@@ -36,7 +36,7 @@
     color:var(--ink);
     font:13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
     display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; padding:0 12px 22px;
+    min-height:100vh; padding:0 12px 14px;
     -webkit-user-select:none; user-select:none;
     -webkit-tap-highlight-color:transparent;
   }
@@ -58,14 +58,14 @@
   }
   header.top nav a:hover, header.top nav button:hover{ color:#7dff7d; border-color:#7dff7d; }
   header.top nav a[aria-current="page"]{ color:#7dff7d; border-color:#7dff7d; box-shadow:0 0 12px -5px #7dff7d; cursor:default; }
-  header.hero{ text-align:center; margin-bottom:18px; }
+  header.hero{ text-align:center; margin-bottom:10px; }
   #title{
     image-rendering:pixelated;
-    width:clamp(200px, 46vw, 340px); height:auto;
+    width:clamp(180px, 40vw, 290px); height:auto;
     filter:drop-shadow(0 0 14px var(--glow));
   }
   header.hero .sub{
-    margin:8px 0 0; color:var(--ink-dim);
+    margin:5px 0 0; color:var(--ink-dim);
     letter-spacing:.14em; text-transform:uppercase; font-size:10.5px;
   }
   /* ---- the monitor ---- */
@@ -73,7 +73,7 @@
     position:relative;
     background:linear-gradient(173deg, var(--bezel1), var(--bezel2) 70%);
     border-radius:16px;
-    padding:20px 20px 34px;
+    padding:14px 18px 24px;
     box-shadow:
       0 30px 70px -24px rgba(0,0,0,.95),
       0 4px 14px -6px rgba(0,0,0,.7),
@@ -107,7 +107,7 @@
   }
   /* ---- controls ---- */
   #controls{
-    margin-top:18px;
+    margin-top:12px;
     display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center;
   }
   #controls .grp{ display:flex; gap:6px; }
@@ -139,10 +139,10 @@
     #hint .kb{ display:none; }
     #hint .tc{ display:inline; }
   }
-  #hint{ margin:14px 0 0; font-size:11px; color:var(--ink-dim); text-align:center; }
+  #hint{ margin:8px 0 0; font-size:11px; color:var(--ink-dim); text-align:center; }
   #hint .tc{ display:none; }
   footer{
-    margin-top:auto; padding-top:26px;
+    margin-top:auto; padding-top:14px;
     max-width:660px; text-align:center;
     font-size:10.5px; color:var(--ink-dim); line-height:1.7;
   }
@@ -200,13 +200,13 @@
 </div>
 
 <p id="hint">
-  <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck &middot; any key continues</span>
+  <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck &middot; F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
   <span class="tc">Swipe to steer &middot; tap = any key</span>
 </p>
 
 <footer>
   <p class="plaque">
-    &copy; July '88 by HerbySoft &mdash; Herbert Groot Jebbink<br>
+    &copy; July '88 by HerbySoft<br>
     Published on the MSX/MS-DOS Computer Magazine diskette MCMPC-D2 (no.&nbsp;25, October 1988).<br>
     Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory &amp;HB000/&amp;HB800 &middot; HTML version: June 2026.
   </p>
@@ -215,7 +215,7 @@
 <script>
 'use strict';
 /* ============================================================
-   SNEEKIE — (c) July '88 by HerbySoft (Herbert Groot Jebbink)
+   SNEEKIE — (c) July '88 by HerbySoft
    Faithful JS port of the GW-BASIC original (SNEEKIE.BAS from
    the MCMPC-D2 diskette). BASIC line numbers in comments.
    ============================================================ */

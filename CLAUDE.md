@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Sneekie is a 32-level snake/maze game originally written in GW-BASIC in July 1988 by
-Herbert Groot Jebbink ("HerbySoft") and published on the MCMPC-D2 diskette. In 2026 it
+HerbySoft and published on the MCMPC-D2 diskette. In 2026 it
 was recovered from the original 720 KB floppy image and ported **line for line** to a
 single self-contained HTML page. There is no framework, no build step, no dependencies,
 and no test suite — `docs/index.html` is the entire program.

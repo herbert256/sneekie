@@ -1,5 +1,5 @@
 ' ============================================================
-' SNEEKIE - (c) juli '88 by HerbySoft (Herbert Groot Jebbink)
+' SNEEKIE - (c) juli '88 by HerbySoft
 ' Published on MSX/MS-DOS Computer Magazine diskette MCMPC-D2
 ' (magazine issue #25, October 1988)
 '
@@ -11,7 +11,7 @@
 10 REM SNEEKIE
 20 REM MSX/MS-DOS Computer Magazine
 30 REM GW-Basic versie
-40 REM door Herbert Groot Jebbink
+40 REM door HerbySoft
 70 REM
 80 DEFINT A-Y: SCREEN 0: WIDTH 80: CLS: ZORE=0: RANDOMIZE TIMER: DEF SEG=&H0
 90 IF PEEK(&H449)=7  THEN  VIDEO=&HB000 ELSE VIDEO=&HB800
