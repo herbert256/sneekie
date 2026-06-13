@@ -59,9 +59,18 @@ https://herbert256.github.io/sneekie/.
   the monitor bezel padding so each cell shows just the game's own in-canvas blue border** — there is no
   extra CSS frame). Cell *i* is told its `TARGET = base + i` (base 1 or 25) and **jumps straight there
   without grinding levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and
-  presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot
-  (BFS-to-food, tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) then plays that
-  one level, driving via `pushKey` at ~165 ms/move and posting status to `parent.botStatus(idx,…)`. It does
+  presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot's
+  `decide()` is space-aware to avoid self-trapping (the old greedy bot hugged the border and boxed itself in):
+  it routes to the nearest food with a **weighted Dijkstra** (each step costs 1, crossing a `☺` smiley costs
+  +8, and — on the **open arena** only, until the idle timer climbs — a border-ring cell costs +3, so one pass
+  minimises both smiley-eating and border-hugging; a **soft heart preference** breaks cost ties so `HART` hits
+  0 sooner), takes that step only through a **gate** (the new head must keep its own tail reachable **and**
+  leave a reachable region ≥ the snake's length + a small margin, both fading as the idle timer climbs so it
+  never refuses food into a red restart), and otherwise falls back to a **tail-chase** survival move (steer
+  toward open space and back toward `T[ETEL]`, shunning smileys). Arrow levels (30/31) also avoid cells an
+  arrow reaches in two ticks when an alternative exists. All BFS/flood passes reuse one stamped
+  `Int32Array` (no per-move `Set`/`Map`) so eight games stay cheap on one thread. It drives via `pushKey`
+  at ~165 ms/move and posts status to `parent.botStatus(idx,…)`. It does
   **not** advance on a win: a clean clear (detected as `LEVEL===TARGET+1 && LIVE>0`) calls
   `parent.botEnd(idx, true)` → **green** flash; getting stuck (head index `BTEL` stops advancing, no safe
   move, ~26 s with no **score** gain — counting items is wrong because a heart spawns a club, so the

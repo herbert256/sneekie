@@ -141,40 +141,102 @@ const BOT = `
   const opp = {72:80, 80:72, 75:77, 77:75};
   const tell = (fn,a,b,c) => { try { parent[fn](a,b,c); } catch(e){} };
 
+  let idle = 0;   // no-score counter, owned by the play loop, read here to relax the gate before a restart
+
   const curDir = () => { const d = T[BTEL]-T[BTEL-1]; return d===-160?72:d===160?80:d===-2?75:77; };
-  const danger = o => peek(o+160)===24 || peek(o-2)===26 || peek(o+2)===27;
-  const pass = (n,d,sm) => { if(danger(n)) return false; const c=peek(n); return c===32||c===3||c===5||(sm&&c===1)||(c===10&&peek(n+d)===32); };
-  const bfsFood = sm => {
-    const head=T[BTEL], cur=curDir(), prev=new Map([[head,head]]), q=[head]; let h=0,t=-1;
-    while(h<q.length){ const o=q[h++]; const c=peek(o); if(o!==head && (c===3||c===5)){ t=o; break; }
-      for(const [sc,d] of DIRS){ if(o===head && sc===opp[cur]) continue; const n=o+d; if(prev.has(n)) continue; if(!pass(n,d,sm)) continue; prev.set(n,o); q.push(n); } }
-    if(t<0) return null; let c=t; while(prev.get(c)!==head) c=prev.get(c); const dd=c-head; return dd===-160?72:dd===160?80:dd===-2?75:77;
+  const danger  = o => peek(o+160)===24 || peek(o-2)===26 || peek(o+2)===27;   // an arrow enters o next tick
+  const danger2 = o => peek(o+320)===24 || peek(o-4)===26 || peek(o+4)===27;   // an arrow is two cells out
+  const inb   = o => o>=0 && o<4000;
+  const onRim = o => { const r=(o/160|0)+1, col=((o%160)>>1)+1; return r<=5||r>=19||col<=3||col>=78; };  // 2-deep border ring
+  const spcFree = c => c===32||c===3||c===5||c===1||c===10||c===24||c===26||c===27;   // free space (arrows are transient)
+  const STAMP = new Int32Array(4000), FSTEP = new Int8Array(4000), DIST = new Int16Array(4000);
+  let GEN = 0;
+  const ARROW = (TARGET===30 || TARGET===31);
+
+  // One BFS from prospective new head nh: reachable open space (uncapped vs the board) + can we still
+  // reach our own vacating tail afterwards? (merges the old flood + safeAfter into a single pass.)
+  const reach = nh => {
+    GEN++;
+    const grow = (peek(nh)===1||peek(nh)===3||peek(nh)===5);
+    const from = grow ? ETEL : ETEL+1, tail = T[from];
+    for(let i=from;i<=BTEL;i++){ if(inb(T[i])) STAMP[T[i]]=GEN; }   // body blocks
+    let space=0, tailOK=false; STAMP[nh]=GEN; const q=[nh]; let h=0;
+    while(h<q.length && space<1400){ const o=q[h++]; space++;
+      for(let k=0;k<4;k++){ const n=o+DIRS[k][1];
+        if(n===tail){ tailOK=true; continue; }
+        if(!inb(n) || STAMP[n]===GEN) continue;
+        if(spcFree(peek(n))){ STAMP[n]=GEN; q.push(n); } } }
+    return { space, tail: tailOK };
   };
-  const plan = () => bfsFood(false) ?? bfsFood(true);
-  const safeAfter = nh => {
-    const grow=[1,3,5].includes(peek(nh)), from=grow?ETEL:ETEL+1, body=new Set();
-    for(let i=from;i<=BTEL;i++) body.add(T[i]); body.add(nh); const tail=T[from];
-    const ok = o => { if(o===tail) return true; if(body.has(o)||danger(o)) return false; const c=peek(o); return c===32||c===3||c===5||c===1||c===10; };
-    const seen=new Set([nh]), q=[nh]; let h=0;
-    while(h<q.length){ const o=q[h++]; if(o===tail) return true; for(const [,d] of DIRS){ const n=o+d; if(!seen.has(n)&&ok(n)){ seen.add(n); q.push(n); } } }
-    return false;
+
+  // Dijkstra (bucket queue) to the nearest food: each step costs 1, crossing a smiley costs +SMc, and
+  // — on the open arena only, until the idle timer climbs — a border cell costs +RIMc. So one pass
+  // minimises smiley-eating AND border-hugging at once. Soft heart preference on a cost tie. Step or -1.
+  const routeFood = () => {
+    GEN++;
+    const head=T[BTEL], cur=curDir();
+    const SMc=8, RIMc=(TARGET===25 && idle<54)?3:0;   // mild interior bias; the food gate is the real anti-trap
+    STAMP[head]=GEN; DIST[head]=0; FSTEP[head]=0;
+    const buckets=[[head]]; let cc=0, hH=-1, hC=-1, dHv=0, dCv=0;
+    while(cc<buckets.length){
+      const b=buckets[cc];
+      if(!b || !b.length){ cc++; continue; }
+      const o=b.pop();
+      if(DIST[o]!==cc) continue;                                   // stale (a cheaper route was found)
+      if(o!==head){ const co=peek(o);
+        if(co===3 && hH<0){ hH=o; dHv=cc; } else if(co===5 && hC<0){ hC=o; dCv=cc; } }
+      if(hH>=0 || hC>=0){ const best=Math.min(hH<0?1e9:dHv, hC<0?1e9:dCv); if(cc>best) break; }
+      const fromHead=(o===head);
+      for(let k=0;k<4;k++){ const sc=DIRS[k][0], d=DIRS[k][1], n=o+d;
+        if(fromHead && sc===opp[cur]) continue;
+        if(!inb(n) || danger(n)) continue;
+        const c=peek(n);
+        if(!(c===32||c===3||c===5||c===1||(c===10&&peek(n+d)===32))) continue;
+        let nc=cc+1; if(c===1) nc+=SMc; if(RIMc && onRim(n) && c!==3 && c!==5) nc+=RIMc;
+        if(STAMP[n]===GEN && DIST[n]<=nc) continue;
+        STAMP[n]=GEN; DIST[n]=nc; FSTEP[n]= fromHead ? sc : FSTEP[o];
+        (buckets[nc] ||= []).push(n); } }
+    if(hH<0 && hC<0) return -1;
+    return FSTEP[(hC<0)?hH:(hH<0)?hC:(dHv<=dCv?hH:hC)];                // heart wins ties
   };
-  const flood = s => {
-    const free = o => { const c=peek(o); return c===32||c===3||c===5||c===1||c===10; };
-    if(!free(s)) return 0; const seen=new Set([s]), q=[s]; let h=0,c=0;
-    while(h<q.length && c<900){ const o=q[h++]; c++; for(const [,d] of DIRS){ const n=o+d; if(!seen.has(n)&&free(n)){ seen.add(n); q.push(n); } } }
-    return c;
+
+  // Distance field outward from the snake's own tail, over open space — drives the tail-chase fallback.
+  const tailField = () => {
+    GEN++; const t=T[ETEL]; if(inb(t)){ STAMP[t]=GEN; DIST[t]=0; }
+    let frontier=[t], d=0;
+    while(frontier.length){ const next=[];
+      for(let fi=0;fi<frontier.length;fi++){ const o=frontier[fi];
+        for(let k=0;k<4;k++){ const n=o+DIRS[k][1];
+          if(!inb(n) || STAMP[n]===GEN) continue;
+          if(spcFree(peek(n))){ STAMP[n]=GEN; DIST[n]=d+1; next.push(n); } } }
+      frontier=next; d++; }
   };
+
   const decide = () => {
-    const head=T[BTEL], cur=curDir(), len=BTEL-ETEL+1, few=(HART+KLAVER)<=6, cands=[];
-    for(const [sc,d] of DIRS){ if(sc===opp[cur]) continue; const n=head+d; if(danger(n)) continue; const c=peek(n);
-      if(c===32||c===3||c===5||c===1||(c===10&&peek(n+d)===32)) cands.push([sc,n]); }
+    const head=T[BTEL], cur=curDir(), len=BTEL-ETEL+1;
+    const build = strict => { const a=[];
+      for(let k=0;k<4;k++){ const sc=DIRS[k][0], d=DIRS[k][1], n=head+d;
+        if(sc===opp[cur]) continue;
+        if(danger(n)) continue; if(strict && ARROW && danger2(n)) continue;
+        const c=peek(n); if(c===32||c===3||c===5||c===1||(c===10&&peek(n+d)===32)) a.push([sc,n]); }
+      return a; };
+    let cands = build(true); if(!cands.length) cands = build(false);   // 2-ply arrow caution, but never stall for it
     if(!cands.length) return null;
-    const fd = plan();
-    if(fd!==null){ const c=cands.find(x=>x[0]===fd); if(c && (safeAfter(c[1]) || flood(c[1]) >= (few?12:len+8))) return fd; }
-    let best=cands[0][0], bs=-1e18;
-    for(const [sc,n] of cands){ const sp=flood(n), rt=safeAfter(n)?1:0, sm=peek(n)===1?1:0;
-      const score = rt*6000 + sp*5 - sm*380; if(score>bs){ bs=score; best=sc; } }
+
+    // small anti-seal margin on the food gate, fading as the no-progress timer climbs (so we never idle-restart)
+    const relax = Math.min(1, idle/90);
+    const gap = Math.round((4 + len*0.06) * (1-relax));
+    const fd = routeFood();                                            // weighted route: low smiley + low border cost
+    if(fd!==-1){ const c=cands.find(x=>x[0]===fd);
+      if(c){ const r=reach(c[1]); if(r.tail && r.space>=len+gap) return fd; } }   // take food if tail stays reachable + region holds us
+
+    // survival: steer toward open space and back toward our own tail; shun smileys
+    tailField();
+    const td = cands.map(x => STAMP[x[1]]===GEN ? DIST[x[1]] : 9999);
+    let best=cands[0][0], bs=-Infinity;
+    for(let i=0;i<cands.length;i++){ const n=cands[i][1], r=reach(n);
+      const score = (r.tail?1e7:0) + r.space*5 - td[i]*6 - (peek(n)===1?900:0);
+      if(score>bs){ bs=score; best=cands[i][0]; } }
     return best;
   };
 
@@ -190,7 +252,7 @@ const BOT = `
     for(let w=0;w<500 && LEVEL!==TARGET;w++) await sleep(8);
     for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
     pushKey('\\r'); await sleep(120);
-    let lastScore = ZCORE, idle = 0, lastHead = BTEL, stall = 0;
+    let lastScore = ZCORE, lastHead = BTEL, stall = 0; idle = 0;   // idle is hoisted (decide() reads it)
     while(true){
       if(typeof LEVEL==='undefined'){ tell('botEnd', IDX, false); return; }
       if(LEVEL === TARGET+1 && LIVE > 0){ tell('botEnd', IDX, true); return; }   // cleared the level -> green
