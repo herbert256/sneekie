@@ -52,7 +52,8 @@
   .ico{ font-family:ui-monospace,monospace; font-weight:700; }
   .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
 
-  .clips{ display:flex; flex-direction:column; gap:42px; margin-top:30px; }
+  .clips{ display:grid; grid-template-columns:repeat(2, 1fr); gap:34px 26px; margin-top:30px; }
+  @media (max-width:680px){ .clips{ grid-template-columns:1fr; } }
   figure.clip{ margin:0; scroll-margin-top:70px; }
   figure.clip img{ display:block; width:100%; height:auto; image-rendering:pixelated; background:#000;
     border:1px solid var(--border); border-radius:10px; box-shadow:0 0 50px -12px var(--glow); }
