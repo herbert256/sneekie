@@ -49,6 +49,13 @@ https://herbert256.github.io/sneekie/.
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
+All five pages share one standard top nav (`header.top`): the same page links (the current
+page marked `aria-current="page"`) plus a `#print` button. It is **themed per page** — green
+phosphor on the game + plain listing (no Light/Dark toggle; those keep their Green/Amber/White/
+CGA `#themes` controls), modern dark on the three doc pages (which add the `#theme` Light/Dark
+toggle). On the CRT pages the page title lives in a separate `header.hero` (renamed so the
+generic `header{}` rules don't hit the nav bar).
+
 ## Running it
 
 No build/lint/test commands exist. To preview, serve the site folder:
