@@ -51,19 +51,24 @@ https://herbert256.github.io/sneekie/.
   a full clear). Bigger and far longer than the manual's per-layout thumbnails; same smart bot,
   captured the same way (drive the game in a browser, rebuild each frame from `vram`).
 - `docs/live.html` — a **Live** page (nav label **Live**): **eight** copies of the *real* game running
-  **live at once**, one per hard arena, in the same 2-up × 4-row grid as the Demo page. Each cell is an
-  `<iframe src="index.html">` with a smarter bot `eval`'d into it (so it can read the game's `const`/`let`
-  globals by name, which are *not* window properties). The bot is embedded as a string in `live.html`
-  and injected on every iframe `load` (along with CSS that hides the game chrome). Cell *i* is told its
-  `TARGET = 25 + i` and **jumps straight there without grinding 24 levels**: it dismisses level 1, sets
-  the loop counter directly (`LEVEL = TARGET - 1`) and presses F10 once, so the game's `for(LEVEL…)` loop
-  lands on `TARGET` and runs that level's setup. The bot (BFS-to-food, tail-reach safety, **eats a smiley
-  to escape a trap**, endgame aggression) then plays that one level, driving via `pushKey` at ~165 ms/move
-  and posting status to `parent.botStatus(idx,…)`. **Stuck detection** (no progress for ~16 s, or boxed in
-  with no safe move) calls `parent.botEnd(idx, true)`, which **flashes that cell's white overlay three times
-  (~0.5 s apart) then reloads the iframe** — re-injecting the bot and re-jumping to the same level. A clean
-  clear (or game-over) reloads quietly. No frames are saved — it's live, foreground only (background tabs
-  throttle and pause all eight at once).
+  **live at once**, in the same 2-up × 4-row grid as the Demo page, with a **switch** at the top to choose
+  the range — **levels 1–8** (the gentle, turn-based openers) or **levels 25–32** (the brutal back half).
+  Each cell is an `<iframe src="index.html">` with a smarter bot `eval`'d into it (so it can read the game's
+  `const`/`let` globals by name, which are *not* window properties). The bot is embedded as a string in
+  `live.html` and injected on every iframe `load` (along with CSS that hides the game chrome **and removes
+  the monitor bezel padding so each cell shows just the game's own in-canvas blue border** — there is no
+  extra CSS frame). Cell *i* is told its `TARGET = base + i` (base 1 or 25) and **jumps straight there
+  without grinding levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and
+  presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot
+  (BFS-to-food, tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) then plays that
+  one level, driving via `pushKey` at ~165 ms/move and posting status to `parent.botStatus(idx,…)`. It does
+  **not** advance on a win: a clean clear (detected as `LEVEL===TARGET+1 && LIVE>0`) calls
+  `parent.botEnd(idx, true)` → **green** flash; getting stuck (head index `BTEL` stops advancing, no safe
+  move, ~20 s with no progress, or a game-over) calls `parent.botEnd(idx, false)` → **red** flash. Either
+  flash pulses the cell overlay **four times, 0.75 s apart**, then reloads the iframe — re-injecting the bot
+  and re-jumping to the **same** level. Flipping the switch bumps a `gen` counter (so in-flight flash
+  reloads are ignored) and reloads all eight with the new base. No frames are saved — it's live, foreground
+  only (background tabs throttle and pause all eight at once).
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
