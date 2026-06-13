@@ -177,7 +177,7 @@
 </header>
 
 <div id="bezel">
-  <canvas id="screen" width="640" height="400"></canvas>
+  <canvas id="screen" width="640" height="384"></canvas>
   <div id="plate">HerbySoft <em>&middot; anno 1988</em></div>
   <span id="led"></span>
 </div>
@@ -877,18 +877,18 @@ paintMute();
 
 function fit(){
   if(document.fullscreenElement){
-    /* fill the screen like a real 1988 monitor (640x400 is 16:10, just like a MacBook) */
-    const s = Math.min(innerWidth/640, innerHeight/400);
+    /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384) */
+    const s = Math.min(innerWidth/640, innerHeight/384);
     cv.style.width = (640*s) + 'px';
-    cv.style.height = (400*s) + 'px';
+    cv.style.height = (384*s) + 'px';
     return;
   }
   const availW = Math.min(document.documentElement.clientWidth - 56, 1300);
   const availH = innerHeight - 250;
-  let s = Math.min(availW/640, availH/400);
+  let s = Math.min(availW/640, availH/384);
   s = s >= 1 ? Math.floor(s) : Math.max(s, 0.42);
   cv.style.width = (640*s) + 'px';
-  cv.style.height = (400*s) + 'px';
+  cv.style.height = (384*s) + 'px';
 }
 addEventListener('resize', fit);
 
