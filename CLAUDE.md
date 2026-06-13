@@ -37,9 +37,13 @@ https://herbert256.github.io/sneekie/.
   inspector that computes the offset formula live. A focused sandbox (empty/heart/wall only)
   that reuses the embedded font; not the full game engine.
 - `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
-  scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The 8 layout
-  screen-prints live in `docs/manual/layout-1..8.png` (640×384, captured straight from the game's
-  own canvas — each is `lay*()` drawn on a cleared playfield via `toDataURL`). Same green doc-page
+  scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The gallery shows
+  one **autoplay gameplay GIF per layout** (`docs/manual/scene-1..8.gif`, 640×384, ~7.7 fps,
+  the best of the 4 levels that share each layout). They were produced by a smart autoplay bot
+  (BFS-to-heart, stone-pushing, tail-reach anti-trap, arrow-dodging) driven via the browser:
+  frames rebuilt from `vram` into a `willReadFrequently` canvas (the game canvas reads back blank
+  in a hidden tab), captured straight to PNGs through a throwaway local upload server, then
+  encoded with ImageMagick (`magick -delay 13 -loop 0 ... -layers optimize`). Same green doc-page
   styling as the other doc pages.
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
