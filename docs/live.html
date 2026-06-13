@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A much smarter bot solving Sneekie's hardest levels (25-32) live in your browser.">
+<meta name="description" content="All eight of Sneekie's hardest levels (25-32) played at once by a smart bot, live in your browser.">
 <title>Sneekie — Live bot</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="Sneekie — Live bot">
-<meta property="og:description" content="Watch a smart bot solve Sneekie's hardest levels (25-32) live in the browser.">
+<meta property="og:description" content="A smart bot playing all eight of Sneekie's hardest levels (25-32) at once, live.">
 <meta property="og:url" content="https://herbert256.github.io/sneekie/live.html">
 <meta property="og:image" content="https://herbert256.github.io/sneekie/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sneekie — Live bot">
-<meta name="twitter:description" content="Watch a smart bot solve Sneekie's hardest levels (25-32) live in the browser.">
+<meta name="twitter:description" content="A smart bot playing all eight of Sneekie's hardest levels (25-32) at once, live.">
 <meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
 <style>
   :root{
@@ -44,21 +44,25 @@
   header.top{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
   header.top .brand{ font-size:13px; }
 
-  main{ max-width:min(1200px, 96vw); margin:0 auto; padding:24px 20px 60px; }
+  main{ max-width:min(1800px, 96vw); margin:0 auto; padding:24px 20px 60px; }
   h1{ font-size:26px; margin:6px 0; color:var(--heading); }
-  .lead{ max-width:860px; color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
-  .lead code{ background:var(--codebg); border:1px solid var(--border); border-radius:4px; padding:.5px 5px; font-size:.86em; color:var(--heading); }
+  .lead{ max-width:900px; color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
   strong{ color:var(--heading); font-weight:600; }
   .ico{ font-family:ui-monospace,monospace; font-weight:700; }
   .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
 
-  #status{ font-family:ui-monospace,monospace; font-size:13px; color:var(--muted); margin:16px 0 10px; min-height:1.4em; }
-  #status b{ color:var(--accent); } #status .lvl{ color:var(--heading); }
-  .stage{ display:flex; justify-content:center; }
-  iframe#game{ width:min(1120px, 96vw); aspect-ratio:1.66; border:1px solid var(--border); border-radius:10px;
-    background:#000; box-shadow:0 0 50px -12px var(--glow); display:block; }
+  .cells{ display:grid; grid-template-columns:repeat(2, 1fr); gap:30px 26px; margin-top:26px; }
+  @media (max-width:760px){ .cells{ grid-template-columns:1fr; } }
+  figure.cell{ margin:0; }
+  figure.cell figcaption{ margin-bottom:10px; font-size:14px; }
+  figcaption .lv{ font:700 13px/1 ui-monospace,monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--heading); }
+  figcaption .dim{ color:var(--muted); } figcaption .st{ color:var(--accent); font-family:ui-monospace,monospace; font-size:12.5px; }
+  figcaption .st.stuck{ color:var(--red); }
+  .frame{ position:relative; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#000; box-shadow:0 0 40px -14px var(--glow); }
+  .frame iframe{ display:block; width:100%; aspect-ratio:1.66; border:0; background:#000; }
+  .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
 
-  footer{ max-width:min(1200px, 96vw); margin:40px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
+  footer{ max-width:min(1800px, 96vw); margin:40px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
 </style>
 </head>
 <body>
@@ -80,22 +84,20 @@
 </header>
 
 <main>
-  <h1>The bot solves the hard levels — live</h1>
-  <p class="lead">This is the <em>real</em> 1988 game running below, with a smarter bot wired into it, playing
-  right now in your browser. It's set loose on levels <strong>25&ndash;32</strong> &mdash; the brutal back half,
-  where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart
-  you eat scatters a <span class="ico" style="color:#66e066">&clubs;</span> club into ground you've already cleared.
-  The bot paths to the nearest target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>,
-  <strong>dodges <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its own tail,
-  and &mdash; unlike the recorded clips &mdash; will <strong>eat a <span class="ico s">&#9786;</span> smiley</strong>
-  when that's the only way to avoid boxing itself in. When it clears level 32 (or runs out of lives) it loops back to 25.</p>
+  <h1>All eight hard levels at once — live</h1>
+  <p class="lead">Eight copies of the <em>real</em> 1988 game, each running its own bot on one of the brutal
+  back-half arenas (<strong>levels&nbsp;25&ndash;32</strong>) &mdash; the self-moving levels where the snake
+  grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart scatters a
+  <span class="ico" style="color:#66e066">&clubs;</span> club into cleared ground. Each bot paths to the nearest
+  target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges
+  <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will
+  <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. When one
+  <strong>gets stuck</strong>, its screen <strong>flashes three times</strong> and that level restarts.</p>
 
-  <div id="status">starting the game&hellip;</div>
-  <div class="stage"><iframe id="game" title="Sneekie playing itself" scrolling="no"></iframe></div>
+  <div class="cells" id="cells"></div>
 
-  <p class="lead" style="margin-top:22px;color:var(--muted);font-size:13px">It's live, not a recording &mdash; reload
-  to watch a fresh run. The bot reads the playfield straight out of screen memory and steers the same snake you would.
-  (Keep this tab in front; browsers throttle background tabs, which pauses the game.)</p>
+  <p class="lead" style="margin-top:22px;color:var(--muted);font-size:13px">It's live, not a recording. Keep this
+  tab in front &mdash; browsers throttle background tabs, which pauses every game at once.</p>
 </main>
 
 <footer>
@@ -109,15 +111,8 @@
 document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
 
 const SCENES = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
-window.botStatus = (lvl, score, left, note) => {
-  const el = document.getElementById('status');
-  if(lvl === 0){ el.innerHTML = note || ''; return; }
-  const scene = SCENES[(lvl - 1) % 8];
-  el.innerHTML = '<span class="lvl">Level ' + lvl + ' &middot; ' + scene + '</span> &mdash; score <b>' +
-    score + '</b> &middot; ' + left + ' left' + (note ? ' &middot; ' + note : '');
-};
 
-// --- the smarter bot, eval'd inside the game iframe so it can read its globals by name ---
+// --- the smarter bot, eval'd inside each game iframe (IDX + TARGET are injected before it) ---
 const BOT = `
 (function(){
   'use strict';
@@ -125,7 +120,7 @@ const BOT = `
   const DIRS = [[72,-160],[80,160],[75,-2],[77,2]];
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const opp = {72:80, 80:72, 75:77, 77:75};
-  const status = (l,s,le,n) => { try { parent.botStatus(l,s,le,n); } catch(e){} };
+  const tell = (fn,a,b,c,d) => { try { parent[fn](a,b,c,d); } catch(e){} };
 
   const curDir = () => { const d = T[BTEL]-T[BTEL-1]; return d===-160?72:d===160?80:d===-2?75:77; };
   const danger = o => peek(o+160)===24 || peek(o-2)===26 || peek(o+2)===27;
@@ -158,7 +153,6 @@ const BOT = `
     if(!cands.length) return null;
     const fd = plan();
     if(fd!==null){ const c=cands.find(x=>x[0]===fd); if(c && (safeAfter(c[1]) || flood(c[1]) >= (few?12:len+8))) return fd; }
-    // survival: keep tail reachable, maximise space, but accept a smiley when it really opens the board
     let best=cands[0][0], bs=-1e18;
     for(const [sc,n] of cands){ const sp=flood(n), rt=safeAfter(n)?1:0, sm=peek(n)===1?1:0;
       const score = rt*6000 + sp*5 - sm*380; if(score>bs){ bs=score; best=sc; } }
@@ -168,51 +162,81 @@ const BOT = `
   const ready = () => { try { return typeof LEVEL!=='undefined' && LEVEL>=1 && BTEL===2 && T[2]===1840; } catch(e){ return false; } };
 
   (async () => {
-    status(0,0,0,'booting the game&hellip;');
     for(let i=0;i<400 && !ready(); i++) await sleep(50);
-    if(!ready()){ location.reload(); return; }
-    status(0,0,0,'skipping to level 25&hellip;');
-    pushKey('\\r'); await sleep(150);
-    let guard=0;
-    while(LEVEL < 25 && guard++ < 200){
-      status(0,0,0, 'skipping to the hard levels&hellip; (level ' + LEVEL + ' / 25)');
-      const b=LEVEL; pushKey(' D');
-      for(let w=0;w<200 && LEVEL===b;w++) await sleep(8);
-      for(let w=0;w<120 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
-      if(LEVEL < 25){ pushKey('\\r'); await sleep(30); }
-    }
-    pushKey('\\r'); await sleep(150);
-    let lastLevel=LEVEL, lastFood=HART+KLAVER, idle=0;
+    if(!ready()){ tell('botEnd', IDX, false); return; }
+    // jump straight to TARGET: set the loop counter and skip once
+    pushKey('\\r'); await sleep(120);
+    LEVEL = TARGET - 1; pushKey(' D');
+    for(let w=0;w<500 && LEVEL!==TARGET;w++) await sleep(8);
+    for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
+    pushKey('\\r'); await sleep(120);
+    let lastFood = HART+KLAVER, idle=0;
     while(true){
-      if(typeof LEVEL==='undefined' || LEVEL<25 || LEVEL>32) break;
-      if(LEVEL!==lastLevel){ lastLevel=LEVEL; lastFood=HART+KLAVER; idle=0; }
-      const f=HART+KLAVER; if(f<=2) BONUS=0;
+      if(typeof LEVEL==='undefined' || LEVEL!==TARGET){ tell('botEnd', IDX, false); return; }   // cleared / advanced -> quiet restart
+      const f = HART+KLAVER; if(f<=2) BONUS=0;
       if(f<lastFood) idle=0; else idle++; lastFood=f;
-      status(LEVEL, ZCORE, f, f<=0 ? 'cleared!' : null);
-      if(idle>140) break;
-      const sc=decide(); if(sc!==null) pushKey(keyOf[sc]);
-      await sleep(155);
+      tell('botStatus', IDX, ZCORE, f, idle);
+      if(idle>95){ tell('botEnd', IDX, true); return; }   // stuck ~16s with no progress -> flash + restart
+      const sc = decide();
+      if(sc===null){ tell('botEnd', IDX, true); return; }  // boxed in -> stuck
+      pushKey(keyOf[sc]);
+      await sleep(165);
     }
-    status(0,0,0,'round finished &mdash; restarting at 25&hellip;');
-    await sleep(700);
-    location.reload();
   })();
 })();
 `;
 
 const HIDE = '<style>header.top,.hero,#controls,#touchbar,#hint,footer{display:none!important}' +
   'html,body{margin:0!important;padding:0!important;background:#000!important;min-height:0!important;overflow:hidden!important}' +
-  '#bezel{margin:0!important;padding:7px!important;border-radius:0!important;box-shadow:none!important;background:#0a0c0d!important;animation:none!important}' +
+  '#bezel{margin:0!important;padding:6px!important;border-radius:0!important;box-shadow:none!important;background:#0a0c0d!important;animation:none!important}' +
   '#screen{width:100%!important;height:auto!important;image-rendering:pixelated!important;border-radius:0!important;box-shadow:none!important}</style>';
 
-const frame = document.getElementById('game');
-frame.addEventListener('load', () => {
+const cells = [];
+const grid = document.getElementById('cells');
+for(let i=0;i<8;i++){
+  const fig = document.createElement('figure'); fig.className = 'cell';
+  fig.innerHTML =
+    '<figcaption><span class="lv">Level ' + (25+i) + '</span> <span class="dim">&middot; ' + SCENES[i] + '</span><span class="st"></span></figcaption>' +
+    '<div class="frame"><iframe scrolling="no" title="Sneekie level ' + (25+i) + '"></iframe><div class="flash"></div></div>';
+  grid.appendChild(fig);
+  cells.push({ frame: fig.querySelector('iframe'), flash: fig.querySelector('.flash'), st: fig.querySelector('.st') });
+}
+
+function inject(i){
+  const c = cells[i];
   try {
-    frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
-    frame.contentWindow.eval(BOT);
-  } catch(e){ document.getElementById('status').textContent = 'could not start the bot: ' + e.message; }
-});
-frame.src = 'index.html';
+    c.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
+    c.frame.contentWindow.eval('var IDX=' + i + ',TARGET=' + (25+i) + ';' + BOT);
+  } catch(e){ c.st.className = 'st stuck'; c.st.textContent = ' — ' + e.message; }
+}
+
+window.botStatus = (idx, score, left) => {
+  const c = cells[idx]; if(!c) return;
+  c.st.className = 'st';
+  c.st.textContent = left <= 0 ? ' — cleared!' : ' — score ' + score + ' · ' + left + ' left';
+};
+
+function flash(el, done){
+  let k = 0;
+  (function tick(){
+    if(k >= 3){ setTimeout(done, 220); return; }
+    el.style.opacity = '0.9';
+    setTimeout(() => { el.style.opacity = '0'; }, 150);
+    k++;
+    setTimeout(tick, 500);
+  })();
+}
+
+window.botEnd = (idx, stuck) => {
+  const c = cells[idx]; if(!c) return;
+  c.st.className = stuck ? 'st stuck' : 'st';
+  c.st.textContent = stuck ? ' — stuck — restarting…' : ' — restarting…';
+  const restart = () => { try { c.frame.contentWindow.location.reload(); } catch(e){ c.frame.src = 'index.html'; } };
+  if(stuck) flash(c.flash, restart); else setTimeout(restart, 400);
+};
+
+// start all eight
+cells.forEach((c, i) => { c.frame.addEventListener('load', () => inject(i)); c.frame.src = 'index.html'; });
 </script>
 </body>
 </html>
