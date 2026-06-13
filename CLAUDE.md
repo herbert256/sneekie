@@ -50,6 +50,14 @@ https://herbert256.github.io/sneekie/.
   stone / picket / rising-arrows / sweeping-arrows / vault) — hundreds of moves each (the open one is
   a full clear). Bigger and far longer than the manual's per-layout thumbnails; same smart bot,
   captured the same way (drive the game in a browser, rebuild each frame from `vram`).
+- `docs/live.html` — a **Live** page (nav label **Live**): the *real* game running **live** in an
+  `<iframe src="index.html">`, with a smarter bot `eval`'d into the iframe (so it can read the game's
+  `const`/`let` globals by name) that skips to level 25 and plays/loops the hard back half (25–32). The
+  bot (BFS-to-food, tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) is
+  embedded as a string in `live.html` and injected on every iframe load; CSS is also injected to hide
+  the game's chrome and show just the screen. It drives the game via `pushKey` at ~155 ms/move and
+  posts status to `parent.botStatus(...)`. No frames are saved — it's live, foreground only (background
+  tabs throttle and pause it).
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
@@ -65,10 +73,10 @@ https://herbert256.github.io/sneekie/.
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
-All seven pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
+All eight pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
 look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`SNEEKIE.BAS.html`; the other
-six pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
-`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Explained, Migration, Visualizer)
+seven pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Live, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
 fixed green set, like the listing's green theme), so re-theming is mostly editing `:root`. On the
