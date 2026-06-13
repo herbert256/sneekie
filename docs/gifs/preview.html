@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sneekie — gameplay GIF previews (staging v2)</title>
+<title>Sneekie — gameplay GIF previews (staging v3)</title>
 <style>
   :root{ --bg:#0a0c0d; --panel:#13171a; --border:#33383d; --text:#aab2b6; --muted:#5b6367; --accent:#7dff7d; --heading:#b6ffb6; --red:#ff5e5e; }
   *{ box-sizing:border-box; }
@@ -11,7 +11,7 @@
     font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   header{ padding:20px; border-bottom:1px solid var(--border); }
   h1{ margin:0 0 4px; font-size:22px; color:var(--heading); }
-  header p{ margin:0; color:var(--muted); font-size:13.5px; max-width:820px; }
+  header p{ margin:0; color:var(--muted); font-size:13.5px; max-width:860px; }
   main{ max-width:1500px; margin:0 auto; padding:20px; }
   .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:16px; }
   .card{ background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -25,18 +25,19 @@
 </head>
 <body>
 <header>
-  <h1>Gameplay GIF previews &mdash; staging v2</h1>
-  <p>Smarter autoplay bot: it pushes stones, paths to hearts (BFS), avoids trapping itself, dodges arrows,
-  and no longer oscillates. Playback is slowed to ~11&nbsp;fps so each move is visible. Pick the level numbers
-  you want and I'll wire those into the manual and delete the rest. Levels flagged
-  <span style="color:var(--red)">SHORT</span> are dense stone or auto-moving levels where the snake still
-  corners itself early &mdash; their layout is covered better by a longer run of the same arena.</p>
+  <h1>Gameplay GIF previews &mdash; staging v3 (eat-most bot)</h1>
+  <p>Much smarter bot: BFS-paths to hearts, <b>pushes stones</b>, eats a smiley only when a heart is otherwise
+  blocked, won't trap itself, <b>doesn't die or oscillate</b>, and plays a long run on each level. Slowed to
+  ~7.7&nbsp;fps. It eats a big chunk of every level but won't fully clear &mdash; a guaranteed clear is only
+  possible on the open arena and only via a 2&ndash;3&nbsp;min lawn-mower sweep, so per your call these are the
+  clean "eat-most" runs. A few dense arrow/stone levels (flagged <span style="color:var(--red)">SHORT</span>)
+  corner the snake early. Pick the level numbers you want and I'll wire those into the manual.</p>
 </header>
 <main><div class="grid" id="grid"></div></main>
 <script>
   const layouts = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
   const enemy = [false,false,false,false,true,true,true,true];
-  const frames = {4:49,10:54,16:28,22:57,26:74,28:33,32:75};   // levels that ended early
+  const frames = {4:53,17:41,28:52,30:9};   // levels that ended early
   const g = document.getElementById('grid');
   for(let L=1; L<=32; L++){
     const li = (L-1)%8, lay = layouts[li];
