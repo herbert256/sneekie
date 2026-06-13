@@ -120,7 +120,7 @@
     Every move is a few <code>peek</code>s and <code>poke</code>s &mdash; shown live on the right.
   </p>
   <p class="lead" style="color:var(--muted);font-size:13.5px">
-    Each cell is two bytes (character, then a brightness attribute), addressed by
+    Each cell is two bytes (character, then a brightness/color attribute), addressed by
     <span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>.
     This is a 22&times;15 corner of the real 80&times;25 screen &mdash; same formula, same 160-byte row stride.
   </p>
@@ -169,8 +169,8 @@
 
   <p class="lead" style="margin-top:26px;color:var(--muted);font-size:13.5px">
     That's the whole trick behind the 1988 code. See it in the source on the
-    <a href="SNEEKIE.BAS.explained.html">explained</a> page, or next to the JavaScript port on the
-    <a href="SNEEKIE.BAS.migration.html">migration</a> page.
+    <a href="SNEEKIE.BAS.explained.html">explained</a> page, or next to the JavaScript port on
+    the&nbsp;<a href="SNEEKIE.BAS.migration.html">migration</a> page.
   </p>
 </main>
 
