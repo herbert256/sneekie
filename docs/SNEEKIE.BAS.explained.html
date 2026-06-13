@@ -21,23 +21,17 @@
 <meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
 <style>
   :root{
-    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#30363d;
-    --text:#c9d1d9; --muted:#8b949e; --accent:#58a6ff; --heading:#e6edf3;
-    --codebg:#0b0f14;
-    --ln:#6e7681; --kw:#ff7b72; --fn:#d2a8ff; --str:#a5d6ff; --num:#79c0ff;
-    --com:#8b949e; --op:#ff7b72; --id:#c9d1d9; --pn:#8b949e; --annot:#e3a857;
-  }
-  body.light{
-    --bg:#f6f8fa; --panel:#ffffff; --panel2:#eef1f4; --border:#d0d7de;
-    --text:#1f2328; --muted:#59636e; --accent:#0969da; --heading:#1f2328;
-    --codebg:#f6f8fa;
-    --ln:#8c959f; --kw:#cf222e; --fn:#8250df; --str:#0a3069; --num:#0550ae;
-    --com:#6e7781; --op:#cf222e; --id:#1f2328; --pn:#6e7781; --annot:#8a6d1a;
+    --bg:#0a0c0d; --panel:#13171a; --panel2:#1b2025; --border:#33383d;
+    --text:#aab2b6; --muted:#5b6367; --accent:#7dff7d; --heading:#b6ffb6;
+    --codebg:#06090a; --glow:rgba(125,255,125,.13);
+    --ln:#46c95a; --kw:#d6ffd6; --fn:#7ff09a; --str:#5ad06f; --num:#a9f4b6;
+    --com:#3c8f49; --id:#86ff86; --op:#54bf69; --pn:#367a43;
+    --annot:#e3a857;
   }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; scroll-padding-top:64px; }
   body{
-    margin:0; background:var(--bg); color:var(--text);
+    margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
     font:15px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   code, .mono{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
@@ -60,7 +54,7 @@
     padding:5px 11px; cursor:pointer; text-decoration:none;
   }
   header.top nav a:hover, header.top nav button:hover{ border-color:var(--accent); color:var(--accent); }
-  header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); background:color-mix(in srgb,var(--accent) 14%,transparent); cursor:default; }
+  header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
 
   main{ max-width:940px; margin:0 auto; padding:30px 20px 80px; }
 
@@ -168,7 +162,6 @@
     <a href="vram.html">Visualizer</a>
     <a href="SNEEKIE.BAS.txt" download>Download .BAS</a>
     <button id="print">Print</button>
-    <button id="theme">Light</button>
   </nav>
 </header>
 
@@ -505,15 +498,7 @@ for(const line of lines){
 /* ---------- light/dark toggle ---------- */
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
-const tbtn = document.getElementById('theme');
 document.getElementById('print').addEventListener('click', () => window.print());
-function applyMode(m){
-  document.body.classList.toggle('light', m === 'light');
-  tbtn.textContent = (m === 'light') ? 'Dark' : 'Light';
-  lsSet('sneekie.explained.mode', m);
-}
-tbtn.addEventListener('click', () => applyMode(document.body.classList.contains('light') ? 'dark' : 'light'));
-applyMode(lsGet('sneekie.explained.mode') || 'dark');
 </script>
 </body>
 </html>
