@@ -149,7 +149,7 @@ const BOT = `
   const inb   = o => o>=0 && o<4000;
   const onRim = o => { const r=(o/160|0)+1, col=((o%160)>>1)+1; return r<=5||r>=19||col<=3||col>=78; };  // 2-deep border ring
   const spcFree = c => c===32||c===3||c===5||c===1||c===10||c===24||c===26||c===27;   // free space (arrows are transient)
-  const STAMP = new Int32Array(4000), FSTEP = new Int8Array(4000), DIST = new Int16Array(4000);
+  const STAMP = new Int32Array(4000), FSTEP = new Int8Array(4000), DIST = new Int16Array(4000), PAR = new Int32Array(4000);
   let GEN = 0;
   const ARROW = (TARGET===30 || TARGET===31);
 
@@ -169,23 +169,43 @@ const BOT = `
     return { space, tail: tailOK };
   };
 
-  // Dijkstra (bucket queue) to the nearest food: each step costs 1, crossing a smiley costs +SMc, and
-  // — on the open arena only, until the idle timer climbs — a border cell costs +RIMc. So one pass
-  // minimises smiley-eating AND border-hugging at once. Soft heart preference on a cost tie. Step or -1.
+  // Would committing the WHOLE route to a food (via the PAR tree) seal us in with our own body? Walk the
+  // route, advance the snake along it (tail recedes one cell per non-food step), then check the new tail is
+  // still reachable. Used only to PREFER an exit-keeping food, never to refuse food — so it can't make the
+  // bot wander/restart; worst case it picks a slightly farther target. true=keeps an exit, false=would seal.
+  const keepsExit = tgt => {
+    const head=T[BTEL], len=BTEL-ETEL+1; let d=0, grow=0, cur=tgt, g=0;
+    while(cur!==head && g++<4000){ const ch=peek(cur); if(ch===3||ch===5) grow++; d++; cur=PAR[cur]; }
+    if(d===0 || d>=len) return true;                                 // adjacent / route longer than snake: don't second-guess
+    const newTailI = ETEL + Math.max(0, d-grow), newTail = T[newTailI];
+    GEN++;
+    cur=tgt; g=0; while(cur!==head && g++<4000){ STAMP[cur]=GEN; cur=PAR[cur]; }     // route cells = body
+    for(let i=newTailI;i<=BTEL;i++) STAMP[T[i]]=GEN;                                  // remaining old body
+    const q=[tgt]; let h=0;
+    while(h<q.length){ const o=q[h++];
+      for(let k=0;k<4;k++){ const n=o+DIRS[k][1];
+        if(n===newTail) return true;
+        if(!inb(n) || STAMP[n]===GEN) continue;
+        if(spcFree(peek(n))){ STAMP[n]=GEN; q.push(n); } } }
+    return false;
+  };
+
+  // Dijkstra (bucket queue) over the board: each step costs 1, crossing a smiley costs +SMc, and — on the
+  // open arena only, until the idle timer climbs — a border cell costs +RIMc (minimises smiley-eating AND
+  // border-hugging). Collect the nearest few foods, then head for the nearest one whose whole route keeps
+  // an exit (heart wins cost ties); if none keeps an exit, head for the nearest food anyway. Step or -1.
   const routeFood = () => {
     GEN++;
     const head=T[BTEL], cur=curDir();
-    const SMc=8, RIMc=(TARGET===25 && idle<54)?3:0;   // mild interior bias; the food gate is the real anti-trap
+    const SMc=8, RIMc=(TARGET===25 && idle<54)?3:0;
     STAMP[head]=GEN; DIST[head]=0; FSTEP[head]=0;
-    const buckets=[[head]]; let cc=0, hH=-1, hC=-1, dHv=0, dCv=0;
-    while(cc<buckets.length){
+    const buckets=[[head]]; let cc=0; const foods=[];
+    while(cc<buckets.length && foods.length<6){
       const b=buckets[cc];
       if(!b || !b.length){ cc++; continue; }
       const o=b.pop();
       if(DIST[o]!==cc) continue;                                   // stale (a cheaper route was found)
-      if(o!==head){ const co=peek(o);
-        if(co===3 && hH<0){ hH=o; dHv=cc; } else if(co===5 && hC<0){ hC=o; dCv=cc; } }
-      if(hH>=0 || hC>=0){ const best=Math.min(hH<0?1e9:dHv, hC<0?1e9:dCv); if(cc>best) break; }
+      if(o!==head){ const co=peek(o); if(co===3||co===5) foods.push(o); }
       const fromHead=(o===head);
       for(let k=0;k<4;k++){ const sc=DIRS[k][0], d=DIRS[k][1], n=o+d;
         if(fromHead && sc===opp[cur]) continue;
@@ -194,10 +214,15 @@ const BOT = `
         if(!(c===32||c===3||c===5||c===1||(c===10&&peek(n+d)===32))) continue;
         let nc=cc+1; if(c===1) nc+=SMc; if(RIMc && onRim(n) && c!==3 && c!==5) nc+=RIMc;
         if(STAMP[n]===GEN && DIST[n]<=nc) continue;
-        STAMP[n]=GEN; DIST[n]=nc; FSTEP[n]= fromHead ? sc : FSTEP[o];
+        STAMP[n]=GEN; DIST[n]=nc; FSTEP[n]= fromHead ? sc : FSTEP[o]; PAR[n]=o;
         (buckets[nc] ||= []).push(n); } }
-    if(hH<0 && hC<0) return -1;
-    return FSTEP[(hC<0)?hH:(hH<0)?hC:(dHv<=dCv?hH:hC)];                // heart wins ties
+    if(!foods.length) return -1;
+    let pick=-1, pCost=1e9, pHeart=false;                           // nearest exit-keeping food; tie -> heart
+    for(const f of foods){ if(!keepsExit(f)) continue;
+      const fc=DIST[f], fh=peek(f)===3;
+      if(fc<pCost || (fc===pCost && fh && !pHeart)){ pick=f; pCost=fc; pHeart=fh; } }
+    if(pick<0) pick=foods[0];                                       // none keeps an exit -> nearest anyway
+    return FSTEP[pick];
   };
 
   // Distance field outward from the snake's own tail, over open space — drives the tail-chase fallback.

@@ -61,10 +61,15 @@ https://herbert256.github.io/sneekie/.
   without grinding levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and
   presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot's
   `decide()` is space-aware to avoid self-trapping (the old greedy bot hugged the border and boxed itself in):
-  it routes to the nearest food with a **weighted Dijkstra** (each step costs 1, crossing a `☺` smiley costs
-  +8, and — on the **open arena** only, until the idle timer climbs — a border-ring cell costs +3, so one pass
-  minimises both smiley-eating and border-hugging; a **soft heart preference** breaks cost ties so `HART` hits
-  0 sooner), takes that step only through a **gate** (the new head must keep its own tail reachable **and**
+  it routes to food with a **weighted Dijkstra** (each step costs 1, crossing a `☺` smiley costs +8, and —
+  on the **open arena** only, until the idle timer climbs — a border-ring cell costs +3, so one pass minimises
+  both smiley-eating and border-hugging). It collects the nearest few foods and heads for the nearest one whose
+  **whole route keeps an exit** — a `keepsExit()` lookahead walks the route, advances the snake's body along it,
+  and checks the new tail is still reachable, so on the maze arenas (Room Grid's 2-wide doors, Combs' two
+  connectors) it won't pick a target that seals it in; if none keeps an exit it takes the nearest anyway, so it
+  **never refuses food** (used for selection, not as a veto — a hard veto made the bot wander and restart). A
+  **soft heart preference** breaks cost ties so `HART` hits 0 sooner. It takes that step only through a **gate**
+  (the new head must keep its own tail reachable **and**
   leave a reachable region ≥ the snake's length + a small margin, both fading as the idle timer climbs so it
   never refuses food into a red restart), and otherwise falls back to a **tail-chase** survival move (steer
   toward open space and back toward `T[ETEL]`, shunning smileys). Arrow levels (30/31) also avoid cells an
