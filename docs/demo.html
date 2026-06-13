@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Watch a bot play Sneekie: live gameplay clips — a full clear of the open arena, and long survival runs dodging the moving arrows.">
+<meta name="description" content="Watch a bot play Sneekie: a big live gameplay clip of every one of the 8 arenas — clearing the open field, pushing stones, and dodging the moving arrows.">
 <title>Sneekie — Demo</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="Sneekie — Demo">
-<meta property="og:description" content="Watch a bot play Sneekie: a full clear of the open arena and long survival runs dodging arrows.">
+<meta property="og:description" content="Watch a bot play every one of Sneekie's 8 arenas: clearing, stone-pushing, and arrow-dodging.">
 <meta property="og:url" content="https://herbert256.github.io/sneekie/demo.html">
 <meta property="og:image" content="https://herbert256.github.io/sneekie/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sneekie — Demo">
-<meta name="twitter:description" content="Watch a bot play Sneekie: a full clear of the open arena and long survival runs dodging arrows.">
+<meta name="twitter:description" content="Watch a bot play every one of Sneekie's 8 arenas: clearing, stone-pushing, and arrow-dodging.">
 <meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
 <style>
   :root{
@@ -50,10 +50,10 @@
   .lead code{ background:var(--codebg); border:1px solid var(--border); border-radius:4px; padding:.5px 5px; font-size:.86em; color:var(--heading); }
   strong{ color:var(--heading); font-weight:600; }
   .ico{ font-family:ui-monospace,monospace; font-weight:700; }
-  .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; }
+  .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
 
-  .clips{ display:flex; flex-direction:column; gap:40px; margin-top:30px; }
-  figure.clip{ margin:0; }
+  .clips{ display:flex; flex-direction:column; gap:42px; margin-top:30px; }
+  figure.clip{ margin:0; scroll-margin-top:70px; }
   figure.clip img{ display:block; width:100%; height:auto; image-rendering:pixelated; background:#000;
     border:1px solid var(--border); border-radius:10px; box-shadow:0 0 50px -12px var(--glow); }
   figure.clip figcaption{ margin-top:12px; }
@@ -89,10 +89,10 @@
   <p class="lead">The 1988 game has no computer player &mdash; so we wrote a bot and let it loose, then captured
   the screen live. It <strong>paths to the nearest <span class="ico h">&hearts;</span> heart</strong>, only steps
   on a <span class="ico s">&#9786;</span> smiley when a heart is otherwise walled off, <strong>pushes
-  <span class="ico t" style="color:var(--stone)">&#9689;</span> stones</strong> out of the way, <strong>dodges
-  the <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and keeps a route back to its own tail so it
-  never boxes itself in. These clips are bigger and run far longer than the thumbnails in the
-  <a href="manual.html">manual</a> &mdash; hundreds of moves each.</p>
+  <span class="ico t">&#9689;</span> stones</strong> out of the way, <strong>dodges the
+  <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and keeps a route back to its own tail so it
+  never boxes itself in. Below is a big, full-length run of <em>every one of the eight arenas</em> &mdash; hundreds
+  of moves each. (See all 8 side by side, smaller, in the <a href="manual.html">manual</a>.)</p>
 
   <div class="note"><strong>Want to try it yourself?</strong> Hit <a href="index.html">&#9654; Play</a>. Curious
   how it's drawn? The <a href="vram.html">Visualizer</a> shows the screen-is-the-memory trick the whole game runs on.</div>
@@ -101,7 +101,7 @@
     <figure class="clip">
       <img loading="lazy" src="demo/clip-1.gif" alt="The bot clearing the open arena: it eats every heart, leaving only the smileys.">
       <figcaption>
-        <div class="tag">Open Arena &middot; a full clear</div>
+        <div class="tag">1 &middot; Open Arena &middot; a full clear</div>
         <h2>Eat everything</h2>
         <p>On the open level the bot clears the <em>entire</em> board &mdash; over 400 moves, threading its own
         ever-growing tail and stepping around every <span class="ico s">&#9786;</span> &minus;50 smiley, until the
@@ -110,9 +110,49 @@
     </figure>
 
     <figure class="clip">
-      <img loading="lazy" src="demo/clip-2.gif" alt="The bot surviving the rising-arrows level, weaving through a swarm of upward arrows.">
+      <img loading="lazy" src="demo/clip-2.gif" alt="The bot weaving through the combs-and-crosses walls.">
       <figcaption>
-        <div class="tag">Rising Arrows &middot; ~500 moves</div>
+        <div class="tag">2 &middot; Combs &amp; Crosses</div>
+        <h2>Weave the clutter</h2>
+        <p>Clusters of comb-like pickets and plus-shaped crosses break the field into pockets. The bot snakes
+        between them, clearing pocket after pocket.</p>
+      </figcaption>
+    </figure>
+
+    <figure class="clip">
+      <img loading="lazy" src="demo/clip-3.gif" alt="The bot slipping through the room-grid door gaps.">
+      <figcaption>
+        <div class="tag">3 &middot; Room Grid</div>
+        <h2>Find the doors</h2>
+        <p>The arena is carved into a grid of rooms with a single door-gap each. The bot routes room to room
+        through the gaps, never trapping itself in a sealed one.</p>
+      </figcaption>
+    </figure>
+
+    <figure class="clip">
+      <img loading="lazy" src="demo/clip-4.gif" alt="The bot pushing stones aside in the stone field.">
+      <figcaption>
+        <div class="tag">4 &middot; Stone Field</div>
+        <h2>Bulldoze the boulders</h2>
+        <p>A dense lattice of pushable <span class="ico t">&#9689;</span> stones. Watch it <strong>shove stones
+        out of the way</strong> &mdash; only when the cell behind is clear &mdash; to carve fresh lanes to the hearts.</p>
+      </figcaption>
+    </figure>
+
+    <figure class="clip">
+      <img loading="lazy" src="demo/clip-5.gif" alt="The bot among the picket columns with crawling wall-gaps.">
+      <figcaption>
+        <div class="tag">5 &middot; Picket Columns</div>
+        <h2>Mind the closing gaps</h2>
+        <p>Tall walls hang from the top and bottom, and the gaps in them <em>crawl</em> &mdash; an opening can close
+        on you. The bot threads the columns while the gaps shift around it.</p>
+      </figcaption>
+    </figure>
+
+    <figure class="clip">
+      <img loading="lazy" src="demo/clip-6.gif" alt="The bot surviving the rising-arrows level, weaving through a swarm of upward arrows.">
+      <figcaption>
+        <div class="tag">6 &middot; Rising Arrows &middot; ~500 moves</div>
         <h2>Thread the swarm</h2>
         <p>A field of <span class="ico a">&uarr;</span> arrows marches upward a step at a time &mdash; touch one
         and you're dead. The bot reads where each arrow will be next tick and never moves into its path, collecting
@@ -121,12 +161,23 @@
     </figure>
 
     <figure class="clip">
-      <img loading="lazy" src="demo/clip-3.gif" alt="The bot surviving the sweeping-arrows level, dodging arrows sliding left and right.">
+      <img loading="lazy" src="demo/clip-7.gif" alt="The bot surviving the sweeping-arrows level, dodging arrows sliding left and right.">
       <figcaption>
-        <div class="tag">Sweeping Arrows &middot; ~600 moves</div>
+        <div class="tag">7 &middot; Sweeping Arrows &middot; ~600 moves</div>
         <h2>Time the crossings</h2>
         <p>Here the <span class="ico a">&larr;&rarr;</span> arrows slide left and right across every row. Six
         hundred moves of picking gaps between them &mdash; about as long as a run gets before the board is nearly bare.</p>
+      </figcaption>
+    </figure>
+
+    <figure class="clip">
+      <img loading="lazy" src="demo/clip-8.gif" alt="The bot threading the vault's walls and stone columns.">
+      <figcaption>
+        <div class="tag">8 &middot; The Vault</div>
+        <h2>The hardest room</h2>
+        <p>Vertical walls, columns of <span class="ico t">&#9689;</span> stones between them, <em>and</em> crawling
+        gaps &mdash; the toughest mix in the game. The bot still bulldozes its way through, pushing stones and
+        threading the walls.</p>
       </figcaption>
     </figure>
   </div>

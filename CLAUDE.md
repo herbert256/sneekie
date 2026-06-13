@@ -45,9 +45,10 @@ https://herbert256.github.io/sneekie/.
   in a hidden tab), captured straight to PNGs through a throwaway local upload server, then
   encoded with ImageMagick (`magick -delay 13 -loop 0 ... -layers optimize`). Same green doc-page
   styling as the other doc pages.
-- `docs/demo.html` — a **Demo** page (nav label **Demo**): a few large autoplay gameplay clips
-  (`docs/demo/clip-1..3.gif`) — a full clear of the open arena plus long survival runs dodging the
-  up/side arrows. Bigger and far longer than the manual's per-layout thumbnails; same smart bot,
+- `docs/demo.html` — a **Demo** page (nav label **Demo**): one large, full-length autoplay gameplay
+  clip for **each of the 8 arenas** (`docs/demo/clip-1..8.gif`, scene order: open / combs / grid /
+  stone / picket / rising-arrows / sweeping-arrows / vault) — hundreds of moves each (the open one is
+  a full clear). Bigger and far longer than the manual's per-layout thumbnails; same smart bot,
   captured the same way (drive the game in a browser, rebuild each frame from `vram`).
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
