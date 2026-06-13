@@ -92,19 +92,6 @@
     box-shadow: 0 0 0 2px #000, 0 0 40px -4px var(--glow), inset 0 0 0 1px #000;
     touch-action:none;
   }
-  #plate{
-    position:absolute; left:24px; bottom:9px;
-    display:flex; align-items:center; gap:8px;
-    font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
-    color:#6d757a; text-shadow:0 1px 0 rgba(0,0,0,.8);
-  }
-  #plate em{ font-style:normal; color:#555c61; }
-  #led{
-    position:absolute; right:26px; bottom:13px;
-    width:7px; height:7px; border-radius:50%;
-    background:var(--phos);
-    box-shadow:0 0 8px 1px var(--glow), 0 0 2px var(--phos);
-  }
   /* ---- controls ---- */
   #controls{
     margin-top:12px;
@@ -131,7 +118,6 @@
     cursor:none;
   }
   #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
-  #bezel:fullscreen #plate, #bezel:fullscreen #led{ display:none; }
   #touchbar{ display:none; margin-top:12px; gap:10px; }
   #touchbar button{ padding:12px 22px; font-size:13px; }
   @media (pointer:coarse){
@@ -178,8 +164,6 @@
 
 <div id="bezel">
   <canvas id="screen" width="640" height="384"></canvas>
-  <div id="plate">HerbySoft <em>&middot; anno 1988</em></div>
-  <span id="led"></span>
 </div>
 
 <div id="controls">
@@ -202,7 +186,7 @@
 </div>
 
 <p id="hint">
-  <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck &middot; F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
+  <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br>F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
   <span class="tc">Swipe to steer &middot; tap = any key</span>
 </p>
 
