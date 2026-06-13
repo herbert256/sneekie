@@ -50,8 +50,9 @@
   code, .lead code, .cap code{ background:var(--codebg); border:1px solid var(--border); border-radius:4px; padding:.5px 5px; font-size:.86em; color:var(--heading); }
   .formula{ display:inline-block; background:var(--codebg); border:1px solid var(--border); border-radius:6px; padding:2px 8px; font-size:13.5px; }
 
-  .demo{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; margin-top:22px; }
+  .demo{ display:flex; gap:22px; flex-wrap:wrap; align-items:stretch; margin-top:22px; }
   .stage{ flex:0 0 auto; display:flex; flex-direction:column; gap:14px; }
+  .stage > .panel:last-child{ flex:1 1 auto; }                 /* Inspector grows to the column bottom */
   .panel{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
   .ptitle{ font:600 11px/1 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
   canvas#screen{ display:block; background:#000; border-radius:4px; image-rendering:pixelated; }
@@ -67,8 +68,10 @@
   .mc.flash{ animation:flash .55s ease-out; }
   .cap{ max-width:384px; margin-top:10px; font-size:12px; color:var(--muted); }
 
-  .side{ flex:1 1 320px; min-width:300px; display:flex; flex-direction:column; gap:14px; }
-  .sxo{ display:flex; gap:14px; align-items:stretch; flex-wrap:wrap; }
+  .side{ flex:0 1 auto; display:flex; flex-direction:column; gap:14px; }   /* hug the memory grid — no gray filler */
+  /* width:0 + min-width:100% lets this row take the column width without widening it, so the
+     memory grid above defines the column and its card has no gray filler. flex:1 fills the height. */
+  .sxo{ display:flex; gap:14px; align-items:stretch; flex-wrap:wrap; flex:1 1 auto; width:0; min-width:100%; }
   .sxo > .panel:first-child{ flex:0 0 auto; }
   .sxo > .panel:last-child{ flex:1 1 220px; min-width:0; }
   .pad{ display:grid; grid-template-columns:repeat(3,44px); grid-template-rows:repeat(2,44px); gap:6px; justify-content:start; }
@@ -87,8 +90,6 @@
   .log .mv{ color:var(--accent); font-weight:600; margin-top:6px; }
   .log .op{ color:var(--text); } .log .op .a{ color:var(--green); } .log .op .b{ color:var(--muted); }
   .log .blk{ color:var(--red); }
-  .legend{ display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-size:12.5px; align-items:center; }
-  .legend .g{ font-family:ui-monospace,monospace; color:var(--muted); }
   footer{ max-width:1100px; margin:46px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
   @media print{ header.top{ display:none } body{ background:#fff; color:#111 } }
   header.top{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
@@ -133,18 +134,6 @@
       <div class="panel">
         <div class="ptitle">Inspector</div>
         <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
-      </div>
-      <div class="panel">
-        <div class="ptitle">Legend</div>
-        <div class="legend">
-          <span class="g">219 &#9608;</span><span>snake head</span>
-          <span class="g">205 186 &hellip;</span><span>snake body (straight + corners)</span>
-          <span class="g">3 &#9829;</span><span>heart &mdash; eat it (+10, snake grows)</span>
-          <span class="g">5 &#9827;</span><span>club &mdash; eat it (+25)</span>
-          <span class="g">1 &#9786;</span><span>smiley &mdash; eat it (&minus;50!)</span>
-          <span class="g">179 196 &hellip;</span><span>wall &mdash; blocks you</span>
-          <span class="g">32 &middot;</span><span>empty space</span>
-        </div>
       </div>
     </div>
 
