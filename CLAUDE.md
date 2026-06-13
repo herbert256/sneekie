@@ -20,7 +20,11 @@ https://herbert256.github.io/sneekie/.
   canonical copy** — edit it directly; there is no second copy to keep in sync.
 - `docs/SNEEKIE.BAS.html` — the original source, syntax-highlighted (a self-contained
   pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS).
-- `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listing.
+- `docs/SNEEKIE.BAS.explained.html` — the same source as an annotated walkthrough: a
+  "big idea" primer, variable/character glossaries, per-routine section cards, and inline
+  `↳` notes on individual lines. Same embedded-base64 + tokenizer approach as the listing;
+  the prose lives in its `SECTIONS` array (by BASIC line) and `NOTES` map (by line number).
+- `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `SNEEKIE.BAS.txt` (root) — the canonical detokenized 1988 GW-BASIC source, kept next to
   the floppy it came from. This is the **specification**: the game's JS is a faithful port
   of it, so read it to understand intended behavior and to check that changes stay true to
