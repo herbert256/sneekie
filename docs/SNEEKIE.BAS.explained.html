@@ -39,21 +39,16 @@
   a:hover{ text-decoration:underline; }
 
   /* ---- top bar ---- */
-  header.top{
-    position:sticky; top:0; z-index:10;
-    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    padding:11px 20px; background:color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter:blur(8px); border-bottom:1px solid var(--border);
-  }
-  header.top .brand{ font-weight:700; letter-spacing:.02em; color:var(--heading); }
+  header.top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 18px; background:linear-gradient(#14171a, rgba(10,12,13,.86));
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--border); }
+  header.top .brand{ font-weight:700; color:var(--accent); letter-spacing:.02em; }
   header.top .brand .dim{ color:var(--muted); font-weight:500; }
   header.top nav{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
-  header.top nav a, header.top nav button{
-    font:inherit; font-size:13px; color:var(--text);
-    background:var(--panel); border:1px solid var(--border); border-radius:6px;
-    padding:5px 11px; cursor:pointer; text-decoration:none;
-  }
-  header.top nav a:hover, header.top nav button:hover{ border-color:var(--accent); color:var(--accent); }
+  header.top nav a, header.top nav button{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:#98a1a6; background:#16181b; border:1px solid var(--border); border-radius:3px; padding:6px 11px;
+    cursor:pointer; text-decoration:none; white-space:nowrap; transition:color .12s, border-color .12s, box-shadow .12s; }
+  header.top nav a:hover, header.top nav button:hover{ color:var(--accent); border-color:var(--accent); }
   header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
 
   main{ max-width:940px; margin:0 auto; padding:30px 20px 80px; }
