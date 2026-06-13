@@ -99,7 +99,12 @@ model rather than building a modern game-object model.** Everything follows from
 - **Two dispatch tables reproduce the `ON LEVEL GOSUB` lines.** `CFG[]` (line 310: per-level
   speed `Z`, item count `AANTAL`, bonus decrement `BMIN`, and which `lay*` walls to draw)
   and `ENEMY[]` (line 1010: which `sub*` enemy routine runs each tick) are both indexed by
-  `(LEVEL-1) % 16` — levels 17-32 reuse the 16 layouts but with the faster `Z` values.
+  `(LEVEL-1) % 16`. There are only **8 distinct wall layouts** (one is "no walls"); they cycle
+  every 8 levels (`(LEVEL-1) % 8`), so each layout is used **4 times** across the 32 levels.
+  The 16 `CFG` entries are those 8 layouts ×2 speed regimes: levels 1-8 are turn-based
+  (`Z=999`, snake waits for a key), levels 9-16 are the same layouts auto-moving and speeding
+  up (`Z` 0.4-1.2 s). Levels 17-32 are an **exact repeat** of 1-16 (the `ON LEVEL GOSUB` list
+  is the 16 targets written out twice) — not faster.
 
 - **Game-state variables keep the exact BASIC names** so the port reads against the source:
   `T` (snake cell offsets), `S` (popup backup), `B` (gate positions), `D` (arrows),
