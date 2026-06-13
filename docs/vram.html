@@ -93,7 +93,7 @@
   <span class="brand">Sneekie <span class="dim">· the screen is the memory</span></span>
   <nav>
     <a href="index.html">&#9654; Play</a>
-    <a href="SNEEKIE.BAS.html">Plain listing</a>
+    <a href="SNEEKIE.BAS.html">Source</a>
     <a href="SNEEKIE.BAS.explained.html">Explained</a>
     <a href="SNEEKIE.BAS.migration.html">Migration</a>
     <a href="vram.html" aria-current="page">Visualizer</a>
@@ -367,7 +367,7 @@ tourBtn.addEventListener('click', () => {
 /* ---------- theme (shared toggle key) ---------- */
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){ } }
-document.getElementById('print').addEventListener('click', () => window.print());
+document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
 init();
 </script>
 </body>

@@ -109,7 +109,7 @@
   <span class="brand">SNEEKIE.BAS <span class="dim">· 1988 &rarr; 2026</span></span>
   <nav>
     <a href="index.html">&#9654; Play</a>
-    <a href="SNEEKIE.BAS.html">Plain listing</a>
+    <a href="SNEEKIE.BAS.html">Source</a>
     <a href="SNEEKIE.BAS.explained.html">Explained</a>
     <a href="SNEEKIE.BAS.migration.html" aria-current="page">Migration</a>
     <a href="vram.html">Visualizer</a>
@@ -327,7 +327,7 @@ SECTIONS.forEach((sec, idx) => {
 /* ---------- light/dark toggle ---------- */
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
-document.getElementById('print').addEventListener('click', () => window.print());
+document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
 </script>
 </body>
 </html>

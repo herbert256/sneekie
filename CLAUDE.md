@@ -19,7 +19,9 @@ https://herbert256.github.io/sneekie/.
 - `docs/index.html` — the game. One file, all HTML/CSS/JS inline. **This is the single
   canonical copy** — edit it directly; there is no second copy to keep in sync.
 - `docs/SNEEKIE.BAS.html` — the original source, syntax-highlighted (a self-contained
-  pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS).
+  pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS). The nav
+  label is **Source**. The rendered listing drops the first 10 banner lines (starts at `10 REM`)
+  and shows only the BASIC line numbers — there is no separate sequential gutter.
 - `docs/SNEEKIE.BAS.explained.html` — the same source as an annotated walkthrough: a
   "big idea" primer, variable/character glossaries, per-routine section cards, and inline
   `↳` notes on individual lines. Same embedded-base64 + tokenizer approach as the listing;
@@ -50,8 +52,8 @@ To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is 
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
 All five pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button.
-There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`SNEEKIE.BAS.html`; the other
+four pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
 `#themes` switcher (`sneekie.theme`); the three doc pages are a fixed green palette with no
 switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a

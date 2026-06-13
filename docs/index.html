@@ -36,7 +36,7 @@
     color:var(--ink);
     font:13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
     display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; padding:26px 12px 22px;
+    min-height:100vh; padding:0 12px 22px;
     -webkit-user-select:none; user-select:none;
     -webkit-tap-highlight-color:transparent;
   }
@@ -160,7 +160,7 @@
   <span class="brand">SNEEKIE <span class="dim">&middot; the 1988 game</span></span>
   <nav>
     <a href="index.html" aria-current="page">&#9654; Play</a>
-    <a href="SNEEKIE.BAS.html">Plain listing</a>
+    <a href="SNEEKIE.BAS.html">Source</a>
     <a href="SNEEKIE.BAS.explained.html">Explained</a>
     <a href="SNEEKIE.BAS.migration.html">Migration</a>
     <a href="vram.html">Visualizer</a>
@@ -862,7 +862,7 @@ function applyTheme(name){
 document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => { ensureAudio(); applyTheme(b.dataset.theme); }));
 
-document.getElementById('print').addEventListener('click', () => window.print());
+document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
 const muteBtn = document.getElementById('mute');
 function paintMute(){ muteBtn.textContent = muted ? 'Sound: off' : 'Sound: on'; }
 muteBtn.addEventListener('click', () => {

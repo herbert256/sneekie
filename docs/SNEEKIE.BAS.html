@@ -37,7 +37,7 @@
     color:var(--ink);
     font:13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
     display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; padding:24px 12px 22px;
+    min-height:100vh; padding:0 12px 22px;
     -webkit-text-size-adjust:100%;
   }
   header.top{
@@ -138,7 +138,7 @@
     text-align:right; color:var(--gut); background:var(--bg);
     user-select:none; -webkit-user-select:none;
   }
-  .code{ white-space:pre; padding-right:24px; }
+  .code{ white-space:pre; padding:0 24px 0 14px; }
 
   /* token colors */
   .ln { color:var(--ln);  font-weight:600; }
@@ -186,7 +186,7 @@
   <span class="brand">SNEEKIE.BAS <span class="dim">&middot; source listing</span></span>
   <nav>
     <a href="index.html">&#9654; Play</a>
-    <a href="SNEEKIE.BAS.html" aria-current="page">Plain listing</a>
+    <a href="SNEEKIE.BAS.html" aria-current="page">Source</a>
     <a href="SNEEKIE.BAS.explained.html">Explained</a>
     <a href="SNEEKIE.BAS.migration.html">Migration</a>
     <a href="vram.html">Visualizer</a>
@@ -287,18 +287,17 @@ function tokenizeLine(line){
 
 /* ---------- render ---------- */
 const listing = document.getElementById('listing');
-const lines = SRC.replace(/\n$/, '').split('\n');
+const lines = SRC.replace(/\n$/, '').split('\n').slice(10);
 const frag = document.createDocumentFragment();
 lines.forEach((line, idx) => {
   const row = document.createElement('div'); row.className = 'line';
-  const gut = document.createElement('span'); gut.className = 'gut'; gut.textContent = idx + 1;
   const code = document.createElement('span'); code.className = 'code';
   for(const [cls, text] of tokenizeLine(line)){
     if(cls === 'ws'){ code.appendChild(document.createTextNode(text)); }
     else { const sp = document.createElement('span'); sp.className = cls; sp.textContent = text; code.appendChild(sp); }
   }
   if(!code.childNodes.length) code.appendChild(document.createTextNode('​')); // keep blank rows tall
-  row.append(gut, code);
+  row.append(code);
   frag.appendChild(row);
 });
 listing.appendChild(frag);
@@ -330,6 +329,7 @@ function applyTheme(name){
 document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => applyTheme(b.dataset.theme)));
 document.getElementById('print').addEventListener('click', () => window.print());
+if(location.search.indexOf('print') > -1) setTimeout(() => window.print(), 120);
 
 applyTheme(THEMES[lsGet('sneekie.theme')] ? lsGet('sneekie.theme') : 'hercules');
 </script>
