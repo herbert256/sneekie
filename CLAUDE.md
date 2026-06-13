@@ -31,6 +31,10 @@ https://herbert256.github.io/sneekie/.
   JS line ranges are a snapshot of `index.html`'s script — if that script changes substantially,
   re-check the ranges (regenerate with the same `<script>`-body extraction).
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
+- `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
+  drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
+  Python, no deps; reads the font straight out of `docs/index.html`). All four pages carry
+  matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`.
 - `SNEEKIE.BAS.txt` (root) — the canonical detokenized 1988 GW-BASIC source, kept next to
   the floppy it came from. This is the **specification**: the game's JS is a faithful port
   of it, so read it to understand intended behavior and to check that changes stay true to
