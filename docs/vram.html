@@ -26,7 +26,7 @@
     --codebg:#06090a; --glow:rgba(125,255,125,.13);
     --ln:#46c95a; --kw:#d6ffd6; --fn:#7ff09a; --str:#5ad06f; --num:#a9f4b6;
     --com:#3c8f49; --id:#86ff86; --op:#54bf69; --pn:#367a43;
-    --green:#7dff7d; --greenhi:#c8ffc8; --red:#ff5e5e; --wall:#8b949e; --empty:#454d56; --club:#66e066; --smiley:#ffd93d;
+    --green:#7dff7d; --greenhi:#c8ffc8; --red:#ff5e5e; --wall:#8b949e; --empty:#454d56; --club:#66e066; --smiley:#ffd93d; --stone:#d08a43;
   }
   *{ box-sizing:border-box; }
   body{ margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
@@ -62,7 +62,7 @@
     font:600 8.5px/1 ui-monospace,monospace; color:var(--empty); cursor:default; }
   .mc.snake{ color:var(--green); } .mc.head{ color:var(--greenhi); background:color-mix(in srgb,var(--green) 16%,var(--codebg)); }
   .mc.heart{ color:var(--red); } .mc.wall{ color:var(--wall); }
-  .mc.club{ color:var(--club); } .mc.smiley{ color:var(--smiley); }
+  .mc.club{ color:var(--club); } .mc.smiley{ color:var(--smiley); } .mc.stone{ color:var(--stone); }
   .mc.hl{ outline:2px solid var(--accent); outline-offset:-2px; z-index:1; }
   @keyframes flash { from{ background:var(--accent); color:#fff; } to{} }
   .mc.flash{ animation:flash .55s ease-out; }
@@ -235,6 +235,8 @@ function init(){
   // snake: cols 5,6,7 on row 5, head at 7 facing right
   T[1] = off(5,5); T[2] = off(6,5); T[3] = off(7,5); ETEL = 1; BTEL = 3; DIR = 'R'; FDIR = 'R';
   poke(T[1], BODY_H); poke(T[2], BODY_H); poke(T[3], HEAD); poke(T[3]+1, 15);
+  // a little zig-zag of pushable stones, like level 4 (lay1400)
+  for(let x = 9; x <= 13; x += 2){ poke(off(x,9), 10); poke(off(x+1,10), 10); poke(off(x-1,11), 10); }
   // scatter the goodies across the bigger board
   hearts = scatter(3, 16);   // hearts  (+10)
   scatter(5, 8);             // clubs   (green, +25)
@@ -244,7 +246,7 @@ function init(){
 }
 
 const cdesc = d => d===32 ? 'empty' : d===3 ? '♥ heart (+10)' :
-  d===5 ? '♣ club (+25)' : d===1 ? '☺ smiley (-50)' :
+  d===5 ? '♣ club (+25)' : d===1 ? '☺ smiley (-50)' : d===10 ? '◙ stone (push it)' :
   d===HEAD ? 'snake head' : SNAKE.has(d) ? 'snake body' :
   WALLSET.has(d) ? 'wall' : 'space';
 
@@ -258,6 +260,14 @@ function move(dir){
   else if(d === 3){ score += 10; hearts--; grow = true; ops.push(['+', 'score += 10 — eat the heart', '', '']); }
   else if(d === 5){ score += 25; grow = true; ops.push(['+', 'score += 25 — eat the club', '', '']); }
   else if(d === 1){ score -= 50; grow = true; ops.push(['+', 'score -= 50 — ouch, a smiley!', '', '']); }
+  else if(d === 10){                                          // push the stone (like level 4)
+    const TA = A + D[dir].d, beyond = peek(TA);               // the cell on the far side of the stone
+    ops.push(['peek', TA, beyond, cdesc(beyond) + ' (behind the stone)']);
+    if(beyond === 32){
+      poke(TA, 10); ops.push(['poke', TA, 10, 'shove the stone ◙ along']);
+      poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, 'erase tail']); ETEL++;
+    } else { moved = false; ops.push(['blk', '→ blocked: stone has nowhere to go, stay put', '', '']); }
+  }
   else { moved = false; ops.push(['blk', '→ blocked: ' + cdesc(d) + ', stay put', '', '']); }
 
   if(moved){
@@ -276,7 +286,7 @@ function move(dir){
 const cv = document.getElementById('screen'), ctx = cv.getContext('2d');
 const arrow = { U:'▲', D:'▼', L:'◀', R:'▶' };
 const colorOf = ch => ch===HEAD ? getCss('--greenhi') : ch===3 ? getCss('--red') :
-  ch===5 ? getCss('--club') : ch===1 ? getCss('--smiley') :
+  ch===5 ? getCss('--club') : ch===1 ? getCss('--smiley') : ch===10 ? getCss('--stone') :
   SNAKE.has(ch) ? getCss('--green') : WALLSET.has(ch) ? getCss('--wall') : null;
 function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
@@ -303,7 +313,7 @@ for(let r = 1; r <= H; r++) for(let c = 1; c <= W; c++){
   memEl.appendChild(d); mcs.push(d);
 }
 function classFor(ch){ return ch===HEAD ? 'head' : ch===3 ? 'heart' :
-  ch===5 ? 'club' : ch===1 ? 'smiley' :
+  ch===5 ? 'club' : ch===1 ? 'smiley' : ch===10 ? 'stone' :
   SNAKE.has(ch) ? 'snake' : WALLSET.has(ch) ? 'wall' : ''; }
 function updateMemory(){
   for(const d of mcs){
