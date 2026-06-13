@@ -30,6 +30,10 @@ https://herbert256.github.io/sneekie/.
   `SECTIONS` pairing; has its own small JS tokenizer alongside the shared BASIC one. Note: the
   JS line ranges are a snapshot of `index.html`'s script — if that script changes substantially,
   re-check the ranges (regenerate with the same `<script>`-body extraction).
+- `docs/vram.html` — an interactive visualization of the text-VRAM model: steer a small snake
+  and watch the rendered screen and the raw `poke`/`peek` bytes change in lock-step, with an
+  inspector that computes the offset formula live. A focused sandbox (empty/heart/wall only)
+  that reuses the embedded font; not the full game engine.
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
