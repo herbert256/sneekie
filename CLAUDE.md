@@ -24,6 +24,12 @@ https://herbert256.github.io/sneekie/.
   "big idea" primer, variable/character glossaries, per-routine section cards, and inline
   `↳` notes on individual lines. Same embedded-base64 + tokenizer approach as the listing;
   the prose lives in its `SECTIONS` array (by BASIC line) and `NOTES` map (by line number).
+- `docs/SNEEKIE.BAS.migration.html` — the BASIC source and the JS port shown **side by side**,
+  with an intro on the new architecture. Embeds *both* sources as base64 (the BASIC, and the
+  port's `<script>` body extracted from `index.html`) and slices them by line range per
+  `SECTIONS` pairing; has its own small JS tokenizer alongside the shared BASIC one. Note: the
+  JS line ranges are a snapshot of `index.html`'s script — if that script changes substantially,
+  re-check the ranges (regenerate with the same `<script>`-body extraction).
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `SNEEKIE.BAS.txt` (root) — the canonical detokenized 1988 GW-BASIC source, kept next to
   the floppy it came from. This is the **specification**: the game's JS is a faithful port
