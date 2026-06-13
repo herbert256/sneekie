@@ -247,15 +247,15 @@ function popClub(){                                            // eat a heart ->
   return null;
 }
 
-/* a little Room-Grid room: single-line walls + one door gap, drawn blue */
+/* a Room-Grid room: single-line walls + a 2-wide door gap, drawn blue */
 function drawRoom(){
   roomCells.clear();
-  const c0 = 15, c1 = 19, r0 = 3, r1 = 6;                       // a 5x4 box up top-right
+  const c0 = 12, c1 = 19, r0 = 3, r1 = 7;                       // an 8x5 box up top
   const put = (c, r, ch) => { poke(off(c,r), ch); poke(off(c,r)+1, 7); roomCells.add(off(c,r)); };
   for(let c = c0; c <= c1; c++){ put(c, r0, WALL_H); put(c, r1, WALL_H); }
   for(let r = r0; r <= r1; r++){ put(c0, r, WALL_V); put(c1, r, WALL_V); }
   put(c0, r0, C_TL); put(c1, r0, C_TR); put(c0, r1, C_BL); put(c1, r1, C_BR);
-  poke(off(17, r1), 32); roomCells.delete(off(17, r1));         // a door gap, like the Room Grid's
+  for(const dc of [15, 16]){ poke(off(dc, r1), 32); roomCells.delete(off(dc, r1)); }  // a 2-wide door gap, like the Room Grid's
 }
 
 /* pushable stones in the Stone Field motif (lay1400): ◙, one down-right, one back */
