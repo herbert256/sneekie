@@ -127,8 +127,6 @@
         <div class="ptitle">The screen &mdash; what you see</div>
         <canvas id="screen" width="352" height="576"></canvas>
       </div>
-      <p class="cap">Each glyph on the left is one cell; its raw byte sits in the same spot in the memory grid
-        on the right. Hover either to link them. <code>32</code> = empty (shown as <code>·</code>).</p>
       <div class="panel">
         <div class="ptitle">Inspector</div>
         <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
@@ -164,12 +162,7 @@
           <button id="tour">&#9654; Tour</button>
           <button id="reset">Reset</button>
         </div>
-        <div class="stats" style="margin-top:10px">
-          <span>score <b id="score">0</b></span>
-          <span>hearts left <b id="hearts">0</b></span>
-          <span>length <b id="len">0</b></span>
-        </div>
-        <div class="cap" style="margin-top:6px">Arrow keys work too, while the pointer is over the demo.</div>
+        <div class="cap" style="margin-top:10px">Arrow keys work too, while the pointer is over the demo.</div>
       </div>
 
 
@@ -254,7 +247,7 @@ function init(){
   scatter(5, 8);             // clubs   (green, +25)
   scatter(1, 8);             // smileys (yellow, -50)
   score = 0; flashSet.clear();
-  render(); logMove(null, []); updateStats();
+  render(); logMove(null, []);
 }
 
 const cdesc = d => d===32 ? 'empty' : d===3 ? '♥ heart (+10)' :
@@ -282,7 +275,7 @@ function move(dir){
     ops.push(['poke', A, HEAD, 'draw new head █']);
     DIR = E; FDIR = E;
   }
-  render(); logMove({dir, grow}, ops); updateStats();
+  render(); logMove({dir, grow}, ops);
   if(hearts === 0) setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">★ all hearts collected!</div>') , 10);
 }
 
@@ -344,11 +337,6 @@ function logMove(info, ops){
     else if(op[0]==='blk') h += '<div class="blk">' + op[1] + '</div>';
   }
   log.innerHTML = h; log.scrollTop = log.scrollHeight;
-}
-function updateStats(){
-  document.getElementById('score').textContent = score;
-  document.getElementById('hearts').textContent = hearts;
-  document.getElementById('len').textContent = BTEL - ETEL + 1;
 }
 const insp = document.getElementById('inspect');
 function setHover(c, r){
