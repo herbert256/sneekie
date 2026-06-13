@@ -19,7 +19,20 @@ video-memory model (the original POKEd characters straight into text VRAM at
 - Display themes: green/amber/white monochrome, or the colorized CGA mode
 - Fullscreen button for the full 1988-monitor experience
 
-## Files
+## Layout
 
-- `index.html` — the game, one file, no dependencies
-- `SNEEKIE.BAS.txt` — the original 1988 GW-BASIC source, detokenized from the floppy image
+The published website lives in [`docs/`](docs/) — GitHub Pages serves it at the link above.
+The rest of the repository is the source and provenance behind it.
+
+```
+docs/                 ← the live site (GitHub Pages source)
+  index.html          ← the game, one file, no dependencies
+  SNEEKIE.BAS.html    ← the original source, syntax-highlighted (a pretty-printed listing)
+  SNEEKIE.BAS.txt     ← the detokenized GW-BASIC source (downloadable from the listing)
+SNEEKIE.BAS.txt       ← the same source, kept at the root next to the floppy it came from
+MCMPC-D2.dsk          ← the original 720 KB FAT12 floppy image (issue #25, October 1988)
+CLAUDE.md             ← notes for working in this repo
+```
+
+The game was recovered from `MCMPC-D2.dsk` by detokenizing `SNEEKIE.BAS` into
+`SNEEKIE.BAS.txt`, then ported line for line into `docs/index.html`.
