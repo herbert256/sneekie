@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sneekie — gameplay GIF previews (staging)</title>
+<style>
+  :root{ --bg:#0a0c0d; --panel:#13171a; --border:#33383d; --text:#aab2b6; --muted:#5b6367; --accent:#7dff7d; --heading:#b6ffb6; --red:#ff5e5e; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(1300px 760px at 50% 12%, #14171a, #0a0c0d 55%, #060708); color:var(--text);
+    font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header{ padding:20px; border-bottom:1px solid var(--border); }
+  h1{ margin:0 0 4px; font-size:22px; color:var(--heading); }
+  header p{ margin:0; color:var(--muted); font-size:13.5px; max-width:760px; }
+  main{ max-width:1500px; margin:0 auto; padding:20px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:16px; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .card img{ display:block; width:100%; height:auto; image-rendering:pixelated; background:#000; border-bottom:1px solid var(--border); }
+  .card .b{ padding:8px 12px 11px; }
+  .card .lv{ font:700 13px ui-monospace,monospace; color:var(--heading); }
+  .card .meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .card .mode{ color:var(--accent); } .card .enemy{ color:var(--red); }
+  .card .short{ color:var(--red); font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gameplay GIF previews &mdash; staging</h1>
+  <p>Autoplay captures of all 32 levels (smart survival bot). Pick the ones you want and tell me the level
+  numbers; I'll wire those into the manual and delete the rest. Levels flagged <span style="color:var(--red)">SHORT</span>
+  are auto-moving enemy/maze levels where the snake died or got stuck early &mdash; their layout is usually covered
+  better by an earlier turn-based level.</p>
+</header>
+<main><div class="grid" id="grid"></div></main>
+<script>
+  const layouts = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
+  const enemy = [false,false,false,false,true,true,true,true];
+  const frames = {7:100,8:71,10:45,14:6,24:20,26:33,32:30};   // levels that ended early
+  const g = document.getElementById('grid');
+  for(let L=1; L<=32; L++){
+    const li = (L-1)%8, lay = layouts[li];
+    const mode = ((L-1)%16) < 8 ? 'turn-based' : 'self-moving';
+    const nn = String(L).padStart(2,'0');
+    const short = frames[L] ? ` &middot; <span class="short">SHORT (${frames[L]}f)</span>` : '';
+    g.insertAdjacentHTML('beforeend',
+      `<div class="card"><img loading="lazy" src="play-${nn}.gif" alt="Level ${L} gameplay">
+       <div class="b"><div class="lv">Level ${L}</div>
+       <div class="meta">${lay} &middot; <span class="${enemy[li]?'enemy':'mode'}">${enemy[li]?'enemy':'no enemy'}</span> &middot; <span class="mode">${mode}</span>${short}</div></div></div>`);
+  }
+</script>
+</body>
+</html>
