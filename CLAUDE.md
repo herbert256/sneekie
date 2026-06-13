@@ -36,6 +36,11 @@ https://herbert256.github.io/sneekie/.
   and watch the rendered screen and the raw `poke`/`peek` bytes change in lock-step, with an
   inspector that computes the offset formula live. A focused sandbox (empty/heart/wall only)
   that reuses the embedded font; not the full game engine.
+- `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
+  scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The 8 layout
+  screen-prints live in `docs/manual/layout-1..8.png` (640×384, captured straight from the game's
+  own canvas — each is `lay*()` drawn on a cleared playfield via `toDataURL`). Same green doc-page
+  styling as the other doc pages.
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
@@ -51,11 +56,11 @@ https://herbert256.github.io/sneekie/.
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
-All five pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
+All six pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
 look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`SNEEKIE.BAS.html`; the other
-four pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
-`#themes` switcher (`sneekie.theme`); the three doc pages are a fixed green palette with no
-switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
+five pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Explained, Migration, Visualizer)
+are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
 fixed green set, like the listing's green theme), so re-theming is mostly editing `:root`. On the
 game + listing the page title lives in a separate `header.hero` (renamed so the generic
