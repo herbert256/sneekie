@@ -190,7 +190,7 @@ const BOT = `
     for(let w=0;w<500 && LEVEL!==TARGET;w++) await sleep(8);
     for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
     pushKey('\\r'); await sleep(120);
-    let lastFood = HART+KLAVER, foodIdle = 0, lastHead = BTEL, stall = 0;
+    let lastScore = ZCORE, idle = 0, lastHead = BTEL, stall = 0;
     while(true){
       if(typeof LEVEL==='undefined'){ tell('botEnd', IDX, false); return; }
       if(LEVEL === TARGET+1 && LIVE > 0){ tell('botEnd', IDX, true); return; }   // cleared the level -> green
@@ -198,9 +198,12 @@ const BOT = `
       if(BTEL > lastHead){ lastHead = BTEL; stall = 0; } else stall++;
       if(stall > 15){ tell('botEnd', IDX, false); return; }                       // head not advancing (boxed/dying) -> red
       const f = HART+KLAVER; if(f<=2) BONUS=0;
-      if(f<lastFood) foodIdle=0; else foodIdle++; lastFood=f;
+      // progress = the score rising (the bot ate something). In levels >16 a heart spawns a
+      // club, so HART+KLAVER can sit flat while the snake is busy eating — the score is the
+      // honest signal, so idle off that, not off the item count.
+      if(ZCORE > lastScore){ idle = 0; } else idle++; lastScore = ZCORE;
       tell('botStatus', IDX, ZCORE, f);
-      if(foodIdle > 120){ tell('botEnd', IDX, false); return; }                   // no progress for ~20s -> red
+      if(idle > 160){ tell('botEnd', IDX, false); return; }                       // ~26s with no score gain -> red
       const sc = decide();
       if(sc===null){ tell('botEnd', IDX, false); return; }                        // no safe move -> red
       pushKey(keyOf[sc]);

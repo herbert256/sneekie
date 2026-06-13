@@ -64,7 +64,8 @@ https://herbert256.github.io/sneekie/.
   one level, driving via `pushKey` at ~165 ms/move and posting status to `parent.botStatus(idx,…)`. It does
   **not** advance on a win: a clean clear (detected as `LEVEL===TARGET+1 && LIVE>0`) calls
   `parent.botEnd(idx, true)` → **green** flash; getting stuck (head index `BTEL` stops advancing, no safe
-  move, ~20 s with no progress, or a game-over) calls `parent.botEnd(idx, false)` → **red** flash. Either
+  move, ~26 s with no **score** gain — counting items is wrong because a heart spawns a club, so the
+  count sits flat while the bot is busy eating — or a game-over) calls `parent.botEnd(idx, false)` → **red** flash. Either
   flash pulses the cell overlay **four times, 0.75 s apart**, then reloads the iframe — re-injecting the bot
   and re-jumping to the **same** level. Flipping the switch bumps a `gen` counter (so in-flight flash
   reloads are ignored) and reloads all eight with the new base. No frames are saved — it's live, foreground
