@@ -886,8 +886,17 @@ if(bezel.requestFullscreen){
     else bezel.requestFullscreen();
   });
   document.addEventListener('fullscreenchange', () => {
-    fsBtn.setAttribute('aria-pressed', String(!!document.fullscreenElement));
+    const fs = !!document.fullscreenElement;
+    fsBtn.setAttribute('aria-pressed', String(fs));
     fit();
+    /* In fullscreen the browser normally swallows <ESC> to leave fullscreen, so the
+       game never sees it. The Keyboard Lock API (Chromium, secure context) routes
+       <ESC> to the page instead; to leave fullscreen you then press & hold <ESC>
+       (Chrome shows a hint). No-op on Firefox/Safari, where <ESC> still exits. */
+    if(navigator.keyboard && navigator.keyboard.lock){
+      if(fs) navigator.keyboard.lock(['Escape']).catch(() => {});
+      else navigator.keyboard.unlock();
+    }
   });
 } else {
   fsBtn.style.display = 'none';
