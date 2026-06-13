@@ -51,7 +51,7 @@
   .formula{ display:inline-block; background:var(--codebg); border:1px solid var(--border); border-radius:6px; padding:2px 8px; font-size:13.5px; }
 
   .demo{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; margin-top:22px; }
-  .stage{ flex:0 0 auto; }
+  .stage{ flex:0 0 auto; display:flex; flex-direction:column; gap:14px; }
   .panel{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
   .ptitle{ font:600 11px/1 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
   canvas#screen{ display:block; background:#000; border-radius:4px; image-rendering:pixelated; }
@@ -85,7 +85,7 @@
   .log .blk{ color:var(--red); }
   .legend{ display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-size:12.5px; align-items:center; }
   .legend .g{ font-family:ui-monospace,monospace; color:var(--muted); }
-  footer{ max-width:1100px; margin:46px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; }
+  footer{ max-width:1100px; margin:46px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
   @media print{ header.top{ display:none } body{ background:#fff; color:#111 } }
 </style>
 </head>
@@ -126,6 +126,20 @@
       </div>
       <p class="cap">Each glyph on the left is one cell; its raw byte sits in the same spot in the memory grid
         on the right. Hover either to link them. <code>32</code> = empty (shown as <code>·</code>).</p>
+      <div class="panel">
+        <div class="ptitle">Inspector</div>
+        <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">Legend</div>
+        <div class="legend">
+          <span class="g">219 &#9608;</span><span>snake head</span>
+          <span class="g">205 186 &hellip;</span><span>snake body (straight + corners)</span>
+          <span class="g">3 &#9829;</span><span>heart &mdash; eat it (+10, snake grows)</span>
+          <span class="g">179 196 &hellip;</span><span>wall &mdash; blocks you</span>
+          <span class="g">32 &middot;</span><span>empty space</span>
+        </div>
+      </div>
     </div>
 
     <div class="side">
@@ -153,26 +167,12 @@
         <div class="cap" style="margin-top:6px">Arrow keys work too, while the pointer is over the demo.</div>
       </div>
 
-      <div class="panel">
-        <div class="ptitle">Inspector</div>
-        <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
-      </div>
 
       <div class="panel">
         <div class="ptitle">Operations (this move)</div>
         <div class="log" id="log"></div>
       </div>
 
-      <div class="panel">
-        <div class="ptitle">Legend</div>
-        <div class="legend">
-          <span class="g">219 &#9608;</span><span>snake head</span>
-          <span class="g">205 186 &hellip;</span><span>snake body (straight + corners)</span>
-          <span class="g">3 &#9829;</span><span>heart &mdash; eat it (+10, snake grows)</span>
-          <span class="g">179 196 &hellip;</span><span>wall &mdash; blocks you</span>
-          <span class="g">32 &middot;</span><span>empty space</span>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -183,7 +183,11 @@
   </p>
 </main>
 
-<footer>The model is faithful; this sandbox keeps only empty / heart / wall to stay legible. The real game adds clubs, stones, smileys, moving arrows and gates &mdash; all the same <code>peek</code>/<code>poke</code> idea.</footer>
+<footer>
+  &copy; July '88 by HerbySoft<br>
+  Published on the MSX/MS-DOS Computer Magazine diskette MCMPC-D2 (no.&nbsp;25, October 1988).<br>
+  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory &amp;HB000/&amp;HB800<br>HTML version: June 2026.
+</footer>
 
 <script>
 'use strict';

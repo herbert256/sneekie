@@ -216,9 +216,8 @@
 <footer>
   <p class="plaque">
     &copy; July '88 by HerbySoft<br>
-    Detokenized from <code>SNEEKIE.BAS</code> (GW-BASIC, 9360 bytes, dated 1988-10-02),
-    recovered from the <code>MCMPC-D2</code> floppy image on 2026-06-12.<br>
-    <span id="stat"></span>
+    Published on the MSX/MS-DOS Computer Magazine diskette MCMPC-D2 (no.&nbsp;25, October 1988).<br>
+    Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory &amp;HB000/&amp;HB800<br>HTML version: June 2026.
   </p>
 </footer>
 
@@ -301,8 +300,7 @@ lines.forEach((line, idx) => {
   frag.appendChild(row);
 });
 listing.appendChild(frag);
-document.getElementById('stat').textContent =
-  lines.length + ' lines · GW-BASIC · ' + SRC.length.toLocaleString() + ' bytes';
+
 
 /* ---------- themes (shared with the game via localStorage) ---------- */
 const THEMES = {
