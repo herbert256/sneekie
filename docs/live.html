@@ -453,7 +453,7 @@ for(const level of LEVEL_CHOICES){
   const fig = document.createElement('figure'); fig.className = 'cell';
   fig.innerHTML =
     '<figcaption><span class="lv"></span> <span class="dim"></span><span class="st"></span></figcaption>' +
-    '<div class="frame"><iframe scrolling="no" tabindex="-1" allow="fullscreen" allowfullscreen></iframe><div class="flash"></div></div>';
+    '<div class="frame"><iframe scrolling="no" tabindex="-1" allow="autoplay; fullscreen" allowfullscreen></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
   cell.frame = fig.querySelector('iframe');
   cell.frameBox = fig.querySelector('.frame');
@@ -475,6 +475,7 @@ function updateLabel(){
 function inject(){
   try {
     cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
+    primeGameAudio(true);
     cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);
     wireGameFullscreenEvents();
     syncControls();
@@ -521,6 +522,15 @@ function setLevel(level){
 function gameDoc(){ try { return cell.frame.contentDocument; } catch(e){ return null; } }
 function getPref(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function setPref(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+function primeGameAudio(forceOn=false){
+  if(forceOn) setPref('sneekie.muted', '0');
+  const unmuted = getPref('sneekie.muted') !== '1';
+  try {
+    cell.frame.contentWindow.eval(
+      "try{if(" + JSON.stringify(unmuted) + "){muted=false;lsSet('sneekie.muted','0');ensureAudio();}paintMute();}catch(e){}"
+    );
+  } catch(e){}
+}
 const ctlThemes = [...document.querySelectorAll('#controls #themes button')];
 const ctlMute = document.getElementById('mute');
 const ctlFs = document.getElementById('fs');
@@ -533,7 +543,6 @@ function exitFullscreen(doc){
   const fn = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
   return fn ? Promise.resolve(fn.call(doc)) : Promise.resolve();
 }
-function gameBezel(){ const d = gameDoc(); return d && d.getElementById('bezel'); }
 function isLiveFullscreen(){
   return fullscreenElement(document) === cell.frameBox ||
     !!fullscreenElement(gameDoc()) ||
@@ -594,17 +603,20 @@ ctlMute.addEventListener('click', () => {
 });
 ctlFs.addEventListener('click', () => {
   if(exitAnyFullscreen()) return;
-  requestFullscreen(gameBezel()).catch(() =>
-    requestFullscreen(cell.frameBox).catch(enterFallbackFullscreen));
+  requestFullscreen(cell.frameBox).catch(enterFallbackFullscreen);
 });
 document.addEventListener('fullscreenchange', () => { if(!fullscreenElement(document)) exitFallbackFullscreen(); fitFullscreenFrame(); syncControls(); });
 document.addEventListener('webkitfullscreenchange', () => { if(!fullscreenElement(document)) exitFallbackFullscreen(); fitFullscreenFrame(); syncControls(); });
 addEventListener('resize', fitFullscreenFrame);
 addEventListener('keydown', e => {
+  primeGameAudio();
   if(e.key === 'Escape' && cell.frameBox.classList.contains('live-fullscreen')){
     exitFallbackFullscreen();
   }
 });
+addEventListener('pointerdown', () => primeGameAudio());
+addEventListener('touchstart', () => primeGameAudio(), {passive:true});
+primeGameAudio(true);
 syncControls();
 
 /* ---- viewer keyboard: step through levels (the game itself can't be steered — the iframe is inert) ---- */
