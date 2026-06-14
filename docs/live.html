@@ -69,15 +69,15 @@
   @media (max-width:360px){ .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 
   .cells{ margin-top:18px; }
-  figure.cell{ margin:0; }
-  figure.cell figcaption{ margin-bottom:9px; font-size:14px; }
+  figure.cell{ margin:0 auto; max-width:640px; }            /* just as wide as the 640x384 game screen, centered */
+  figure.cell figcaption{ margin-bottom:9px; font-size:14px; text-align:center; }
   figcaption .lv{ font:700 13px/1 ui-monospace,monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--heading); }
   figcaption .dim{ color:var(--muted); } figcaption .st{ color:var(--muted); font-family:ui-monospace,monospace; font-size:12.5px; }
   figcaption .st.win{ color:var(--accent); } figcaption .st.stuck{ color:var(--red); }
   .frame{ position:relative; line-height:0; }
   .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; }
   .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
-  .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; }
+  .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; text-align:center; }
 
   footer{ max-width:960px; margin:16px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
 </style>
