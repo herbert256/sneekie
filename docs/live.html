@@ -43,24 +43,24 @@
   header.top nav a:hover, header.top nav button:hover{ color:var(--accent); border-color:var(--accent); }
   header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
 
-  main{ max-width:min(1800px, 96vw); margin:0 auto; padding:24px 20px 60px; }
-  h1{ font-size:26px; margin:6px 0; color:var(--heading); }
-  .lead{ max-width:900px; color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
+  main{ max-width:960px; margin:0 auto; padding:28px 20px 24px; }
+  h1{ font-size:28px; margin:6px 0; color:var(--heading); }
+  .lead{ color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
   strong{ color:var(--heading); font-weight:600; }
   .ico{ font-family:ui-monospace,monospace; font-weight:700; }
   .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
   .ico.g{ color:#66e066; } .ico.green{ color:var(--accent); } .ico.r{ color:var(--red); }
 
-  .leveltabs{ display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:7px; margin-top:22px; font-family:ui-monospace,monospace; }
+  .leveltabs{ display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:7px; margin-top:18px; font-family:ui-monospace,monospace; }
   .leveltabs button{ min-height:40px; font:inherit; font-size:12px; letter-spacing:.03em; color:#98a1a6; background:#16181b;
     border:1px solid var(--border); border-radius:5px; cursor:pointer; transition:background .12s, color .12s, border-color .12s, box-shadow .12s; }
   .leveltabs button:hover{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 70%, var(--border)); }
   .leveltabs button[aria-selected="true"]{ color:var(--accent); border-color:var(--accent);
     background:color-mix(in srgb, var(--accent) 18%, #16181b); box-shadow:0 0 16px -8px var(--accent); cursor:default; }
   @media (max-width:900px){ .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); } }
-  @media (max-width:520px){ .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:360px){ .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 
-  .cells{ max-width:1120px; margin-top:26px; }
+  .cells{ margin-top:18px; }
   figure.cell{ margin:0; }
   figure.cell figcaption{ margin-bottom:9px; font-size:14px; }
   figcaption .lv{ font:700 13px/1 ui-monospace,monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--heading); }
@@ -69,8 +69,9 @@
   .frame{ position:relative; line-height:0; }
   .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; }
   .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
+  .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; }
 
-  footer{ max-width:min(1800px, 96vw); margin:40px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
+  footer{ max-width:960px; margin:16px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
 </style>
 </head>
 <body>
@@ -106,7 +107,7 @@
 
   <div class="cells" id="cells"></div>
 
-  <p class="lead" style="margin-top:22px;color:var(--muted);font-size:13px">It's live, not a recording. Keep this
+  <p class="lead live-note">It's live, not a recording. Keep this
   tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
 </main>
 
