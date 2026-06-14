@@ -55,9 +55,9 @@ https://herbert256.github.io/sneekie/.
   turn-based openers) and **25–32** (the brutal back half). The single cell is an
   `<iframe src="index.html">` with a smarter bot `eval`'d into it (so it can read the game's
   `const`/`let` globals by name, which are *not* window properties). The bot is embedded as a string in
-  `live.html` and injected on every iframe `load` (along with CSS that hides the game chrome, removes
-  the monitor bezel padding, and crops the canvas to rows 3–21 so the cell shows just the game's
-  in-canvas blue playfield border — there is no extra CSS frame). The selected tab sets `TARGET`, and
+  `live.html` and injected on every iframe `load` (along with CSS that hides the game chrome and removes
+  the monitor bezel padding, while keeping the full 640×384 game canvas visible — there is no extra CSS
+  frame). The selected tab sets `TARGET`, and
   the iframe **jumps straight there without grinding
   levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and presses F10 once,
   so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot (BFS-to-food,
