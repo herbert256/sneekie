@@ -211,6 +211,48 @@
   main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
   @media screen{ body, header.top{ background:#000; } }   /* full deep black, identical on every page */
   @media print{ h1.page-title{ color:#000; } }
+  @media (max-width: 520px){
+    body{ padding:0 8px 12px; font-size:12px; overflow-x:hidden; }
+    header.top{
+      width:calc(100% + 16px); margin:0 -8px 10px; gap:8px;
+      padding:8px 10px 7px; align-items:center;
+    }
+    header.top .brand img{ height:22px; }
+    header.top nav{
+      flex:1 1 100%; order:2; margin-left:0; flex-wrap:nowrap; gap:5px;
+      overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:3px;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    header.top nav::-webkit-scrollbar{ display:none; }
+    header.top nav a, header.top nav button{ flex:0 0 auto; font-size:10px; padding:6px 9px; letter-spacing:.06em; }
+    header.hero{ margin-bottom:8px; }
+    h1.page-title{ font-size:clamp(25px, 9vw, 34px); margin:14px 0 10px; }
+    header.hero .sub{
+      max-width:24rem; margin:0 auto; padding:0 6px;
+      font-size:10.5px; line-height:1.45; letter-spacing:.08em;
+    }
+    #bezel{ width:100%; max-width:100%; gap:8px; padding:10px 10px 9px; border-radius:13px; }
+    #tube{ max-width:100%; padding:5px; border-radius:10px; }
+    #screen{ border-radius:4px; box-shadow:0 0 0 1px #000, 0 0 30px -7px var(--glow); }
+    #glass{ inset:5px; border-radius:4px; }
+    #panel{ height:14px; padding:0 3px; gap:8px; }
+    #panel .logo{ font-size:8.5px; letter-spacing:.16em; }
+    #panel .led{ width:6px; height:6px; }
+    #panel .knobs{ gap:8px; }
+    #panel .knobs i{ width:12px; height:12px; }
+    #controls{ width:100%; gap:7px; margin-top:10px; padding:0 1px; }
+    #controls .grp{
+      width:100%; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 1fr); gap:5px;
+    }
+    button{ min-width:0; padding:8px 6px; font-size:10px; letter-spacing:.055em; }
+    #touchbar{ width:100%; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:7px; }
+    #touchbar button{ padding:12px 6px; font-size:12px; }
+    #hint{ margin-top:7px; font-size:11px; line-height:1.45; }
+    footer{ font-size:11px; line-height:1.55; padding-top:12px; }
+  }
+  @media (pointer:coarse) and (max-width: 520px){
+    #touchbar{ display:grid; }
+  }
 </style>
 </head>
 <body>
@@ -1236,8 +1278,21 @@ function fit(){
     cv.style.height = (384*s) + 'px';
     return;
   }
-  const availW = Math.min(document.documentElement.clientWidth - 56, 1300);
-  const availH = innerHeight - 250;
+  const num = v => parseFloat(v) || 0;
+  const inlinePad = el => {
+    const st = getComputedStyle(el);
+    return num(st.paddingLeft) + num(st.paddingRight);
+  };
+  const blockPad = el => {
+    const st = getComputedStyle(el);
+    return num(st.paddingTop) + num(st.paddingBottom);
+  };
+  const bodyChromeW = inlinePad(document.body);
+  const monitorChromeW = inlinePad(bezel) + inlinePad(document.getElementById('tube')) + 4;
+  const monitorChromeH = blockPad(bezel) + blockPad(document.getElementById('tube')) +
+    document.getElementById('panel').offsetHeight + 18;
+  const availW = Math.min(document.documentElement.clientWidth - bodyChromeW - monitorChromeW, 1300);
+  const availH = innerHeight - bezel.getBoundingClientRect().top - monitorChromeH - 18;
   let s = Math.min(availW/640, availH/384);
   s = s >= 1 ? Math.floor(s) : Math.max(s, 0.42);
   cv.style.width = (640*s) + 'px';

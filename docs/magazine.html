@@ -95,6 +95,19 @@
   footer, footer .src{ color:#7fcf8a; }
   footer{ font-size:12.5px; }
   footer a{ color:#a3edab; }
+  @media (max-width: 520px){
+    body{ overflow-x:hidden; }
+    header.top{ gap:8px; padding:8px 10px 7px; align-items:center; }
+    header.top .brand img{ height:22px; }
+    header.top nav{
+      flex:1 1 100%; order:2; margin-left:0; flex-wrap:nowrap; gap:5px;
+      overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:3px;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    header.top nav::-webkit-scrollbar{ display:none; }
+    header.top nav a, header.top nav button{ flex:0 0 auto; font-size:10px; padding:6px 9px; letter-spacing:.06em; }
+    h1.page-title{ font-size:clamp(25px, 9vw, 34px); margin:14px 0 12px; }
+  }
   @media print{ h1.page-title{ color:#000; } }
 </style>
 </head>
