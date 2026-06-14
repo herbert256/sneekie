@@ -1,7 +1,7 @@
 # Sneekie (1988)
 
 A 32-level snake/maze game written in GW-BASIC in July 1988 by **HerbySoft**,
-published in MSX/MS-DOS Computer Magazine, issue #25 (October 1988).
+published in MS(X)DOS Computer Magazine, issue #25 (October 1988).
 
 **Play it here: https://herbert256.github.io/sneekie/**
 

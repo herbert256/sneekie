@@ -1,6 +1,6 @@
 ' ============================================================
 ' SNEEKIE - (c) juli '88 by HerbySoft
-' Published in MSX/MS-DOS Computer Magazine
+' Published in MS(X)DOS Computer Magazine
 ' (issue #25, October 1988)
 '
 ' Recovered by OCR from the magazine's printed program
@@ -9,7 +9,7 @@
 ' ============================================================
 
 10 REM SNEEKIE
-20 REM MSX/MS-DOS Computer Magazine
+20 REM MS(X)DOS Computer Magazine
 30 REM GW-Basic versie
 40 REM door HerbySoft
 70 REM
