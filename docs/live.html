@@ -89,6 +89,7 @@
   <nav>
     <a href="index.html">&#9654; Play</a>
     <a href="manual.html">Manual</a>
+    <a href="demo.html">Demo</a>
     <a href="live.html" aria-current="page">Live</a>
     <a href="SNEEKIE.BAS.html">Source</a>
     <a href="SNEEKIE.BAS.explained.html">Explained</a>
@@ -173,7 +174,10 @@ const BOT = `
     for(let i=ETEL;i<=BTEL;i++){ body.push(T[i]); bodySet.add(T[i]); }
     return { head:T[BTEL], body, bodySet, dir:curDir(), cells:new Map(), first:null, dist:0, ate:0, points:0, smiles:0, stones:0 };
   };
-  const cell = (st,o) => st.cells.has(o) ? st.cells.get(o) : peek(o);
+  const cell = (st,o) => {
+    const c = st.cells.get(o);
+    return c === undefined ? peek(o) : c;
+  };
   const move = (st, sc, allowSmile) => {
     if(sc===opp[st.dir]) return null;
     const d = STEP[sc], n = st.head + d;
@@ -221,11 +225,12 @@ const BOT = `
     for(const [sc] of DIRS) if(canMove(st, sc, allowSmile)) count++;
     return count;
   };
-  const tailReach = st => {
-    const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), q = [[st.head,st.dir]]; let h = 0;
+  const spaceInfo = st => {
+    const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), cells = new Set([st.head]), q = [[st.head,st.dir]];
+    let h = 0, tailReach = st.head === tail;
     while(h<q.length){
       const [o,dir] = q[h++];
-      if(o===tail) return true;
+      if(o===tail) tailReach = true;
       for(const [sc,d] of DIRS){
         if(sc===opp[dir]) continue;
         const n = o + d;
@@ -233,26 +238,13 @@ const BOT = `
         if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
         const key = visitKey(n, sc);
         if(seen.has(key)) continue;
-        seen.add(key); q.push([n,sc]);
+        seen.add(key);
+        if(cells.size < 1200) cells.add(n);
+        q.push([n,sc]);
       }
+      if(tailReach && cells.size >= 1200) break;
     }
-    return false;
-  };
-  const flood = st => {
-    const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), cells = new Set([st.head]), q = [[st.head,st.dir]]; let h = 0;
-    while(h<q.length && cells.size<1200){
-      const [o,dir] = q[h++];
-      for(const [sc,d] of DIRS){
-        if(sc===opp[dir]) continue;
-        const n = o + d;
-        if(danger(n)) continue;
-        if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
-        const key = visitKey(n, sc);
-        if(seen.has(key)) continue;
-        seen.add(key); cells.add(n); q.push([n,sc]);
-      }
-    }
-    return cells.size;
+    return { space: cells.size, tailReach };
   };
   const survivalDepth = (start, limit) => {
     let frontier = [start], seen = new Set([stateKey(start)]), best = 0;
@@ -275,7 +267,7 @@ const BOT = `
   };
   const routeFood = allowSmile => {
     const start = makeState(), q = [start], seen = new Set(), few = (HART+KLAVER)<=6;
-    const arrowLevel = [5,6,13,14].includes((LEVEL-1) % 16);
+    const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
     const maxDepth = few ? 115 : 78; let h = 0, checked = 0, best = null, bs = -1e18;
     seen.add(stateKey(start));
     while(h<q.length && h<950){
@@ -287,10 +279,12 @@ const BOT = `
         if(seen.has(key)) continue; seen.add(key);
         if(ns.ate){
           checked++;
-          const sp = flood(ns), rt = tailReach(ns), exits = legalCount(ns, true);
+          const exits = legalCount(ns, true);
+          if(!exits) continue;
+          const info = spaceInfo(ns), sp = info.space, rt = info.tailReach;
           const minSpace = Math.min(190, ns.body.length + (few ? 24 : 12));
           const spacious = (rt && sp >= minSpace) || sp >= minSpace + 42;
-          if(!exits || !spacious) continue;
+          if(!spacious) continue;
           const horizon = few ? 22 : (arrowLevel ? 12 : 16), live = survivalDepth(ns, horizon);
           const corridorOk = exits > 1 || arrowLevel || (live >= horizon && rt && sp >= minSpace + 50);
           if(corridorOk && live >= (few ? 14 : (arrowLevel ? 7 : 10)) && ((rt && sp >= minSpace) || sp >= minSpace + 42)){
@@ -323,7 +317,10 @@ const BOT = `
   const survivalMove = () => {
     const st = makeState(); let best = null, bs = -1e18;
     for(const ns of legal(st, true)){
-      const c = cell(st, st.head + STEP[ns.first]), sp = flood(ns), rt = tailReach(ns), exits = legalCount(ns, true);
+      const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+      if(!exits) continue;
+      const info = spaceInfo(ns);
+      const sp = info.space, rt = info.tailReach;
       const score = (rt?60000:0) + sp*24 + exits*900 + (isFood(c)?1200:0) - (c===1?1400:0) - ns.stones*35 + (ns.first===st.dir?40:0);
       if(score > bs){ bs = score; best = ns.first; }
     }
