@@ -14,7 +14,7 @@ and no test suite — `docs/index.html` is the entire program.
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
 publishable website lives in `docs/`, which is the GitHub Pages source — it is served at
-https://herbert256.github.io/sneekie/.
+https://sneekie.xyz/.
 
 - `docs/index.html` — the game. One file, all HTML/CSS/JS inline. **This is the single
   canonical copy** — edit it directly; there is no second copy to keep in sync.

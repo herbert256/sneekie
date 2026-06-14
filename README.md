@@ -3,7 +3,7 @@
 A 32-level snake/maze game written in GW-BASIC in July 1988 by **HerbySoft**,
 published in MS(X)DOS Computer Magazine, issue #25 (October 1988).
 
-**Play it here: https://herbert256.github.io/sneekie/**
+**Play it here: https://sneekie.xyz/**
 
 In 2026 the game's printed listing was recovered by OCR and ported,
 line for line, to a single self-contained HTML page — same game logic, same direct
@@ -23,7 +23,7 @@ video-memory model (the original POKEd characters straight into text VRAM at
 
 More than just the game — every page is one self-contained HTML file:
 
-- **[Play](https://herbert256.github.io/sneekie/)** — the game itself.
+- **[Play](https://sneekie.xyz/)** — the game itself.
 - **Manual** — controls, scoring, the 8 maze layouts, and all 32 levels.
 - **Live** — a smart bot playing one level live in your browser, with a level picker and a speed slider.
 - **Bot** — how that bot thinks (reading VRAM, searching routes, keeping a way back to its own tail).
