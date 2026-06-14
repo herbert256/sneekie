@@ -19,6 +19,19 @@ video-memory model (the original POKEd characters straight into text VRAM at
 - Display themes: green/amber/white monochrome, or the colorized CGA mode
 - Fullscreen button for the full 1988-monitor experience
 
+## On the site
+
+More than just the game — every page is one self-contained HTML file:
+
+- **[Play](https://herbert256.github.io/sneekie/)** — the game itself.
+- **Manual** — controls, scoring, the 8 maze layouts, and all 32 levels.
+- **Live** — a smart bot playing one level live in your browser, with a level picker and a speed slider.
+- **Bot** — how that bot thinks (reading VRAM, searching routes, keeping a way back to its own tail).
+- **Magazine** — the original 1988 magazine pages where Sneekie was published.
+- **Source / Explained / Migration** — the GW-BASIC listing, an annotated walkthrough, and the
+  BASIC-vs-JavaScript port shown side by side.
+- **Visualizer** — an interactive look at the “the screen is the memory” trick behind it all.
+
 ## Layout
 
 The published website lives in [`docs/`](docs/) — GitHub Pages serves it at the link above.
