@@ -138,6 +138,9 @@ const BOT = `
   const curDir = () => { const d = T[BTEL]-T[BTEL-1]; return d===-160?72:d===160?80:d===-2?75:77; };
   const rowOf = o => Math.trunc(o / 160) + 1;
   const colOf = o => Math.trunc((o % 160) / 2) + 1;
+  const visitKey = (o, sc) => o * 100 + sc;
+  const dirIdx = sc => sc===72?0:sc===80?1:sc===75?2:3;
+  const stateKey = st => (((((st.head>>1)*4 + dirIdx(st.dir))*2000 + (st.body[0]>>1))*2000 + (st.body[st.body.length-2]>>1))*16000 + st.body.length);
   const isFood = c => c===3 || c===5;
   const open = c => c===32 || c===1 || isFood(c);
   const danger = o => {
@@ -185,8 +188,25 @@ const BOT = `
     for(const [sc] of DIRS){ const ns = move(st, sc, allowSmile); if(ns) out.push(ns); }
     return out;
   };
+  const canMove = (st, sc, allowSmile) => {
+    if(sc===opp[st.dir]) return false;
+    const d = STEP[sc], n = st.head + d;
+    if(danger(n) || st.bodySet.has(n)) return false;
+    const c = cell(st,n);
+    if(c===1 && !allowSmile) return false;
+    if(c===10){
+      const nn = n + d;
+      return !st.bodySet.has(nn) && cell(st,nn)===32;
+    }
+    return open(c);
+  };
+  const legalCount = (st, allowSmile) => {
+    let count = 0;
+    for(const [sc] of DIRS) if(canMove(st, sc, allowSmile)) count++;
+    return count;
+  };
   const tailReach = st => {
-    const tail = st.body[0], seen = new Set([st.head + ',' + st.dir]), q = [[st.head,st.dir]]; let h = 0;
+    const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), q = [[st.head,st.dir]]; let h = 0;
     while(h<q.length){
       const [o,dir] = q[h++];
       if(o===tail) return true;
@@ -195,7 +215,7 @@ const BOT = `
         const n = o + d;
         if(danger(n)) continue;
         if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
-        const key = n + ',' + sc;
+        const key = visitKey(n, sc);
         if(seen.has(key)) continue;
         seen.add(key); q.push([n,sc]);
       }
@@ -203,7 +223,7 @@ const BOT = `
     return false;
   };
   const flood = st => {
-    const tail = st.body[0], seen = new Set([st.head + ',' + st.dir]), cells = new Set([st.head]), q = [[st.head,st.dir]]; let h = 0;
+    const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), cells = new Set([st.head]), q = [[st.head,st.dir]]; let h = 0;
     while(h<q.length && cells.size<1200){
       const [o,dir] = q[h++];
       for(const [sc,d] of DIRS){
@@ -211,14 +231,13 @@ const BOT = `
         const n = o + d;
         if(danger(n)) continue;
         if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
-        const key = n + ',' + sc;
+        const key = visitKey(n, sc);
         if(seen.has(key)) continue;
         seen.add(key); cells.add(n); q.push([n,sc]);
       }
     }
     return cells.size;
   };
-  const stateKey = st => st.head + ',' + st.dir + ',' + st.body[0] + ',' + st.body.length + ',' + st.body[st.body.length-2];
   const survivalDepth = (start, limit) => {
     let frontier = [start], seen = new Set([stateKey(start)]), best = 0;
     for(let depth=1; depth<=limit; depth++){
@@ -228,7 +247,7 @@ const BOT = `
           const key = stateKey(ns);
           if(seen.has(key)) continue;
           seen.add(key);
-          next.push([ns, legal(ns, true).length]);
+          next.push([ns, legalCount(ns, true)]);
         }
       }
       if(!next.length) return best;
@@ -242,17 +261,17 @@ const BOT = `
     const start = makeState(), q = [start], seen = new Set(), few = (HART+KLAVER)<=6;
     const arrowLevel = [5,6,13,14].includes((LEVEL-1) % 16);
     const maxDepth = few ? 115 : 78; let h = 0, checked = 0, best = null, bs = -1e18;
-    seen.add(start.head + ',' + start.dir + ',' + start.body[0] + ',' + start.body.length);
+    seen.add(stateKey(start));
     while(h<q.length && h<950){
       const st = q[h++];
       if(st.dist >= maxDepth) continue;
       for(const [sc] of DIRS){
         const ns = move(st, sc, allowSmile); if(!ns) continue;
-        const key = ns.head + ',' + ns.dir + ',' + ns.body[0] + ',' + ns.body.length;
+        const key = stateKey(ns);
         if(seen.has(key)) continue; seen.add(key);
         if(ns.ate){
           checked++;
-          const sp = flood(ns), rt = tailReach(ns), exits = legal(ns, true).length;
+          const sp = flood(ns), rt = tailReach(ns), exits = legalCount(ns, true);
           const minSpace = Math.min(190, ns.body.length + (few ? 24 : 12));
           const spacious = (rt && sp >= minSpace) || sp >= minSpace + 42;
           if(!exits || !spacious) continue;
@@ -288,7 +307,7 @@ const BOT = `
   const survivalMove = () => {
     const st = makeState(); let best = null, bs = -1e18;
     for(const ns of legal(st, true)){
-      const c = cell(st, st.head + STEP[ns.first]), sp = flood(ns), rt = tailReach(ns), exits = legal(ns, true).length;
+      const c = cell(st, st.head + STEP[ns.first]), sp = flood(ns), rt = tailReach(ns), exits = legalCount(ns, true);
       const score = (rt?60000:0) + sp*24 + exits*900 + (isFood(c)?1200:0) - (c===1?1400:0) - ns.stones*35 + (ns.first===st.dir?40:0);
       if(score > bs){ bs = score; best = ns.first; }
     }
