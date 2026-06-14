@@ -560,7 +560,7 @@ const rnd = Math.random;
 const DEATH = {sneekie:'crashed'};          // RETURN 510
 
 /* ---------- BOOT SHOW: compressed PC DOS + GW-BASIC startup, before line 80 ---------- */
-const BOOT_TIME_SCALE = 1.9;
+const BOOT_TIME_SCALE = 2.15;
 
 function startBootFromGesture(){
   if(!bootWaiting || bootStarted) return;
@@ -594,12 +594,90 @@ function bootClick(freq=95, dur=0.022, gain=0.04){
   o.connect(g); g.connect(actx.destination);
   o.start(t); o.stop(t + dur + 0.01);
 }
+let bootSeekNoise = null;
+function bootNoiseBuffer(){
+  const rate = actx.sampleRate;
+  const length = Math.floor(rate * 0.09);
+  const b = actx.createBuffer(1, length, rate);
+  const d = b.getChannelData(0);
+  let last = 0;
+  for(let i = 0; i < length; i++){
+    last = last * 0.72 + (rnd() * 2 - 1) * 0.28;
+    d[i] = last * (1 - i / length);
+  }
+  return b;
+}
+function bootDiskMotor(ms=300){
+  if(!actx || muted) return;
+  const t = actx.currentTime + 0.002;
+  const dur = Math.max(0.08, ms * BOOT_TIME_SCALE / 1000);
+  const out = actx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.linearRampToValueAtTime(0.012, t + 0.035);
+  out.gain.setValueAtTime(0.012, Math.max(t + 0.036, t + dur - 0.08));
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  out.connect(actx.destination);
+  for(const [type, freq, level] of [
+    ['triangle', 82 + rnd() * 9, 1],
+    ['sine', 166 + rnd() * 14, 0.42],
+    ['sine', 246 + rnd() * 18, 0.24],
+  ]){
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.linearRampToValueAtTime(freq * (0.985 + rnd() * 0.035), t + dur);
+    g.gain.value = level;
+    o.connect(g); g.connect(out);
+    o.start(t); o.stop(t + dur + 0.01);
+  }
+}
+function bootDiskStep(force=1){
+  if(!actx || muted) return;
+  const t = actx.currentTime + 0.002;
+
+  const thud = actx.createOscillator(), tg = actx.createGain();
+  thud.type = 'square';
+  thud.frequency.setValueAtTime(58 + rnd() * 58, t);
+  thud.frequency.exponentialRampToValueAtTime(34 + rnd() * 24, t + 0.045);
+  tg.gain.setValueAtTime(0.028 * force, t);
+  tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+  thud.connect(tg); tg.connect(actx.destination);
+  thud.start(t); thud.stop(t + 0.055);
+
+  if(!bootSeekNoise) bootSeekNoise = bootNoiseBuffer();
+  const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), ng = actx.createGain();
+  src.buffer = bootSeekNoise;
+  src.playbackRate.value = 0.65 + rnd() * 0.95;
+  bp.type = 'bandpass';
+  bp.frequency.value = 620 + rnd() * 1550;
+  bp.Q.value = 4 + rnd() * 6;
+  ng.gain.setValueAtTime(0.018 * force, t);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+  src.connect(bp); bp.connect(ng); ng.connect(actx.destination);
+  src.start(t); src.stop(t + 0.085);
+
+  if(rnd() > 0.38){
+    const chirp = actx.createOscillator(), cg = actx.createGain();
+    chirp.type = 'triangle';
+    chirp.frequency.setValueAtTime(420 + rnd() * 700, t);
+    chirp.frequency.exponentialRampToValueAtTime(180 + rnd() * 210, t + 0.038);
+    cg.gain.setValueAtTime(0.0075 * force, t);
+    cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.038);
+    chirp.connect(cg); cg.connect(actx.destination);
+    chirp.start(t); chirp.stop(t + 0.046);
+  }
+}
 async function bootDiskBurst(ms=300){
+  bootDiskMotor(ms);
   const end = performance.now() + ms * BOOT_TIME_SCALE;
   while(!bootSkip && performance.now() < end){
-    bootClick(70 + rnd()*55, 0.014 + rnd()*0.018, 0.026 + rnd()*0.03);
-    if(rnd() > 0.45) bootClick(1150 + rnd()*2300, 0.006 + rnd()*0.01, 0.012);
-    await bootSleep(18 + rnd()*38);
+    const steps = 1 + (rnd() * 4 | 0);
+    for(let i = 0; i < steps && !bootSkip; i++){
+      bootDiskStep(0.72 + rnd() * 0.75);
+      if(rnd() > 0.68) bootDiskStep(0.38 + rnd() * 0.35);
+      await bootSleep(7 + rnd() * 14);
+    }
+    await bootSleep(rnd() > 0.74 ? 64 + rnd() * 120 : 18 + rnd() * 48);
   }
 }
 async function bootType(s, at=15, lo=16, hi=34){
