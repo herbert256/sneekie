@@ -178,8 +178,8 @@
   /* in-bezel touch controls: hidden until fullscreen on a touch device (see below) */
   #fstouch{ display:none; }
   #bezel:fullscreen #fstouch{
-    position:fixed; left:50%; bottom:10px; transform:translateX(-50%);
-    gap:7px; z-index:10; flex-wrap:wrap; justify-content:center; max-width:97vw;
+    position:fixed; left:0; right:0; top:8px;
+    gap:7px; z-index:10; flex-wrap:wrap; justify-content:center;
   }
   #bezel:fullscreen #fstouch button{
     min-width:46px; padding:12px 14px; font-size:15px; line-height:1;
@@ -193,7 +193,7 @@
   #touchbar button{ padding:12px 22px; font-size:13px; }
   @media (pointer:coarse){
     #touchbar{ display:flex; }
-    #bezel:fullscreen #fstouch{ display:flex; }
+    body:not(.booting) #bezel:fullscreen #fstouch{ display:flex; }  /* only after the boot sim */
     #hint .kb{ display:none; }
     #hint .tc{ display:inline; }
   }
@@ -377,6 +377,7 @@ let atlasDim, atlasBright;
 const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
 let bootStartResolve = null;
+document.body.classList.add('booting');     // hides the fullscreen touch controls until boot finishes
 
 /* boot-time blinking hardware text cursor (the original game has none) */
 let cursorVisible = false, cursorBlink = false, cursorPrevIdx = -1, cursorTimer = null;
@@ -831,7 +832,7 @@ function crtPowerOn(){
   if(p) p.classList.add('go');               // one-shot tube warm-up flash
 }
 async function bootSequence(){
-  if(shouldSkipBoot()){ bootActive = false; return; }
+  if(shouldSkipBoot()){ bootActive = false; document.body.classList.remove('booting'); return; }
 
   crtPowerOn();
   cls();
@@ -914,6 +915,7 @@ async function bootSequence(){
   qEnd = actx ? actx.currentTime : 0;
   clearKbd();
   bootActive = false;
+  document.body.classList.remove('booting');  // boot done → reveal fullscreen touch controls
 }
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
