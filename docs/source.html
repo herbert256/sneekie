@@ -7,6 +7,11 @@
 <title>SNEEKIE.BAS — source listing — (c) July '88 by HerbySoft</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#0a0c0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sneekie">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="SNEEKIE.BAS — source listing">
@@ -180,12 +185,21 @@
   }
   header.top{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
   header.top .brand{ font-size:13px; }
+  /* --- shared: ♥ SNEEKIE ♥ logo top-left + big white centered page title --- */
+  header.top .brand{ display:inline-flex; align-items:center; line-height:0; }
+  header.top .brand img{ height:24px; width:auto; display:block; }
+  .hero{ text-align:center; }
+  h1.page-title{ color:#fff; text-align:center; font-weight:800; line-height:1.14;
+    font-size:clamp(28px, 5vw, 50px); margin:22px 0 18px; }
+  main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
+  @media screen{ body, header.top{ background:#000; } }   /* full deep black, identical on every page */
+  @media print{ h1.page-title{ color:#000; } }
 </style>
 </head>
 <body>
 
 <header class="top">
-  <span class="brand">SNEEKIE.BAS <span class="dim">&middot; source listing</span></span>
+  <a class="brand" href="index.html" aria-label="Sneekie home"><img src="logo.png" alt="Sneekie"></a>
   <nav>
     <a href="index.html">&#9654; Play</a>
     <a href="manual.html">Manual</a>
@@ -202,7 +216,7 @@
 </header>
 
 <header class="hero">
-  <h1><span class="hrt">&#9829;</span>SNEEKIE<span class="hl">.BAS</span><span class="hrt">&#9829;</span></h1>
+  <h1 class="page-title">Source Listing</h1>
   <p class="sub">The original 1988 GW-BASIC source</p>
 </header>
 
@@ -336,6 +350,13 @@ document.getElementById('print').addEventListener('click', () => window.print())
 if(location.search.indexOf('print') > -1) setTimeout(() => window.print(), 120);
 
 applyTheme(THEMES[lsGet('sneekie.theme')] ? lsGet('sneekie.theme') : 'hercules');
+</script>
+<script>
+if("serviceWorker" in navigator){
+  addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,38 @@
+{
+  "id": "./",
+  "name": "Sneekie - 1988 MS-DOS text game",
+  "short_name": "Sneekie",
+  "description": "Play the restored 1988 GW-BASIC snake/maze game offline, with its manual, source, magazine scans, visualizer, and live bot.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0a0c0d",
+  "theme_color": "#0a0c0d",
+  "categories": ["games", "education", "entertainment"],
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

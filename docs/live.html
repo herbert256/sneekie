@@ -7,6 +7,11 @@
 <title>Sneekie — Live bot</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#0a0c0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sneekie">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="Sneekie — Live bot">
@@ -94,12 +99,20 @@
   .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; text-align:center; }
 
   footer{ max-width:960px; margin:16px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
+  /* --- shared: ♥ SNEEKIE ♥ logo top-left + big white centered page title --- */
+  header.top .brand{ display:inline-flex; align-items:center; line-height:0; }
+  header.top .brand img{ height:24px; width:auto; display:block; }
+  h1.page-title{ color:#fff; text-align:center; font-weight:800; line-height:1.14;
+    font-size:clamp(28px, 5vw, 50px); margin:22px 0 18px; }
+  main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
+  @media screen{ body, header.top{ background:#000; } }   /* full deep black, identical on every page */
+  @media print{ h1.page-title{ color:#000; } }
 </style>
 </head>
 <body>
 
 <header class="top">
-  <span class="brand">Sneekie <span class="dim">· live bot</span></span>
+  <a class="brand" href="index.html" aria-label="Sneekie home"><img src="logo.png" alt="Sneekie"></a>
   <nav>
     <a href="index.html">&#9654; Play</a>
     <a href="manual.html">Manual</a>
@@ -116,7 +129,7 @@
 </header>
 
 <main>
-  <h1>One live bot — sixteen levels</h1>
+  <h1 class="page-title">One live bot — sixteen levels</h1>
   <p class="lead">One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch the
   <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving
   levels where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span>
@@ -714,6 +727,13 @@ document.addEventListener('keydown', e => {
 updateLabel();
 cell.frame.addEventListener('load', inject);
 cell.frame.src = 'index.html';
+</script>
+<script>
+if("serviceWorker" in navigator){
+  addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

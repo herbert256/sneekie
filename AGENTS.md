@@ -88,17 +88,24 @@ https://herbert256.github.io/sneekie/.
   artifact. Its first 10 lines are a `'`-comment header; the listing pages (`source`/`explained`/`migration`)
   **embed this whole file as base64**, so if you edit it, regenerate those `B64`/`atob(...)` blobs — and keep the
   header at 10 lines so `slice(10)` and migration's absolute `SECTIONS` line ranges stay valid.
-- `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
-  drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
+- `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png`, `docs/logo.png` — site icon,
+  social card, and the **`♥ SNEEKIE ♥` header wordmark** (green letters, red hearts, transparent),
+  all drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
   Python, no deps; reads the font straight out of `docs/index.html`). Every page carries
-  matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`.
+  matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`. `logo.png` is the
+  shared top-left brand on **every** page (see the nav note below).
 
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
 All nine pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
-eight pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+look**: the **top-left is the `♥ SNEEKIE ♥` logo** (`<a class="brand" href="index.html"><img src="logo.png">`,
+the same on every page — no more per-page brand text), then the same page links (current page marked
+`aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
+eight pages navigate there with `?print`, which auto-prints). Each page also carries **one big white centered
+title** (`h1.page-title`) naming the page's purpose, just under the nav — on the doc pages this is the
+page's existing intro `<h1>`; `index` and `source` get a dedicated one ("The 1988 Game" / "Source Listing").
+The old per-page brand descriptor became that title. There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
 `#themes` switcher (`sneekie.theme`); the doc pages (Manual, Live, Bot, Magazine, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a

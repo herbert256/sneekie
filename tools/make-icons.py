@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Sneekie's favicon, apple-touch-icon and social (og:image),
+Generate Sneekie's favicon, install icons, apple-touch-icon and social (og:image),
 drawn with the game's own embedded IBM VGA 8x16 CP437 ROM font so they
 match the on-page "♥ SNEEKIE ♥" title.
 
@@ -92,8 +92,10 @@ def icon(size):
     c.glyph(size - hw - pad, size - hh - pad, HEART, hs, RED)
     return c
 
-# favicon + apple-touch share the snake mark
+# favicon, install icons and apple-touch share the snake mark
 icon(32).save("favicon.png")
+icon(192).save("icon-192.png")
+icon(512).save("icon-512.png")
 icon(180).save("apple-touch-icon.png")
 
 # ---- social card 1200x630 ----
@@ -116,5 +118,43 @@ us = 3
 og.text((og.w - og.text_w(url, us)) // 2, 470, url, us, GREY)
 og.scanlines()
 og.save("og.png")
+
+# ---- header wordmark logo: transparent "♥ SNEEKIE ♥" for every page's top-left ----
+def write_png_rgba(path, w, h, rgba):
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)                          # filter: none
+        raw += rgba[y * w * 4:(y + 1) * w * 4]
+    png = (b"\x89PNG\r\n\x1a\n"
+           + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))   # 6 = truecolor + alpha
+           + chunk(b"IDAT", zlib.compress(bytes(raw), 9))
+           + chunk(b"IEND", b""))
+    path.write_bytes(png)
+
+def logo(scale=8):
+    """Green SNEEKIE flanked by red hearts, on a transparent ground — matches the
+       in-game ♥ SNEEKIE ♥ title so it works on any page background."""
+    text = "♥ SNEEKIE ♥"
+    w, h = len(text) * 8 * scale, 16 * scale
+    buf = bytearray(w * h * 4)                  # fully transparent
+    cx = 0
+    for ch in text:
+        code = HEART if ch == "♥" else ord(ch)
+        color = RED if ch == "♥" else GREEN
+        for row in range(16):
+            bits = FONT[code * 16 + row]
+            for col in range(8):
+                if bits & (0x80 >> col):
+                    for sy in range(scale):
+                        for sx in range(scale):
+                            i = ((row * scale + sy) * w + cx + col * scale + sx) * 4
+                            buf[i:i + 4] = bytes(color) + b"\xff"
+        cx += 8 * scale
+    write_png_rgba(DOCS / "logo.png", w, h, bytes(buf))
+    print("wrote logo.png", f"{w}x{h}")
+
+logo()
 
 print("done")
