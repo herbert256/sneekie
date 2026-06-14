@@ -59,9 +59,9 @@ https://herbert256.github.io/sneekie/.
   tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) then plays that one level,
   driving via `pushKey` and reading the page's `parent.botDelay()` each move; the top speed slider maps
   0–100 to a slow-to-fast move delay without restarting the iframe. The controls below the screen mirror
-  the game controls, and fullscreen requests the live frame itself (falling back to a fixed full-viewport
-  frame if the browser rejects the Fullscreen API) and explicitly scales the iframe to the native 640×384
-  game ratio, like `index.html`. It posts status to
+  the game controls, and fullscreen first requests the iframe game's own `#bezel` so `index.html` runs its
+  native fullscreen fitting path; if that fails, Live falls back to its own full-viewport 640×384-ratio frame.
+  It posts status to
   `parent.botStatus(…)`. It does **not** advance on a win: a clean clear (detected as
   `LEVEL===TARGET+1 && LIVE>0`) calls `parent.botEnd(…, true)` →
   **green** flash; getting stuck (head index `BTEL` stops advancing, no safe move, ~26 s with no **score**
