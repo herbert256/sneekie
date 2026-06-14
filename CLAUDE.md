@@ -72,6 +72,14 @@ https://herbert256.github.io/sneekie/.
   and re-jumping to the **same** level. Flipping the switch bumps a `gen` counter (so in-flight flash
   reloads are ignored) and reloads all eight with the new base. No frames are saved — it's live, foreground
   only (background tabs throttle and pause all eight at once).
+- `docs/magazine.html` — a **Magazine** page (nav label **Magazine**): the original 1988 publication of
+  Sneekie as a **type-in program** in *MS(X)DOS Computer Magazine* no. 25. A thumbnail grid of the **cover +
+  pages 58–63** (`docs/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking a thumb opens a JS lightbox
+  (←/→ to flip, Esc to close). The page images were rasterised from `docs/ms(x)dos_computer_magazine_25.pdf`
+  with **pypdfium2** at ~168 dpi (`pip install pypdfium2 pillow` in a throwaway venv — ImageMagick needs
+  Ghostscript, which isn't installed). That source PDF is the **full 100-page magazine** and is **kept untracked
+  on purpose** (size + it's third-party content); only the 7 page images about the game are committed. Same green
+  doc-page styling.
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
@@ -87,10 +95,10 @@ https://herbert256.github.io/sneekie/.
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
-All eight pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
+All nine pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
 look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`SNEEKIE.BAS.html`; the other
-seven pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
-`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Live, Explained, Migration, Visualizer)
+eight pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Live, Magazine, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
 fixed green set, like the listing's green theme), so re-theming is mostly editing `:root`. On the

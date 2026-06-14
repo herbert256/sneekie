@@ -1,1 +1,5 @@
 .DS_Store
+
+# Full 100-page scan of MS(X)DOS Computer Magazine no. 25 (third-party content).
+# Only the 7 page images about Sneekie (docs/magazine/) are published; keep the whole magazine local.
+docs/ms(x)dos_computer_magazine_25.pdf
