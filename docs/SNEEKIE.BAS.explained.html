@@ -347,8 +347,8 @@ const SECTIONS = [
   {at:1500, t:'Layout: rooms with doorways', h:`Build a grid of little rooms (rails every 6 rows, walls every 10 columns, joined with <span class="mono">&#9532;&#9516;&#9524;&#9500;&#9508;</span>), then <code>READ</code> 13 coordinate pairs from the <code>DATA</code> at 1630&ndash;1650 and knock doorways through the walls at those spots.`},
   {at:1670, t:'Layout: vertical gates', h:`Columns each with a 3-cell gap; <code>B(I)</code> remembers the row of each gap. On the moving-gate levels those gaps later slide (see &sect;&nbsp;the moving gates).`},
   {at:1750, t:'Layout: gates + stones', h:`The gate layout (GOSUB 1670) plus a scatter of stones.`},
-  {at:1810, t:'Hazard: horizontal arrows', h:`Set-up gives each column a random arrow row in <code>D(I,1)</code> and marks the cell behind it empty in <code>D(I,2)</code>; <code>sub1830</code> then nudges every arrow one step each tick, wrapping at the edge. An arrow stepping onto the head (<code>219</code>) is fatal &mdash; <code>RETURN 510</code> jumps into the death routine.`},
-  {at:1920, t:'Hazard: vertical arrows', h:`Two arrows per row &mdash; one travelling right (<span class="mono">&#8594;</span>), one left (<span class="mono">&#8592;</span>) &mdash; advanced each tick by <code>sub1970</code> and wrapped at the far column. Touching the head kills.`},
+  {at:1810, t:'Hazard: upward arrows', h:`Set-up gives each even column a random arrow row in <code>D(I,1)</code> and marks the cell behind it empty in <code>D(I,2)</code>; <code>sub1830</code> then nudges every <span class="mono">&#8593;</span> arrow one row upward each tick, wrapping from row 4 back to row 21. An arrow stepping onto the head (<code>219</code>) is fatal &mdash; <code>RETURN 510</code> jumps into the death routine.`},
+  {at:1920, t:'Hazard: horizontal arrows', h:`Two arrows per row &mdash; one travelling right (<span class="mono">&#8594;</span>), one left (<span class="mono">&#8592;</span>) &mdash; advanced each tick by <code>sub1970</code> and wrapped at the far column. Touching the head kills.`},
   {at:2130, t:'Hazard: the moving gates', h:`Each tick the nine gate openings slide. The <code>=96</code> tests (three blank cells sum to 96) check the path is clear before a gap shifts down, and a gap that passes the bottom wraps back to the top.`},
   {at:2260, t:'The pick-up jingle', h:`<code>PLAY "mb"</code> means "music in the background" (don't pause the game) followed by three rising blips.`},
   {at:2280, t:'The pop-up box', h:`Draws the double-line box used behind the "Level n" and "The End" messages.`},
@@ -497,7 +497,7 @@ for(const line of lines){
   }
 }
 
-/* ---------- light/dark toggle ---------- */
+/* ---------- page helpers ---------- */
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
 document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
