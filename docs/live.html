@@ -173,7 +173,11 @@ const BOT = `
       cells = new Map(cells); cells.set(n,32); cells.set(nn,10); stones++;
     } else if(!open(c)) return null;
     const grow = c===1 || isFood(c), body = st.body.slice(), bodySet = new Set(st.bodySet);
-    if(!grow){ const old = body.shift(); bodySet.delete(old); }
+    if(!grow){
+      const old = body.shift(); bodySet.delete(old);
+      if(cells===st.cells) cells = new Map(cells);
+      cells.set(old,32);
+    }
     body.push(n); bodySet.add(n);
     if(grow){ if(cells===st.cells) cells = new Map(cells); cells.set(n,32); }
     return {
@@ -188,34 +192,61 @@ const BOT = `
     return out;
   };
   const tailReach = st => {
-    const tail = st.body[0], seen = new Set([st.head]), q = [st.head]; let h = 0;
+    const tail = st.body[0], seen = new Set([st.head + ',' + st.dir]), q = [[st.head,st.dir]]; let h = 0;
     while(h<q.length){
-      const o = q[h++];
+      const [o,dir] = q[h++];
       if(o===tail) return true;
-      for(const [,d] of DIRS){
+      for(const [sc,d] of DIRS){
+        if(sc===opp[dir]) continue;
         const n = o + d;
-        if(seen.has(n) || danger(n)) continue;
+        if(danger(n)) continue;
         if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
-        seen.add(n); q.push(n);
+        const key = n + ',' + sc;
+        if(seen.has(key)) continue;
+        seen.add(key); q.push([n,sc]);
       }
     }
     return false;
   };
   const flood = st => {
-    const tail = st.body[0], seen = new Set([st.head]), q = [st.head]; let h = 0, count = 0;
-    while(h<q.length && count<1200){
-      const o = q[h++]; count++;
-      for(const [,d] of DIRS){
+    const tail = st.body[0], seen = new Set([st.head + ',' + st.dir]), cells = new Set([st.head]), q = [[st.head,st.dir]]; let h = 0;
+    while(h<q.length && cells.size<1200){
+      const [o,dir] = q[h++];
+      for(const [sc,d] of DIRS){
+        if(sc===opp[dir]) continue;
         const n = o + d;
-        if(seen.has(n) || danger(n)) continue;
+        if(danger(n)) continue;
         if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
-        seen.add(n); q.push(n);
+        const key = n + ',' + sc;
+        if(seen.has(key)) continue;
+        seen.add(key); cells.add(n); q.push([n,sc]);
       }
     }
-    return count;
+    return cells.size;
+  };
+  const stateKey = st => st.head + ',' + st.dir + ',' + st.body[0] + ',' + st.body.length + ',' + st.body[st.body.length-2];
+  const survivalDepth = (start, limit) => {
+    let frontier = [start], seen = new Set([stateKey(start)]), best = 0;
+    for(let depth=1; depth<=limit; depth++){
+      const next = [];
+      for(const st of frontier){
+        for(const ns of legal(st, true)){
+          const key = stateKey(ns);
+          if(seen.has(key)) continue;
+          seen.add(key);
+          next.push([ns, legal(ns, true).length]);
+        }
+      }
+      if(!next.length) return best;
+      best = depth;
+      next.sort((a,b) => b[1] - a[1]);
+      frontier = next.slice(0,40).map(x => x[0]);
+    }
+    return best;
   };
   const routeFood = allowSmile => {
     const start = makeState(), q = [start], seen = new Set(), few = (HART+KLAVER)<=6;
+    const arrowLevel = [5,6,13,14].includes((LEVEL-1) % 16);
     const maxDepth = few ? 115 : 78; let h = 0, checked = 0, best = null, bs = -1e18;
     seen.add(start.head + ',' + start.dir + ',' + start.body[0] + ',' + start.body.length);
     while(h<q.length && h<950){
@@ -227,12 +258,17 @@ const BOT = `
         if(seen.has(key)) continue; seen.add(key);
         if(ns.ate){
           checked++;
-          const sp = flood(ns), rt = tailReach(ns), minSpace = Math.min(170, ns.body.length + (few ? 18 : 8));
-          if(rt || sp >= minSpace){
-            const score = (rt?100000:0) + sp*14 + ns.points*150 - ns.dist*220 - ns.smiles*950 - ns.stones*35;
+          const sp = flood(ns), rt = tailReach(ns), exits = legal(ns, true).length;
+          const minSpace = Math.min(190, ns.body.length + (few ? 24 : 12));
+          const spacious = (rt && sp >= minSpace) || sp >= minSpace + 42;
+          if(!exits || !spacious) continue;
+          const horizon = few ? 22 : (arrowLevel ? 12 : 16), live = survivalDepth(ns, horizon);
+          const corridorOk = exits > 1 || arrowLevel || (live >= horizon && rt && sp >= minSpace + 50);
+          if(corridorOk && live >= (few ? 14 : (arrowLevel ? 7 : 10)) && ((rt && sp >= minSpace) || sp >= minSpace + 42)){
+            const score = (rt?100000:0) + live*5600 + exits*2400 + sp*16 + ns.points*150 - ns.dist*260 - ns.smiles*1200 - ns.stones*55 - (exits===1?18000:0);
             if(score > bs){ bs = score; best = ns.first; }
           }
-          if(checked >= 42 && best !== null) return best;
+          if(checked >= 28 && best !== null) return best;
         } else q.push(ns);
       }
     }
@@ -278,38 +314,22 @@ const BOT = `
     for(let w=0;w<500 && LEVEL!==TARGET;w++) await sleep(8);
     for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
     pushKey('\\r'); await sleep(120);
-    let lastScore = ZCORE, idle = 0, lastHead = BTEL, lastTail = ETEL, stall = 0;
-    const resetTrack = () => { lastScore = ZCORE; idle = 0; lastHead = BTEL; lastTail = ETEL; stall = 0; };
-    const resumeTarget = async () => {
-      for(let w=0;w<1500 && !(LEVEL===TARGET && BTEL===2 && T[2]===1840);w++) await sleep(20);
-      if(LEVEL===TARGET && BTEL===2 && T[2]===1840){ pushKey('\\r'); await sleep(120); resetTrack(); return true; }
-      return false;
-    };
-    const useLife = async () => {
-      if(LIVE <= 1) return false;
-      pushKey('\\x1b');
-      return await resumeTarget();
-    };
+    let lastScore = ZCORE, idle = 0, lastHead = BTEL, stall = 0;
     while(true){
       if(typeof LEVEL==='undefined'){ tell('botEnd', IDX, false); return; }
       if(LEVEL === TARGET+1 && LIVE > 0){ tell('botEnd', IDX, true); return; }   // cleared the level -> green
-      if(LEVEL === TARGET-1 && LIVE > 0){ if(await resumeTarget()) continue; tell('botEnd', IDX, false); return; }
       if(LEVEL !== TARGET){ tell('botEnd', IDX, false); return; }                 // game-over / jumped away -> red
-      const headMoved = BTEL > lastHead, tailMoved = ETEL > lastTail;
-      if(headMoved || tailMoved){
-        lastHead = BTEL; lastTail = ETEL; stall = 0;
-        if(tailMoved && !headMoved){ idle = 0; await sleep(165); continue; }       // death unwinding; let the real life counter handle it
-      } else stall++;
-      if(stall > 24){ if(await useLife()) continue; tell('botEnd', IDX, false); return; } // boxed after all retries -> red
+      if(BTEL > lastHead){ lastHead = BTEL; stall = 0; } else stall++;
+      if(stall > 15){ tell('botEnd', IDX, false); return; }                       // head not advancing (boxed/dying) -> red
       const f = HART+KLAVER; if(f<=2) BONUS=0;
       // progress = the score rising (the bot ate something). In levels >16 a heart spawns a
       // club, so HART+KLAVER can sit flat while the snake is busy eating — the score is the
       // honest signal, so idle off that, not off the item count.
       if(ZCORE > lastScore){ idle = 0; } else idle++; lastScore = ZCORE;
       tell('botStatus', IDX, ZCORE, f);
-      if(idle > 160){ if(await useLife()) continue; tell('botEnd', IDX, false); return; } // ~26s with no score gain -> red
+      if(idle > 160){ tell('botEnd', IDX, false); return; }                       // ~26s with no score gain -> red
       const sc = decide();
-      if(sc===null){ if(await useLife()) continue; tell('botEnd', IDX, false); return; }  // no safe move after all retries -> red
+      if(sc===null){ tell('botEnd', IDX, false); return; }                        // no safe move -> red
       pushKey(keyOf[sc]);
       await sleep(165);
     }
