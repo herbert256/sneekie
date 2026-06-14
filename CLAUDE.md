@@ -77,9 +77,8 @@ https://herbert256.github.io/sneekie/.
   pages 58–63** (`docs/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking a thumb opens a JS lightbox
   (←/→ to flip, Esc to close). The page images were rasterised from `docs/ms(x)dos_computer_magazine_25.pdf`
   with **pypdfium2** at ~168 dpi (`pip install pypdfium2 pillow` in a throwaway venv — ImageMagick needs
-  Ghostscript, which isn't installed). That source PDF is the **full 100-page magazine** and is **kept untracked
-  on purpose** (size + it's third-party content); only the 7 page images about the game are committed. Same green
-  doc-page styling.
+  Ghostscript, which isn't installed). The **full 100-page magazine PDF is committed and served** (5.4 MB) and the
+  page links to it ("browse the whole issue"). Same green doc-page styling.
 - `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
