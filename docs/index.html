@@ -118,6 +118,19 @@
       repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
     box-shadow: inset 0 0 26px 5px rgba(0,0,0,.5);
   }
+  /* CRT power-on: a bright bar snaps to full height then fades, like a tube energizing */
+  #power{
+    position:absolute; inset:9px; border-radius:7px; z-index:3; pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 50%, #fff, rgba(255,255,255,.55));
+    opacity:0;
+  }
+  #power.go{ animation:crton 620ms ease-out both; }
+  @keyframes crton{
+    0%   { opacity:0;   transform:scaleY(.006); filter:brightness(2.2); }
+    7%   { opacity:.95; transform:scaleY(.03); }
+    22%  { opacity:.55; transform:scaleY(1); }
+    100% { opacity:0;   transform:scaleY(1); }
+  }
   /* the control chin: engraved logo, power LED, brightness/contrast knobs */
   #panel{ display:flex; align-items:center; gap:11px; height:16px; padding:0 5px; }
   #panel .logo{
@@ -167,6 +180,7 @@
   #bezel:fullscreen #tube{ padding:0; border-radius:0; box-shadow:none; background:#000; }
   #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
   #bezel:fullscreen #glass{ inset:0; border-radius:0; }   /* keep the scanlines over the fullscreen image */
+  #bezel:fullscreen #power{ inset:0; border-radius:0; }
   #bezel:fullscreen #panel{ display:none; }
   /* in-bezel touch controls: hidden until fullscreen on a touch device (see below) */
   #fstouch{ display:none; }
@@ -282,6 +296,7 @@
   <div id="tube">
     <canvas id="screen" width="640" height="384"></canvas>
     <div id="glass" aria-hidden="true"></div>
+    <div id="power" aria-hidden="true"></div>
   </div>
   <div id="panel" aria-hidden="true">
     <span class="logo">Acme Corporation</span>
@@ -830,9 +845,14 @@ async function waitForBootGesture(){
   bootSkip = false;
   return new Promise(resolve => { bootStartResolve = resolve; });
 }
+function crtPowerOn(){
+  const p = document.getElementById('power');
+  if(p) p.classList.add('go');               // one-shot tube warm-up flash
+}
 async function bootSequence(){
   if(shouldSkipBoot()){ bootActive = false; return; }
 
+  crtPowerOn();
   cls();
   bootBiosLogo(4);
   bootCenter(11, 'Acme Corporation PC/XT compatible', 15);
