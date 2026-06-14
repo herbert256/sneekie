@@ -578,6 +578,18 @@ addEventListener('keydown', e => {
 });
 syncControls();
 
+/* ---- viewer keyboard: step through levels (the game itself can't be steered — the iframe is inert) ---- */
+function stepLevel(dir){
+  const i = LEVEL_CHOICES.indexOf(activeLevel);
+  const n = ((i < 0 ? 0 : i) + dir + LEVEL_CHOICES.length) % LEVEL_CHOICES.length;
+  setLevel(LEVEL_CHOICES[n]);                 // wraps: after 32 back to 1, before 1 back to 32
+}
+document.addEventListener('keydown', e => {
+  if(e.target === speed) return;              // leave the speed slider's own arrow/space handling alone
+  if(e.key === ' ' || e.key === 'Spacebar' || e.key === 'ArrowRight'){ e.preventDefault(); stepLevel(1); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); stepLevel(-1); }
+});
+
 // start the selected level
 updateLabel();
 cell.frame.addEventListener('load', inject);
