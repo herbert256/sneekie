@@ -24,6 +24,7 @@
 <meta name="twitter:title" content="SNEEKIE.BAS — source listing">
 <meta name="twitter:description" content="The original 1988 GW-BASIC source of Sneekie, syntax-highlighted.">
 <meta name="twitter:image" content="https://sneekie.xyz/og.png">
+<link rel="stylesheet" href="site.css">
 <style>
   :root{
     /* token palette — overwritten by the active theme in JS */
@@ -45,24 +46,7 @@
     min-height:100vh; padding:0 12px 22px;
     -webkit-text-size-adjust:100%;
   }
-  header.top{
-    position:sticky; top:0; z-index:20; width:calc(100% + 24px); margin:0 -12px 12px;
-    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    padding:10px 18px;
-    background:linear-gradient(var(--room1), rgba(10,12,13,.86));
-    backdrop-filter:blur(6px); border-bottom:1px solid var(--line);
-  }
-  header.top .brand{ font-weight:700; color:#7dff7d; letter-spacing:.02em; }
-  header.top .brand .dim{ color:var(--ink-dim); font-weight:500; }
-  header.top nav{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
-  header.top nav a, header.top nav button{
-    font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--ink); background:#16181b; border:1px solid var(--line); border-radius:3px;
-    padding:6px 11px; cursor:pointer; text-decoration:none; white-space:nowrap;
-    transition:color .12s, border-color .12s, box-shadow .12s;
-  }
-  header.top nav a:hover, header.top nav button:hover{ color:#7dff7d; border-color:#7dff7d; }
-  header.top nav a[aria-current="page"]{ color:#7dff7d; border-color:#7dff7d; box-shadow:0 0 12px -5px #7dff7d; cursor:default; }
+  /* top nav, brand, page title + footer are shared — see site.css */
   .themebar{ display:flex; justify-content:center; gap:6px; margin-bottom:14px; }
   header.hero{ text-align:center; margin-bottom:14px; }
   h1{
@@ -156,14 +140,6 @@
   .id { color:var(--id);  }
   .pn { color:var(--pn);  }
 
-  footer{
-    margin-top:18px; max-width:760px; text-align:center;
-    font-size:10.5px; color:var(--ink-dim); line-height:1.75;
-  }
-  footer .plaque{ border-top:1px solid var(--line); padding-top:12px; letter-spacing:.04em; }
-  footer a{ color:var(--ink); text-decoration:none; border-bottom:1px dotted var(--ink-dim); }
-  footer a:hover{ color:var(--phos); border-color:var(--phos); }
-
   /* ---- print: a clean paper listing ---- */
   @media print{
     @page{ margin:14mm; }
@@ -183,35 +159,10 @@
     .ln{color:#7a3ea0} .kw{color:#9a1f6b} .fn{color:#0a7a52} .op{color:#555}
     .str{color:#a85d00} .num{color:#1a5fb4} .com{color:#888} .id{color:#222} .pn{color:#888}
   }
-  header.top{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
-  header.top .brand{ font-size:13px; }
-  /* --- shared: ♥ SNEEKIE ♥ logo top-left + big white centered page title --- */
-  header.top .brand{ display:inline-flex; align-items:center; line-height:0; }
-  header.top .brand img{ height:24px; width:auto; display:block; }
   .hero{ text-align:center; }
-  h1.page-title{ color:#fff; text-align:center; font-weight:800; line-height:1.14;
-    font-size:clamp(28px, 5vw, 50px); margin:22px 0 18px; }
-  main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
-  @media screen{ body, header.top{ background:#000; } }   /* full deep black, identical on every page */
-  /* header nav + footer: readable phosphor green at index.html sizing (page body unchanged) */
-  header.top nav a, header.top nav button{ color:#a3edab; }
-  footer, footer .src{ color:#7fcf8a; }
-  footer{ font-size:12.5px; }
-  footer a{ color:#a3edab; }
   @media (max-width: 520px){
     body{ overflow-x:hidden; }
-    header.top{ gap:8px; padding:8px 10px 7px; align-items:center; }
-    header.top .brand img{ height:22px; }
-    header.top nav{
-      flex:1 1 100%; order:2; margin-left:0; flex-wrap:nowrap; gap:5px;
-      overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:3px;
-      -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    }
-    header.top nav::-webkit-scrollbar{ display:none; }
-    header.top nav a, header.top nav button{ flex:0 0 auto; font-size:10px; padding:6px 9px; letter-spacing:.06em; }
-    h1.page-title{ font-size:clamp(25px, 9vw, 34px); margin:14px 0 12px; }
   }
-  @media print{ h1.page-title{ color:#000; } }
 </style>
 </head>
 <body>
@@ -252,11 +203,9 @@
 </div>
 
 <footer>
-  <p class="plaque">
-    Sneekie &copy; July '88 by HerbySoft<br>
-    Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>
-    Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
-  </p>
+  Sneekie &copy; July '88 by HerbySoft<br>
+  Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>
+  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
 </footer>
 
 <script>

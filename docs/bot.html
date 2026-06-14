@@ -24,6 +24,7 @@
 <meta name="twitter:title" content="Sneekie — how the live bot thinks">
 <meta name="twitter:description" content="A detailed look at the live bot's route finding, survival checks, and trap avoidance.">
 <meta name="twitter:image" content="https://sneekie.xyz/og.png">
+<link rel="stylesheet" href="site.css">
 <style>
   :root{
     --bg:#0a0c0d; --panel:#13171a; --panel2:#1b2025; --border:#33383d;
@@ -38,18 +39,7 @@
     font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
   code,.mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Cascadia Mono",monospace; }
   a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
-  header.top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    padding:10px 18px; background:linear-gradient(#14171a, rgba(10,12,13,.86));
-    backdrop-filter:blur(6px); border-bottom:1px solid var(--border);
-    font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
-  header.top .brand{ font-weight:700; color:var(--accent); letter-spacing:.02em; font-size:13px; }
-  header.top .brand .dim{ color:var(--muted); font-weight:500; }
-  header.top nav{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
-  header.top nav a, header.top nav button{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-    color:#98a1a6; background:#16181b; border:1px solid var(--border); border-radius:3px; padding:6px 11px;
-    cursor:pointer; text-decoration:none; white-space:nowrap; transition:color .12s, border-color .12s, box-shadow .12s; }
-  header.top nav a:hover, header.top nav button:hover{ color:var(--accent); border-color:var(--accent); }
-  header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
+  /* top nav, brand, page title + footer are shared — see site.css */
 
   main{ max-width:1080px; margin:0 auto; padding:30px 20px 78px; }
   h1{ font-size:30px; line-height:1.18; margin:6px 0; color:var(--heading); }
@@ -95,7 +85,6 @@
   .flow div{ background:var(--codebg); border:1px solid var(--border); border-radius:7px; padding:10px 12px; min-height:64px; }
   .flow b{ display:block; color:var(--blue); font:700 12px/1 ui-monospace,monospace; margin-bottom:6px; }
   .flow span{ font-size:13px; }
-  footer{ max-width:1080px; margin:46px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
   @media (max-width:640px){
     main{ padding:24px 16px 60px; }
     h1{ font-size:25px; }
@@ -103,32 +92,10 @@
     td:first-child{ white-space:normal; }
   }
   @media print{ header.top,.toc{ display:none } body{ background:#fff; color:#111 } .card,.step,.note,pre,.formula{ break-inside:avoid; } }
-  /* --- shared: ♥ SNEEKIE ♥ logo top-left + big white centered page title --- */
-  header.top .brand{ display:inline-flex; align-items:center; line-height:0; }
-  header.top .brand img{ height:24px; width:auto; display:block; }
-  h1.page-title{ color:#fff; text-align:center; font-weight:800; line-height:1.14;
-    font-size:clamp(28px, 5vw, 50px); margin:22px 0 18px; }
   main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
-  @media screen{ body, header.top{ background:#000; } }   /* full deep black, identical on every page */
-  /* header nav + footer: readable phosphor green at index.html sizing (page body unchanged) */
-  header.top nav a, header.top nav button{ color:#a3edab; }
-  footer, footer .src{ color:#7fcf8a; }
-  footer{ font-size:12.5px; }
-  footer a{ color:#a3edab; }
   @media (max-width: 520px){
     body{ overflow-x:hidden; }
-    header.top{ gap:8px; padding:8px 10px 7px; align-items:center; }
-    header.top .brand img{ height:22px; }
-    header.top nav{
-      flex:1 1 100%; order:2; margin-left:0; flex-wrap:nowrap; gap:5px;
-      overflow-x:auto; overscroll-behavior-x:contain; padding-bottom:3px;
-      -webkit-overflow-scrolling:touch; scrollbar-width:none;
-    }
-    header.top nav::-webkit-scrollbar{ display:none; }
-    header.top nav a, header.top nav button{ flex:0 0 auto; font-size:10px; padding:6px 9px; letter-spacing:.06em; }
-    h1.page-title{ font-size:clamp(25px, 9vw, 34px); margin:14px 0 12px; }
   }
-  @media print{ h1.page-title{ color:#000; } }
 </style>
 </head>
 <body>
