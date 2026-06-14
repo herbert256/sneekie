@@ -131,6 +131,15 @@
     22%  { opacity:.55; transform:scaleY(1); }
     100% { opacity:0;   transform:scaleY(1); }
   }
+  /* brief blackout + bright snap-back when the boot changes screen mode */
+  #screen.flick{ animation:modeflick 150ms ease-out; }
+  @keyframes modeflick{
+    0%   { filter:brightness(.04); }
+    45%  { filter:brightness(.04); }
+    50%  { filter:brightness(1.8); }
+    70%  { filter:brightness(1.8); }
+    100% { filter:brightness(1); }
+  }
   /* the control chin: engraved logo, power LED, brightness/contrast knobs */
   #panel{ display:flex; align-items:center; gap:11px; height:16px; padding:0 5px; }
   #panel .logo{
@@ -671,6 +680,16 @@ function bootSleep(ms){
     tick();
   });
 }
+function bootFlick(){                          // retrigger the screen mode-switch flicker
+  cv.classList.remove('flick');
+  void cv.offsetWidth;
+  cv.classList.add('flick');
+}
+async function bootCls(){                       // clear screen with a CRT mode-switch blackout
+  bootFlick();
+  await bootSleep(70);
+  cls();
+}
 function bootClick(freq=95, dur=0.022, gain=0.04){
   if(!actx || muted) return;
   const t = actx.currentTime + 0.002;
@@ -861,7 +880,7 @@ async function bootSequence(){
   bootCenter(17, 'or tap the monitor glass', 7);
   await waitForBootGesture();
 
-  cls();
+  await bootCls();
   startCursor();
   bootLine('Acme Corporation Turbo BIOS v1.88', 15);
   bootLine('(C) Copyright Acme Corporation 1984,1988', 7);
@@ -892,13 +911,13 @@ async function bootSequence(){
   bootLine('Booting from fixed disk C:...', 15);
   await bootDiskBurst(440);
 
-  cls();
+  await bootCls();
   bootLine('The IBM Personal Computer DOS', 15);
   bootLine('Version 3.30 (C)Copyright International Business Machines Corp 1981, 1987', 7);
   bootLine('(C)Copyright Microsoft Corp 1981, 1986', 7);
   bootLine('');
   await bootDiskBurst(260);
-  bootLine('Current date is Tue 01-01-1980', 7);
+  bootLine('Current date is Tue 1-01-1980', 7);
   await bootType('Enter new date (mm-dd-yy): ', 7, 12, 22);
   await bootTypeLine('07-15-88', 15, 42, 78);
   bootLine('Current time is  0:00:00.00', 7);
@@ -918,7 +937,7 @@ async function bootSequence(){
   await bootTypeLine('C:\\GAMES>GWBASIC', 15);
   await bootDiskBurst(360);
 
-  cls();
+  await bootCls();
   bootLine('GW-BASIC 3.23', 15);
   bootLine('(C) Copyright Microsoft 1983,1984,1985,1986,1987,1988', 7);
   bootLine('60300 Bytes free', 7);
