@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A line-by-line, plain-English walkthrough of the 1988 GW-BASIC source of Sneekie by HerbySoft.">
+<title>SNEEKIE.BAS — explained</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sneekie">
+<meta property="og:title" content="SNEEKIE.BAS — explained">
+<meta property="og:description" content="The 1988 GW-BASIC source with a plain-English, line-by-line walkthrough.">
+<meta property="og:url" content="https://herbert256.github.io/sneekie/explained.html">
+<meta property="og:image" content="https://herbert256.github.io/sneekie/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SNEEKIE.BAS — explained">
+<meta name="twitter:description" content="The 1988 GW-BASIC source with a plain-English, line-by-line walkthrough.">
+<meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
+<style>
+  :root{
+    --bg:#0a0c0d; --panel:#13171a; --panel2:#1b2025; --border:#33383d;
+    --text:#aab2b6; --muted:#5b6367; --accent:#7dff7d; --heading:#b6ffb6;
+    --codebg:#06090a; --glow:rgba(125,255,125,.13);
+    --ln:#6e7681; --kw:#ff7b72; --fn:#d2a8ff; --str:#a5d6ff; --num:#79c0ff;
+    --com:#8b949e; --id:#c9d1d9; --op:#ff7b72; --pn:#8b949e;
+    --annot:#e3a857;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; scroll-padding-top:64px; }
+  body{
+    margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
+    font:15px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  code, .mono{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
+  a{ color:var(--accent); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+
+  /* ---- top bar ---- */
+  header.top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 18px; background:linear-gradient(#14171a, rgba(10,12,13,.86));
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--border); }
+  header.top .brand{ font-weight:700; color:var(--accent); letter-spacing:.02em; }
+  header.top .brand .dim{ color:var(--muted); font-weight:500; }
+  header.top nav{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+  header.top nav a, header.top nav button{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:#98a1a6; background:#16181b; border:1px solid var(--border); border-radius:3px; padding:6px 11px;
+    cursor:pointer; text-decoration:none; white-space:nowrap; transition:color .12s, border-color .12s, box-shadow .12s; }
+  header.top nav a:hover, header.top nav button:hover{ color:var(--accent); border-color:var(--accent); }
+  header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
+
+  main{ max-width:940px; margin:0 auto; padding:30px 20px 80px; }
+
+  /* ---- intro ---- */
+  .hero h1{ font-size:30px; line-height:1.2; margin:6px 0 6px; color:var(--heading); letter-spacing:.01em; }
+  .hero h1 .sub{ display:block; font-size:15px; font-weight:500; color:var(--muted); margin-top:6px; letter-spacing:0; }
+  .lead{ color:var(--text); }
+  .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
+
+  .callout{
+    margin:26px 0; padding:18px 20px; background:var(--panel); border:1px solid var(--border);
+    border-left:3px solid var(--accent); border-radius:8px;
+  }
+  .callout h2{ margin:0 0 8px; font-size:17px; color:var(--heading); }
+  .callout p{ margin:9px 0; }
+  .formula{ display:inline-block; background:var(--codebg); border:1px solid var(--border); border-radius:6px;
+    padding:2px 8px; margin:2px 0; font-size:13.5px; }
+
+  h2.sec, h3.sub{ color:var(--heading); }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
+
+  table{ width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  table.gloss td:first-child, table.chars td:first-child{ white-space:nowrap; }
+  th, td{ text-align:left; padding:5px 9px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th{ color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  td .g{ font-family:ui-monospace, monospace; color:var(--num); }       /* code/char cell */
+  td b{ color:var(--heading); }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:6px 14px 12px; }
+  .panel h3{ font-size:14px; color:var(--heading); margin:12px 2px 2px; }
+
+  /* ---- table of contents ---- */
+  nav.toc{ margin:30px 0; padding:14px 18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; }
+  nav.toc h2{ margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  nav.toc ol{ margin:0; padding:0; list-style:none; columns:2; column-gap:26px; font-size:13.5px; }
+  @media (max-width:640px){ nav.toc ol{ columns:1; } }
+  nav.toc li{ margin:3px 0; break-inside:avoid; }
+  nav.toc .n{ display:inline-block; width:1.7em; color:var(--muted); }
+
+  /* ---- section cards ---- */
+  section.card{ margin:34px 0 0; scroll-margin-top:64px; }
+  section.card .head{ display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  section.card .badge{
+    flex:0 0 auto; min-width:24px; height:24px; padding:0 6px; border-radius:6px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--panel2); border:1px solid var(--border); color:var(--accent);
+    font:600 12px/1 ui-monospace, monospace;
+  }
+  section.card h2{ margin:0; font-size:19px; color:var(--heading); }
+  section.card .lines{ color:var(--muted); font-size:12.5px; font-family:ui-monospace, monospace; }
+  section.card .prose{ margin:0 0 10px; }
+  section.card .prose ul{ margin:8px 0; padding-left:20px; }
+  section.card .prose li{ margin:3px 0; }
+  section.card .prose code, .lead code, .callout code, td code{
+    background:var(--codebg); border:1px solid var(--border); border-radius:4px;
+    padding:.5px 5px; font-size:.86em; color:var(--heading);
+  }
+
+  /* ---- code blocks ---- */
+  .src{
+    background:var(--codebg); border:1px solid var(--border); border-radius:8px;
+    padding:12px 0; margin:10px 0 0; overflow-x:auto;
+    font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+    font-size:13px; line-height:1.55;
+  }
+  .src:empty{ display:none; }
+  .ln-row{ white-space:pre; padding:0 16px; }
+  .ln-row:hover{ background:color-mix(in srgb, var(--accent) 8%, transparent); }
+  .annot{
+    white-space:pre-wrap; padding:1px 16px 5px 16px; color:var(--annot);
+    font-size:12px; font-style:italic;
+  }
+  .annot .mk{ font-style:normal; opacity:.8; }
+
+  /* token colors */
+  .t-ln { color:var(--ln);  }
+  .t-kw { color:var(--kw);  font-weight:600; }
+  .t-fn { color:var(--fn);  }
+  .t-op { color:var(--op);  }
+  .t-str{ color:var(--str); }
+  .t-num{ color:var(--num); }
+  .t-com{ color:var(--com); font-style:italic; }
+  .t-id { color:var(--id);  }
+  .t-pn { color:var(--pn);  }
+
+  footer{ max-width:940px; margin:50px auto 0; padding:20px; border-top:1px solid var(--border);
+    color:var(--muted); font-size:12.5px; text-align:center; }
+
+  @media print{
+    header.top, nav.toc nav, .toc-skip{ display:none !important; }
+    body{ background:#fff; color:#111; }
+    .src{ overflow:visible; } .ln-row{ white-space:pre-wrap; }
+  }
+  header.top{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
+  header.top .brand{ font-size:13px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="brand">SNEEKIE.BAS <span class="dim">· explained</span></span>
+  <nav>
+    <a href="index.html">&#9654; Play</a>
+    <a href="manual.html">Manual</a>
+    <a href="demo.html">Demo</a>
+    <a href="live.html">Live</a>
+    <a href="magazine.html">Magazine</a>
+    <a href="source.html">Source</a>
+    <a href="explained.html" aria-current="page">Explained</a>
+    <a href="migration.html">Migration</a>
+    <a href="vram.html">Visualizer</a>
+    <a href="SNEEKIE.BAS" download="SNEEKIE.BAS">Download</a>
+    <button id="print">Print</button>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Sneekie, line by line
+      <span class="sub">A plain-English tour of the 1988 GW-BASIC source &mdash; annotated 38 years later.</span>
+    </h1>
+  </div>
+
+  <p class="lead">
+    This is the original <code>SNEEKIE.BAS</code> with the story added back in. The code is shown exactly as
+    you wrote it; the <span style="color:var(--annot)">amber notes</span> under a line and the cards between
+    sections are the new explanations. If a routine is a mystery, find its line number below &mdash; everything
+    is grouped the way GW-BASIC numbered it.
+  </p>
+
+  <div class="callout">
+    <h2>The one idea that explains everything: the screen <em>is</em> the game</h2>
+    <p>There are no sprites, no game objects, no "snake" data structure to speak of. The snake, the walls, the
+      hearts and the arrows are just <em>characters sitting in the PC's text-screen memory</em>, and the program
+      reads and writes that memory directly with <code>PEEK</code> and <code>POKE</code>.</p>
+    <p>The text screen is 80&times;25 cells. Each cell is <b>two bytes</b>: the character code, then its colour
+      ("attribute"). So a cell's address is</p>
+    <p><span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>
+      &nbsp;&mdash; 160 because a row is 80 cells &times; 2 bytes.</p>
+    <p>The even byte holds the glyph; the odd byte holds the attribute (<code>7</code> = normal, <code>15</code> =
+      bright). To find out what's in front of the snake, the code just <code>PEEK</code>s the character byte of the
+      target cell and switches on the number it finds. That single trick &mdash; <em>the picture and the state are
+      the same bytes</em> &mdash; is why so much of the program is arithmetic on screen offsets.</p>
+    <p style="margin-bottom:0"><a href="vram.html">&#9654; See it live</a> &mdash; steer a snake and watch the actual bytes change.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>The variables (many are Dutch)</h3>
+      <table class="gloss">
+        <tr><td class="g">T()</td><td>the snake &mdash; a list of screen offsets, from tail <code>T(ETEL)</code> to head <code>T(BTEL)</code></td></tr>
+        <tr><td class="g">BTEL / ETEL</td><td>index of the <b>head</b> / <b>tail</b> inside <code>T()</code> (<i>teller</i> = counter)</td></tr>
+        <tr><td class="g">E / F</td><td>current / previous heading (scancodes 72 80 75 77)</td></tr>
+        <tr><td class="g">HART</td><td>hearts &#9829; still to collect (<i>hart</i> = heart)</td></tr>
+        <tr><td class="g">KLAVER</td><td>clubs &#9827; still to collect (<i>klaver</i> = club)</td></tr>
+        <tr><td class="g">BONUS / BMIN</td><td>time bonus, and how much it drops per move</td></tr>
+        <tr><td class="g">AANTAL</td><td>how many of each item to scatter (<i>aantal</i> = number)</td></tr>
+        <tr><td class="g">Z</td><td>seconds allowed per move; <code>999</code> = turn-based, small = real-time</td></tr>
+        <tr><td class="g">LIVE / LEVEL</td><td>lives left / current level</td></tr>
+        <tr><td class="g">ZCORE / ZORE</td><td>score / high score (kept floating-point on purpose &mdash; see line 80)</td></tr>
+        <tr><td class="g">OP</td><td>points to add this time (handed to the score routine, 1190)</td></tr>
+        <tr><td class="g">S() B() D()</td><td>pop-up backup / gate rows / moving-arrow state</td></tr>
+        <tr><td class="g">VIDEO</td><td>the screen's memory segment (<code>&amp;HB000</code> mono / <code>&amp;HB800</code> colour)</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>What the characters mean (CP437)</h3>
+      <table class="chars">
+        <tr><td class="g">32</td><td>&nbsp;</td><td>empty cell</td></tr>
+        <tr><td class="g">219</td><td>&#9608;</td><td>snake head</td></tr>
+        <tr><td class="g">186 205 187 188 201 200</td><td>&#9553;&#9552;&#9559;&#9565;&#9556;&#9562;</td><td>snake body: straight + corners</td></tr>
+        <tr><td class="g">179 196 197 &hellip;</td><td>&#9474;&#9472;&#9532;</td><td>maze &amp; frame walls (single line)</td></tr>
+        <tr><td class="g">1</td><td>&#9786;</td><td>smiley &mdash; <b>bad</b> (&minus;50)</td></tr>
+        <tr><td class="g">3</td><td>&#9829;</td><td>heart (+10)</td></tr>
+        <tr><td class="g">5</td><td>&#9827;</td><td>club (+25)</td></tr>
+        <tr><td class="g">10</td><td>&#9689;</td><td>stone &mdash; pushable</td></tr>
+        <tr><td class="g">24 26 27</td><td>&#8593;&#8594;&#8592;</td><td>moving arrows &mdash; <b>deadly</b></td></tr>
+        <tr><td class="g">attr 7 / 15</td><td>&nbsp;</td><td>normal / bright</td></tr>
+      </table>
+      <h3>Keys (the scancodes in E)</h3>
+      <table class="chars">
+        <tr><td class="g">72 80 75 77</td><td>&#8593;&#8595;&#8592;&#8594;</td><td>steer the snake</td></tr>
+        <tr><td class="g">27</td><td>ESC</td><td>give up when stuck (costs a life)</td></tr>
+        <tr><td class="g">67 / 68</td><td>F9 / F10</td><td>cheat: +life &amp; skip / skip level</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h2>How one move plays out (lines 420&ndash;1010)</h2>
+    <ol style="margin:6px 0; padding-left:22px;">
+      <li>Wait up to <code>Z</code> seconds for an arrow key (or let the snake keep its heading).</li>
+      <li>Knock <code>BMIN</code> off the bonus.</li>
+      <li>Turn the heading into a step and work out the cell the head is about to enter.</li>
+      <li><code>PEEK</code> that cell and react: move into empty space, eat a heart/club, push a stone, die on an arrow, or get blocked by a wall.</li>
+      <li>Turn the old head cell into the right <span class="mono">&#9552;&#9553;&#9559;&#9565;&#9556;&#9562;</span> piece and draw a new <span class="mono">&#9608;</span> head.</li>
+      <li>Shimmer the body and advance the level's arrows/gates by one step.</li>
+      <li>Repeat until every heart and club is gone.</li>
+    </ol>
+  </div>
+
+  <nav class="toc" id="toc"><h2>The routines</h2><ol id="toc-list"></ol></nav>
+
+  <div id="listing"></div>
+</main>
+
+<footer>
+  &copy; July '88 by HerbySoft<br>
+  Published on the MSX/MS-DOS Computer Magazine diskette MCMPC-D2 (no.&nbsp;25, October 1988).<br>
+  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory &amp;HB000/&amp;HB800<br>HTML version: June 2026.
+</footer>
+
+<script>
+'use strict';
+
+/* the source, byte-exact (UTF-8), base64-encoded */
+const B64 = "JyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KJyBTTkVFS0lFIC0gKGMpIGp1bGkgJzg4IGJ5IEhlcmJ5U29mdAonIFB1Ymxpc2hlZCBvbiBNU1gvTVMtRE9TIENvbXB1dGVyIE1hZ2F6aW5lIGRpc2tldHRlIE1DTVBDLUQyCicgKG1hZ2F6aW5lIGlzc3VlICMyNSwgT2N0b2JlciAxOTg4KQonCicgRGV0b2tlbml6ZWQgZnJvbSBTTkVFS0lFLkJBUyAoR1ctQkFTSUMgdG9rZW5pemVkIGZvcm1hdCwKJyA5MzYwIGJ5dGVzLCBmaWxlIGRhdGUgMTk4OC0xMC0wMikgZXh0cmFjdGVkIGZyb20gdGhlIEZBVDEyCicgZGlzayBpbWFnZSBNQ01QQy1EMi5kc2sgb24gMjAyNi0wNi0xMi4KJyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCjEwIFJFTSBTTkVFS0lFCjIwIFJFTSBNU1gvTVMtRE9TIENvbXB1dGVyIE1hZ2F6aW5lCjMwIFJFTSBHVy1CYXNpYyB2ZXJzaWUKNDAgUkVNIGRvb3IgSGVyYnlTb2Z0CjcwIFJFTQo4MCBERUZJTlQgQS1ZOiBTQ1JFRU4gMDogV0lEVEggODA6IENMUzogWk9SRT0wOiBSQU5ET01JWkUgVElNRVI6IERFRiBTRUc9JkgwCjkwIElGIFBFRUsoJkg0NDkpPTcgIFRIRU4gIFZJREVPPSZIQjAwMCBFTFNFIFZJREVPPSZIQjgwMAoxMDAgREVGIFNFRz1WSURFTzogQ0xTOiBESU0gVCgxNTAwMCksUygxNjgpLEIoMTApLEQoODAsMykKMTEwIExPQ0FURSAgMSwgMTogUFJJTlQgQ0hSJCgyMTgpO1NUUklORyQoNzgsQ0hSJCgxOTYpKTtDSFIkKDE5MSk7CjEyMCBMT0NBVEUgIDIsIDE6IFBSSU5UIENIUiQoMTc5KTtTUEMoNzgpO0NIUiQoMTc5KTsKMTMwIExPQ0FURSAgMiwxNzogUFJJTlQgIioqKiogU25lZWtpZSAqKioqICAgICAgICAgKGMpIGp1bGkgJzg4IGJ5IEhlcmJ5U29mdCI7CjE0MCBMT0NBVEUgMjIsIDE6IFBSSU5UIENIUiQoMTc5KTtTUEMoNzgpO0NIUiQoMTc5KTsKMTUwIExPQ0FURSAyMiwgNjogUFJJTlQgIjEwIHB1bnRlbiAgICAgIC01MCBwdW50ZW4gICAgSGlnaHNjb3JlIjsKMTYwIExPQ0FURSAyMywgMTogUFJJTlQgQ0hSJCgxNzkpO1NQQyg3OCk7Q0hSJCgxNzkpOwoxNzAgTE9DQVRFIDIyLDU1OiBQUklOVCAiTGV2ZWwgICAgICAgU2NvcmUiOwoxODAgTE9DQVRFIDIzLCA2OiBQUklOVCAiMjUgcHVudGVuICAgICAgU3RlZW4gICAgICAgICA8RVNDPiB2YXN0Z2Vsb3BlbiI7CjE5MCBMT0NBVEUgMjMsNTU6IFBSSU5UICJMaXZlcyAgICAgICBCb251cyI7CjIwMCBMT0NBVEUgMjQsIDE6IFBSSU5UIENIUiQoMTkyKTtTVFJJTkckKDc4LENIUiQoMTk2KSk7Q0hSJCgyMTcpOwoyMTAgUE9LRSAzMzk2LDE6IFBPS0UgMzU1NiwxMDogUE9LRSAzNTI2LDU6IFBPS0UgMzM2NiwzCjIyMCAnCjIzMCBaQ09SRT0wOiBMSVZFPTMKMjQwIEZPUiBMRVZFTD0xICBUTyAgMzIKMjUwICAgIEZPUiBJPTEgIFRPICAxNzogTE9DQVRFIDMrSSwxOiBQUklOVCBDSFIkKDE3OSk7U1BDKDc4KTtDSFIkKDE3OSk6IE5FWFQKMjYwICAgIExPQ0FURSAgMywxOiBQUklOVCBDSFIkKDE5NSk7U1RSSU5HJCg3OCxDSFIkKDE5NikpO0NIUiQoMTgwKQoyNzAgICAgTE9DQVRFIDIxLDE6IFBSSU5UIENIUiQoMTk1KTtTVFJJTkckKDc4LENIUiQoMTk2KSk7Q0hSJCgxODApCjI4MCAgICBUKDEpPTIwMDA6IFQoMik9MTg0MDogQlRFTD0yOiBFVEVMPTEKMjkwICAgIFBPS0UgVChCVEVMKSwyMTk6IFBPS0UgVChFVEVMKSwxODY6IFBPS0UgVChCVEVMKSsxLDE1CjMwMCAgICBFPTcyOiBGPTcyOiBIQVJUPTA6IEtMQVZFUj0wOiBCT05VUz0xMDAwMDogT1A9MDogR09TVUIgMTE5MAozMTAgICAgT04gTEVWRUwgR09TVUIgMjMyMCwyMzMwLDIzNDAsMjM1MCwyMzYwLDIzNzAsMjM4MCwyMzkwLDI0MTAsMjQyMCwyNDMwLDI0NDAsMjQ1MCwyNDYwLDI0NzAsMjQ4MCwyMzIwLDIzMzAsMjM0MCwyMzUwLDIzNjAsMjM3MCwyMzgwLDIzOTAsMjQxMCwyNDIwLDI0MzAsMjQ0MCwyNDUwLDI0NjAsMjQ3MCwyNDgwCjMyMCAgICBMT0NBVEUgMjMsNzM6IFBSSU5UIFVTSU5HICIjIyMjIyMiO0JPTlVTCjMzMCAgICBMT0NBVEUgMjMsNjE6IFBSSU5UIFVTSU5HICIjIyI7TElWRTogTE9DQVRFIDIyLDYxOiBQUklOVCBVU0lORyAiIyMiO0xFVkVMCjM0MCAgICBGT1IgST0xICBUTyAgQUFOVEFMCjM1MCAgICAgICBMPTE6IEdPU1VCIDExNTA6IEw9MzogR09TVUIgMTE1MDogSUYgSzE9MSAgVEhFTiAgSEFSVD1IQVJUKzEKMzYwICAgIE5FWFQKMzcwICAgIEZPUiBJPTEgIFRPICA0MjogRk9SIEkzPTAgIFRPICAzOiBTKEkrSTMqNDIpPVBFRUsoMTQ5NytJK0kzKjE2MCk6IE5FWFQ6IE5FWFQKMzgwICAgIEdPU1VCIDIyODA6IExPQ0FURSAxMSwzNzogUFJJTlQgIkxldmVsICI7TEVWRUwKMzkwICAgIExPQ0FURSAxMiwzMjogUFJJTlQgIkRydWsgb3AgZWVuIHRvZXRzIgo0MDAgICAgREVGIFNFRz0wOiBQT0tFIDEwNTAsUEVFSygxMDUyKTogREVGIFNFRz1WSURFTzogQSQ9SU5QVVQkKDEpCjQxMCAgICBGT1IgST0xICBUTyAgNDI6IEZPUiBJMz0wICBUTyAgMzogUE9LRSAxNDk3K0krSTMqMTYwLFMoSStJMyo0Mik6IE5FWFQ6IE5FWFQKNDIwICAgIFdISUxFKyBLTEFWRVIrSEFSVD4wCjQzMCAgICAgICBBJD1JTktFWSQ6IFoyPTA6IFoxPVRJTUVSCjQ0MCAgICAgICBXSElMRSsgQSQ9IiIgIEFORCAgWjI8Wgo0NTAgICAgICAgICAgWjI9VElNRVItWjE6IEEkPUlOS0VZJAo0NjAgICAgICAgV0VORAo0NzAgICAgICAgSUYgQk9OVVM+MCAgVEhFTiAgQk9OVVM9Qk9OVVMtQk1JTgo0ODAgICAgICAgTE9DQVRFIDIzLDczOiBQUklOVCBVU0lORyAiIyMjIyMjIjtCT05VUwo0OTAgICAgICAgSUYgTEVOKEEkKTw+MSAgVEhFTiAgR09UTyA2NDAKNTAwICAgICAgICAgIElGIEFTQyhBJCk8PjI3ICBUSEVOICBHT1RPIDkxMAo1MTAgICAgICAgICAgRk9SIEk9MSAgVE8gIDMKNTIwICAgICAgICAgICAgIFNPVU5EIDIwMDAsMzogU09VTkQgMzAwMCwzOiBTT1VORCA0MDAwLDM6IFNPVU5EIDMwMDAsMwo1MzAgICAgICAgICAgTkVYVAo1NDAgICAgICAgICAgSUYgUExBWSgwKTw+MCAgVEhFTiAgR09UTyA1NDAKNTUwICAgICAgICAgIFdISUxFKyBFVEVMPD1CVEVMCjU2MCAgICAgICAgICAgICBaPVRJTUVSCjU3MCAgICAgICAgICAgICBaMT1USU1FUi1aOiBJRiBaMTwwLjA3NSAgVEhFTiAgR09UTyA1NzAKNTgwICAgICAgICAgICAgIFBPS0UgVChFVEVMKSwzMjogUE9LRSBUKEVURUwpKzEsNzogU09VTkQgMTUwMCwwLjEKNTkwICAgICAgICAgICAgIEVURUw9RVRFTCsxOiBPUD1CTUlOKi0xOiBHT1NVQiAxMTkwCjYwMCAgICAgICAgICBXRU5ECjYxMCAgICAgICAgICBMSVZFPUxJVkUtMTogSEFSVD0wOiBLTEFWRVI9MAo2MjAgICAgICAgICAgSUYgTElWRT0wICBUSEVOICBMRVZFTD0zMiBFTFNFIExFVkVMPUxFVkVMLTEKNjMwICAgICAgICAgIEdPVE8gMTA4MAo2NDAgICAgICAgSUYgTEVOKEEkKT0yICBUSEVOICBFPUFTQyhNSUQkKEEkLDIsMSkpCjY1MCAgICAgICBBPVQoQlRFTCkKNjYwICAgICAgIElGIEU9NjggIFRIRU4gIEdPVE8gMTA4MAo2NzAgICAgICAgSUYgRT02NyAgVEhFTiAgTElWRT1MSVZFKzE6IEdPVE8gMTA4MAo2ODAgICAgICAgSUYgRT04MCAgVEhFTiAgQT1BKzE2MCBFTFNFIElGIEU9NzIgIFRIRU4gIEE9QS0xNjAKNjkwICAgICAgIElGIEU9NzcgIFRIRU4gIEE9QSsyICAgRUxTRSBJRiBFPTc1ICBUSEVOICBBPUEtMgo3MDAgICAgICAgRD1QRUVLKEEpCjcxMCAgICAgICBJRiBEPD4zMiAgVEhFTiAgR09UTyA3NDAKNzIwICAgICAgICAgIFBPS0UgVChFVEVMKSwzMjogUE9LRSBUKEVURUwpKzEsNzogU09VTkQgMTUwMCwwLjE6IEVURUw9RVRFTCsxCjczMCAgICAgICAgICBHT1RPIDkyMAo3NDAgICAgICAgSUYgRDw+NSAgVEhFTiAgR09UTyA3NzAKNzUwICAgICAgICAgIEw9MTogR09TVUIgMTE1MDogR09TVUIgMjI2MAo3NjAgICAgICAgICAgT1A9MjU6IEdPU1VCIDExOTA6IEtMQVZFUj1LTEFWRVItMTogR09UTyA5MjAKNzcwICAgICAgIElGIEQ8PjMgIFRIRU4gIEdPVE8gODAwCjc4MCAgICAgICAgICBJRiBMRVZFTD4xNiAgVEhFTiAgTD01OiBHT1NVQiAxMTUwOiBJRiBLMT0xICBUSEVOICBLTEFWRVI9S0xBVkVSKzEKNzkwICAgICAgICAgIEw9MTogR09TVUIgMTE1MDogR09TVUIgMjI2MDogT1A9MTA6IEdPU1VCIDExOTA6IEhBUlQ9SEFSVC0xOiBHT1RPIDkyMAo4MDAgICAgICAgSUYgRDw+MTAgIFRIRU4gIEdPVE8gODcwCjgxMCAgICAgICAgICBUQT1BOiBJRiBFPTgwICBUSEVOICBUQT1UQSsxNjAgRUxTRSBJRiBFPTcyICBUSEVOICBUQT1UQS0xNjAKODIwICAgICAgICAgIElGIEU9NzcgIFRIRU4gIFRBPVRBKzIgRUxTRSBJRiBFPTc1ICBUSEVOICBUQT1UQS0yCjgzMCAgICAgICAgICBEPVBFRUsoVEEpCjg0MCAgICAgICAgICBJRiBEPD4zMiAgVEhFTiAgR09UTyA5MTAKODUwICAgICAgICAgICAgIFBPS0UgVEEsMTA6IFBPS0UgVChFVEVMKSwzMjogUE9LRSBUKEVURUwpKzEsNwo4NjAgICAgICAgICAgICAgU09VTkQgMTUwMCwwLjE6IEVURUw9RVRFTCsxOiBHT1RPIDkyMAo4NzAgICAgICAgSUYgRDw+MSAgVEhFTiAgR09UTyA5MDAKODgwICAgICAgICAgIEZPUiBJPTUwICBUTyAgMSAgU1RFUCAgLTE6IFNPVU5EIDYwMCs3NSpJLDAuMzU6IE5FWFQKODkwICAgICAgICAgIE9QPS01MDogR09TVUIgMTE5MDogTD0xOiBHT1NVQiAxMTUwOiBHT1RPIDkyMAo5MDAgICAgICAgSUYgRD0yNCAgT1IgIEQ9MjYgIE9SICBEPTI3ICBUSEVOICBHT1RPIDUxMAo5MTAgICAgICAgRT1GOiBPUD1CTUlOKi0xOiBHT1NVQiAxMTkwOiBTT1VORCAxMDAwLDU6IEdPVE8gMTAyMAo5MjAgICAgICAgSUYgKEU9NzcgIEFORCAgRj03NykgIE9SICAoRT03NSAgQU5EICBGPTc1KSAgVEhFTiAgUE9LRSBUKEJURUwpLDIwNTogR09UTyA5ODAKOTMwICAgICAgIElGIChFPTgwICBBTkQgIEY9ODApICBPUiAgKEU9NzIgIEFORCAgRj03MikgIFRIRU4gIFBPS0UgVChCVEVMKSwxODY6IEdPVE8gOTgwCjk0MCAgICAgIElGIChFPTgwICBBTkQgIEY9NzcpICBPUiAgKEU9NzUgIEFORCAgRj03MikgIFRIRU4gIFBPS0UgVChCVEVMKSwxODc6IEdPVE8gOTgwCjk1MCAgICAgIElGIChFPTcyICBBTkQgIEY9NzcpICBPUiAgKEU9NzUgIEFORCAgRj04MCkgIFRIRU4gIFBPS0UgVChCVEVMKSwxODg6IEdPVE8gOTgwCjk2MCAgICAgIElGIChFPTgwICBBTkQgIEY9NzUpICBPUiAgKEU9NzcgIEFORCAgRj03MikgIFRIRU4gIFBPS0UgVChCVEVMKSwyMDE6IEdPVE8gOTgwCjk3MCAgICAgIElGIChFPTcyICBBTkQgIEY9NzUpICBPUiAgKEU9NzcgIEFORCAgRj04MCkgIFRIRU4gIFBPS0UgVChCVEVMKSwyMDA6IEdPVE8gOTgwCjk4MCAgICAgIEJURUw9QlRFTCsxOiBUKEJURUwpPUE6IEY9RTogUE9LRSBUKEJURUwpLDIxOQo5OTAgICAgICBJRiBCVEVMPTE1MDAwICBUSEVOICBHT1RPIDUxMAoxMDAwICAgICAgRk9SIEk9QlRFTCAgVE8gIEVURUwgIFNURVAgIC0yOiBQT0tFIFQoSSkrMSwxNTogUE9LRSBUKEktMSkrMSw3OiBORVhUCjEwMTAgICAgICBPTiBMRVZFTCBHT1NVQiAxMTcwLDExNzAsMTE3MCwxMTcwLDIxMzAsMTgzMCwxOTcwLDIxMzAsMTE3MCwxMTcwLDExNzAsMTE3MCwyMTMwLDE4MzAsMTk3MCwyMTMwLDExNzAsMTE3MCwxMTcwLDExNzAsMjEzMCwxODMwLDE5NzAsMjEzMCwxMTcwLDExNzAsMTE3MCwxMTcwLDIxMzAsMTgzMCwxOTcwLDIxMzAKMTAyMCAgIFdFTkQKMTAzMCAgIFdISUxFKyBCT05VUz4wCjEwNDAgICAgICBPUD01OiBHT1NVQiAxMTkwOiBCT05VUz1CT05VUy01OiBMT0NBVEUgMjMsNzQKMTA1MCAgICAgIFBSSU5UIFVTSU5HICIjIyMjIyI7Qk9OVVM6IFNPVU5EIDMwMDAsMC4xCjEwNjAgICBXRU5ECjEwNzAgICBMSVZFPUxJVkUrMQoxMDgwIE5FWFQgTEVWRUwKMTA5MCBHT1NVQiAyMjgwOiBMT0NBVEUgMTEsMzM6IFBSSU5UICJFaW5kZSIKMTEwMCBMT0NBVEUgMTIsMzI6IFBSSU5UICJOb2cgZWVuIGtlZXIgKGovbikiCjExMTAgREVGIFNFRz0wOiBQT0tFIDEwNTAsUEVFSygxMDUyKTogREVGIFNFRz1WSURFTwoxMTIwIEEkPUlOUFVUJCgxKTogSUYgSU5TVFIoIkpqTm4iLEEkKT0wICBUSEVOICBHT1RPIDExMjAKMTEzMCBJRiBBJD0iSiIgIE9SICBBJD0iaiIgIFRIRU4gIEdPVE8gMjMwIEVMU0UgQ0xTOiBQUklOVCAiQmVkYW5rdCB2b29yIGhldCBzcGVsZW4iOiBFTkQKMTE0MCAnCjExNTAgSzE9MDogSz1JTlQoUk5EKjI3MjArNDgwKTogSUYgSyAgTU9EICAyPTEgIFRIRU4gIEs9SysxCjExNjAgSUYgUEVFSyhLKT0zMiAgVEhFTiAgUE9LRSBLLEw6IEsxPTEKMTE3MCBSRVRVUk4KMTE4MCAnCjExOTAgWkNPUkU9WkNPUkUrT1A6IExPQ0FURSAyMiw3MzogUFJJTlQgVVNJTkcgIiMjIyMjIyI7WkNPUkUKMTIwMCBJRiBaQ09SRT5aT1JFICBUSEVOICBaT1JFPVpDT1JFOiBMT0NBVEUgMjIsNDY6IFBSSU5UIFVTSU5HICIjIyMjIyMiO1pPUkUKMTIxMCBSRVRVUk4KMTIyMCAnCjEyMzAgRk9SIEk9MSAgVE8gIDM5OiBMT0NBVEUgOCwxK0k6IFBSSU5UIENIUiQoMTk2KTogTE9DQVRFIDE2LDgwLUk6IFBSSU5UIENIUiQoMTk2KTogTkVYVAoxMjQwICBGT1IgST0wICBUTyAgOAoxMjUwICAgTE9DQVRFIDIxLUksMTE6IFBSSU5UIENIUiQoMTc5KTogTE9DQVRFIDMrSSw3MDogUFJJTlQgQ0hSJCgxNzkpOiBMT0NBVEUgMjEtSSwyNjogUFJJTlQgQ0hSJCgxNzkpCjEyNjAgICBMT0NBVEUgMytJLDU1OiBQUklOVCBDSFIkKDE3OSk6IExPQ0FURSAxNSwyMitJOiBQUklOVCBDSFIkKDE5Nik6IExPQ0FURSA2LDUxK0k6IFBSSU5UIENIUiQoMTk2KQoxMjcwICAgTE9DQVRFIDE1LDcrSTogUFJJTlQgQ0hSJCgxOTYpOiBMT0NBVEUgNiw2NitJOiBQUklOVCBDSFIkKDE5Nik6IExPQ0FURSAxOCw3K0k6IFBSSU5UIENIUiQoMTk2KQoxMjgwICAgTE9DQVRFIDksNjYrSTogUFJJTlQgQ0hSJCgxOTYpOiBMT0NBVEUgMTgsMjIrSTogUFJJTlQgQ0hSJCgxOTYpOiBMT0NBVEUgOSw1MStJOiBQUklOVCBDSFIkKDE5NikKMTI5MCAgIEZPUiBJMT02ICBUTyAgMTAKMTMwMCAgICAgTE9DQVRFIEkxLDUrSSo0OiBQUklOVCBDSFIkKDE3OSk6IExPQ0FURSA4K0kxLDQ0K0kqNDogUFJJTlQgQ0hSJCgxNzkpCjEzMTAgICBORVhUCjEzMjAgICBMT0NBVEUgOCw1K0kqNDogUFJJTlQgQ0hSJCgxOTcpOiBMT0NBVEUgMTYsNDQrSSo0OiBQUklOVCBDSFIkKDE5NykKMTMzMCBORVhUCjEzNDAgTE9DQVRFICAzLDcwOiBQUklOVCBDSFIkKDE5NCk6IExPQ0FURSAyMSwxMTogUFJJTlQgQ0hSJCgxOTMpOiBMT0NBVEUgIDMsNTU6IFBSSU5UIENIUiQoMTk0KQoxMzUwIExPQ0FURSAxNSwyNjogUFJJTlQgQ0hSJCgxOTcpOiBMT0NBVEUgIDYsNTU6IFBSSU5UIENIUiQoMTk3KTogTE9DQVRFIDE4LDI2OiBQUklOVCBDSFIkKDE5NykKMTM2MCBMT0NBVEUgIDksNTU6IFBSSU5UIENIUiQoMTk3KTogTE9DQVRFIDE1LDExOiBQUklOVCBDSFIkKDE5Nyk6IExPQ0FURSAgNiw3MDogUFJJTlQgQ0hSJCgxOTcpCjEzNzAgTE9DQVRFIDE4LDExOiBQUklOVCBDSFIkKDE5Nyk6IExPQ0FURSAgOSw3MDogUFJJTlQgQ0hSJCgxOTcpOiBMT0NBVEUgMjEsMjY6IFBSSU5UIENIUiQoMTkzKQoxMzgwIFJFVFVSTgoxMzkwICcKMTQwMCBGT1IgWT00ICBUTyAgMjAgIFNURVAgIDI6IEZPUiBJPTAgIFRPICAxOiBRPTE6IEZPUiBBPTEgIFRPICA2CjE0MTAgICAgSUYgUT0xICBUSEVOICBRPTA6IFk9WSsxIEVMU0UgUT0xOiBZPVktMQoxNDIwICAgIElGIFk8MjEgIFRIRU4gIFg9MTcrQSs0MCpJOiBHT1NVQiAxNDgwCjE0MzAgICAgTkVYVDogTkVYVDogTkVYVAoxNDQwICAgIEkxPTcKMTQ1MCAgICBGT1IgWD0yICBUTyAgNzggIFNURVAgIDI6IEZPUiBJPTAgIFRPICAxCjE0NjAgICAgICAgWT03KzgqSTogR09TVUIgMTQ4MDogWT04KzgqSTogWD1YKzE6IEdPU1VCIDE0ODA6IFk9OSs4Kkk6IFg9WC0xOiBHT1NVQiAxNDgwCjE0NzAgTkVYVDogTkVYVDogUkVUVVJOCjE0ODAgUE9LRSAoWS0xKSoxNjArKFgtMSkqMiwxMDogUkVUVVJOCjE0OTAgJwoxNTAwIEZPUiBJPTIgIFRPICA3OTogRk9SIEkxPTEgIFRPICAyOiBMT0NBVEUgMys2KkkxLEk6IFBSSU5UIENIUiQoMTk2KTogTkVYVDogTkVYVAoxNTEwICAgIEZPUiBJPTQgIFRPICAyMDogRk9SIEkxPTEgIFRPICA3CjE1MjAgICAgICAgTE9DQVRFICAzLDEwKkkxOiBQUklOVCBDSFIkKDE5NCk6IExPQ0FURSAyMSwxMCpJMTogUFJJTlQgQ0hSJCgxOTMpCjE1MzAgICAgICAgTE9DQVRFIEksMTAqSTE6IFBSSU5UIENIUiQoMTc5KQoxNTQwICAgICAgIEZPUiBJMj0xICBUTyAgMgoxNTUwICAgICAgICAgIExPQ0FURSAzKzYqSTIsMTAqSTE6IFBSSU5UIENIUiQoMTk3KTogTE9DQVRFIDMrNipJMiw4MDogUFJJTlQgQ0hSJCgxODApCjE1NjAgICAgICAgICAgTE9DQVRFIDMrNipJMiwgMTogUFJJTlQgQ0hSJCgxOTUpCjE1NzAgTkVYVDogTkVYVDogTkVYVDogUkVTVE9SRSAxNTAwCjE1ODAgRk9SIEk9MSAgVE8gIDEzOiBSRUFEIEMxLEMyLEMzLEM0CjE1OTAgICAgTE9DQVRFIEMxLEMyOiBQUklOVCAiICI6IExPQ0FURSBDMSxDMi0xOiBQUklOVCBDSFIkKDE4MCkKMTYwMCAgICBMT0NBVEUgQzEsQzIrMjogUFJJTlQgQ0hSJCgxOTUpOiBMT0NBVEUgQzEsQzIrMTogUFJJTlQgIiAiCjE2MTAgICAgTE9DQVRFIEMzKzIsQzQ6IFBSSU5UIENIUiQoMTk0KTogTE9DQVRFIEMzKzEsQzQ6IFBSSU5UICIgIgoxNjIwICAgIExPQ0FURSBDMyxDNDogUFJJTlQgIiAiOiBMT0NBVEUgQzMtMSxDNDogUFJJTlQgQ0hSJCgxOTMpCjE2MzAgTkVYVDogUkVUVVJOOiBEQVRBIDE1LDUKMTY0MCBEQVRBIDYsMTAsOSwzNSw2LDIwLDksNzUsNiw0MCw5LDU1LDYsNzAsOSw2NSwxOCwxMCwxNSw1NSwxOCwyMCwxNSw2NSwxOCwzMAoxNjUwIERBVEEgMTUsNzUsMTgsNDAsOSw0NSwxMiwyMCw5LDE1LDEyLDMwLDksMTUsMTgsNTAsOSwxNSw2LDUwLDksMTUsMTgsNjAKMTY2MCAnCjE2NzAgRk9SIEk9MSAgVE8gIDk6IEIoSSk9NitJCjE2ODAgICAgTE9DQVRFICAzLDgqSTogUFJJTlQgQ0hSJCgxOTQpCjE2OTAgICAgRk9SIEkxPTQgIFRPICAyMDogTE9DQVRFIEkxLDgqSTogUFJJTlQgQ0hSJCgxNzkpOiBORVhUCjE3MDAgICAgTE9DQVRFIDIxLDgqSTogUFJJTlQgQ0hSJCgxOTMpOiBMT0NBVEUgQihJKS0xLEkqODogUFJJTlQgIuKUtAoxNzEwICAgICAgIEZPUiBJMT0wICBUTyAgMjogTE9DQVRFIEIoSSkrSTEsSSo4OiBQUklOVCAiICI6IE5FWFQKMTcyMCAgICAgICBMT0NBVEUgQihJKSszLEkqODogUFJJTlQgQ0hSJCgxOTQpCjE3MzAgTkVYVDogUkVUVVJOCjE3NDAgJwoxNzUwIEdPU1VCIDE2NzAKMTc2MCBGT1IgSTE9NCAgVE8gIDIwICBTVEVQICAyOiBGT1IgSTI9MCAgVE8gIDkKMTc3MCAgICBZPUkxOiBYPUkyKjgrMzogR09TVUIgMTQ4MDogWT1JMTogWD1JMio4KzU6IEdPU1VCIDE0ODAKMTc4MCAgICBJRiBZPDIwICBUSEVOICBZPUkxKzE6IFg9STIqOCs0OiBHT1NVQiAxNDgwCjE3OTAgTkVYVDogTkVYVDogUkVUVVJOCjE4MDAgJwoxODEwIEZPUiBJPTIgIFRPICA3OSAgU1RFUCAgMjogRChJLDEpPTUrSU5UKFJORCoxNCk6IEQoSSwyKT0zMjogTkVYVDogR09TVUIgMTgzMDogUkVUVVJOCjE4MjAgJwoxODMwIEZPUiBJPTIgIFRPICA3OCAgU1RFUCAgMgoxODQwICAgIEkyPShEKEksMSktMSkqMTYwKyhJLTEpKjIKMTg1MCAgICBJRiBEKEksMSk9NCAgVEhFTiAgUE9LRSBJMixEKEksMik6IFBPS0UgSTIrMSw3OiBEKEksMSk9MjE6IEkyPUkyKzI3MjAKMTg2MCAgICBJRiBQRUVLKEkyLTE2MCk9MjE5ICBUSEVOICBSRVRVUk4gNTEwCjE4NzAgICAgSUYgUEVFSyhJMi0xNjApPjEwMCAgVEhFTiAgR09UTyAxOTAwCjE4ODAgICAgICAgSUYgRChJLDEpPD4yMSAgVEhFTiAgUE9LRSBJMixEKEksMik6IFBPS0UgSTIrMSw3CjE4OTAgICAgICAgRChJLDEpPUQoSSwxKS0xOiBEKEksMik9UEVFSyhJMi0xNjApOiBQT0tFIEkyLTE2MCwyNDogUE9LRSBJMi0xNTksMTUKMTkwMCBORVhUOiBSRVRVUk4KMTkxMCAnCjE5MjAgRk9SIEk9NCAgVE8gIDIwOiBGT1IgQT0wICBUTyAgMQoxOTMwICAgIEQoSStBKjIwLDEpPVJORCozOCoyKzIrQTogRChJK0EqMjAsMik9MzIKMTk0MCBORVhUOiBORVhUCjE5NTAgRCgxMiwxKT0xNDogRCgxMywxKT02OiBEKDMyLDEpPTY1OiBEKDMzLDEpPTU1OiBHT1NVQiAxOTcwOiBSRVRVUk4KMTk2MCAnCjE5NzAgRk9SIEk9NCAgVE8gIDIwCjE5ODAgICAgSTI9KEktMSkqMTYwKyhEKEksMSktMSkqMgoxOTkwICAgIElGIEQoSSwxKT03OSAgVEhFTiAgUE9LRSBJMixEKEksMik6IFBPS0UgSTIrMSw3OiBEKEksMSk9MTogSTI9STItMTU2CjIwMDAgICAgRD1QRUVLKEkyKzIpOiBJRiBEPTIxOSAgVEhFTiAgUkVUVVJOIDUxMAoyMDEwICAgIElGIEQ9MjcgIFRIRU4gIFBPS0UgSTIrMixEKEkrMjAsMik6IEQoSSsyMCwyKT0yNgoyMDIwICAgIElGIEQ+MTAwICBUSEVOICBHT1RPIDIwNTAKMjAzMCAgICAgICBJRiBEKEksMSk8PjEgIFRIRU4gIFBPS0UgSTIsRChJLDIpOiBQT0tFIEkyKzEsNwoyMDQwICAgICAgIEQoSSwxKT1EKEksMSkrMTogRChJLDIpPVBFRUsoSTIrMik6IFBPS0UgSTIrMiwyNjogUE9LRSBJMiszLDE1CjIwNTAgICAgTD1JKzIwOiBJMj0oSS0xKSoxNjArKEQoTCwxKS0xKSoyCjIwNjAgICAgSUYgRChMLDEpPTIgIFRIRU4gIFBPS0UgSTIsRChMLDIpOiBQT0tFIEkyKzEsNzogRChMLDEpPTgwOiBJMj1JMisxNTYKMjA3MCAgICBEPVBFRUsoSTItMik6IElGIEQ9MjE5ICBUSEVOICBSRVRVUk4gNTEwCjIwODAgICAgSUYgRD4xMDAgIE9SICBEPTI2ICBUSEVOICBHT1RPIDIxMTAKMjA5MCAgICAgICBJRiBEKEwsMSk8PjgwICBUSEVOICBQT0tFIEkyLEQoTCwyKTogUE9LRSBJMisxLDcKMjEwMCAgICAgICBEKEwsMSk9RChMLDEpLTE6IEQoTCwyKT1QRUVLKEkyLTIpOiBQT0tFIEkyLTIsMjc6IFBPS0UgSTItMSwxNQoyMTEwIE5FWFQ6IFJFVFVSTgoyMTIwICcKMjEzMCBGT1IgRDE9MSAgVE8gIDkKMjE0MCAgICBEMj0oQihEMSktMSkqMTYwKyhEMSo4LTEpKjI6IElGIEIoRDEpPD40ICBUSEVOICBHT1RPIDIxOTAKMjE1MCAgICBBPVBFRUsoRDIrMjA4MCkrUEVFSyhEMisyMjQwKStQRUVLKEQyKzI0MDApCjIxNjAgICAgSUYgQTw+OTYgIFRIRU4gIEdPVE8gMjI0MAoyMTcwICAgIFBPS0UgRDIrMjU2MCwxNzk6IFBPS0UgRDIrMjA4MCwxNzk6IFBPS0UgRDIrMjI0MCwxNzk6IFBPS0UgRDIrMjQwMCwxNzkKMjE4MCAgICBQT0tFIEQyLDMyOiBQT0tFIEQyKzE2MCwzMjogUE9LRSBEMiszMjAsMzI6IFBPS0UgRDIrMTkyMCwxNzkKMjE5MCAgICBBPVBFRUsoRDIpK1BFRUsoRDIrMTYwKStQRUVLKEQyKzMyMCkKMjIwMCAgICBJRiBBPD45NiAgVEhFTiAgR09UTyAyMjQwCjIyMTAgICAgICAgSUYgQihEMSk8PjQgIFRIRU4gIFBPS0UgRDItMTYwLDE3OQoyMjIwICAgICAgIFBPS0UgRDIsMTkzOiBQT0tFIEQyKzE2MCwzMjogUE9LRSBEMiszMjAsMzI6IFBPS0UgRDIrNDgwLDMyCjIyMzAgICAgICAgUE9LRSBEMis2NDAsMTk0OiBCKEQxKT1CKEQxKSsxOiBJRiBCKEQxKT0xNyAgVEhFTiAgQihEMSk9NAoyMjQwIE5FWFQ6IFJFVFVSTgoyMjUwICcKMjI2MCBQTEFZICJtYiI6IFNPVU5EIDI1MDAsMC4xOiBTT1VORCAzNTAwLDAuMTogU09VTkQgNTAwMCwwLjE6IFJFVFVSTgoyMjcwICcKMjI4MCBMT0NBVEUgMTAsMzA6IFBSSU5UIENIUiQoMjAxKTtTVFJJTkckKDE5LENIUiQoMjA1KSk7Q0hSJCgxODcpCjIyOTAgTE9DQVRFIDExLDMwOiBQUklOVCBDSFIkKDE4Nik7U1BDKDE5KTtDSFIkKDE4Nik6IExPQ0FURSAxMiwzMDogUFJJTlQgQ0hSJCgxODYpO1NQQygxOSk7Q0hSJCgxODYpCjIzMDAgTE9DQVRFIDEzLDMwOiBQUklOVCBDSFIkKDIwMCk7U1RSSU5HJCgxOSxDSFIkKDIwNSkpO0NIUiQoMTg4KTogUkVUVVJOCjIzMTAgJwoyMzIwIFo9OTk5OiBBQU5UQUw9IDc1OiBCTUlOPTEwOiBSRVRVUk4KMjMzMCBaPTk5OTogQUFOVEFMPSA3NTogQk1JTj0xMDogR09TVUIgMTIzMDogUkVUVVJOCjIzNDAgWj05OTk6IEFBTlRBTD0gNzU6IEJNSU49MTA6IEdPU1VCIDE1MDA6IFJFVFVSTgoyMzUwIFo9OTk5OiBBQU5UQUw9IDUwOiBCTUlOPTEwOiBHT1NVQiAxNDAwOiBSRVRVUk4KMjM2MCBaPTk5OTogQUFOVEFMPSA1MDogQk1JTj0xMDogR09TVUIgMTY3MDogUkVUVVJOCjIzNzAgWj05OTk6IEFBTlRBTD0gNTA6IEJNSU49MTA6IEdPU1VCIDE4MTA6IFJFVFVSTgoyMzgwIFo9OTk5OiBBQU5UQUw9IDUwOiBCTUlOPTEwOiBHT1NVQiAxOTIwOiBSRVRVUk4KMjM5MCBaPTk5OTogQUFOVEFMPSA1MDogQk1JTj0xMDogR09TVUIgMTc1MDogUkVUVVJOCjI0MDAgJwoyNDEwIFo9IDAuNDogQUFOVEFMPTEyNTogQk1JTj0gNTogUkVUVVJOCjI0MjAgWj0gMC42OiBBQU5UQUw9MTI1OiBCTUlOPSA1OiBHT1NVQiAxMjMwOiBSRVRVUk4KMjQzMCBaPSAwLjY6IEFBTlRBTD0xMjU6IEJNSU49IDU6IEdPU1VCIDE1MDA6IFJFVFVSTgoyNDQwIFo9IDAuOTogQUFOVEFMPTEwMDogQk1JTj0gNTogR09TVUIgMTQwMDogUkVUVVJOCjI0NTAgWj0gMC45OiBBQU5UQUw9MTAwOiBCTUlOPSA1OiBHT1NVQiAxNjcwOiBSRVRVUk4KMjQ2MCBaPTEgIDogQUFOVEFMPTEwMDogQk1JTj0gNTogR09TVUIgMTgxMDogUkVUVVJOCjI0NzAgWj0xICA6IEFBTlRBTD0xMDA6IEJNSU49IDU6IEdPU1VCIDE5MjA6IFJFVFVSTgoyNDgwIFo9MS4yOiBBQU5UQUw9MTAwOiBCTUlOPSA1OiBHT1NVQiAxNzUwOiBSRVRVUk4K";
+const SRC = new TextDecoder().decode(Uint8Array.from(atob(B64), c => c.charCodeAt(0)));
+
+/* ---------- GW-BASIC tokenizer (same classes as the plain listing) ---------- */
+const KW = new Set(('REM DEFINT DEFSNG DEFDBL DEFSTR SCREEN WIDTH CLS RANDOMIZE DEF SEG ' +
+  'POKE DIM LOCATE PRINT USING LPRINT FOR TO STEP NEXT IF THEN ELSE GOTO GOSUB RETURN ' +
+  'ON WHILE WEND SOUND PLAY BEEP END STOP DATA READ RESTORE LET INPUT LINE GET PUT OPEN ' +
+  'CLOSE CALL RUN COLOR PSET PRESET CIRCLE PAINT DRAW OUT WAIT SWAP ERASE CLEAR OPTION BASE').split(' '));
+const FN = new Set(('CHR$ STR$ STRING$ SPACE$ LEFT$ RIGHT$ MID$ HEX$ OCT$ INKEY$ INPUT$ ASC LEN ' +
+  'INSTR INT FIX ABS SGN SQR SIN COS TAN ATN LOG EXP RND VAL PEEK TIMER POS CSRLIN VARPTR ' +
+  'FRE SPC TAB').split(' '));
+const OPWORD = new Set('AND OR NOT XOR EQV IMP MOD'.split(' '));
+const isWS = c => (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+const isW  = c => isWS(c) || (c >= '0' && c <= '9');
+const isD  = c => c >= '0' && c <= '9';
+const isH  = c => isD(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+
+function scan(s, out){
+  let i = 0; const n = s.length;
+  while(i < n){
+    const c = s[i];
+    if(c === ' ' || c === '\t'){ let j = i; while(j < n && (s[j] === ' ' || s[j] === '\t')) j++; out.push(['ws', s.slice(i, j)]); i = j; continue; }
+    if(c === "'"){ out.push(['com', s.slice(i)]); break; }
+    if(c === '"'){ let j = i + 1; while(j < n && s[j] !== '"') j++; if(j < n) j++; out.push(['str', s.slice(i, j)]); i = j; continue; }
+    if(c === '&' && (s[i+1] === 'H' || s[i+1] === 'h')){ let j = i + 2; while(j < n && isH(s[j])) j++; out.push(['num', s.slice(i, j)]); i = j; continue; }
+    if(isD(c) || (c === '.' && isD(s[i+1] || ''))){ let j = i; while(j < n && (isD(s[j]) || s[j] === '.')) j++; out.push(['num', s.slice(i, j)]); i = j; continue; }
+    if(isWS(c)){
+      let j = i; while(j < n && isW(s[j])) j++; if(s[j] === '$') j++;
+      const w = s.slice(i, j), up = w.toUpperCase();
+      if(up === 'REM'){ out.push(['kw', w]); out.push(['com', s.slice(j)]); break; }
+      out.push([KW.has(up) ? 'kw' : FN.has(up) ? 'fn' : OPWORD.has(up) ? 'op' : 'id', w]);
+      i = j; continue;
+    }
+    if('=+-*/\\^<>'.includes(c)){
+      const two = s.substr(i, 2);
+      if(two === '<=' || two === '>=' || two === '<>' || two === '><'){ out.push(['op', two]); i += 2; continue; }
+      out.push(['op', c]); i++; continue;
+    }
+    out.push(['pn', c]); i++;
+  }
+}
+function tokenize(line){
+  const out = []; const m = /^(\s*)(\d+)(?=\D|$)/.exec(line);
+  if(m){ if(m[1]) out.push(['ws', m[1]]); out.push(['ln', m[2]]); scan(line.slice(m[0].length), out); }
+  else scan(line, out);
+  return out;
+}
+function lineNo(line){ const m = /^\s*(\d+)/.exec(line); return m ? +m[1] : null; }
+
+/* ---------- section cards (inserted before the given BASIC line) ---------- */
+const SECTIONS = [
+  {at:80, t:'Boot &amp; find the screen', h:`Three jobs in two lines. <code>DEFINT A-Y</code> makes every variable A&hellip;Y an integer &mdash; which deliberately leaves the <code>Z*</code> names floating-point, the reason the timer and score are called <code>Z</code>, <code>ZCORE</code>, <code>ZORE</code>. <code>SCREEN 0:WIDTH 80</code> selects 80&times;25 text. Then <code>PEEK(&amp;H449)</code> asks the BIOS whether this PC has a mono card (memory at <code>&amp;HB000</code>) or colour (<code>&amp;HB800</code>); from here on every <code>PEEK</code>/<code>POKE</code> aims straight at that screen memory.`},
+  {at:110, t:'Paint the frame &amp; score panel', h:`Plain <code>LOCATE&hellip;PRINT</code> draws the fixed furniture: the outer box, the title bar, and the legend along the bottom. The final line <code>POKE</code>s the four little legend icons (&#9786; &#9689; &#9827; &#9829;) straight into screen memory at fixed offsets.`},
+  {at:230, t:'Start a new game', h:`Zero the score and set three lives, then play levels 1&rarr;32.`},
+  {at:240, t:'The level loop', h:`For each level: blank the 17 inner rows, drop a two-cell snake in the middle pointing up, and <code>ON LEVEL GOSUB</code> into this level's recipe (lines 2320&ndash;2480) which sets the speed and builds the maze.`},
+  {at:320, t:'Status line &amp; scattering the items', h:`Show the bonus, lives and level, then sprinkle <code>AANTAL</code> hearts and <code>AANTAL</code> smileys onto random empty squares. <code>HART</code> ends up holding how many hearts you must collect to clear the level.`},
+  {at:370, t:'The &ldquo;Level n&rdquo; pop-up', h:`Copy the patch of screen the box will cover into <code>S()</code>, draw the box and level number, wait for a key, then paste the screen back &mdash; so the pop-up leaves no hole behind it.`},
+  {at:420, t:'The move loop &mdash; reading a key', h:`The heart of the game. It runs until every heart and club is gone, waiting up to <code>Z</code> seconds for a key each tick. On the early levels <code>Z=999</code> (wait forever &mdash; turn-based); later levels give you a fraction of a second, so the snake keeps moving on its own if you don't steer.`},
+  {at:470, t:'Spend bonus, then sort the keypress', h:`Every tick nibbles <code>BMIN</code> off the bonus. Then the keypress is classified: a 2-character string is an arrow key (or a time-out) and jumps to the movement code at 640; a single character that is ESC starts the give-up routine; any other single key is treated as a wasted move.`},
+  {at:660, t:'Cheats, then turn the head', h:`Two hidden keys first: F10 (scancode 68) skips the level, F9 (67) grants a life and skips. Otherwise the heading is turned into a step across screen memory &mdash; &plusmn;160 for a row, &plusmn;2 for a column &mdash; giving <code>A</code>, the cell the head wants to enter, which is then <code>PEEK</code>ed.`},
+  {at:710, t:'What is in the next cell?', h:`The big decision: switch on the character found ahead.
+    <ul>
+      <li><code>32</code> empty &rarr; slide forward (erase tail, advance).</li>
+      <li><code>5</code> &#9827; club &rarr; +25 and <b>grow</b> (the tail is not erased).</li>
+      <li><code>3</code> &#9829; heart &rarr; +10 and grow; on levels past 16 it also breeds a new club.</li>
+      <li><code>10</code> &#9689; stone &rarr; push it if the square beyond is empty, else you're blocked.</li>
+      <li><code>1</code> &#9786; smiley &rarr; &minus;50 and grow onto it.</li>
+      <li><code>24/26/27</code> arrow &rarr; instant death.</li>
+    </ul>
+    A neat twist: eating a heart or club <i>spawns fresh smileys</i>, so the board gets busier as you clear it.`},
+  {at:910, t:'Blocked &mdash; walls and your own tail', h:`If the cell ahead is a wall or part of the snake, you simply can't enter: keep the old heading (<code>E=F</code>), lose a little bonus, buzz, and skip the move. Unlike most snake games, walls and bumping yourself don't kill you here &mdash; only arrows, ESC, or completely filling <code>T()</code> do.`},
+  {at:920, t:'Lay the body, grow the head, animate', h:`The cell the head is leaving is turned into the correct box-drawing piece &mdash; straight <span class="mono">&#9552;</span>/<span class="mono">&#9553;</span> or a corner <span class="mono">&#9559;&#9565;&#9556;&#9562;</span> chosen from the new heading <code>E</code> and the old one <code>F</code> &mdash; then a new <span class="mono">&#9608;</span> head is appended at <code>T(BTEL)</code>. A "shimmer" lights alternate body cells, and finally this level's animation routine (arrows or gates) takes one step.`},
+  {at:1030, t:'Level cleared &mdash; bank the bonus', h:`Pour the leftover bonus into the score, 5 points and a beep at a time, then award an extra life.`},
+  {at:1090, t:'The End / play again', h:`After all 32 levels (or when the lives run out) show <i>Einde</i> ("The End"), ask <i>Nog een keer (j/n)</i> ("again? y/n"), and either restart at 230 or quit.`},
+  {at:1150, t:'Drop an item on a random cell', h:`Pick a random <i>even</i> offset inside the playfield (even so it lands on a character byte, not its colour byte). If that square is empty, write the item there and set <code>K1=1</code> to report that it landed.`},
+  {at:1190, t:'Score &amp; high score', h:`Add <code>OP</code> to the score and redraw it; if it beats <code>ZORE</code>, update and show the high score.`},
+  {at:1230, t:'Layout: the labyrinth', h:`Nested loops draw a web of single-line walls joined with <span class="mono">&#9532;</span> junctions &mdash; the densest of the mazes (used by levels 2, 10, 18, 26).`},
+  {at:1400, t:'Layout: scattered stones', h:`Lays &#9689; stones in a zig-zag. The four-line helper at <b>1480</b> &mdash; <code>POKE (Y-1)*160+(X-1)*2,&hellip;</code> &mdash; is the shared "put one character at column X, row Y" routine that several layouts call.`},
+  {at:1500, t:'Layout: rooms with doorways', h:`Build a grid of little rooms (rails every 6 rows, walls every 10 columns, joined with <span class="mono">&#9532;&#9516;&#9524;&#9500;&#9508;</span>), then <code>READ</code> 13 coordinate pairs from the <code>DATA</code> at 1630&ndash;1650 and knock doorways through the walls at those spots.`},
+  {at:1670, t:'Layout: vertical gates', h:`Columns each with a 3-cell gap; <code>B(I)</code> remembers the row of each gap. On the moving-gate levels those gaps later slide (see &sect;&nbsp;the moving gates).`},
+  {at:1750, t:'Layout: gates + stones', h:`The gate layout (GOSUB 1670) plus a scatter of stones.`},
+  {at:1810, t:'Hazard: upward arrows', h:`Set-up gives each even column a random arrow row in <code>D(I,1)</code> and marks the cell behind it empty in <code>D(I,2)</code>; <code>sub1830</code> then nudges every <span class="mono">&#8593;</span> arrow one row upward each tick, wrapping from row 4 back to row 21. An arrow stepping onto the head (<code>219</code>) is fatal &mdash; <code>RETURN 510</code> jumps into the death routine.`},
+  {at:1920, t:'Hazard: horizontal arrows', h:`Two arrows per row &mdash; one travelling right (<span class="mono">&#8594;</span>), one left (<span class="mono">&#8592;</span>) &mdash; advanced each tick by <code>sub1970</code> and wrapped at the far column. Touching the head kills.`},
+  {at:2130, t:'Hazard: the moving gates', h:`Each tick the nine gate openings slide. The <code>=96</code> tests (three blank cells sum to 96) check the path is clear before a gap shifts down, and a gap that passes the bottom wraps back to the top.`},
+  {at:2260, t:'The pick-up jingle', h:`<code>PLAY "mb"</code> means "music in the background" (don't pause the game) followed by three rising blips.`},
+  {at:2280, t:'The pop-up box', h:`Draws the double-line box used behind the "Level n" and "The End" messages.`},
+  {at:2320, t:'The 32 level recipes', h:`Each line sets the three dials &mdash; <code>Z</code> (seconds per move), <code>AANTAL</code> (items to scatter), <code>BMIN</code> (bonus drain) &mdash; and calls a layout. 2320&ndash;2390 are the calm, turn-based first eight; 2410&ndash;2480 are the same mazes but real-time and getting faster. The <code>ON LEVEL</code> tables at 310 and 1010 pick one per level and loop the set of 16 for levels 17&ndash;32.`},
+];
+const SEC_AT = {}; SECTIONS.forEach((s, i) => { s.num = i + 1; SEC_AT[s.at] = s; });
+
+/* ---------- inline notes, keyed by BASIC line number ---------- */
+const NOTES = {
+  80:'DEFINT A-Y = integers; Z* left floating-point (TIMER needs fractions, the score can pass 32767). SCREEN 0:WIDTH 80 = 80x25 text. RANDOMIZE TIMER seeds the dice.',
+  90:'PEEK(&H449) is the BIOS video-mode byte. Mode 7 = mono card at &HB000; anything else = colour at &HB800.',
+  100:'DEF SEG=VIDEO aims PEEK/POKE at screen memory. DIM the four arrays: T()=snake, S()=pop-up backup, B()=gate rows, D()=arrows.',
+  110:'Top edge of the frame: corner + 78 bars + corner.',
+  130:'The title in the top bar.',
+  200:'Bottom edge of the frame.',
+  210:'Drop the four legend icons straight into screen memory by offset: smiley(1), stone(10), club(5), heart(3).',
+  230:'Fresh game: score 0, three lives.',
+  250:'Wipe the 17 inner rows back to blank, leaving the side walls.',
+  280:'Seed the snake: tail at offset 2000 (row 13), head at 1840 (row 12, right above it) -> it starts pointing up. BTEL=2 is the head slot in T(), ETEL=1 the tail.',
+  290:'Paint it: head = block (219), tail = double-bar (186), head attribute bright (15).',
+  300:'Per-level reset: heading up (E=F=72), nothing collected yet, bonus 10000.',
+  310:"ON LEVEL GOSUB -> this level's recipe (2320..2480): speed, item count, bonus step, and the maze. Levels 17-32 reuse the same 16.",
+  340:'Scatter the items: AANTAL times, drop one smiley (hazard) and one heart.',
+  350:'GOSUB 1150 drops a char on a random empty cell. K1=1 means the heart landed -> count it into HART.',
+  370:'Back up the 4x42 region the pop-up will cover into S() so it can be restored (1497 = box top-left, +160 per row).',
+  400:'Flush the BIOS keyboard buffer (head:=tail) so a stray key does not skip the box, then wait for one key.',
+  410:'Paste the saved region back, erasing the box.',
+  420:'Play this level until every heart AND club is collected (HART+KLAVER reaches 0).',
+  430:'Grab whatever key is waiting; start a timer.',
+  450:'Keep polling INKEY$ until a key arrives or Z seconds pass. Z=999 early (wait forever, turn-based); a fraction later (the snake moves itself).',
+  470:'Each move costs BMIN off the bonus.',
+  490:'A real arrow key is a 2-character string, so length<>1 means a move (or a time-out) -> handle at 640.',
+  500:'It was a single character. If not ESC (27), it is junk -> 910 (small penalty, no move).',
+  510:'ESC (or jumped here from a deadly hit): the you-died / give-up routine.',
+  540:'Wait for the sound queue to drain (PLAY(0) = notes still pending).',
+  550:'Unwind the whole snake, tail-first...',
+  580:'...blank each cell (space + normal attribute) with a blip...',
+  590:'...advancing the tail and docking the bonus as it goes.',
+  610:'Lose a life; clear the heart/club counters.',
+  620:'Last life? set LEVEL=32 so the FOR loop ends (game over). Otherwise LEVEL-1 so NEXT replays this level.',
+  640:'A 2-char key: take the scancode from its second byte into E (new heading). A time-out leaves E as-is, so the snake keeps going.',
+  650:'A = where the head is now.',
+  660:'Scancode 68 = F10: skip to the next level.',
+  670:'Scancode 67 = F9: free life and skip.',
+  680:'Turn the heading into a screen step: +/-160 = up/down a row, +/-2 = left/right a column. A is now the target cell.',
+  700:'Look at what is already in that cell.',
+  710:'32 = empty -> just move.',
+  720:'Erase the tail cell and advance the tail pointer, so the snake slides forward at the same length.',
+  740:'5 = club (worth 25).',
+  750:'Drop a fresh smiley somewhere (L=1) and play the jingle -- collecting tightens the screen.',
+  760:'+25, one fewer club, finish. No tail erase here, so eating GROWS the snake.',
+  770:'3 = heart (worth 10).',
+  780:'On the hard half (levels past 16) a heart also breeds a new club; if it landed, add it to the clubs you must collect.',
+  790:'Spawn a smiley, jingle, +10, one fewer heart, finish (grow).',
+  800:'10 = stone -> try to push it.',
+  810:'TA = the cell on the far side of the stone, in the same direction.',
+  840:'If that far cell is not empty the stone cannot move -> 910 (blocked).',
+  850:'Otherwise shove the stone into TA, erase the tail, and move.',
+  870:'1 = smiley -- the bad one.',
+  880:'A descending 50-note wail.',
+  890:'-50, drop another smiley, and move onto it (grow).',
+  900:'24/26/27 = a moving arrow -> instant death (jump to 510).',
+  910:'A wall or your own body: you cannot enter. Keep the old heading (E=F), lose a little bonus, buzz, skip the move. Walls do not kill you here.',
+  920:'Straight horizontal run -> the cell you leave becomes = (205).',
+  930:'Straight vertical run -> the cell you leave becomes || (186).',
+  940:'These four lines choose the corner glyph (corner-pieces) for a bend, from the new heading E and the old heading F.',
+  980:'Append the new head: BTEL+1, store its offset in T(BTEL), remember F=E, paint the block (219).',
+  990:'If the trail array is full (15000) the snake has nowhere to grow -> death.',
+  1000:'The shimmer: step through the body by twos, making alternate cells bright (15) and their neighbours normal (7). BTEL flips parity each move, so the bright dashes appear to crawl.',
+  1010:'ON LEVEL GOSUB -> this level animation: 1170 (nothing) on calm levels, or the arrow/gate movers (2130/1830/1970).',
+  1030:'Level cleared. Pour the leftover bonus into the score, 5 at a time...',
+  1070:'...then reward finishing with +1 life.',
+  1090:'All 32 done (or out of lives): show Einde (The End).',
+  1130:'j = ja = yes -> restart at 230; otherwise clear, thank the player, END.',
+  1150:'Random even offset in the playfield (480..3200); even = a character byte, not a colour byte.',
+  1160:'Only if the cell is empty (32): write L there and flag K1=1 (it landed).',
+  1190:'Add OP to the score and redraw it.',
+  1200:'Beat the high score? update ZORE and show it.',
+  1480:'The workhorse: POKE one character at column X, row Y (here a stone, 10). Shared by several layouts.',
+  1580:'READ 13 coordinate pairs from the DATA and punch doorways through the room walls.',
+  1630:'DATA: the doorway coordinates (row,col pairs).',
+  1670:'B(I) = the opening row of gate I. Draw a full column, then blank the 3-cell gap and cap it.',
+  1850:'When an arrow runs off the top (row 4) it wraps back to the far side (+2720 = 17 rows).',
+  1860:'An arrow about to step onto the head (219)? RETURN 510 = death.',
+  1890:'Otherwise restore the vacated cell, move the arrow one row, draw it, remembering what was underneath in D(I,2).',
+  1970:'Move the vertical arrows: one going right (26), one left (27) per row, each frame.',
+  2000:'Hit the head (219)? death.',
+  2070:'Hit the head (219)? death.',
+  2130:'For each of the 9 gates, slide its opening; the =96 sums test that three cells are blank before shifting.',
+  2230:'Move the opening down a row; past row 16 it wraps back to row 4.',
+  2260:'PLAY "mb" = music in background (do not block), then three rising blips.',
+  2320:'Level 1: Z=999 (turn-based), scatter 75 of each, bonus drops 10/move, no maze.',
+  2410:'From level 9 (Z<1) the snake moves on its own and speeds up; 2410-2480 mirror 2320-2390 but real-time.',
+};
+
+/* ---------- render ---------- */
+const lines = SRC.replace(/\n$/, '').split('\n');
+const listing = document.getElementById('listing');
+const tocList = document.getElementById('toc-list');
+
+let block = null;
+function freshBlock(){ block = document.createElement('div'); block.className = 'src'; listing.appendChild(block); }
+function addCard(sec){
+  const c = document.createElement('section');
+  c.className = 'card'; c.id = 's-' + sec.num;
+  const lastLine = sectionEndLine(sec);
+  const range = (lastLine && lastLine !== sec.at) ? 'lines ' + sec.at + '&ndash;' + lastLine : 'line ' + sec.at;
+  c.innerHTML =
+    '<div class="head"><span class="badge">' + sec.num + '</span>' +
+    '<h2>' + sec.t + '</h2><span class="lines">' + range + '</span></div>' +
+    '<div class="prose">' + sec.h + '</div>';
+  listing.appendChild(c);
+  const li = document.createElement('li');
+  li.innerHTML = '<span class="n">' + sec.num + '</span><a href="#s-' + sec.num + '">' + sec.t + '</a>';
+  tocList.appendChild(li);
+  freshBlock();
+}
+/* last BASIC line covered by a section = (next section's start) found in the source, minus one step */
+function sectionEndLine(sec){
+  const idx = SECTIONS.indexOf(sec);
+  const next = SECTIONS[idx + 1];
+  if(!next) return null;
+  let last = null;
+  for(const l of lines){ const n = lineNo(l); if(n !== null && n >= sec.at && n < next.at) last = n; }
+  return last;
+}
+
+freshBlock();
+for(const line of lines){
+  const no = lineNo(line);
+  if(no !== null && SEC_AT[no]) addCard(SEC_AT[no]);
+
+  const row = document.createElement('div'); row.className = 'ln-row';
+  for(const [cls, text] of tokenize(line)){
+    if(cls === 'ws'){ row.appendChild(document.createTextNode(text)); }
+    else { const sp = document.createElement('span'); sp.className = 't-' + cls; sp.textContent = text; row.appendChild(sp); }
+  }
+  if(!row.childNodes.length) row.appendChild(document.createTextNode('​'));
+  block.appendChild(row);
+
+  if(no !== null && NOTES[no]){
+    const a = document.createElement('div'); a.className = 'annot';
+    const mk = document.createElement('span'); mk.className = 'mk'; mk.textContent = '↳ ';
+    a.appendChild(mk); a.appendChild(document.createTextNode(NOTES[no]));
+    block.appendChild(a);
+  }
+}
+
+/* ---------- page helpers ---------- */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
+document.getElementById('print').addEventListener('click', () => { location.href = 'source.html?print'; });
+</script>
+</body>
+</html>

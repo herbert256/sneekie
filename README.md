@@ -27,11 +27,10 @@ The rest of the repository is the source and provenance behind it.
 ```
 docs/                 ← the live site (GitHub Pages source)
   index.html          ← the game, one file, no dependencies
-  SNEEKIE.BAS.html    ← the original source, syntax-highlighted (a pretty-printed listing)
-  SNEEKIE.BAS.txt     ← the detokenized GW-BASIC source — the spec (downloadable from the listing)
-MCMPC-D2.dsk          ← the original 720 KB FAT12 floppy image (issue #25, October 1988)
+  source.html         ← the original source, syntax-highlighted (a pretty-printed listing)
+  SNEEKIE.BAS         ← the detokenized GW-BASIC source — the spec (downloadable from the listing)
 CLAUDE.md             ← notes for working in this repo
 ```
 
 The game was recovered from `MCMPC-D2.dsk` by detokenizing `SNEEKIE.BAS` into
-`docs/SNEEKIE.BAS.txt`, then ported line for line into `docs/index.html`.
+`docs/SNEEKIE.BAS`, then ported line for line into `docs/index.html`.

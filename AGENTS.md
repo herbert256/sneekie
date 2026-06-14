@@ -18,15 +18,15 @@ https://herbert256.github.io/sneekie/.
 
 - `docs/index.html` — the game. One file, all HTML/CSS/JS inline. **This is the single
   canonical copy** — edit it directly; there is no second copy to keep in sync.
-- `docs/SNEEKIE.BAS.html` — the original source, syntax-highlighted (a self-contained
+- `docs/source.html` — the original source, syntax-highlighted (a self-contained
   pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS). The nav
   label is **Source**. The rendered listing drops the first 10 banner lines (starts at `10 REM`)
   and shows only the BASIC line numbers — there is no separate sequential gutter.
-- `docs/SNEEKIE.BAS.explained.html` — the same source as an annotated walkthrough: a
+- `docs/explained.html` — the same source as an annotated walkthrough: a
   "big idea" primer, variable/character glossaries, per-routine section cards, and inline
   `↳` notes on individual lines. Same embedded-base64 + tokenizer approach as the listing;
   the prose lives in its `SECTIONS` array (by BASIC line) and `NOTES` map (by line number).
-- `docs/SNEEKIE.BAS.migration.html` — the BASIC source and the JS port shown **side by side**,
+- `docs/migration.html` — the BASIC source and the JS port shown **side by side**,
   with an intro on the new architecture. Embeds *both* sources as base64 (the BASIC, and the
   port's `<script>` body extracted from `index.html`) and slices them by line range per
   `SECTIONS` pairing; has its own small JS tokenizer alongside the shared BASIC one. Note: the
@@ -73,21 +73,19 @@ https://herbert256.github.io/sneekie/.
   **same** selected level. Changing tabs bumps a `gen` counter (so in-flight flash reloads are ignored) and
   reloads the one iframe with the new target. No frames are saved — it's live, foreground only (background
   tabs throttle and pause the running game).
-- `docs/SNEEKIE.BAS.txt` — the canonical detokenized 1988 GW-BASIC source (served, linked for download from
+- `docs/SNEEKIE.BAS` — the canonical detokenized 1988 GW-BASIC source (served, linked for download from
   the listings). This is the **specification**: the game's JS is a faithful port of it, so read it to understand
   intended behavior and to check that changes stay true to the original. A frozen 1988 artifact.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
   Python, no deps; reads the font straight out of `docs/index.html`). All four pages carry
   matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`.
-- `MCMPC-D2.dsk` (root) — the original FAT12 floppy image the `.BAS` was detokenized from.
-  Provenance; not served.
 
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
 All eight pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`SNEEKIE.BAS.html`; the other
+look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
 seven pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
 `#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Live, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
