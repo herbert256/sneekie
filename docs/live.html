@@ -305,6 +305,35 @@ const BOT = `
     }
     return best;
   };
+  const nearFood = allowSmile => {
+    const start = makeState(), q = [start], seen = new Set([stateKey(start)]), few = (HART+KLAVER)<=6;
+    const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
+    const maxDepth = few ? 12 : 9;
+    let h = 0, best = null, bs = -1e18;
+    while(h<q.length && h<260){
+      const st = q[h++];
+      if(st.dist >= maxDepth) continue;
+      for(const [sc] of DIRS){
+        const ns = move(st, sc, allowSmile); if(!ns) continue;
+        const key = stateKey(ns);
+        if(seen.has(key)) continue; seen.add(key);
+        if(ns.ate){
+          const exits = legalCount(ns, true);
+          if(!exits) continue;
+          const info = spaceInfo(ns), sp = info.space, rt = info.tailReach;
+          const minSpace = Math.min(170, ns.body.length + (few ? 18 : 8));
+          if(!((rt && sp >= Math.min(minSpace, 115)) || sp >= minSpace + 22)) continue;
+          const horizon = few ? 14 : (arrowLevel ? 7 : 9);
+          const live = survivalDepth(ns, horizon);
+          if(live < (few ? 8 : (arrowLevel ? 4 : 6)) && !(rt && exits > 1)) continue;
+          const score = -ns.dist*6200 + (rt?32000:0) + live*2600 + exits*1600 +
+            sp*8 + ns.points*120 - ns.smiles*900 - ns.stones*45 - (exits===1?9000:0);
+          if(score > bs){ bs = score; best = ns.first; }
+        } else q.push(ns);
+      }
+    }
+    return best;
+  };
   const routeFood = allowSmile => {
     const start = makeState(), q = [start], seen = new Set(), few = (HART+KLAVER)<=6;
     const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
@@ -403,7 +432,7 @@ const BOT = `
   const decide = (idle, looping) => {
     resetDanger();
     const urgent = idle >= 45 || looping;
-    return routeFood(false) ?? routeFood(true) ??
+    return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
       (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
       (!urgent ? tailFirst() : null) ??
       pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
