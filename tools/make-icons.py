@@ -113,7 +113,7 @@ og.text((og.w - og.text_w(title, ts)) // 2, 196, title, ts, GREEN, hearts=RED)
 sub = "a snake & maze game from 1988"
 ss = 4
 og.text((og.w - og.text_w(sub, ss)) // 2, 392, sub, ss, DIMG)
-url = "herbert256.github.io/sneekie"
+url = "sneekie.xyz"
 us = 3
 og.text((og.w - og.text_w(url, us)) // 2, 470, url, us, GREY)
 og.scanlines()
