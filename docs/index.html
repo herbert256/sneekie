@@ -242,7 +242,7 @@
     <div id="glass" aria-hidden="true"></div>
   </div>
   <div id="panel" aria-hidden="true">
-    <span class="logo">HerbySoft</span>
+    <span class="logo">Acme Corporation</span>
     <span class="led"></span>
     <span class="knobs"><i></i><i></i></span>
   </div>
@@ -426,6 +426,10 @@ function psa(s, at=7){
   }
 }
 function bootLine(s='', at=7){ psa(s, at); curR = Math.min(24, curR + 1); curC = 1; }
+function bootCenter(row, s, at=7){
+  locate(row, Math.max(1, Math.floor((80 - s.length) / 2) + 1));
+  psa(s, at);
+}
 
 /* ---------- INPUT: BIOS keyboard buffer / INKEY$ semantics ---------- */
 const kbuf = [];
@@ -556,6 +560,8 @@ const rnd = Math.random;
 const DEATH = {sneekie:'crashed'};          // RETURN 510
 
 /* ---------- BOOT SHOW: compressed PC DOS + GW-BASIC startup, before line 80 ---------- */
+const BOOT_TIME_SCALE = 1.9;
+
 function startBootFromGesture(){
   if(!bootWaiting || bootStarted) return;
   bootWaiting = false;
@@ -569,7 +575,7 @@ function shouldSkipBoot(){
 }
 function bootSleep(ms){
   return new Promise(resolve => {
-    const end = performance.now() + ms;
+    const end = performance.now() + ms * BOOT_TIME_SCALE;
     function tick(){
       if(bootSkip || performance.now() >= end){ resolve(); return; }
       setTimeout(tick, Math.min(35, end - performance.now()));
@@ -589,7 +595,7 @@ function bootClick(freq=95, dur=0.022, gain=0.04){
   o.start(t); o.stop(t + dur + 0.01);
 }
 async function bootDiskBurst(ms=300){
-  const end = performance.now() + ms;
+  const end = performance.now() + ms * BOOT_TIME_SCALE;
   while(!bootSkip && performance.now() < end){
     bootClick(70 + rnd()*55, 0.014 + rnd()*0.018, 0.026 + rnd()*0.03);
     if(rnd() > 0.45) bootClick(1150 + rnd()*2300, 0.006 + rnd()*0.01, 0.012);
@@ -609,6 +615,21 @@ async function bootTypeLine(s, at=15, lo=16, hi=34){
   curR = Math.min(24, curR + 1);
   curC = 1;
 }
+function bootBiosLogo(top=3){
+  const left = 25, inner = 30;
+  const center = text => {
+    const pad = Math.max(0, inner - text.length);
+    return ' '.repeat(Math.floor(pad / 2)) + text + ' '.repeat(Math.ceil(pad / 2));
+  };
+  const row = (r, text, at) => {
+    locate(r, left); pc(186); psa(center(text), at); pc(186);
+  };
+  locate(top, left); pc(201); pcn(205, inner); pc(187);
+  row(top + 1, 'Acme Corporation', 15);
+  row(top + 2, 'Turbo BIOS 1.88', 7);
+  row(top + 3, 'PC/XT Compatible', 7);
+  locate(top + 4, left); pc(200); pcn(205, inner); pc(188);
+}
 async function waitForBootGesture(){
   bootWaiting = true;
   bootStarted = false;
@@ -619,17 +640,21 @@ async function bootSequence(){
   if(shouldSkipBoot()){ bootActive = false; return; }
 
   cls();
-  locate(6,22); psa('HERBYSOFT PC/XT COMPATIBLE', 15);
-  locate(8,24); psa('8088  4.77 MHz   640K RAM', 7);
-  locate(14,26); psa('Press any key to boot', 15);
-  locate(16,24); psa('or tap the monitor glass', 7);
+  bootBiosLogo(4);
+  bootCenter(11, 'Acme Corporation PC/XT compatible', 15);
+  bootCenter(13, '8088  4.77 MHz   640K RAM', 7);
+  bootCenter(15, 'Press any key to boot', 15);
+  bootCenter(17, 'or tap the monitor glass', 7);
   await waitForBootGesture();
 
   cls();
+  bootLine('Acme Corporation Turbo BIOS v1.88', 15);
+  bootLine('(C) Copyright Acme Corporation 1984,1988', 7);
+  bootLine('');
   for(const k of [64,128,256,384,512,640]){
-    locate(1,1); psa(String(k).padStart(3) + 'K OK', 15);
+    locate(4,1); psa(String(k).padStart(3) + 'K OK', 15);
     bootClick(900 + k, 0.018, 0.028);
-    await bootSleep(80);
+    await bootSleep(115);
   }
   bootLine('', 7);
   bootLine('BIOS ROM checksum . . . . . . . . . . . . . . . . OK', 7);
@@ -647,16 +672,18 @@ async function bootSequence(){
   bootLine('(C)Copyright Microsoft Corp 1981, 1986', 7);
   bootLine('');
   await bootDiskBurst(260);
-  bootLine('Current date is Tue 10-11-1988', 7);
-  await bootTypeLine('Enter new date (mm-dd-yy): ', 7, 12, 22);
-  bootLine('Current time is  8:08:00.00a', 7);
-  await bootTypeLine('Enter new time: ', 7, 12, 22);
+  bootLine('Current date is Tue 01-01-1980', 7);
+  await bootType('Enter new date (mm-dd-yy): ', 7, 12, 22);
+  await bootTypeLine('07-15-88', 15, 42, 78);
+  bootLine('Current time is  0:00:00.00', 7);
+  await bootType('Enter new time: ', 7, 12, 22);
+  await bootTypeLine('8:08a', 15, 42, 78);
   bootLine('');
   await bootTypeLine('C:\\>CD \\GAMES', 15);
   await bootDiskBurst(150);
   await bootTypeLine('C:\\GAMES>DIR SNEEKIE.*', 15);
   await bootDiskBurst(180);
-  bootLine(' Volume in drive C is HERBYSOFT', 7);
+  bootLine(' Volume in drive C is ACME CORP', 7);
   bootLine(' Directory of C:\\GAMES', 7);
   bootLine('');
   bootLine('SNEEKIE  BAS     12664  07-15-88   8:08a', 7);

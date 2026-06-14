@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v2';
+const CACHE_NAME = 'sneekie-offline-v5';
 const PRECACHE_ASSETS = [
   './',
   'index.html',
