@@ -71,6 +71,8 @@
   .recap h3{ font-size:15px; color:var(--accent); margin:22px 0 2px; }
   .recap p{ color:var(--text); } .recap em{ color:var(--heading); font-style:normal; font-weight:600; }
   .recap .note{ color:var(--muted); font-size:13px; }
+  .translated-scans .gallery{ max-width:520px; grid-template-columns:repeat(2, minmax(168px, 1fr)); }
+  @media (max-width:520px){ .translated-scans .gallery{ grid-template-columns:1fr; max-width:260px; } }
 
   /* lightbox */
   #lb{ position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
@@ -184,6 +186,25 @@
     rising difficulty. On the gentlest the snake only moves when you press a key; later it slides on by itself,
     faster and faster, while the time bonus ticks down &mdash; and the harder boards add pushable stones to
     shove aside and arrows that are fatal to touch. (The type-in listing itself begins further down page&nbsp;59.)</p>
+  </section>
+
+  <hr class="sep">
+
+  <section class="recap translated-scans">
+    <h2>Full translated scans</h2>
+    <p class="note">A second translation option: copied scans of pages&nbsp;58 and&nbsp;59 with the article text
+    translated in place. The BASIC listing on page&nbsp;59 stays as the original source.</p>
+
+    <div class="gallery">
+      <button class="thumb" data-full="magazine/p58.en.jpg" data-cap="Page 58 — full English translation on the copied scan">
+        <img loading="lazy" src="magazine/p58.en.thumb.jpg" alt="Translated copy of magazine page 58 in English.">
+        <figcaption><span class="lbl">Page 58</span><span class="cap">English scan translation</span></figcaption>
+      </button>
+      <button class="thumb" data-full="magazine/p59.en.jpg" data-cap="Page 59 — full English translation on the copied scan">
+        <img loading="lazy" src="magazine/p59.en.thumb.jpg" alt="Translated copy of magazine page 59 in English.">
+        <figcaption><span class="lbl">Page 59</span><span class="cap">English scan translation</span></figcaption>
+      </button>
+    </div>
   </section>
 </main>
 
