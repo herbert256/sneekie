@@ -337,6 +337,40 @@ const BOT = `
     }
     return best;
   };
+  const pressureFood = (allowSmile, urgent) => {
+    const start = makeState(), q = [start], seen = new Set([stateKey(start)]), few = (HART+KLAVER)<=6;
+    const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
+    const maxDepth = few ? (urgent ? 125 : 100) : (urgent ? 88 : 70);
+    const scanLimit = urgent ? 1050 : 720, checkLimit = urgent ? 38 : 22;
+    let h = 0, checked = 0, best = null, bs = -1e18;
+    while(h<q.length && h<scanLimit){
+      const st = q[h++];
+      if(st.dist >= maxDepth) continue;
+      for(const [sc] of DIRS){
+        const ns = move(st, sc, allowSmile); if(!ns) continue;
+        const key = stateKey(ns);
+        if(seen.has(key)) continue; seen.add(key);
+        if(ns.ate){
+          checked++;
+          const exits = legalCount(ns, true);
+          if(!exits) continue;
+          const info = spaceInfo(ns), sp = info.space, rt = info.tailReach;
+          const minSpace = Math.min(150, ns.body.length + (few ? 12 : 6));
+          if(sp < Math.min(minSpace, 80) && !rt) continue;
+          const horizon = urgent ? (arrowLevel ? 6 : 8) : (arrowLevel ? 8 : 10);
+          const live = survivalDepth(ns, horizon);
+          if(live < (urgent ? 3 : 5) && exits < 2 && !rt) continue;
+          const trapCost = exits===1 ? (urgent ? 3800 : 9000) : 0;
+          const smileCost = urgent ? 450 : 900;
+          const score = (rt?36000:0) + live*3600 + exits*2100 + sp*13 + ns.points*230 -
+            ns.dist*(urgent?110:190) - ns.smiles*smileCost - ns.stones*40 - trapCost;
+          if(score > bs){ bs = score; best = ns.first; }
+          if(checked >= checkLimit && best !== null) return best;
+        } else q.push(ns);
+      }
+    }
+    return best;
+  };
   const tailFirst = () => {
     const st = makeState(), tail = st.body[0], first = new Map(), seen = new Set([st.head]), q = [st.head]; let h = 0;
     while(h<q.length){
@@ -366,9 +400,14 @@ const BOT = `
     }
     return best;
   };
-  const decide = () => {
+  const decide = (idle, looping) => {
     resetDanger();
-    return routeFood(false) ?? routeFood(true) ?? tailFirst() ?? survivalMove();
+    const urgent = idle >= 45 || looping;
+    return routeFood(false) ?? routeFood(true) ??
+      (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
+      (!urgent ? tailFirst() : null) ??
+      pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
+      survivalMove();
   };
 
   const ready = () => { try { return typeof LEVEL!=='undefined' && LEVEL>=1 && BTEL===2 && T[2]===1840; } catch(e){ return false; } };
@@ -384,6 +423,7 @@ const BOT = `
     for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
     pushKey('\\r'); await sleep(120);
     let lastScore = ZCORE, idle = 0, lastHead = BTEL, stall = 0;
+    const headTrail = [];
     while(true){
       if(typeof LEVEL==='undefined'){ tell('botEnd', IDX, false); return; }
       if(LEVEL === TARGET+1 && LIVE > 0){ tell('botEnd', IDX, true); return; }   // cleared the level -> green
@@ -397,7 +437,12 @@ const BOT = `
       if(ZCORE > lastScore){ idle = 0; } else idle++; lastScore = ZCORE;
       tell('botStatus', IDX, ZCORE, f);
       if(idle > 160){ tell('botEnd', IDX, false); return; }                       // ~26s with no score gain -> red
-      const sc = decide();
+      headTrail.push(T[BTEL]);
+      if(headTrail.length > 96) headTrail.shift();
+      let repeats = 0;
+      for(let i=0;i<headTrail.length-10;i++) if(headTrail[i]===T[BTEL]) repeats++;
+      const looping = idle > 24 && repeats >= 2;
+      const sc = decide(idle, looping);
       if(sc===null){ tell('botEnd', IDX, false); return; }                        // no safe move -> red
       pushKey(keyOf[sc]);
       await sleep(moveDelay());
