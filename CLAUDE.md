@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Sneekie is a 32-level snake/maze game originally written in GW-BASIC in July 1988 by
-HerbySoft and published on the MCMPC-D2 diskette. In 2026 it
-was recovered from the original 720 KB floppy image and ported **line for line** to a
+HerbySoft and published in MS(X)DOS Computer Magazine no. 25. In 2026 it
+was recovered by OCR from the magazine's printed listing and ported **line for line** to a
 single self-contained HTML page. There is no framework, no build step, no dependencies,
 and no test suite — `docs/index.html` is the entire program.
 
@@ -79,9 +79,12 @@ https://herbert256.github.io/sneekie/.
   ~168 dpi (`pip install pypdfium2 pillow` in a throwaway venv — ImageMagick needs Ghostscript, which isn't
   installed); only the **7 page images** about the game are in the repo — the full 100-page magazine scan is not
   committed. Same green doc-page styling.
-- `docs/SNEEKIE.BAS` — the canonical detokenized 1988 GW-BASIC source (served, linked for download from
-  the listings). This is the **specification**: the game's JS is a faithful port of it, so read it to understand
-  intended behavior and to check that changes stay true to the original. A frozen 1988 artifact.
+- `docs/SNEEKIE.BAS` — the canonical 1988 GW-BASIC source, recovered by OCR from the magazine listing (served,
+  linked for download from the listings). This is the **specification**: the game's JS is a faithful port of it,
+  so read it to understand intended behavior and to check that changes stay true to the original. A frozen 1988
+  artifact. Its first 10 lines are a `'`-comment header; the listing pages (`source`/`explained`/`migration`)
+  **embed this whole file as base64**, so if you edit it, regenerate those `B64`/`atob(...)` blobs — and keep the
+  header at 10 lines so `slice(10)` and migration's absolute `SECTIONS` line ranges stay valid.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
   Python, no deps; reads the font straight out of `docs/index.html`). All four pages carry

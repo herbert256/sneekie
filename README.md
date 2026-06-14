@@ -1,11 +1,11 @@
 # Sneekie (1988)
 
 A 32-level snake/maze game written in GW-BASIC in July 1988 by **HerbySoft**,
-published on the MSX/MS-DOS Computer Magazine diskette MCMPC-D2 (issue #25, October 1988).
+published in MSX/MS-DOS Computer Magazine, issue #25 (October 1988).
 
 **Play it here: https://herbert256.github.io/sneekie/**
 
-In 2026 the game was recovered from the original 720 KB floppy disk image and ported,
+In 2026 the game's printed listing was recovered by OCR and ported,
 line for line, to a single self-contained HTML page — same game logic, same direct
 video-memory model (the original POKEd characters straight into text VRAM at
 `&HB000`/`&HB800`), rendered with the real IBM VGA 8×16 CP437 ROM font.
@@ -28,9 +28,9 @@ The rest of the repository is the source and provenance behind it.
 docs/                 ← the live site (GitHub Pages source)
   index.html          ← the game, one file, no dependencies
   source.html         ← the original source, syntax-highlighted (a pretty-printed listing)
-  SNEEKIE.BAS         ← the detokenized GW-BASIC source — the spec (downloadable from the listing)
+  SNEEKIE.BAS         ← the OCR'd GW-BASIC source — the spec (downloadable from the listing)
 CLAUDE.md             ← notes for working in this repo
 ```
 
-The game was recovered from `MCMPC-D2.dsk` by detokenizing `SNEEKIE.BAS` into
+The game's source was recovered by OCR from the magazine's printed listing into
 `docs/SNEEKIE.BAS`, then ported line for line into `docs/index.html`.

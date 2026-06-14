@@ -1,11 +1,11 @@
 ' ============================================================
 ' SNEEKIE - (c) juli '88 by HerbySoft
-' Published on MSX/MS-DOS Computer Magazine diskette MCMPC-D2
-' (magazine issue #25, October 1988)
+' Published in MSX/MS-DOS Computer Magazine
+' (issue #25, October 1988)
 '
-' Detokenized from SNEEKIE.BAS (GW-BASIC tokenized format,
-' 9360 bytes, file date 1988-10-02) extracted from the FAT12
-' disk image MCMPC-D2.dsk on 2026-06-12.
+' Recovered by OCR from the magazine's printed program
+' listing (the type-in pages of that issue) and proof-read
+' against the running game, on 2026-06-12.
 ' ============================================================
 
 10 REM SNEEKIE
