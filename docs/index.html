@@ -194,13 +194,17 @@
   /* in-bezel touch controls: hidden until fullscreen on a touch device (see below) */
   #fstouch{ display:none; }
   #bezel:fullscreen #fstouch{
-    position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-    gap:14px; z-index:10;
+    position:fixed; left:50%; bottom:10px; transform:translateX(-50%);
+    gap:7px; z-index:10; flex-wrap:wrap; justify-content:center; max-width:97vw;
   }
   #bezel:fullscreen #fstouch button{
-    padding:14px 26px; font-size:14px;
+    min-width:46px; padding:12px 14px; font-size:15px; line-height:1;
     background:rgba(10,12,14,.72); cursor:pointer;
   }
+  /* small breaks between the ESC / arrows / Y-N / F-key groups */
+  #bezel:fullscreen #fstouch button[data-key="left"],
+  #bezel:fullscreen #fstouch button[data-key="y"],
+  #bezel:fullscreen #fstouch button[data-key="f9"]{ margin-left:14px; }
   #touchbar{ display:none; margin-top:12px; gap:10px; }
   #touchbar button{ padding:12px 22px; font-size:13px; }
   @media (pointer:coarse){
@@ -317,8 +321,14 @@
        Shown only in fullscreen on a coarse pointer; see CSS. -->
   <div id="fstouch">
     <button data-key="esc">ESC</button>
+    <button data-key="left" aria-label="Left">&#8592;</button>
+    <button data-key="up" aria-label="Up">&#8593;</button>
+    <button data-key="down" aria-label="Down">&#8595;</button>
+    <button data-key="right" aria-label="Right">&#8594;</button>
     <button data-key="y">Y</button>
     <button data-key="n">N</button>
+    <button data-key="f9">F9</button>
+    <button data-key="f10">F10</button>
   </div>
 </div>
 
@@ -605,6 +615,11 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
 });
 
+/* on-screen button -> the same INKEY$ strings the keyboard produces */
+const TOUCHKEYS = {
+  esc:'\x1b', up:'\0H', down:'\0P', left:'\0K', right:'\0M',
+  f9:'\0C', f10:'\0D', y:'y', n:'n',          // F9/F10 = extra life / skip level
+};
 document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
   b.addEventListener('click', () => {
     if(bootActive){
@@ -615,7 +630,7 @@ document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
     }
     ensureAudio();
     const k = b.dataset.key;
-    pushKey(k === 'esc' ? '\x1b' : k);
+    pushKey(TOUCHKEYS[k] || k);
   });
 });
 
