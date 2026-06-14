@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A smart bot playing eight Sneekie levels at once, live in your browser — switch between levels 1-8 and 25-32.">
+<meta name="description" content="A smart bot playing one Sneekie level at a time, live in your browser — pick from levels 1-8 and 25-32.">
 <title>Sneekie — Live bot</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="Sneekie — Live bot">
-<meta property="og:description" content="A smart bot playing eight Sneekie levels at once, live — switch between levels 1-8 and 25-32.">
+<meta property="og:description" content="A smart bot playing one Sneekie level at a time, live — pick from levels 1-8 and 25-32.">
 <meta property="og:url" content="https://herbert256.github.io/sneekie/live.html">
 <meta property="og:image" content="https://herbert256.github.io/sneekie/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sneekie — Live bot">
-<meta name="twitter:description" content="A smart bot playing eight Sneekie levels at once, live — switch between levels 1-8 and 25-32.">
+<meta name="twitter:description" content="A smart bot playing one Sneekie level at a time, live — pick from levels 1-8 and 25-32.">
 <meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
 <style>
   :root{
@@ -51,17 +51,16 @@
   .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
   .ico.g{ color:#66e066; } .ico.green{ color:var(--accent); } .ico.r{ color:var(--red); }
 
-  .switchrow{ display:flex; align-items:center; gap:12px; margin-top:22px; font-family:ui-monospace,monospace; }
-  .switchrow .lbl{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; }
-  .switch{ display:inline-flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
-  .switch button{ font:inherit; font-size:13px; letter-spacing:.04em; padding:9px 20px; background:#16181b; color:#98a1a6;
-    border:0; cursor:pointer; transition:background .12s, color .12s; }
-  .switch button + button{ border-left:1px solid var(--border); }
-  .switch button[aria-pressed="true"]{ background:color-mix(in srgb, var(--accent) 20%, #16181b); color:var(--accent); cursor:default; }
-  .switch button[aria-pressed="false"]:hover{ color:var(--accent); }
+  .leveltabs{ display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:7px; margin-top:22px; font-family:ui-monospace,monospace; }
+  .leveltabs button{ min-height:40px; font:inherit; font-size:12px; letter-spacing:.03em; color:#98a1a6; background:#16181b;
+    border:1px solid var(--border); border-radius:5px; cursor:pointer; transition:background .12s, color .12s, border-color .12s, box-shadow .12s; }
+  .leveltabs button:hover{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 70%, var(--border)); }
+  .leveltabs button[aria-selected="true"]{ color:var(--accent); border-color:var(--accent);
+    background:color-mix(in srgb, var(--accent) 18%, #16181b); box-shadow:0 0 16px -8px var(--accent); cursor:default; }
+  @media (max-width:900px){ .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); } }
+  @media (max-width:520px){ .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
 
-  .cells{ display:grid; grid-template-columns:repeat(2, 1fr); gap:30px 26px; margin-top:26px; }
-  @media (max-width:760px){ .cells{ grid-template-columns:1fr; } }
+  .cells{ max-width:1120px; margin-top:26px; }
   figure.cell{ margin:0; }
   figure.cell figcaption{ margin-bottom:9px; font-size:14px; }
   figcaption .lv{ font:700 13px/1 ui-monospace,monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--heading); }
@@ -92,29 +91,23 @@
 </header>
 
 <main>
-  <h1>Eight games at once — live</h1>
-  <p class="lead">Eight copies of the <em>real</em> 1988 game, each running its own bot. Flip the switch to watch
-  the <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving
+  <h1>One live bot — sixteen levels</h1>
+  <p class="lead">One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch the
+  <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving
   levels where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span>
-  heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. Each bot paths to the nearest
+  heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest
   target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges
   <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will
   <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its
   screen <strong><span class="ico green">flashes green</span></strong> and plays the same level again; get stuck
   and it <strong><span class="ico r">flashes red</span></strong> and restarts.</p>
 
-  <div class="switchrow">
-    <span class="lbl">Levels</span>
-    <div class="switch" id="switch">
-      <button data-base="1" aria-pressed="false">1 &ndash; 8</button>
-      <button data-base="25" aria-pressed="true">25 &ndash; 32</button>
-    </div>
-  </div>
+  <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level"></div>
 
   <div class="cells" id="cells"></div>
 
   <p class="lead" style="margin-top:22px;color:var(--muted);font-size:13px">It's live, not a recording. Keep this
-  tab in front &mdash; browsers throttle background tabs, which pauses every game at once.</p>
+  tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
 </main>
 
 <footer>
@@ -128,9 +121,10 @@
 document.getElementById('print').addEventListener('click', () => { location.href = 'SNEEKIE.BAS.html?print'; });
 
 const SCENES = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
+const LEVEL_CHOICES = [1,2,3,4,5,6,7,8,25,26,27,28,29,30,31,32];
 const GREEN = '#46ff64', RED = '#ff4040';
 
-// --- the smarter bot, eval'd inside each game iframe (IDX + TARGET are injected before it) ---
+// --- the smarter bot, eval'd inside the game iframe (IDX + TARGET are injected before it) ---
 const BOT = `
 (function(){
   'use strict';
@@ -345,35 +339,60 @@ const HIDE = '<style>header.top,.hero,#controls,#touchbar,#hint,footer{display:n
   '#glass,#panel{display:none!important}' +
   '#screen{display:block!important;width:100%!important;height:auto!important;image-rendering:pixelated!important;border-radius:0!important;box-shadow:none!important}</style>';
 
-let base = 25, gen = 0;
-const cells = [];
+let activeLevel = 25, gen = 0;
+const cell = {};
+const tabs = new Map();
+const tablist = document.getElementById('leveltabs');
 const grid = document.getElementById('cells');
-for(let i=0;i<8;i++){
+
+for(const level of LEVEL_CHOICES){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('role', 'tab');
+  btn.dataset.level = String(level);
+  btn.textContent = 'Level ' + level;
+  btn.setAttribute('aria-selected', String(level === activeLevel));
+  btn.addEventListener('click', () => setLevel(level));
+  tablist.appendChild(btn);
+  tabs.set(level, btn);
+}
+
+{
   const fig = document.createElement('figure'); fig.className = 'cell';
   fig.innerHTML =
-    '<figcaption><span class="lv">Level ' + (base+i) + '</span> <span class="dim">&middot; ' + SCENES[i] + '</span><span class="st"></span></figcaption>' +
-    '<div class="frame"><iframe scrolling="no" title="Sneekie level ' + (base+i) + '"></iframe><div class="flash"></div></div>';
+    '<figcaption><span class="lv"></span> <span class="dim"></span><span class="st"></span></figcaption>' +
+    '<div class="frame"><iframe scrolling="no"></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
-  cells.push({ frame: fig.querySelector('iframe'), flash: fig.querySelector('.flash'), st: fig.querySelector('.st'), lv: fig.querySelector('.lv') });
+  cell.frame = fig.querySelector('iframe');
+  cell.flash = fig.querySelector('.flash');
+  cell.st = fig.querySelector('.st');
+  cell.lv = fig.querySelector('.lv');
+  cell.scene = fig.querySelector('.dim');
 }
 
-function inject(i){
-  const c = cells[i];
+function sceneFor(level){ return SCENES[(level - 1) % 8]; }
+
+function updateLabel(){
+  cell.lv.textContent = 'Level ' + activeLevel;
+  cell.scene.innerHTML = '&middot; ' + sceneFor(activeLevel);
+  cell.frame.title = 'Sneekie level ' + activeLevel;
+  tabs.forEach((btn, level) => btn.setAttribute('aria-selected', String(level === activeLevel)));
+}
+
+function inject(){
   try {
-    c.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
-    c.frame.contentWindow.eval('var IDX=' + i + ',TARGET=' + (base+i) + ';' + BOT);
-  } catch(e){ c.st.className = 'st stuck'; c.st.textContent = ' — ' + e.message; }
+    cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
+    cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);
+  } catch(e){ cell.st.className = 'st stuck'; cell.st.textContent = ' — ' + e.message; }
 }
 
-function reloadCell(i){
-  const c = cells[i];
-  try { c.frame.contentWindow.location.reload(); } catch(e){ c.frame.src = 'index.html'; }
+function reloadCell(){
+  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = 'index.html'; }
 }
 
 window.botStatus = (idx, score, left) => {
-  const c = cells[idx]; if(!c) return;
-  c.st.className = 'st';
-  c.st.textContent = left <= 0 ? ' — clearing…' : ' — score ' + score + ' · ' + left + ' left';
+  cell.st.className = 'st';
+  cell.st.textContent = left <= 0 ? ' — clearing…' : ' — score ' + score + ' · ' + left + ' left';
 };
 
 function flash(el, color, done){
@@ -389,28 +408,24 @@ function flash(el, color, done){
 }
 
 window.botEnd = (idx, win) => {
-  const c = cells[idx]; if(!c) return;
   const g = gen;
-  c.st.className = win ? 'st win' : 'st stuck';
-  c.st.textContent = win ? ' — cleared! restarting…' : ' — stuck — restarting…';
-  flash(c.flash, win ? GREEN : RED, () => { if(g === gen) reloadCell(idx); });
+  cell.st.className = win ? 'st win' : 'st stuck';
+  cell.st.textContent = win ? ' — cleared! restarting…' : ' — stuck — restarting…';
+  flash(cell.flash, win ? GREEN : RED, () => { if(g === gen) reloadCell(); });
 };
 
-function setRange(b){
-  if(base === b) return;
-  base = b; gen++;   // invalidate any in-flight flash restarts
-  document.querySelectorAll('#switch button').forEach(btn => btn.setAttribute('aria-pressed', String(Number(btn.dataset.base) === b)));
-  cells.forEach((c, i) => {
-    c.lv.textContent = 'Level ' + (base + i);
-    c.frame.title = 'Sneekie level ' + (base + i);
-    c.st.className = 'st'; c.st.textContent = ' — restarting…';
-    reloadCell(i);
-  });
+function setLevel(level){
+  if(activeLevel === level) return;
+  activeLevel = level; gen++;   // invalidate any in-flight flash restarts
+  updateLabel();
+  cell.st.className = 'st'; cell.st.textContent = ' — restarting…';
+  reloadCell();
 }
-document.querySelectorAll('#switch button').forEach(btn => btn.addEventListener('click', () => setRange(Number(btn.dataset.base))));
 
-// start all eight
-cells.forEach((c, i) => { c.frame.addEventListener('load', () => inject(i)); c.frame.src = 'index.html'; });
+// start the selected level
+updateLabel();
+cell.frame.addEventListener('load', inject);
+cell.frame.src = 'index.html';
 </script>
 </body>
 </html>
