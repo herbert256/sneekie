@@ -862,7 +862,11 @@ async function bootSequence(){
   bootBeep();                                 // POST passed: the one short beep
   await bootSleep(320);
   bootConfigBox(11);                          // the clone's configuration summary
-  await bootSleep(950);
+  await bootSleep(500);
+  const afterBox = curR;
+  bootCenter(24, 'Hit  <DEL>  if you want to run SETUP', 7);
+  curR = afterBox; curC = 1;                  // keep boot messages above the SETUP prompt
+  await bootSleep(850);
   await bootDiskBurst(220);
   bootLine('');
   bootLine('Booting from fixed disk C:...', 15);
