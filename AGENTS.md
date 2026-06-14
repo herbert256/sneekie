@@ -73,15 +73,13 @@ https://herbert256.github.io/sneekie/.
   **same** selected level. Changing tabs bumps a `gen` counter (so in-flight flash reloads are ignored) and
   reloads the one iframe with the new target. No frames are saved — it's live, foreground only (background
   tabs throttle and pause the running game).
-- `docs/SNEEKIE.BAS.txt` — a served copy of the source, linked for download from the listings.
+- `docs/SNEEKIE.BAS.txt` — the canonical detokenized 1988 GW-BASIC source (served, linked for download from
+  the listings). This is the **specification**: the game's JS is a faithful port of it, so read it to understand
+  intended behavior and to check that changes stay true to the original. A frozen 1988 artifact.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
   Python, no deps; reads the font straight out of `docs/index.html`). All four pages carry
   matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`.
-- `SNEEKIE.BAS.txt` (root) — the canonical detokenized 1988 GW-BASIC source, kept next to
-  the floppy it came from. This is the **specification**: the game's JS is a faithful port
-  of it, so read it to understand intended behavior and to check that changes stay true to
-  the original. It is a frozen 1988 artifact; the `docs/` copy is identical.
 - `MCMPC-D2.dsk` (root) — the original FAT12 floppy image the `.BAS` was detokenized from.
   Provenance; not served.
 
