@@ -77,6 +77,17 @@
   .frame{ position:relative; line-height:0; }
   .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; }
   .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
+  .frame:fullscreen{ display:grid; place-items:center; background:#000; }
+  .frame:fullscreen iframe{ width:min(100vw, calc(100vh * 5 / 3)); height:auto; max-width:100vw; }
+
+  /* the six game controls, same as below the game on index.html (they drive the iframe's own hidden controls) */
+  #controls{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; }
+  #controls .grp{ display:flex; gap:6px; }
+  #controls button{ background:#16181b; color:#98a1a6; border:1px solid var(--border); border-radius:3px;
+    font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase; padding:7px 13px; cursor:pointer;
+    touch-action:manipulation; transition:color .12s, border-color .12s, box-shadow .12s; }
+  #controls button:hover{ color:var(--accent); border-color:var(--accent); }
+  #controls button[aria-pressed="true"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); }
   .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; text-align:center; }
 
   footer{ max-width:960px; margin:16px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
@@ -122,6 +133,19 @@
   <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level"></div>
 
   <div class="cells" id="cells"></div>
+
+  <div id="controls">
+    <div class="grp" id="themes">
+      <button data-theme="hercules">Green</button>
+      <button data-theme="amber">Amber</button>
+      <button data-theme="white">White</button>
+      <button data-theme="cga">CGA</button>
+    </div>
+    <div class="grp">
+      <button id="mute">Sound: on</button>
+      <button id="fs">Fullscreen</button>
+    </div>
+  </div>
 
   <p class="lead live-note">It's live, not a recording. Keep this
   tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
@@ -429,6 +453,7 @@ for(const level of LEVEL_CHOICES){
     '<div class="frame"><iframe scrolling="no"></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
   cell.frame = fig.querySelector('iframe');
+  cell.frameBox = fig.querySelector('.frame');
   cell.flash = fig.querySelector('.flash');
   cell.st = fig.querySelector('.st');
   cell.lv = fig.querySelector('.lv');
@@ -486,6 +511,34 @@ function setLevel(level){
   cell.st.className = 'st'; cell.st.textContent = ' — restarting…';
   reloadCell();
 }
+
+/* ---- the six game controls below the screen (drive the iframe's own hidden controls) ---- */
+function gameDoc(){ try { return cell.frame.contentDocument; } catch(e){ return null; } }
+function getPref(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function setPref(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+const ctlThemes = [...document.querySelectorAll('#controls #themes button')];
+const ctlMute = document.getElementById('mute');
+function syncControls(){
+  const theme = getPref('sneekie.theme') || 'cga';
+  ctlThemes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
+  ctlMute.textContent = getPref('sneekie.muted') === '1' ? 'Sound: off' : 'Sound: on';
+}
+ctlThemes.forEach(b => b.addEventListener('click', () => {
+  setPref('sneekie.theme', b.dataset.theme);                              // persists across the frequent iframe reloads
+  const d = gameDoc(), gb = d && d.querySelector('#themes button[data-theme="' + b.dataset.theme + '"]');
+  if(gb) gb.click();                                                      // apply to the running game now (reuses applyTheme)
+  syncControls();
+}));
+ctlMute.addEventListener('click', () => {
+  const d = gameDoc(), gm = d && d.getElementById('mute');
+  if(gm) gm.click(); else setPref('sneekie.muted', getPref('sneekie.muted') === '1' ? '0' : '1');
+  syncControls();
+});
+document.getElementById('fs').addEventListener('click', () => {
+  if(document.fullscreenElement) document.exitFullscreen();
+  else if(cell.frameBox && cell.frameBox.requestFullscreen) cell.frameBox.requestFullscreen();
+});
+syncControls();
 
 // start the selected level
 updateLabel();
