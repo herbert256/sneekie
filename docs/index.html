@@ -636,6 +636,20 @@ function bootClick(freq=95, dur=0.022, gain=0.04){
   o.connect(g); g.connect(actx.destination);
   o.start(t); o.stop(t + dur + 0.01);
 }
+/* the one short PC-speaker beep that signals POST passed (AT BIOS ~0.18s) */
+function bootBeep(freq=900, dur=0.18, gain=0.07){
+  if(!actx || muted) return;
+  const t = actx.currentTime + 0.002;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'square';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.006);
+  g.gain.setValueAtTime(gain, t + dur - 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
 let bootSeekNoise = null;
 function bootNoiseBuffer(){
   const rate = actx.sampleRate;
@@ -781,6 +795,9 @@ async function bootSequence(){
   await bootSleep(140);
   bootLine('Keyboard controller test . . . . . . . . . . . . OK', 7);
   bootLine('CGA display adapter . . . . . . . . . . . . . . . OK', 7);
+  await bootSleep(150);
+  bootBeep();                                 // POST passed: the one short beep
+  await bootSleep(360);
   await bootDiskBurst(220);
   bootLine('Fixed Disk 0: 20 MB', 7);
   bootLine('Booting from fixed disk...', 15);
