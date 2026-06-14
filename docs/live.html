@@ -124,7 +124,7 @@
   target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges
   <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will
   <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its
-  screen <strong><span class="ico green">flashes green</span></strong> and plays the same level again; get stuck
+  screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck
   and it <strong><span class="ico r">flashes red</span></strong> and restarts.</p>
 
   <div class="speedbar">
@@ -495,19 +495,19 @@ function flash(el, color, done){
   el.style.background = color;
   let k = 0;
   (function tick(){
-    if(k >= 4){ setTimeout(done, 260); return; }
+    if(k >= 5){ setTimeout(done, 320); return; }
     el.style.opacity = '0.82';
-    setTimeout(() => { el.style.opacity = '0'; }, 200);
+    setTimeout(() => { el.style.opacity = '0'; }, 300);
     k++;
-    setTimeout(tick, 750);   // 0.75 s between flashes
+    setTimeout(tick, 1000);   // 1 s between flashes
   })();
 }
 
 window.botEnd = (idx, win) => {
   const g = gen;
   cell.st.className = win ? 'st win' : 'st stuck';
-  cell.st.textContent = win ? ' — cleared! restarting…' : ' — stuck — restarting…';
-  flash(cell.flash, win ? GREEN : RED, () => { if(g === gen) reloadCell(); });
+  cell.st.textContent = win ? ' — cleared! next level…' : ' — stuck — next level…';
+  flash(cell.flash, win ? GREEN : RED, () => { if(g === gen) stepLevel(1); });
 };
 
 function setLevel(level){
