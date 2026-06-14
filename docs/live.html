@@ -140,42 +140,131 @@ const BOT = `
   const opp = {72:80, 80:72, 75:77, 77:75};
   const tell = (fn,a,b,c) => { try { parent[fn](a,b,c); } catch(e){} };
 
+  const STEP = {72:-160, 80:160, 75:-2, 77:2};
   const curDir = () => { const d = T[BTEL]-T[BTEL-1]; return d===-160?72:d===160?80:d===-2?75:77; };
-  const danger = o => peek(o+160)===24 || peek(o-2)===26 || peek(o+2)===27;
-  const pass = (n,d,sm) => { if(danger(n)) return false; const c=peek(n); return c===32||c===3||c===5||(sm&&c===1)||(c===10&&peek(n+d)===32); };
-  const bfsFood = sm => {
-    const head=T[BTEL], cur=curDir(), prev=new Map([[head,head]]), q=[head]; let h=0,t=-1;
-    while(h<q.length){ const o=q[h++]; const c=peek(o); if(o!==head && (c===3||c===5)){ t=o; break; }
-      for(const [sc,d] of DIRS){ if(o===head && sc===opp[cur]) continue; const n=o+d; if(prev.has(n)) continue; if(!pass(n,d,sm)) continue; prev.set(n,o); q.push(n); } }
-    if(t<0) return null; let c=t; while(prev.get(c)!==head) c=prev.get(c); const dd=c-head; return dd===-160?72:dd===160?80:dd===-2?75:77;
-  };
-  const plan = () => bfsFood(false) ?? bfsFood(true);
-  const safeAfter = nh => {
-    const grow=[1,3,5].includes(peek(nh)), from=grow?ETEL:ETEL+1, body=new Set();
-    for(let i=from;i<=BTEL;i++) body.add(T[i]); body.add(nh); const tail=T[from];
-    const ok = o => { if(o===tail) return true; if(body.has(o)||danger(o)) return false; const c=peek(o); return c===32||c===3||c===5||c===1||c===10; };
-    const seen=new Set([nh]), q=[nh]; let h=0;
-    while(h<q.length){ const o=q[h++]; if(o===tail) return true; for(const [,d] of DIRS){ const n=o+d; if(!seen.has(n)&&ok(n)){ seen.add(n); q.push(n); } } }
+  const rowOf = o => Math.trunc(o / 160) + 1;
+  const colOf = o => Math.trunc((o % 160) / 2) + 1;
+  const isFood = c => c===3 || c===5;
+  const open = c => c===32 || c===1 || isFood(c);
+  const danger = o => {
+    const r = rowOf(o), c = colOf(o);
+    if(peek(o)===24 || peek(o)===26 || peek(o)===27) return true;
+    if(peek(o+160)===24 || peek(o-2)===26 || peek(o+2)===27) return true;
+    if(r===20 && c%2===0 && peek((4-1)*160 + (c-1)*2)===24) return true;
+    if(c===2 && r>=4 && r<=20 && peek((r-1)*160 + (79-1)*2)===26) return true;
+    if(c===79 && r>=4 && r<=20 && peek((r-1)*160 + (2-1)*2)===27) return true;
     return false;
   };
-  const flood = s => {
-    const free = o => { const c=peek(o); return c===32||c===3||c===5||c===1||c===10; };
-    if(!free(s)) return 0; const seen=new Set([s]), q=[s]; let h=0,c=0;
-    while(h<q.length && c<900){ const o=q[h++]; c++; for(const [,d] of DIRS){ const n=o+d; if(!seen.has(n)&&free(n)){ seen.add(n); q.push(n); } } }
-    return c;
+  const makeState = () => {
+    const body = [], bodySet = new Set();
+    for(let i=ETEL;i<=BTEL;i++){ body.push(T[i]); bodySet.add(T[i]); }
+    return { head:T[BTEL], body, bodySet, dir:curDir(), cells:new Map(), first:null, dist:0, ate:0, points:0, smiles:0, stones:0 };
   };
-  const decide = () => {
-    const head=T[BTEL], cur=curDir(), len=BTEL-ETEL+1, few=(HART+KLAVER)<=6, cands=[];
-    for(const [sc,d] of DIRS){ if(sc===opp[cur]) continue; const n=head+d; if(danger(n)) continue; const c=peek(n);
-      if(c===32||c===3||c===5||c===1||(c===10&&peek(n+d)===32)) cands.push([sc,n]); }
-    if(!cands.length) return null;
-    const fd = plan();
-    if(fd!==null){ const c=cands.find(x=>x[0]===fd); if(c && (safeAfter(c[1]) || flood(c[1]) >= (few?12:len+8))) return fd; }
-    let best=cands[0][0], bs=-1e18;
-    for(const [sc,n] of cands){ const sp=flood(n), rt=safeAfter(n)?1:0, sm=peek(n)===1?1:0;
-      const score = rt*6000 + sp*5 - sm*380; if(score>bs){ bs=score; best=sc; } }
+  const cell = (st,o) => st.cells.has(o) ? st.cells.get(o) : peek(o);
+  const move = (st, sc, allowSmile) => {
+    if(sc===opp[st.dir]) return null;
+    const d = STEP[sc], n = st.head + d;
+    if(danger(n) || st.bodySet.has(n)) return null;
+    let c = cell(st,n), cells = st.cells, stones = st.stones;
+    if(c===1 && !allowSmile) return null;
+    if(c===10){
+      const nn = n + d;
+      if(st.bodySet.has(nn) || cell(st,nn)!==32) return null;
+      cells = new Map(cells); cells.set(n,32); cells.set(nn,10); stones++;
+    } else if(!open(c)) return null;
+    const grow = c===1 || isFood(c), body = st.body.slice(), bodySet = new Set(st.bodySet);
+    if(!grow){ const old = body.shift(); bodySet.delete(old); }
+    body.push(n); bodySet.add(n);
+    if(grow){ if(cells===st.cells) cells = new Map(cells); cells.set(n,32); }
+    return {
+      head:n, body, bodySet, dir:sc, cells, first:st.first ?? sc, dist:st.dist+1,
+      ate:st.ate + (isFood(c)?1:0), points:st.points + (c===5?25:c===3?10:0),
+      smiles:st.smiles + (c===1?1:0), stones
+    };
+  };
+  const legal = (st, allowSmile) => {
+    const out = [];
+    for(const [sc] of DIRS){ const ns = move(st, sc, allowSmile); if(ns) out.push(ns); }
+    return out;
+  };
+  const tailReach = st => {
+    const tail = st.body[0], seen = new Set([st.head]), q = [st.head]; let h = 0;
+    while(h<q.length){
+      const o = q[h++];
+      if(o===tail) return true;
+      for(const [,d] of DIRS){
+        const n = o + d;
+        if(seen.has(n) || danger(n)) continue;
+        if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
+        seen.add(n); q.push(n);
+      }
+    }
+    return false;
+  };
+  const flood = st => {
+    const tail = st.body[0], seen = new Set([st.head]), q = [st.head]; let h = 0, count = 0;
+    while(h<q.length && count<1200){
+      const o = q[h++]; count++;
+      for(const [,d] of DIRS){
+        const n = o + d;
+        if(seen.has(n) || danger(n)) continue;
+        if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
+        seen.add(n); q.push(n);
+      }
+    }
+    return count;
+  };
+  const routeFood = allowSmile => {
+    const start = makeState(), q = [start], seen = new Set(), few = (HART+KLAVER)<=6;
+    const maxDepth = few ? 115 : 78; let h = 0, checked = 0, best = null, bs = -1e18;
+    seen.add(start.head + ',' + start.dir + ',' + start.body[0] + ',' + start.body.length);
+    while(h<q.length && h<950){
+      const st = q[h++];
+      if(st.dist >= maxDepth) continue;
+      for(const [sc] of DIRS){
+        const ns = move(st, sc, allowSmile); if(!ns) continue;
+        const key = ns.head + ',' + ns.dir + ',' + ns.body[0] + ',' + ns.body.length;
+        if(seen.has(key)) continue; seen.add(key);
+        if(ns.ate){
+          checked++;
+          const sp = flood(ns), rt = tailReach(ns), minSpace = Math.min(170, ns.body.length + (few ? 18 : 8));
+          if(rt || sp >= minSpace){
+            const score = (rt?100000:0) + sp*14 + ns.points*150 - ns.dist*220 - ns.smiles*950 - ns.stones*35;
+            if(score > bs){ bs = score; best = ns.first; }
+          }
+          if(checked >= 42 && best !== null) return best;
+        } else q.push(ns);
+      }
+    }
     return best;
   };
+  const tailFirst = () => {
+    const st = makeState(), tail = st.body[0], first = new Map(), seen = new Set([st.head]), q = [st.head]; let h = 0;
+    while(h<q.length){
+      const o = q[h++];
+      for(const [sc,d] of DIRS){
+        if(o===st.head && sc===opp[st.dir]) continue;
+        const n = o + d;
+        if(o===st.head && n===tail) continue;
+        if(seen.has(n) || danger(n)) continue;
+        if(n!==tail && (st.bodySet.has(n) || !open(cell(st,n)))) continue;
+        const f = o===st.head ? sc : first.get(o);
+        if(n===tail && move(st, f, true)) return f;
+        seen.add(n); first.set(n, f); q.push(n);
+      }
+    }
+    return null;
+  };
+  const survivalMove = () => {
+    const st = makeState(); let best = null, bs = -1e18;
+    for(const ns of legal(st, true)){
+      const c = cell(st, st.head + STEP[ns.first]), sp = flood(ns), rt = tailReach(ns), exits = legal(ns, true).length;
+      const score = (rt?60000:0) + sp*24 + exits*900 + (isFood(c)?1200:0) - (c===1?1400:0) - ns.stones*35 + (ns.first===st.dir?40:0);
+      if(score > bs){ bs = score; best = ns.first; }
+    }
+    return best;
+  };
+  const decide = () => routeFood(false) ?? routeFood(true) ?? tailFirst() ?? survivalMove();
 
   const ready = () => { try { return typeof LEVEL!=='undefined' && LEVEL>=1 && BTEL===2 && T[2]===1840; } catch(e){ return false; } };
 
@@ -189,22 +278,38 @@ const BOT = `
     for(let w=0;w<500 && LEVEL!==TARGET;w++) await sleep(8);
     for(let w=0;w<200 && !(BTEL===2 && T[2]===1840);w++) await sleep(8);
     pushKey('\\r'); await sleep(120);
-    let lastScore = ZCORE, idle = 0, lastHead = BTEL, stall = 0;
+    let lastScore = ZCORE, idle = 0, lastHead = BTEL, lastTail = ETEL, stall = 0;
+    const resetTrack = () => { lastScore = ZCORE; idle = 0; lastHead = BTEL; lastTail = ETEL; stall = 0; };
+    const resumeTarget = async () => {
+      for(let w=0;w<1500 && !(LEVEL===TARGET && BTEL===2 && T[2]===1840);w++) await sleep(20);
+      if(LEVEL===TARGET && BTEL===2 && T[2]===1840){ pushKey('\\r'); await sleep(120); resetTrack(); return true; }
+      return false;
+    };
+    const useLife = async () => {
+      if(LIVE <= 1) return false;
+      pushKey('\\x1b');
+      return await resumeTarget();
+    };
     while(true){
       if(typeof LEVEL==='undefined'){ tell('botEnd', IDX, false); return; }
       if(LEVEL === TARGET+1 && LIVE > 0){ tell('botEnd', IDX, true); return; }   // cleared the level -> green
+      if(LEVEL === TARGET-1 && LIVE > 0){ if(await resumeTarget()) continue; tell('botEnd', IDX, false); return; }
       if(LEVEL !== TARGET){ tell('botEnd', IDX, false); return; }                 // game-over / jumped away -> red
-      if(BTEL > lastHead){ lastHead = BTEL; stall = 0; } else stall++;
-      if(stall > 15){ tell('botEnd', IDX, false); return; }                       // head not advancing (boxed/dying) -> red
+      const headMoved = BTEL > lastHead, tailMoved = ETEL > lastTail;
+      if(headMoved || tailMoved){
+        lastHead = BTEL; lastTail = ETEL; stall = 0;
+        if(tailMoved && !headMoved){ idle = 0; await sleep(165); continue; }       // death unwinding; let the real life counter handle it
+      } else stall++;
+      if(stall > 24){ if(await useLife()) continue; tell('botEnd', IDX, false); return; } // boxed after all retries -> red
       const f = HART+KLAVER; if(f<=2) BONUS=0;
       // progress = the score rising (the bot ate something). In levels >16 a heart spawns a
       // club, so HART+KLAVER can sit flat while the snake is busy eating — the score is the
       // honest signal, so idle off that, not off the item count.
       if(ZCORE > lastScore){ idle = 0; } else idle++; lastScore = ZCORE;
       tell('botStatus', IDX, ZCORE, f);
-      if(idle > 160){ tell('botEnd', IDX, false); return; }                       // ~26s with no score gain -> red
+      if(idle > 160){ if(await useLife()) continue; tell('botEnd', IDX, false); return; } // ~26s with no score gain -> red
       const sc = decide();
-      if(sc===null){ tell('botEnd', IDX, false); return; }                        // no safe move -> red
+      if(sc===null){ if(await useLife()) continue; tell('botEnd', IDX, false); return; }  // no safe move after all retries -> red
       pushKey(keyOf[sc]);
       await sleep(165);
     }
@@ -215,7 +320,9 @@ const BOT = `
 
 const HIDE = '<style>header.top,.hero,#controls,#touchbar,#hint,footer{display:none!important}' +
   'html,body{margin:0!important;padding:0!important;background:#000!important;min-height:0!important;overflow:hidden!important}' +
-  '#bezel{margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#000!important;animation:none!important}' +
+  '#bezel{margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#000!important;animation:none!important;gap:0!important}' +
+  '#tube{margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#000!important;width:100%!important;display:block!important}' +
+  '#glass,#panel{display:none!important}' +
   '#screen{display:block!important;width:100%!important;height:auto!important;image-rendering:pixelated!important;border-radius:0!important;box-shadow:none!important}</style>';
 
 let base = 25, gen = 0;

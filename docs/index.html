@@ -24,7 +24,6 @@
     --phos:#7dff7d;
     --glow:rgba(125,255,125,.14);
     --room1:#14171a; --room2:#0a0c0d; --room3:#060708;
-    --bezel1:#2c3034; --bezel2:#1c1f22;
     --ink:#98a1a6; --ink-dim:#5b6367;
     --line:#33383d;
   }
@@ -68,29 +67,72 @@
     margin:5px 0 0; color:var(--ink-dim);
     letter-spacing:.14em; text-transform:uppercase; font-size:10.5px;
   }
-  /* ---- the monitor ---- */
+  /* ---- the monitor: a late-'80s CRT ---- */
   #bezel{
     position:relative;
-    background:linear-gradient(173deg, var(--bezel1), var(--bezel2) 70%);
-    border-radius:16px;
-    padding:14px 18px 24px;
+    display:flex; flex-direction:column; align-items:stretch; gap:13px;
+    background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
+    border-radius:20px;
+    padding:18px 22px 15px;
     box-shadow:
-      0 30px 70px -24px rgba(0,0,0,.95),
-      0 4px 14px -6px rgba(0,0,0,.7),
-      inset 0 1px 0 rgba(255,255,255,.07),
-      inset 0 -2px 6px rgba(0,0,0,.45);
-    animation:poweron .55s ease-out both .08s;
+      0 38px 84px -28px rgba(0,0,0,.95),
+      0 8px 20px -8px rgba(0,0,0,.7),
+      inset 0 2px 0 rgba(255,255,255,.09),
+      inset 0 -3px 9px rgba(0,0,0,.55),
+      inset 0 0 0 1px rgba(0,0,0,.45);
+    animation:poweron .6s ease-out both .08s;
   }
   @keyframes poweron{
     from{ opacity:0; transform:scale(.985); }
     to{ opacity:1; transform:none; }
   }
+  /* the glass tube: a black, recessed frame around the active image */
+  #tube{
+    position:relative; align-self:center;
+    background:#060708;
+    padding:9px;
+    border-radius:14px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.035),
+      inset 0 0 18px 5px rgba(0,0,0,.9);
+  }
   #screen{
     display:block; background:#000;
-    border-radius:5px;
+    border-radius:7px;
     image-rendering:pixelated;
-    box-shadow: 0 0 0 2px #000, 0 0 40px -4px var(--glow), inset 0 0 0 1px #000;
+    box-shadow: 0 0 0 2px #000, 0 0 44px -2px var(--glow);
     touch-action:none;
+  }
+  /* scanlines + vignette + corner glare painted over the glass (never eats input) */
+  #glass{
+    position:absolute; inset:9px;
+    border-radius:7px; pointer-events:none; z-index:2;
+    background:
+      linear-gradient(133deg, rgba(255,255,255,.07), rgba(255,255,255,.012) 24%, transparent 40%),
+      radial-gradient(128% 132% at 50% 47%, transparent 56%, rgba(0,0,0,.40) 100%),
+      repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+    box-shadow: inset 0 0 26px 5px rgba(0,0,0,.5);
+  }
+  /* the control chin: engraved logo, power LED, brightness/contrast knobs */
+  #panel{ display:flex; align-items:center; gap:11px; height:16px; padding:0 5px; }
+  #panel .logo{
+    font:700 10px/1 ui-monospace,monospace; letter-spacing:.24em; text-transform:uppercase;
+    color:#494e53; text-shadow:0 1px 0 rgba(255,255,255,.06), 0 -1px 0 rgba(0,0,0,.55);
+  }
+  #panel .led{
+    width:7px; height:7px; border-radius:50%;
+    background:radial-gradient(circle at 34% 30%, #e6ffe6, var(--phos) 52%, rgba(0,0,0,.7) 100%);
+    box-shadow:0 0 9px 1px var(--glow);
+  }
+  #panel .knobs{ margin-left:auto; display:flex; gap:11px; }
+  #panel .knobs i{
+    width:15px; height:15px; border-radius:50%; position:relative;
+    background:radial-gradient(circle at 38% 30%, #4a4f54, #25292c 62%, #15171a 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.6);
+  }
+  #panel .knobs i::after{
+    content:""; position:absolute; left:50%; top:2px; width:1.5px; height:5px;
+    background:rgba(0,0,0,.6); border-radius:1px; transform:translateX(-50%);
   }
   /* ---- controls ---- */
   #controls{
@@ -111,13 +153,16 @@
     color:var(--phos); border-color:var(--phos);
     box-shadow:0 0 12px -5px var(--phos);
   }
-  /* ---- fullscreen: the MacBook becomes the 1988 monitor ---- */
+  /* ---- fullscreen: the laptop becomes the 1988 monitor ---- */
   #bezel:fullscreen{
-    background:#000; padding:0; border-radius:0; box-shadow:none; animation:none;
+    background:#000; padding:0; border-radius:0; box-shadow:none; animation:none; gap:0;
     display:flex; align-items:center; justify-content:center;
     cursor:none;
   }
+  #bezel:fullscreen #tube{ padding:0; border-radius:0; box-shadow:none; background:#000; }
   #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
+  #bezel:fullscreen #glass{ inset:0; border-radius:0; }   /* keep the scanlines over the fullscreen image */
+  #bezel:fullscreen #panel{ display:none; }
   #touchbar{ display:none; margin-top:12px; gap:10px; }
   #touchbar button{ padding:12px 22px; font-size:13px; }
   @media (pointer:coarse){
@@ -165,7 +210,15 @@
 </header>
 
 <div id="bezel">
-  <canvas id="screen" width="640" height="384"></canvas>
+  <div id="tube">
+    <canvas id="screen" width="640" height="384"></canvas>
+    <div id="glass" aria-hidden="true"></div>
+  </div>
+  <div id="panel" aria-hidden="true">
+    <span class="logo">HerbySoft</span>
+    <span class="led"></span>
+    <span class="knobs"><i></i><i></i></span>
+  </div>
 </div>
 
 <div id="controls">
