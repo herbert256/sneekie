@@ -65,6 +65,13 @@
   footer{ max-width:1040px; margin:40px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
   footer .src{ margin-top:6px; color:var(--muted); }
 
+  hr.sep{ border:0; border-top:1px solid var(--border); margin:40px 0 0; }
+  .recap{ max-width:760px; margin-top:8px; }
+  .recap h2{ font-size:22px; color:var(--heading); margin:26px 0 4px; }
+  .recap h3{ font-size:15px; color:var(--accent); margin:22px 0 2px; }
+  .recap p{ color:var(--text); } .recap em{ color:var(--heading); font-style:normal; font-weight:600; }
+  .recap .note{ color:var(--muted); font-size:13px; }
+
   /* lightbox */
   #lb{ position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
     background:rgba(4,6,7,.92); backdrop-filter:blur(3px); padding:46px 16px 60px; }
@@ -145,6 +152,39 @@
       <figcaption><span class="lbl">Page 63</span><span class="cap">Listing ends &middot; checksum</span></figcaption>
     </button>
   </div>
+
+  <hr class="sep">
+
+  <section class="recap">
+    <h2>The feature, in English</h2>
+    <p class="note">The article is in Dutch; here is a short recap of page&nbsp;58 and the top of page&nbsp;59 in
+    English &mdash; paraphrased in my own words, not a word-for-word translation of the magazine's text.</p>
+
+    <p>The piece opens by remarking how unusual a <em>BASIC game written for the PC</em> was in 1988. The machine
+    wasn't built for the kind of tricks an MSX could pull off, and the real obstacle was the video card: an EGA
+    card could do attractive graphics, a Hercules card managed crisp monochrome but no colour, and the cheapest
+    cards in some PC clones couldn't do graphics at all. A game that runs on <em>any</em> PC, whatever card it
+    has, was therefore something to welcome. It arrived, the magazine notes, after a reader who had traded his
+    MSX for a PC wrote in &mdash; and then sent along a game he'd written for it.</p>
+
+    <h3>Text screen</h3>
+    <p>Sneekie sidesteps the whole problem by drawing entirely on the standard 80&times;25 <em>text screen</em>
+    &mdash; no graphics mode, no redefined characters. That costs it some polish (custom glyphs would look
+    nicer), but it means the game runs unchanged on essentially any PC with GW-BASIC. The author had asked, in
+    the note he sent with the program, whether that trade-off was the right one; the verdict was that staying
+    universal was worth it.</p>
+
+    <h3>A nice game</h3>
+    <p>Plain looks aside, the article rates it a good game. The goal is simple &mdash; clear every heart &mdash;
+    but the snake grows with each one, so the longer you last the easier it is to wall yourself in, and a
+    misjudged turn ends the run.</p>
+
+    <h3>The fields</h3>
+    <p>What gives it staying power is the <em>32 levels</em>: eight board layouts, each used several times at
+    rising difficulty. On the gentlest the snake only moves when you press a key; later it slides on by itself,
+    faster and faster, while the time bonus ticks down &mdash; and the harder boards add pushable stones to
+    shove aside and arrows that are fatal to touch. (The type-in listing itself begins further down page&nbsp;59.)</p>
+  </section>
 </main>
 
 <footer>
