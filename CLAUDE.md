@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Sneekie is a 32-level snake/maze game originally written in GW-BASIC in July 1988 by
 HerbySoft and published in MS(X)DOS Computer Magazine no. 25. In 2026 it
 was recovered by OCR from the magazine's printed listing and ported **line for line** to a
-single self-contained HTML page. There is no framework, no build step, no dependencies,
-and no test suite — `docs/index.html` is the entire program.
+self-contained HTML page. There is no framework, no build step, no dependencies, and no
+test suite — `docs/index.html` is the whole game (plus two small shared static assets it
+links, `site.css` and, for the listing pages, `basic.js`; see below).
 
 ## Layout & deployment
 
@@ -16,8 +17,20 @@ The repository root **is** the git repo (remote `github.com:herbert256/sneekie`)
 publishable website lives in `docs/`, which is the GitHub Pages source — it is served at
 https://sneekie.xyz/.
 
-- `docs/index.html` — the game. One file, all HTML/CSS/JS inline. **This is the single
-  canonical copy** — edit it directly; there is no second copy to keep in sync.
+- `docs/index.html` — the game. All game HTML/CSS/JS is inline and **this is the single
+  canonical copy** — edit it directly; there is no second copy to keep in sync. It links the
+  shared `site.css` for the top nav/footer/title chrome (so it is no longer a strictly
+  single-file program), but every line of the actual game lives here.
+- `docs/site.css` — the **shared page chrome** linked by all nine pages: the top nav,
+  brand wordmark, big white page title, footer, and the mobile-nav rules. Chrome colours are
+  pinned via `--c-*` variables (the nav never followed the game theme switcher, which only
+  sets `--phos`/`--glow`), so each page keeps its own palette/`:root`. Linked **before** each
+  page's inline `<style>`, so a page can still override. Edit nav/footer/title styling here,
+  once, instead of in nine files.
+- `docs/basic.js` — the **shared GW-BASIC tokenizer** (`tokenizeBasicLine()`), linked by
+  `source.html` and `explained.html` (which had byte-identical copies). `migration.html` keeps
+  its own reduced inline tokenizer — it uses a smaller keyword set, classifies `STRING$`/`SPC`
+  differently, and coexists with a second (JS) tokenizer, so it deliberately does not share this.
 - `docs/source.html` — the original source, syntax-highlighted (a self-contained
   pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS). The nav
   label is **Source**. The rendered listing drops the first 10 banner lines (starts at `10 REM`)
@@ -99,13 +112,17 @@ To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is 
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
 All nine pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**: the **top-left is the `♥ SNEEKIE ♥` logo** (`<a class="brand" href="index.html"><img src="logo.png">`,
-the same on every page — no more per-page brand text), then the same page links (current page marked
-`aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
-eight pages navigate there with `?print`, which auto-prints). Each page also carries **one big white centered
-title** (`h1.page-title`) naming the page's purpose, just under the nav — on the doc pages this is the
-page's existing intro `<h1>`; `index` and `source` get a dedicated one ("The 1988 Game" / "Source Listing").
-The old per-page brand descriptor became that title. There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
+look**, now driven by the shared **`site.css`** (the nav/footer/title CSS used to be copy-pasted,
+with drift, into all nine `<style>` blocks). The **top-left is the `♥ SNEEKIE ♥` logo**
+(`<a class="brand" href="index.html"><img src="logo.png">`, the same on every page — no more
+per-page brand text), then the same page links (current page marked `aria-current="page"`) plus a
+`#print` button that **always prints the Source page** (`source.html`; the other eight pages
+navigate there with `?print`, which auto-prints). Each page also carries **one big white centered
+title** (`h1.page-title`, styled in `site.css`) naming the page's purpose, just under the nav — on
+the doc pages this is the page's existing intro `<h1>`; `index` and `source` get a dedicated one
+("The 1988 Game" / "Source Listing"). The old per-page brand descriptor became that title.
+Footers are unified into one `site.css` style. To restyle the nav/footer/title, edit `site.css`
+(chrome colours are the `--c-*` vars there); to recolour a page's *body*, edit that page's `:root`. There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
 `#themes` switcher (`sneekie.theme`); the doc pages (Manual, Live, Bot, Magazine, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
