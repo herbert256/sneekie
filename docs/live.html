@@ -75,7 +75,7 @@
   figcaption .dim{ color:var(--muted); } figcaption .st{ color:var(--muted); font-family:ui-monospace,monospace; font-size:12.5px; }
   figcaption .st.win{ color:var(--accent); } figcaption .st.stuck{ color:var(--red); }
   .frame{ position:relative; line-height:0; }
-  .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; }
+  .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; pointer-events:none; }  /* the bot plays — the viewer can't steer the game */
   .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
   .frame:fullscreen,
   .frame.live-fullscreen{ width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; background:#000; }
@@ -453,7 +453,7 @@ for(const level of LEVEL_CHOICES){
   const fig = document.createElement('figure'); fig.className = 'cell';
   fig.innerHTML =
     '<figcaption><span class="lv"></span> <span class="dim"></span><span class="st"></span></figcaption>' +
-    '<div class="frame"><iframe scrolling="no"></iframe><div class="flash"></div></div>';
+    '<div class="frame"><iframe scrolling="no" tabindex="-1"></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
   cell.frame = fig.querySelector('iframe');
   cell.frameBox = fig.querySelector('.frame');
