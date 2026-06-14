@@ -795,6 +795,35 @@ function bootBiosLogo(top=3){
   row(top + 3, 'PC/XT Compatible', 7);
   locate(top + 4, left); pc(200); pcn(205, inner); pc(188);
 }
+/* the system-configuration summary clones printed at the end of POST */
+function bootConfigBox(top=11){
+  const padR = (s, w) => (s + ' '.repeat(w)).slice(0, w);
+  const fields = [
+    ['Main Processor',  '8088  @ 4.77 MHz', 'Base Memory',     '640 KB'],
+    ['Numeric Coproc.', 'None',             'Extended Memory', '0 KB'],
+    ['Floppy Drive A',  '1.2 MB, 5.25"',    'Display Type',    'Color / CGA'],
+    ['Floppy Drive B',  'None',             'Serial Ports',    '1'],
+    ['Fixed Disk C',    '20 MB  (Type 2)',  'Parallel Ports',  '1'],
+  ];
+  const rows = fields.map(([lk, lv, rk, rv]) =>
+    ' ' + padR(lk, 16) + ': ' + padR(lv, 17) + padR(rk, 16) + ': ' + rv);
+  const title = 'System Configuration   (C) Acme Corporation 1988';
+  const inner = Math.max(title.length, ...rows.map(r => r.length));
+  const left = Math.max(2, Math.floor((80 - (inner + 2)) / 2) + 1);
+  const center = s => {
+    const p = Math.max(0, inner - s.length);
+    return ' '.repeat(Math.floor(p / 2)) + s + ' '.repeat(Math.ceil(p / 2));
+  };
+  let r = top;
+  locate(r++, left); pc(201); pcn(205, inner); pc(187);            // top border
+  locate(r++, left); pc(186); psa(center(title), 15); pc(186);     // title
+  locate(r++, left); pc(204); pcn(205, inner); pc(185);            // title rule
+  for(const line of rows){
+    locate(r++, left); pc(186); psa(padR(line, inner), 7); pc(186);
+  }
+  locate(r++, left); pc(200); pcn(205, inner); pc(188);            // bottom border
+  curR = Math.min(24, r); curC = 1;
+}
 async function waitForBootGesture(){
   bootWaiting = true;
   bootStarted = false;
@@ -831,10 +860,12 @@ async function bootSequence(){
   bootLine('CGA display adapter . . . . . . . . . . . . . . . OK', 7);
   await bootSleep(150);
   bootBeep();                                 // POST passed: the one short beep
-  await bootSleep(360);
+  await bootSleep(320);
+  bootConfigBox(11);                          // the clone's configuration summary
+  await bootSleep(950);
   await bootDiskBurst(220);
-  bootLine('Fixed Disk 0: 20 MB', 7);
-  bootLine('Booting from fixed disk...', 15);
+  bootLine('');
+  bootLine('Booting from fixed disk C:...', 15);
   await bootDiskBurst(440);
 
   cls();
