@@ -817,12 +817,14 @@ async function bootSequence(){
   bootLine('Acme Corporation Turbo BIOS v1.88', 15);
   bootLine('(C) Copyright Acme Corporation 1984,1988', 7);
   bootLine('');
-  for(const k of [64,128,256,384,512,640]){
-    locate(4,1); psa(String(k).padStart(3) + 'K OK', 15);
-    bootClick(900 + k, 0.018, 0.028);
-    await bootSleep(115);
+  const memRow = curR;                        // count RAM in place, fast and fine-grained
+  for(let k = 0; k <= 640; k += 8){
+    locate(memRow, 1); psa(String(k).padStart(4) + 'K OK', 15);
+    if(k % 64 === 0) bootClick(760 + k, 0.011, 0.02);
+    await bootSleep(7);
   }
-  bootLine('', 7);
+  curR = memRow; curC = 1;
+  bootLine('');                               // drop to the line below the RAM tally
   bootLine('BIOS ROM checksum . . . . . . . . . . . . . . . . OK', 7);
   await bootSleep(140);
   bootLine('Keyboard controller test . . . . . . . . . . . . OK', 7);
