@@ -29,7 +29,7 @@
     --phos:#7dff7d;
     --glow:rgba(125,255,125,.14);
     --room1:#14171a; --room2:#0a0c0d; --room3:#060708;
-    --ink:#98a1a6; --ink-dim:#5b6367;
+    --ink:#a3edab; --ink-dim:#7fcf8a;   /* body text: readable phosphor green (was gray #98a1a6/#5b6367) */
     --line:#33383d;
   }
   *{ box-sizing:border-box; }
@@ -70,7 +70,7 @@
   }
   header.hero .sub{
     margin:5px 0 0; color:var(--ink-dim);
-    letter-spacing:.14em; text-transform:uppercase; font-size:10.5px;
+    letter-spacing:.14em; text-transform:uppercase; font-size:12.5px;
   }
   /* ---- the monitor: a late-'80s CRT ---- */
   #bezel{
@@ -186,12 +186,12 @@
     #hint .kb{ display:none; }
     #hint .tc{ display:inline; }
   }
-  #hint{ margin:8px 0 0; font-size:11px; color:var(--ink-dim); text-align:center; }
+  #hint{ margin:8px 0 0; font-size:13px; color:var(--ink-dim); text-align:center; }
   #hint .tc{ display:none; }
   footer{
     margin-top:auto; padding-top:14px;
     max-width:660px; text-align:center;
-    font-size:10.5px; color:var(--ink-dim); line-height:1.7;
+    font-size:12.5px; color:var(--ink-dim); line-height:1.7;
   }
   footer .plaque{
     border-top:1px solid var(--line);
@@ -352,6 +352,8 @@ const cv = document.getElementById('screen');
 const ctx = cv.getContext('2d');
 let atlasDim, atlasBright;
 const cgaAtlas = {};
+let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
+let bootStartResolve = null;
 
 function buildAtlas(rgb){
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
@@ -411,6 +413,20 @@ function sp(n){ pcn(32, n); }
 function pu(w, n){ let s = String(Math.trunc(n)); if(s.length < w) s = s.padStart(w); ps(s); } // PRINT USING "#..#"
 function cls(){ for(let i = 0; i < 4000; i += 2){ vram[i] = 32; vram[i+1] = 7; } repaintAll(); locate(1,1); }
 
+function pca(code, at){
+  const off = (curR-1)*160 + (curC-1)*2;
+  poke(off, code); poke(off+1, at);
+  curC++;
+  if(curC > 80){ curC = 1; curR = Math.min(24, curR + 1); }
+}
+function psa(s, at=7){
+  for(let i = 0; i < s.length; i++){
+    const c = s.charCodeAt(i);
+    pca(c < 128 ? c : 63, at);
+  }
+}
+function bootLine(s='', at=7){ psa(s, at); curR = Math.min(24, curR + 1); curC = 1; }
+
 /* ---------- INPUT: BIOS keyboard buffer / INKEY$ semantics ---------- */
 const kbuf = [];
 let kwaiter = null;
@@ -431,6 +447,13 @@ function keyOrTimeout(ms){                   // 430-460: INKEY$ poll with Z time
 function waitKey(){ return keyOrTimeout(Infinity); }   // INPUT$(1)
 
 addEventListener('keydown', e => {
+  if(bootActive){
+    ensureAudio();
+    if(bootWaiting) startBootFromGesture();
+    else if(bootStarted) bootSkip = true;
+    if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
+    return;
+  }
   ensureAudio();
   let s = null;
   switch(e.key){
@@ -452,8 +475,18 @@ addEventListener('keydown', e => {
 
 /* touch: swipe = direction, tap = any key */
 let tStart = null;
-cv.addEventListener('touchstart', e => { ensureAudio(); const t = e.changedTouches[0]; tStart = {x:t.clientX, y:t.clientY}; e.preventDefault(); }, {passive:false});
+cv.addEventListener('touchstart', e => {
+  if(bootActive){
+    ensureAudio();
+    if(bootWaiting) startBootFromGesture();
+    else if(bootStarted) bootSkip = true;
+    e.preventDefault();
+    return;
+  }
+  ensureAudio(); const t = e.changedTouches[0]; tStart = {x:t.clientX, y:t.clientY}; e.preventDefault();
+}, {passive:false});
 cv.addEventListener('touchend', e => {
+  if(bootActive){ e.preventDefault(); return; }
   if(!tStart) return;
   const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
   tStart = null;
@@ -462,9 +495,23 @@ cv.addEventListener('touchend', e => {
   else pushKey(dy > 0 ? '\0P' : '\0H');
   e.preventDefault();
 }, {passive:false});
+cv.addEventListener('pointerdown', e => {
+  if(e.pointerType === 'touch') return;
+  if(!bootActive) return;
+  ensureAudio();
+  if(bootWaiting) startBootFromGesture();
+  else if(bootStarted) bootSkip = true;
+  e.preventDefault();
+});
 
 document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
   b.addEventListener('click', () => {
+    if(bootActive){
+      ensureAudio();
+      if(bootWaiting) startBootFromGesture();
+      else if(bootStarted) bootSkip = true;
+      return;
+    }
     ensureAudio();
     const k = b.dataset.key;
     pushKey(k === 'esc' ? '\x1b' : k);
@@ -507,6 +554,132 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const raf = () => new Promise(r => requestAnimationFrame(r));
 const rnd = Math.random;
 const DEATH = {sneekie:'crashed'};          // RETURN 510
+
+/* ---------- BOOT SHOW: compressed PC DOS + GW-BASIC startup, before line 80 ---------- */
+function startBootFromGesture(){
+  if(!bootWaiting || bootStarted) return;
+  bootWaiting = false;
+  bootStarted = true;
+  if(bootStartResolve){ const r = bootStartResolve; bootStartResolve = null; r(); }
+}
+function shouldSkipBoot(){
+  try {
+    return window.self !== window.top || new URLSearchParams(location.search).has('noboot');
+  } catch(_){ return true; }
+}
+function bootSleep(ms){
+  return new Promise(resolve => {
+    const end = performance.now() + ms;
+    function tick(){
+      if(bootSkip || performance.now() >= end){ resolve(); return; }
+      setTimeout(tick, Math.min(35, end - performance.now()));
+    }
+    tick();
+  });
+}
+function bootClick(freq=95, dur=0.022, gain=0.04){
+  if(!actx || muted) return;
+  const t = actx.currentTime + 0.002;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'square';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur + 0.01);
+}
+async function bootDiskBurst(ms=300){
+  const end = performance.now() + ms;
+  while(!bootSkip && performance.now() < end){
+    bootClick(70 + rnd()*55, 0.014 + rnd()*0.018, 0.026 + rnd()*0.03);
+    if(rnd() > 0.45) bootClick(1150 + rnd()*2300, 0.006 + rnd()*0.01, 0.012);
+    await bootSleep(18 + rnd()*38);
+  }
+}
+async function bootType(s, at=15, lo=16, hi=34){
+  for(let i = 0; i < s.length; i++){
+    if(bootSkip){ psa(s.slice(i), at); break; }
+    psa(s[i], at);
+    if(s[i] !== ' ') bootClick(1450 + rnd()*700, 0.006, 0.012);
+    await bootSleep(lo + rnd()*(hi-lo));
+  }
+}
+async function bootTypeLine(s, at=15, lo=16, hi=34){
+  await bootType(s, at, lo, hi);
+  curR = Math.min(24, curR + 1);
+  curC = 1;
+}
+async function waitForBootGesture(){
+  bootWaiting = true;
+  bootStarted = false;
+  bootSkip = false;
+  return new Promise(resolve => { bootStartResolve = resolve; });
+}
+async function bootSequence(){
+  if(shouldSkipBoot()){ bootActive = false; return; }
+
+  cls();
+  locate(6,22); psa('HERBYSOFT PC/XT COMPATIBLE', 15);
+  locate(8,24); psa('8088  4.77 MHz   640K RAM', 7);
+  locate(14,26); psa('Press any key to boot', 15);
+  locate(16,24); psa('or tap the monitor glass', 7);
+  await waitForBootGesture();
+
+  cls();
+  for(const k of [64,128,256,384,512,640]){
+    locate(1,1); psa(String(k).padStart(3) + 'K OK', 15);
+    bootClick(900 + k, 0.018, 0.028);
+    await bootSleep(80);
+  }
+  bootLine('', 7);
+  bootLine('BIOS ROM checksum . . . . . . . . . . . . . . . . OK', 7);
+  await bootSleep(140);
+  bootLine('Keyboard controller test . . . . . . . . . . . . OK', 7);
+  bootLine('CGA display adapter . . . . . . . . . . . . . . . OK', 7);
+  await bootDiskBurst(220);
+  bootLine('Fixed Disk 0: 20 MB', 7);
+  bootLine('Booting from fixed disk...', 15);
+  await bootDiskBurst(440);
+
+  cls();
+  bootLine('The IBM Personal Computer DOS', 15);
+  bootLine('Version 3.30 (C)Copyright International Business Machines Corp 1981, 1987', 7);
+  bootLine('(C)Copyright Microsoft Corp 1981, 1986', 7);
+  bootLine('');
+  await bootDiskBurst(260);
+  bootLine('Current date is Tue 10-11-1988', 7);
+  await bootTypeLine('Enter new date (mm-dd-yy): ', 7, 12, 22);
+  bootLine('Current time is  8:08:00.00a', 7);
+  await bootTypeLine('Enter new time: ', 7, 12, 22);
+  bootLine('');
+  await bootTypeLine('C:\\>CD \\GAMES', 15);
+  await bootDiskBurst(150);
+  await bootTypeLine('C:\\GAMES>DIR SNEEKIE.*', 15);
+  await bootDiskBurst(180);
+  bootLine(' Volume in drive C is HERBYSOFT', 7);
+  bootLine(' Directory of C:\\GAMES', 7);
+  bootLine('');
+  bootLine('SNEEKIE  BAS     12664  07-15-88   8:08a', 7);
+  bootLine('        1 File(s)      12664 bytes', 7);
+  bootLine('');
+  await bootTypeLine('C:\\GAMES>GWBASIC', 15);
+  await bootDiskBurst(360);
+
+  cls();
+  bootLine('GW-BASIC 3.23', 15);
+  bootLine('(C) Copyright Microsoft 1983,1984,1985,1986,1987,1988', 7);
+  bootLine('60300 Bytes free', 7);
+  bootLine('');
+  bootLine('Ok', 15);
+  await bootTypeLine('LOAD "SNEEKIE.BAS"', 15);
+  await bootDiskBurst(520);
+  bootLine('Ok', 15);
+  await bootTypeLine('RUN', 15);
+  await bootDiskBurst(220);
+  qEnd = actx ? actx.currentTime : 0;
+  clearKbd();
+  bootActive = false;
+}
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
 const T = new Int32Array(15001);            // 100: DIM T(15000) — snake cell offsets
@@ -995,7 +1168,10 @@ if(bezel.requestFullscreen){
 
 applyTheme(themeName);
 fit();
-program();
+(async () => {
+  await bootSequence();
+  await program();
+})();
 </script>
 <script>
 if("serviceWorker" in navigator){
