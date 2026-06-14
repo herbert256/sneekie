@@ -38,18 +38,13 @@ https://herbert256.github.io/sneekie/.
   that reuses the embedded font; not the full game engine.
 - `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
   scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The gallery shows
-  one **autoplay gameplay GIF per layout** (`docs/manual/scene-1..8.gif`, 640×384, ~7.7 fps,
-  the best of the 4 levels that share each layout). They were produced by a smart autoplay bot
+  one **full-length autoplay gameplay GIF per layout** (`docs/manual/scene-1..8.gif`, 640×384 — the long clips
+  that used to be the Demo page, hundreds of moves each). They were produced by a smart autoplay bot
   (BFS-to-heart, stone-pushing, tail-reach anti-trap, arrow-dodging) driven via the browser:
   frames rebuilt from `vram` into a `willReadFrequently` canvas (the game canvas reads back blank
   in a hidden tab), captured straight to PNGs through a throwaway local upload server, then
   encoded with ImageMagick (`magick -delay 13 -loop 0 ... -layers optimize`). Same green doc-page
   styling as the other doc pages.
-- `docs/demo.html` — a **Demo** page (nav label **Demo**): one large, full-length autoplay gameplay
-  clip for **each of the 8 arenas** (`docs/demo/clip-1..8.gif`, scene order: open / combs / grid /
-  stone / picket / rising-arrows / sweeping-arrows / vault) — hundreds of moves each (the open one is
-  a full clear). Bigger and far longer than the manual's per-layout thumbnails; same smart bot,
-  captured the same way (drive the game in a browser, rebuild each frame from `vram`).
 - `docs/live.html` — a **Live** page (nav label **Live**): **one** copy of the *real* game running
   live, with **16 level tabs** at the top for the levels the page showcases: **1–8** (the gentle,
   turn-based openers) and **25–32** (the brutal back half). The single cell is an
@@ -90,7 +85,7 @@ to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to
 All eight pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
 look**: the same page links (current page marked `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
 seven pages navigate there with `?print`, which auto-prints). There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
-`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Demo, Live, Explained, Migration, Visualizer)
+`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Live, Magazine, Explained, Migration, Visualizer)
 are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
 colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
 fixed green set, like the listing's green theme), so re-theming is mostly editing `:root`. On the
