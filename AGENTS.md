@@ -39,43 +39,49 @@ https://herbert256.github.io/sneekie/.
 - `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
   scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The gallery shows
   one **full-length autoplay gameplay GIF per layout** (`docs/manual/scene-1..8.gif`, 640×384 — the long clips
-  that used to be the Demo page, hundreds of moves each). They were produced by a smart autoplay bot
+  that used to be the Demo page, hundreds of moves each); **clicking a layout image pops up a big version**
+  (X / Esc / backdrop to close). They were produced by a smart autoplay bot
   (BFS-to-heart, stone-pushing, tail-reach anti-trap, arrow-dodging) driven via the browser:
   frames rebuilt from `vram` into a `willReadFrequently` canvas (the game canvas reads back blank
   in a hidden tab), captured straight to PNGs through a throwaway local upload server, then
   encoded with ImageMagick (`magick -delay 13 -loop 0 ... -layers optimize`). Same green doc-page
   styling as the other doc pages.
-- `docs/live.html` — a **Live** page (nav label **Live**): **one** copy of the *real* game running
-  live, with **16 level tabs** at the top for the levels the page showcases: **1–8** (the gentle,
-  turn-based openers) and **25–32** (the brutal back half). The single cell is an
-  `<iframe src="index.html">` with a smarter bot `eval`'d into it (so it can read the game's
-  `const`/`let` globals by name, which are *not* window properties). The bot is embedded as a string in
-  `live.html` and injected on every iframe `load` (along with CSS that hides the game chrome and removes
-  the monitor bezel padding, while keeping the full 640×384 game canvas visible — there is no extra CSS
-  frame). The selected tab sets `TARGET`, and
-  the iframe **jumps straight there without grinding
-  levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and presses F10 once,
-  so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot (BFS-to-food,
-  tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) then plays that one level,
-  driving via `pushKey` and reading the page's `parent.botDelay()` each move; the top speed slider maps
-  0–100 to a slow-to-fast move delay without restarting the iframe. The controls below the screen mirror
-  the game controls, and fullscreen first requests the iframe game's own `#bezel` so `index.html` runs its
-  native fullscreen fitting path; if that fails, Live falls back to its own full-viewport 640×384-ratio frame.
-  It posts status to
-  `parent.botStatus(…)`. It does **not** advance on a win: a clean clear (detected as
-  `LEVEL===TARGET+1 && LIVE>0`) calls `parent.botEnd(…, true)` →
-  **green** flash; getting stuck (head index `BTEL` stops advancing, no safe move, ~26 s with no **score**
-  gain — counting items is wrong because a heart spawns a club, so the count sits flat while the bot is busy
-  eating — or a game-over) calls `parent.botEnd(…, false)` → **red** flash. Either flash pulses the cell
-  overlay **four times, 0.75 s apart**, then reloads the iframe — re-injecting the bot and re-jumping to the
-  **same** selected level. Changing tabs bumps a `gen` counter (so in-flight flash reloads are ignored) and
-  reloads the one iframe with the new target. No frames are saved — it's live, foreground only (background
-  tabs throttle and pause the running game).
+- `docs/live.html` — a **Live** page (nav label **Live**): **one** copy of the *real* game running live,
+  with **16 level tabs** for the levels it showcases — **1–8** (gentle, turn-based) and **25–32** (the brutal
+  back half) — a **bot-speed slider**, and, below the screen, the **same six controls as the game**
+  (Green/Amber/White/CGA, Sound, Fullscreen). The single cell is an `<iframe src="index.html">` with a smarter
+  bot `eval`'d into it (so it can read the game's `const`/`let` globals by name, which are *not* window
+  properties). The bot is embedded as a string in `live.html` and injected on every iframe `load` (with CSS
+  that hides the game chrome and the bezel padding, keeping the full 640×384 canvas). The selected tab sets
+  `TARGET`, and the iframe **jumps straight there without grinding levels**: it dismisses level 1, sets
+  `LEVEL = TARGET - 1` and presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET`. The bot
+  (BFS-to-food, tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) plays that one
+  level, driving via `pushKey` and reading `parent.botDelay()` each move; the slider maps 0–100 to a
+  slow-to-fast delay without restarting. The six controls drive the iframe's own hidden buttons (theme/sound)
+  and fullscreen the `.frame` box. **The viewer can't steer the game** — the iframe is inert
+  (`pointer-events:none` + `tabindex=-1`); instead a page-level keydown steps the shown level (**Space / →**
+  next, **←** previous, wrapping after 32 back to 1). It posts status to `parent.botStatus(…)` and does **not**
+  advance on a win: a clean clear (`LEVEL===TARGET+1 && LIVE>0`) → `parent.botEnd(…, true)` → **green** flash;
+  getting stuck (`BTEL` stops advancing, no safe move, ~26 s with no **score** gain — counting items is wrong
+  because a heart spawns a club — or a game-over) → `parent.botEnd(…, false)` → **red** flash. Either flash
+  pulses the overlay four times, then reloads the iframe (re-injecting the bot, re-jumping to the same level);
+  changing tabs bumps a `gen` counter so in-flight flash reloads are ignored. Foreground only (background tabs
+  throttle and pause the game).
 - `docs/bot.html` — a **Bot** page (nav label **Bot**) that explains the smart bot embedded in
   `live.html`: where it runs, how it reads VRAM and the snake arrays, how it models arrows, simulates
   moves and pushed stones, searches for food, checks tail reach/open space/survival depth, scores
   candidate routes, falls back to tail-following, and decides when a level is cleared or stuck. Keep
   this page in sync with the `BOT` string in `docs/live.html` when the planner changes.
+- `docs/magazine.html` — a **Magazine** page (nav label **Magazine**): the original 1988 publication of
+  Sneekie as a **type-in program** in *MS(X)DOS Computer Magazine* no. 25. A thumbnail grid of the **cover +
+  pages 58–63** (`docs/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking any page opens it in
+  **real browser fullscreen** (`requestFullscreen` on a bare `#page-fs` box — just the page on black, no
+  chrome or caption; Esc exits, with a fixed-overlay fallback). Below the scans, two English takes on the
+  Dutch feature: an **original-words recap** (explicitly *not* a verbatim translation of the magazine's
+  editorial) and a **"translated scans"** pair — copies of pages 58/59 with the text rendered in English
+  (`magazine/p58.en.jpg`, `p59.en.jpg` + thumbs). Page images were rasterised from a scan of the issue with
+  **pypdfium2** (~168 dpi, in a throwaway venv); the full 100-page magazine is not committed. Same green
+  doc-page styling.
 - `docs/SNEEKIE.BAS` — the canonical 1988 GW-BASIC source, recovered by OCR from the magazine listing (served,
   linked for download from the listings). This is the **specification**: the game's JS is a faithful port of it,
   so read it to understand intended behavior and to check that changes stay true to the original. A frozen 1988
@@ -84,7 +90,7 @@ https://herbert256.github.io/sneekie/.
   header at 10 lines so `slice(10)` and migration's absolute `SECTIONS` line ranges stay valid.
 - `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png` — site icon + social card,
   drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
-  Python, no deps; reads the font straight out of `docs/index.html`). All four pages carry
+  Python, no deps; reads the font straight out of `docs/index.html`). Every page carries
   matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`.
 
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
@@ -171,6 +177,7 @@ model rather than building a modern game-object model.** Everything follows from
 These deviate from the 1988 source intentionally: localStorage persistence (keys
 `sneekie.theme`, `sneekie.muted`, `sneekie.highscore` — the persisted highscore is new),
 theme switching + CGA colorization, fullscreen, touch controls, responsive scaling (`fit`),
-the on-page error banner, the title-bar canvas, and English UI strings (the original was
-Dutch). When changing behavior, decide whether you're fixing the *port* (match the BASIC) or
+the on-page error banner, the title-bar canvas, the CRT-monitor shell (molded `#bezel`, recessed
+`#tube`/`#glass` with scanlines, and a `#panel` control chin), and English UI strings (the original
+was Dutch). When changing behavior, decide whether you're fixing the *port* (match the BASIC) or
 extending the *modern shell* — and preserve the line-number comments either way.
