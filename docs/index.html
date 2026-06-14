@@ -178,7 +178,7 @@
   /* in-bezel touch controls: hidden until fullscreen on a touch device (see below) */
   #fstouch{ display:none; }
   #bezel:fullscreen #fstouch{
-    position:fixed; left:0; right:0; top:8px;
+    position:fixed; left:0; right:0; bottom:8px;            /* in the reserved strip below the canvas */
     gap:7px; z-index:10; flex-wrap:wrap; justify-content:center;
   }
   #bezel:fullscreen #fstouch button{
@@ -194,6 +194,9 @@
   @media (pointer:coarse){
     #touchbar{ display:flex; }
     body:not(.booting) #bezel:fullscreen #fstouch{ display:flex; }  /* only after the boot sim */
+    /* reserve a strip below the canvas for the touch bar so they never overlap
+       (matched by the 64px subtracted in fit()); the game screen shrinks to fit */
+    #bezel:fullscreen{ padding-bottom:64px; }
     #hint .kb{ display:none; }
     #hint .tc{ display:inline; }
   }
@@ -1362,8 +1365,11 @@ paintMute();
 
 function fit(){
   if(document.fullscreenElement){
-    /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384) */
-    const s = Math.min(innerWidth/640, innerHeight/384);
+    /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384).
+       On touch, leave a strip below the canvas for the on-screen key bar (see #bezel:fullscreen
+       padding-bottom) so the game screen and the buttons never overlap. */
+    const reserve = matchMedia('(pointer:coarse)').matches ? 64 : 0;
+    const s = Math.min(innerWidth/640, (innerHeight - reserve)/384);
     cv.style.width = (640*s) + 'px';
     cv.style.height = (384*s) + 'px';
     return;
