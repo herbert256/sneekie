@@ -465,7 +465,10 @@ const BOT = `
       // honest signal, so idle off that, not off the item count.
       if(ZCORE > lastScore){ idle = 0; } else idle++; lastScore = ZCORE;
       tell('botStatus', IDX, ZCORE, f);
-      if(idle > 160){ tell('botEnd', IDX, false); return; }                       // ~26s with no score gain -> red
+      // Endgame clubs can take a long safe path without scoring; keep the quick stuck
+      // detector early, but give the last few items enough moves to finish.
+      const idleLimit = f<=1 ? 520 : f<=2 ? 400 : f<=4 ? 280 : f<=8 ? 210 : 160;
+      if(idle > idleLimit){ tell('botEnd', IDX, false); return; }                 // no score gain for too long -> red
       headTrail.push(T[BTEL]);
       if(headTrail.length > 96) headTrail.shift();
       let repeats = 0;
