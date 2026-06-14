@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A detailed explanation of the smart bot that plays Sneekie live: state model, pathfinding, trap avoidance, hazards, scoring, and restart logic.">
+<title>Sneekie — how the live bot thinks</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sneekie">
+<meta property="og:title" content="Sneekie — how the live bot thinks">
+<meta property="og:description" content="The live Sneekie bot explained in detail: how it reads the game, plans routes, avoids traps, dodges arrows, and restarts levels.">
+<meta property="og:url" content="https://herbert256.github.io/sneekie/bot.html">
+<meta property="og:image" content="https://herbert256.github.io/sneekie/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sneekie — how the live bot thinks">
+<meta name="twitter:description" content="A detailed look at the live bot's route finding, survival checks, and trap avoidance.">
+<meta name="twitter:image" content="https://herbert256.github.io/sneekie/og.png">
+<style>
+  :root{
+    --bg:#0a0c0d; --panel:#13171a; --panel2:#1b2025; --border:#33383d;
+    --text:#aab2b6; --muted:#5b6367; --accent:#7dff7d; --heading:#b6ffb6;
+    --codebg:#06090a; --glow:rgba(125,255,125,.13);
+    --green:#7dff7d; --greenhi:#c8ffc8; --red:#ff5e5e; --club:#66e066;
+    --smiley:#ffd93d; --stone:#d08a43; --arrow:#d886ff; --blue:#79c0ff;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; scroll-padding-top:64px; }
+  body{ margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
+    font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  code,.mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Cascadia Mono",monospace; }
+  a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
+  header.top{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:10px 18px; background:linear-gradient(#14171a, rgba(10,12,13,.86));
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--border);
+    font-family:ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace; }
+  header.top .brand{ font-weight:700; color:var(--accent); letter-spacing:.02em; font-size:13px; }
+  header.top .brand .dim{ color:var(--muted); font-weight:500; }
+  header.top nav{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+  header.top nav a, header.top nav button{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:#98a1a6; background:#16181b; border:1px solid var(--border); border-radius:3px; padding:6px 11px;
+    cursor:pointer; text-decoration:none; white-space:nowrap; transition:color .12s, border-color .12s, box-shadow .12s; }
+  header.top nav a:hover, header.top nav button:hover{ color:var(--accent); border-color:var(--accent); }
+  header.top nav a[aria-current="page"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); cursor:default; }
+
+  main{ max-width:1080px; margin:0 auto; padding:30px 20px 78px; }
+  h1{ font-size:30px; line-height:1.18; margin:6px 0; color:var(--heading); }
+  h2{ font-size:20px; color:var(--heading); margin:38px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+  h3{ font-size:15px; color:var(--greenhi); margin:20px 0 5px; }
+  p{ max-width:820px; margin:10px 0; }
+  .lead{ color:var(--text); max-width:860px; }
+  .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
+  strong{ color:var(--heading); font-weight:600; }
+  code{ background:var(--codebg); border:1px solid var(--border); border-radius:4px; padding:.5px 5px; font-size:.86em; color:var(--heading); }
+  pre{ max-width:100%; overflow:auto; background:var(--codebg); border:1px solid var(--border); border-radius:8px; padding:12px 14px;
+    color:#c9d1d9; font:12.5px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  .ico{ font-family:ui-monospace,monospace; font-weight:700; }
+  .ico.h{ color:var(--red); } .ico.c{ color:var(--club); } .ico.s{ color:var(--smiley); }
+  .ico.t{ color:var(--stone); } .ico.a{ color:var(--arrow); } .ico.g{ color:var(--green); }
+
+  .note{ background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:6px;
+    padding:11px 14px; margin:17px 0; max-width:840px; font-size:13.5px; }
+  .toc{ margin:26px 0; padding:14px 18px; background:var(--panel); border:1px solid var(--border); border-radius:8px; max-width:840px; }
+  .toc h2{ margin:0 0 8px; padding:0; border:0; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .toc ol{ margin:0; padding:0; list-style:none; columns:2; column-gap:28px; font-size:13.5px; }
+  .toc li{ margin:3px 0; break-inside:avoid; }
+  .toc .n{ display:inline-block; width:1.8em; color:var(--muted); }
+
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; max-width:960px; margin:16px 0; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:13px 15px; }
+  .card h3{ margin-top:0; }
+  .card p{ margin:7px 0 0; font-size:13.5px; }
+  .ladder{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; max-width:960px; margin:16px 0; }
+  .step{ position:relative; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .step b{ display:block; color:var(--accent); font:700 12px/1 ui-monospace,monospace; letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px; }
+  .step p{ margin:0; font-size:13.5px; }
+
+  table{ border-collapse:collapse; width:100%; max-width:960px; margin:14px 0; font-size:13.5px; }
+  th,td{ border:1px solid var(--border); padding:7px 10px; text-align:left; vertical-align:top; }
+  th{ background:var(--panel); color:var(--muted); font:600 11px/1.35 ui-monospace,monospace; letter-spacing:.06em; text-transform:uppercase; }
+  tbody tr:nth-child(odd){ background:rgba(255,255,255,.015); }
+  td:first-child{ white-space:nowrap; }
+  .formula{ display:block; max-width:960px; background:var(--codebg); border:1px solid var(--border); border-radius:8px; padding:11px 14px;
+    font:12.5px/1.65 ui-monospace,"SF Mono",Menlo,Consolas,monospace; color:var(--greenhi); overflow:auto; }
+  .formula .dim{ color:var(--muted); }
+  .flow{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; max-width:960px; margin:16px 0; }
+  .flow div{ background:var(--codebg); border:1px solid var(--border); border-radius:7px; padding:10px 12px; min-height:64px; }
+  .flow b{ display:block; color:var(--blue); font:700 12px/1 ui-monospace,monospace; margin-bottom:6px; }
+  .flow span{ font-size:13px; }
+  footer{ max-width:1080px; margin:46px auto 0; padding:18px 20px; border-top:1px solid var(--border); color:var(--muted); font-size:12.5px; text-align:center; }
+  @media (max-width:640px){
+    main{ padding:24px 16px 60px; }
+    h1{ font-size:25px; }
+    .toc ol{ columns:1; }
+    td:first-child{ white-space:normal; }
+  }
+  @media print{ header.top,.toc{ display:none } body{ background:#fff; color:#111 } .card,.step,.note,pre,.formula{ break-inside:avoid; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="brand">Sneekie <span class="dim">· bot notes</span></span>
+  <nav>
+    <a href="index.html">&#9654; Play</a>
+    <a href="manual.html">Manual</a>
+    <a href="live.html">Live</a>
+    <a href="bot.html" aria-current="page">Bot</a>
+    <a href="magazine.html">Magazine</a>
+    <a href="source.html">Source</a>
+    <a href="explained.html">Explained</a>
+    <a href="migration.html">Migration</a>
+    <a href="vram.html">Visualizer</a>
+    <a href="SNEEKIE.BAS" download="SNEEKIE.BAS">Download</a>
+    <button id="print">Print</button>
+  </nav>
+</header>
+
+<main>
+  <h1>How the live bot thinks</h1>
+  <p class="lead">
+    The <a href="live.html">Live</a> page does not play a recording. It loads the real game in an
+    <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same
+    arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state,
+    searches for food, rejects tempting routes that become traps, and falls back to pure survival when no safe food
+    path exists.
+  </p>
+  <div class="note">
+    <strong>Important distinction.</strong> The actual 1988 game in <a href="index.html">Play</a> stays faithful to
+    the BASIC source. The bot is only a modern addition in <code>live.html</code>; it reads the port's live variables
+    and sends keys, but it does not change the game rules.
+  </div>
+
+  <nav class="toc">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#where"><span class="n">1.</span>Where the bot runs</a></li>
+      <li><a href="#data"><span class="n">2.</span>The data it sees</a></li>
+      <li><a href="#turn"><span class="n">3.</span>One decision cycle</a></li>
+      <li><a href="#danger"><span class="n">4.</span>Arrow danger model</a></li>
+      <li><a href="#simulation"><span class="n">5.</span>Move simulation</a></li>
+      <li><a href="#routes"><span class="n">6.</span>Food search</a></li>
+      <li><a href="#safety"><span class="n">7.</span>Trap checks</a></li>
+      <li><a href="#fallbacks"><span class="n">8.</span>Fallback moves</a></li>
+      <li><a href="#score"><span class="n">9.</span>Route scoring</a></li>
+      <li><a href="#speed"><span class="n">10.</span>Speed limits</a></li>
+      <li><a href="#restart"><span class="n">11.</span>Win, stuck, restart</a></li>
+      <li><a href="#limits"><span class="n">12.</span>Limits and tradeoffs</a></li>
+    </ol>
+  </nav>
+
+  <section id="where">
+    <h2>1. Where the bot runs</h2>
+    <p>
+      The live page has one iframe whose source is <code>index.html</code>. On every iframe load, <code>live.html</code>
+      appends CSS that hides the surrounding game chrome, then runs the bot string with <code>eval()</code> inside
+      the iframe:
+    </p>
+    <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
+    <p>
+      That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as
+      <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>,
+      and <code>pushKey()</code>. Those names are visible to code evaluated in the same script realm, but they are
+      not ordinary <code>window</code> properties. Injecting the bot into the iframe lets it call <code>peek()</code>,
+      read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.
+    </p>
+    <div class="cards">
+      <div class="card"><h3>Level jump</h3><p>It dismisses level 1, sets <code>LEVEL = TARGET - 1</code>, presses F10 once, and lets the game's own loop enter the selected level.</p></div>
+      <div class="card"><h3>Real input</h3><p>It sends DOS-style extended-key strings: up <code>' H'</code>, down <code>' P'</code>, left <code>' K'</code>, right <code>' M'</code>.</p></div>
+      <div class="card"><h3>Live status</h3><p>It reports score and remaining items to the parent page with <code>parent.botStatus(...)</code>, and reports success or failure with <code>parent.botEnd(...)</code>.</p></div>
+    </div>
+  </section>
+
+  <section id="data">
+    <h2>2. The data it sees</h2>
+    <p>
+      The bot uses the same screen-memory model as the game. It does not have a neat list of "objects"; it reads
+      characters from VRAM with <code>peek(offset)</code>. The snake body is reconstructed from the game's
+      <code>T</code> array, from tail index <code>ETEL</code> through head index <code>BTEL</code>.
+    </p>
+    <table>
+      <thead><tr><th>Game value</th><th>Meaning to the bot</th><th>Planning effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>32</code></td><td>Empty cell</td><td>Freely enterable.</td></tr>
+        <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Heart</td><td>Food worth 10 points; grows the snake.</td></tr>
+        <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Club</td><td>Food worth 25 points; grows the snake.</td></tr>
+        <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Normally avoided; allowed only in escape mode.</td></tr>
+        <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Stone</td><td>Pushable if the cell behind it is empty.</td></tr>
+        <tr><td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Moving arrows</td><td>Treated as fatal, including cells they are about to enter.</td></tr>
+        <tr><td><code>219</code></td><td>Snake head</td><td>Used by the game for collision; the bot also tracks the head through <code>T[BTEL]</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      For simulated routes, the bot keeps an overlay map called <code>cells</code>. This overlay records only changes
+      caused by imaginary moves, such as a pushed stone or an emptied tail cell. If a cell is not in the overlay, the
+      bot reads the real game screen with <code>peek()</code>. That keeps route simulation cheap without cloning the
+      whole 4000-byte VRAM array for every branch.
+    </p>
+  </section>
+
+  <section id="turn">
+    <h2>3. One decision cycle</h2>
+    <p>
+      Every bot move follows the same ladder. The first strategy that returns a direction wins; the bot presses that
+      key, waits according to the speed slider, then recalculates from the new live game state.
+    </p>
+    <div class="ladder">
+      <div class="step"><b>1. Reset danger cache</b><p>Arrow danger is recalculated for this tick, with memoization so repeated checks are cheap.</p></div>
+      <div class="step"><b>2. Route to food</b><p>Search for a heart or club without eating smileys.</p></div>
+      <div class="step"><b>3. Escape via smiley</b><p>If clean food routes fail, repeat the food search with smileys allowed.</p></div>
+      <div class="step"><b>4. Follow tail</b><p>If food is unsafe, try to reach the moving tail and buy space.</p></div>
+      <div class="step"><b>5. Survive locally</b><p>If even the tail route fails, pick the best legal one-step survival move.</p></div>
+    </div>
+    <pre><code>const decide = () =&gt; {
+  resetDanger();
+  return routeFood(false) ?? routeFood(true) ?? tailFirst() ?? survivalMove();
+};</code></pre>
+  </section>
+
+  <section id="danger">
+    <h2>4. Arrow danger model</h2>
+    <p>
+      The bot treats arrow levels differently because a square can be empty now and fatal one tick later. The
+      <code>danger(offset)</code> function marks a destination unsafe if an arrow is already there, if an arrow will
+      step into it on the next enemy update, or if a wrapping arrow will reappear there.
+    </p>
+    <div class="flow">
+      <div><b>Current cell</b><span><code>peek(o)</code> is <code>24</code>, <code>26</code>, or <code>27</code>.</span></div>
+      <div><b>Up arrows</b><span>An <span class="ico a">&uarr;</span> below the square will move upward into it.</span></div>
+      <div><b>Right arrows</b><span>A <span class="ico a">&rarr;</span> to the left will move right into it.</span></div>
+      <div><b>Left arrows</b><span>A <span class="ico a">&larr;</span> to the right will move left into it.</span></div>
+      <div><b>Wrap edges</b><span>Special checks cover arrows that jump from the far edge back to the start.</span></div>
+    </div>
+    <p>
+      This is a one-tick hazard model, not a full future enemy simulation. That is intentional: the bot moves,
+      the real game advances, and the next decision recalculates danger from the fresh screen. That gives good
+      arrow avoidance without making every search branch simulate all enemy routines.
+    </p>
+  </section>
+
+  <section id="simulation">
+    <h2>5. Move simulation</h2>
+    <p>
+      The core planner primitive is <code>move(state, scancode, allowSmile)</code>. It returns a new imaginary
+      state if the move is legal, or <code>null</code> if it would collide, reverse, die, or push an impossible stone.
+    </p>
+    <table>
+      <thead><tr><th>Rule</th><th>How the bot applies it</th></tr></thead>
+      <tbody>
+        <tr><td>No instant reverse</td><td>If the requested scancode is opposite to the current direction, reject it.</td></tr>
+        <tr><td>No danger</td><td>If <code>danger(next)</code> is true, reject the move.</td></tr>
+        <tr><td>No self-hit</td><td>If the next square is in the simulated <code>bodySet</code>, reject it.</td></tr>
+        <tr><td>Smileys optional</td><td>Reject smileys during normal search; allow them during escape search.</td></tr>
+        <tr><td>Stones push</td><td>A stone can move one cell forward only if that cell is empty and not occupied by the simulated body.</td></tr>
+        <tr><td>Growth</td><td>Hearts, clubs, and smileys grow the body. Empty moves remove the tail first.</td></tr>
+        <tr><td>First move preserved</td><td>Every simulated branch remembers only the first real key to press once that branch wins.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      This is why the bot can reason about pushing stones and about its own tail moving away. It is not only finding
+      a geometric path through the current picture; it is simulating what the snake's body will look like after each
+      step on that path.
+    </p>
+  </section>
+
+  <section id="routes">
+    <h2>6. Food search</h2>
+    <p>
+      <code>routeFood()</code> is a breadth-first search from the current head position. It explores legal snake moves
+      until it reaches food, then treats that route as a candidate and runs safety checks before accepting it. The
+      limits are tuned so the live page stays responsive:
+    </p>
+    <div class="formula">
+      maxDepth = 78 normally, 115 when only 6 or fewer items remain<br>
+      search window = at most 950 dequeued states<br>
+      candidate window = stop after 28 food candidates once a good route exists
+    </div>
+    <p>
+      The endgame gets deeper search because the last few hearts and clubs are exactly where traps become most
+      expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast.
+    </p>
+  </section>
+
+  <section id="safety">
+    <h2>7. Trap checks</h2>
+    <p>
+      Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and
+      discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with three
+      different survival signals.
+    </p>
+    <div class="cards">
+      <div class="card">
+        <h3>Exit count</h3>
+        <p><code>legalCount()</code> asks how many moves will still be available immediately after eating. Zero exits reject the route; one-exit corridors are heavily penalized.</p>
+      </div>
+      <div class="card">
+        <h3>Reachable space</h3>
+        <p><code>spaceInfo()</code> flood-fills from the simulated head, respecting current direction, walls, body, stones, food, and danger.</p>
+      </div>
+      <div class="card">
+        <h3>Tail reach</h3>
+        <p>The same flood fill records whether the simulated head can reach the tail. If the tail is reachable, the snake probably has a moving escape route.</p>
+      </div>
+      <div class="card">
+        <h3>Survival depth</h3>
+        <p><code>survivalDepth()</code> runs a small beam search to see how many future moves remain possible after the candidate is eaten.</p>
+      </div>
+    </div>
+    <p>
+      The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must
+      leave behind. In the final items, the bot demands more space and a deeper survival horizon.
+    </p>
+  </section>
+
+  <section id="fallbacks">
+    <h2>8. Fallback moves</h2>
+    <p>
+      The bot has two non-food fallbacks. They are what keep it from freezing when every nearby heart is temporarily
+      unsafe.
+    </p>
+    <table>
+      <thead><tr><th>Fallback</th><th>Purpose</th><th>Behavior</th></tr></thead>
+      <tbody>
+        <tr><td><code>tailFirst()</code></td><td>Buy time</td><td>Runs a BFS toward the current tail. Following the tail is often safe because the tail keeps moving away on empty steps.</td></tr>
+        <tr><td><code>survivalMove()</code></td><td>Last resort</td><td>Scores each immediately legal move by reachable space, tail reach, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      This gives the bot a survival instinct. If the map says "do not eat yet", it can circle, follow the tail, or
+      move into the largest open region until the situation changes.
+    </p>
+  </section>
+
+  <section id="score">
+    <h2>9. Route scoring</h2>
+    <p>
+      Once a food candidate passes the safety gates, it gets a score. The score is intentionally biased toward
+      survival first, points second, and shortness only after those are satisfied:
+    </p>
+    <div class="formula">
+      score = tailReach ? +100000 : 0<br>
+      score += survivalDepth * 5600<br>
+      score += exits * 2400<br>
+      score += reachableSpace * 16<br>
+      score += itemPoints * 150<br>
+      score -= routeDistance * 260<br>
+      score -= smileysEaten * 1200<br>
+      score -= stonesPushed * 55<br>
+      score -= oneExitAfterEating ? 18000 : 0
+    </div>
+    <p>
+      The large tail-reach and survival-depth weights are the key anti-trap behavior. A slightly longer route that
+      keeps access to the tail beats a short route into a tight pocket. Clubs still matter because they are worth
+      more points than hearts, but they do not override the survival tests.
+    </p>
+  </section>
+
+  <section id="speed">
+    <h2>10. Speed limits</h2>
+    <p>
+      The bot has to think between visible game moves. Several caps keep that work bounded:
+    </p>
+    <ul>
+      <li><code>danger()</code> uses a generation-stamped cache so repeated hazard checks in one decision are cheap.</li>
+      <li><code>routeFood()</code> stops at 950 dequeued search states and keeps only useful food candidates.</li>
+      <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
+      <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
+      <li>The page speed slider changes the delay between key presses, not the search itself.</li>
+    </ul>
+    <p>
+      The slider maps 0&ndash;100 onto a nonlinear delay. At low values the bot waits longer between moves; at high
+      values it presses keys much faster, down to roughly 45&nbsp;ms per move.
+    </p>
+    <pre><code>delay = round(45 + 375 * ((100 - sliderValue) / 100) ** 1.6)</code></pre>
+  </section>
+
+  <section id="restart">
+    <h2>11. Win, stuck, restart</h2>
+    <p>
+      The live page is meant to keep demonstrating one selected level, so the bot does not continue into the next
+      level after a clear. It flashes the cell green, reloads the iframe, jumps back to the same level, and starts
+      over. A failure flashes red and also restarts the same level.
+    </p>
+    <table>
+      <thead><tr><th>Condition</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Clean clear. Flash green and restart the same selected level.</td></tr>
+        <tr><td><code>LEVEL !== TARGET</code></td><td>The game jumped away or ended. Treat as failure and flash red.</td></tr>
+        <tr><td><code>BTEL</code> stops advancing</td><td>The snake is boxed, dying, or not moving. Flash red after the stall threshold.</td></tr>
+        <tr><td>No safe move</td><td>All planners failed. Flash red.</td></tr>
+        <tr><td>No score gain for about 26 seconds</td><td>Progress stalled. Flash red. Score is used instead of item count because late hearts can spawn clubs.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="limits">
+    <h2>12. Limits and tradeoffs</h2>
+    <p>
+      The bot is deliberately practical rather than perfect. It does not solve the whole level as one enormous plan,
+      because the board changes after every pickup, pushed stone, spawned club, and enemy tick. Instead it replans
+      constantly from the live state. That makes it resilient and fast enough to watch.
+    </p>
+    <ul>
+      <li>It simulates the snake body and pushed stones, but not a full multi-tick future of every enemy routine.</li>
+      <li>It treats current and next-tick arrow danger conservatively, then recalculates after the real game advances.</li>
+      <li>Its state hash is compact and meant for pruning, not for preserving every possible board detail.</li>
+      <li>It may choose a smiley only when clean food routes fail, because smileys cost points and grow the snake.</li>
+      <li>The survival beam favors positions with many exits, so it can miss rare narrow routes that are technically safe but expensive to prove.</li>
+    </ul>
+    <p>
+      In short: the bot thinks like a cautious snake player. It wants food, but only food that leaves breathing room.
+      When the board gets tight, it values its tail, open space, and future exits more than the nearest points.
+    </p>
+  </section>
+</main>
+
+<footer>
+  &copy; July '88 by HerbySoft<br>
+  Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>
+  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory &amp;HB000/&amp;HB800<br>HTML version: June 2026.
+</footer>
+
+<script>
+'use strict';
+document.getElementById('print').addEventListener('click', () => { location.href = 'source.html?print'; });
+</script>
+</body>
+</html>
