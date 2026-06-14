@@ -61,8 +61,10 @@ https://herbert256.github.io/sneekie/.
   levels**: it dismisses level 1, sets the loop counter directly (`LEVEL = TARGET - 1`) and presses F10 once,
   so the game's `for(LEVEL…)` loop lands on `TARGET` and runs that level's setup. The bot (BFS-to-food,
   tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) then plays that one level,
-  driving via `pushKey` at ~165 ms/move and posting status to `parent.botStatus(…)`. It does **not** advance
-  on a win: a clean clear (detected as `LEVEL===TARGET+1 && LIVE>0`) calls `parent.botEnd(…, true)` →
+  driving via `pushKey` and reading the page's `parent.botDelay()` each move; the top speed slider maps
+  0–100 to a slow-to-fast move delay without restarting the iframe. It posts status to
+  `parent.botStatus(…)`. It does **not** advance on a win: a clean clear (detected as
+  `LEVEL===TARGET+1 && LIVE>0`) calls `parent.botEnd(…, true)` →
   **green** flash; getting stuck (head index `BTEL` stops advancing, no safe move, ~26 s with no **score**
   gain — counting items is wrong because a heart spawns a club, so the count sits flat while the bot is busy
   eating — or a game-over) calls `parent.botEnd(…, false)` → **red** flash. Either flash pulses the cell

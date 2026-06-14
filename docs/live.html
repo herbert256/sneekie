@@ -51,6 +51,14 @@
   .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
   .ico.g{ color:#66e066; } .ico.green{ color:var(--accent); } .ico.r{ color:var(--red); }
 
+  .speedbar{ display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; margin-top:18px;
+    font-family:ui-monospace,monospace; }
+  .speedbar label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0; white-space:nowrap; }
+  .speedbar output{ min-width:3ch; text-align:right; font-size:13px; color:var(--accent); }
+  .speedbar input{ width:100%; accent-color:var(--accent); cursor:pointer; }
+  @media (max-width:520px){ .speedbar{ grid-template-columns:1fr auto; gap:7px 10px; }
+    .speedbar label{ grid-column:1 / -1; } }
+
   .leveltabs{ display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:7px; margin-top:18px; font-family:ui-monospace,monospace; }
   .leveltabs button{ min-height:40px; font:inherit; font-size:12px; letter-spacing:.03em; color:#98a1a6; background:#16181b;
     border:1px solid var(--border); border-radius:5px; cursor:pointer; transition:background .12s, color .12s, border-color .12s, box-shadow .12s; }
@@ -103,6 +111,12 @@
   screen <strong><span class="ico green">flashes green</span></strong> and plays the same level again; get stuck
   and it <strong><span class="ico r">flashes red</span></strong> and restarts.</p>
 
+  <div class="speedbar">
+    <label for="speed">Bot speed</label>
+    <input id="speed" type="range" min="0" max="100" value="50">
+    <output id="speedout" for="speed">50</output>
+  </div>
+
   <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level"></div>
 
   <div class="cells" id="cells"></div>
@@ -134,6 +148,7 @@ const BOT = `
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const opp = {72:80, 80:72, 75:77, 77:75};
   const tell = (fn,a,b,c) => { try { parent[fn](a,b,c); } catch(e){} };
+  const moveDelay = () => { try { return parent.botDelay(); } catch(e){ return 165; } };
 
   const STEP = {72:-160, 80:160, 75:-2, 77:2};
   const curDir = () => { const d = T[BTEL]-T[BTEL-1]; return d===-160?72:d===160?80:d===-2?75:77; };
@@ -345,7 +360,7 @@ const BOT = `
       const sc = decide();
       if(sc===null){ tell('botEnd', IDX, false); return; }                        // no safe move -> red
       pushKey(keyOf[sc]);
-      await sleep(165);
+      await sleep(moveDelay());
     }
    } catch(e){ tell('botEnd', IDX, false); }
   })();
@@ -364,6 +379,23 @@ const cell = {};
 const tabs = new Map();
 const tablist = document.getElementById('leveltabs');
 const grid = document.getElementById('cells');
+const speed = document.getElementById('speed');
+const speedout = document.getElementById('speedout');
+let botSpeed = Number(speed.value);
+
+function speedToDelay(value){
+  return Math.round(45 + 375 * Math.pow((100 - value) / 100, 1.6));
+}
+
+function updateSpeed(){
+  botSpeed = Number(speed.value);
+  speedout.value = String(botSpeed);
+  speedout.textContent = String(botSpeed);
+}
+speed.addEventListener('input', updateSpeed);
+updateSpeed();
+function botDelay(){ return speedToDelay(botSpeed); }
+window.botDelay = botDelay;
 
 for(const level of LEVEL_CHOICES){
   const btn = document.createElement('button');
