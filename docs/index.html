@@ -397,6 +397,32 @@ const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
 let bootStartResolve = null;
 
+/* boot-time blinking hardware text cursor (the original game has none) */
+let cursorVisible = false, cursorBlink = false, cursorPrevIdx = -1, cursorTimer = null;
+function cursorCell(){
+  const i = (curR-1)*80 + (curC-1);
+  return (i >= 0 && i < 2000) ? i : -1;
+}
+function cursorRGB(){ return theme.cga ? [255,255,255] : theme.bright; }
+function startCursor(){
+  if(cursorTimer) return;
+  cursorVisible = true; cursorBlink = true; cursorPrevIdx = cursorCell();
+  if(cursorPrevIdx >= 0) dirty.add(cursorPrevIdx);
+  cursorTimer = setInterval(() => {
+    cursorBlink = !cursorBlink;
+    const idx = cursorCell();
+    if(cursorPrevIdx >= 0 && cursorPrevIdx !== idx) dirty.add(cursorPrevIdx);
+    if(idx >= 0) dirty.add(idx);
+    cursorPrevIdx = idx;
+  }, 260);
+}
+function stopCursor(){
+  if(cursorTimer){ clearInterval(cursorTimer); cursorTimer = null; }
+  cursorVisible = false;
+  if(cursorPrevIdx >= 0) dirty.add(cursorPrevIdx);
+  cursorPrevIdx = -1;
+}
+
 function buildAtlas(rgb){
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
   const x = c.getContext('2d');
@@ -433,6 +459,11 @@ function drawCell(i){
   ctx.fillRect(dx, dy, 8, 16);
   const atlas = theme.cga ? cgaAtlas[cgaColor(ch, at)] : ((at & 8) ? atlasBright : atlasDim);
   ctx.drawImage(atlas, (ch & 31)*8, (ch >> 5)*16, 8, 16, dx, dy, 8, 16);
+  if(cursorVisible && cursorBlink && i === cursorCell()){
+    const [r,g,b] = cursorRGB();
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(dx, dy + 13, 8, 3);          // underline cursor (cell scanlines 13-15)
+  }
 }
 function repaintAll(){ for(let i = 0; i < 2000; i++) dirty.add(i); }
 (function frame(){
@@ -782,6 +813,7 @@ async function bootSequence(){
   await waitForBootGesture();
 
   cls();
+  startCursor();
   bootLine('Acme Corporation Turbo BIOS v1.88', 15);
   bootLine('(C) Copyright Acme Corporation 1984,1988', 7);
   bootLine('');
@@ -840,6 +872,7 @@ async function bootSequence(){
   bootLine('Ok', 15);
   await bootTypeLine('RUN', 15);
   await bootDiskBurst(220);
+  stopCursor();
   qEnd = actx ? actx.currentTime : 0;
   clearKbd();
   bootActive = false;
