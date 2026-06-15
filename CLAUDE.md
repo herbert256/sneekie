@@ -5,137 +5,122 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Sneekie is a 32-level snake/maze game originally written in GW-BASIC in July 1988 by
-HerbySoft and published in MS(X)DOS Computer Magazine no. 25. In 2026 it
-was recovered by OCR from the magazine's printed listing and ported **line for line** to a
-self-contained HTML page. There is no framework, no build step, no dependencies, and no
-test suite — `docs/index.html` is the whole game (plus two small shared static assets it
-links, `site.css` and, for the listing pages, `basic.js`; see below).
+HerbySoft and published in MS(X)DOS Computer Magazine no. 25. In 2026 it was
+recovered by OCR from the magazine's printed listing and ported **line for line** to a
+static browser version.
 
-## Layout & deployment
+There is no framework, no build step, no package dependency, and no dedicated automated
+test suite. The current site is **not** a single inline HTML file anymore: it is a GitHub
+Pages site under `docs/`, split into shared and page-specific HTML/CSS/JS files. The
+canonical 1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in
+`docs/js/index.js`.
+
+## Layout & Deployment
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
-publishable website lives in `docs/`, which is the GitHub Pages source — it is served at
+publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
 https://sneekie.xyz/.
 
-- `docs/index.html` — the game. All game HTML/CSS/JS is inline and **this is the single
-  canonical copy** — edit it directly; there is no second copy to keep in sync. It links the
-  shared `site.css` for the top nav/footer/title chrome (so it is no longer a strictly
-  single-file program), but every line of the actual game lives here.
-- `docs/site.css` — the **shared page chrome** linked by all nine pages: the top nav,
-  brand wordmark, big white page title, footer, and the mobile-nav rules. Chrome colours are
-  pinned via `--c-*` variables (the nav never followed the game theme switcher, which only
-  sets `--phos`/`--glow`), so each page keeps its own palette/`:root`. Linked **before** each
-  page's inline `<style>`, so a page can still override. Edit nav/footer/title styling here,
-  once, instead of in nine files.
-- `docs/basic.js` — the **shared GW-BASIC tokenizer** (`tokenizeBasicLine()`), linked by
-  `source.html` and `explained.html` (which had byte-identical copies). `migration.html` keeps
-  its own reduced inline tokenizer — it uses a smaller keyword set, classifies `STRING$`/`SPC`
-  differently, and coexists with a second (JS) tokenizer, so it deliberately does not share this.
-- `docs/source.html` — the original source, syntax-highlighted (a self-contained
-  pretty-printed listing; embeds the `.BAS` text as base64 and tokenizes it in JS). The nav
-  label is **Source**. The rendered listing drops the first 10 banner lines (starts at `10 REM`)
-  and shows only the BASIC line numbers — there is no separate sequential gutter.
-- `docs/explained.html` — the same source as an annotated walkthrough: a
-  "big idea" primer, variable/character glossaries, per-routine section cards, and inline
-  `↳` notes on individual lines. Same embedded-base64 + tokenizer approach as the listing;
-  the prose lives in its `SECTIONS` array (by BASIC line) and `NOTES` map (by line number).
-- `docs/migration.html` — the BASIC source and the JS port shown **side by side**,
-  with an intro on the new architecture. Embeds *both* sources as base64 (the BASIC, and the
-  port's `<script>` body extracted from `index.html`) and slices them by line range per
-  `SECTIONS` pairing; has its own small JS tokenizer alongside the shared BASIC one. Note: the
-  JS line ranges are a snapshot of `index.html`'s script — if that script changes substantially,
-  re-check the ranges (regenerate with the same `<script>`-body extraction).
-- `docs/vram.html` — an interactive visualization of the text-VRAM model: steer a small snake
-  and watch the rendered screen and the raw `poke`/`peek` bytes change in lock-step, with an
-  inspector that computes the offset formula live. A focused sandbox (empty/heart/wall only)
-  that reuses the embedded font; not the full game engine.
-- `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
-  scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The gallery shows
-  one **full-length autoplay gameplay GIF per layout** (`docs/images/manual/scene-1..8.gif`, 640×384 — the long clips
-  that used to be the Demo page, hundreds of moves each); **clicking a layout image pops up a big version**
-  (X / Esc / backdrop to close). They were produced by a smart autoplay bot
-  (BFS-to-heart, stone-pushing, tail-reach anti-trap, arrow-dodging) driven via the browser:
-  frames rebuilt from `vram` into a `willReadFrequently` canvas (the game canvas reads back blank
-  in a hidden tab), captured straight to PNGs through a throwaway local upload server, then
-  encoded with ImageMagick (`magick -delay 13 -loop 0 ... -layers optimize`). Same green doc-page
-  styling as the other doc pages.
-- `docs/live.html` — a **Live** page (nav label **Live**): **one** copy of the *real* game running live,
-  with **16 level tabs** for the levels it showcases — **1–8** (gentle, turn-based) and **25–32** (the brutal
-  back half) — a **bot-speed slider**, and, below the screen, the **same six controls as the game**
-  (Green/Amber/White/CGA, Sound, Fullscreen). The single cell is an `<iframe src="index.html">` with a smarter
-  bot `eval`'d into it (so it can read the game's `const`/`let` globals by name, which are *not* window
-  properties). The bot is embedded as a string in `live.html` and injected on every iframe `load` (with CSS
-  that hides the game chrome and the bezel padding, keeping the full 640×384 canvas). The selected tab sets
-  `TARGET`, and the iframe **jumps straight there without grinding levels**: it dismisses level 1, sets
-  `LEVEL = TARGET - 1` and presses F10 once, so the game's `for(LEVEL…)` loop lands on `TARGET`. The bot
-  (BFS-to-food, tail-reach safety, **eats a smiley to escape a trap**, endgame aggression) plays that one
-  level, driving via `pushKey` and reading `parent.botDelay()` each move; the slider maps 0–100 to a
-  slow-to-fast delay without restarting. The six controls drive the iframe's own hidden buttons (theme/sound)
-  and fullscreen the `.frame` box. **The viewer can't steer the game** — the iframe is inert
-  (`pointer-events:none` + `tabindex=-1`); instead a page-level keydown steps the shown level (**Space / →**
-  next, **←** previous, wrapping after 32 back to 1). It posts status to `parent.botStatus(…)` and does **not**
-  advance on a win: a clean clear (`LEVEL===TARGET+1 && LIVE>0`) → `parent.botEnd(…, true)` → **green** flash;
-  getting stuck (`BTEL` stops advancing, no safe move, ~26 s with no **score** gain — counting items is wrong
-  because a heart spawns a club — or a game-over) → `parent.botEnd(…, false)` → **red** flash. Either flash
-  pulses the overlay four times, then reloads the iframe (re-injecting the bot, re-jumping to the same level);
-  changing tabs bumps a `gen` counter so in-flight flash reloads are ignored. Foreground only (background tabs
-  throttle and pause the game).
-- `docs/bot.html` — a **Bot** page (nav label **Bot**) that explains the smart bot embedded in `live.html`:
-  where it runs, how it reads VRAM and the snake arrays, how it models arrows, simulates moves and pushed
-  stones, searches for food, checks tail reach / open space / survival depth, scores candidate routes, falls
-  back to tail-following, and decides when a level is cleared or stuck. Keep this page in sync with the `BOT`
-  string in `docs/live.html` when the planner changes.
-- `docs/magazine.html` — a **Magazine** page (nav label **Magazine**): the original 1988 publication of
-  Sneekie as a **type-in program** in *MS(X)DOS Computer Magazine* no. 25. A thumbnail grid of the **cover +
-  pages 58–63** (`docs/images/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking any page opens it in
-  **real browser fullscreen** (`requestFullscreen` on a bare `#page-fs` box — just the page on black, no
-  chrome or caption; Esc exits, with a fixed-overlay fallback). Below the scans, two English takes on the
-  Dutch feature: an **original-words recap** (explicitly *not* a verbatim translation of the magazine's
-  editorial) and a **"translated scans"** pair — copies of pages 58/59 with the text rendered in English
-  (`images/magazine/p58.en.jpg`, `p59.en.jpg` + thumbs). Page images were rasterised from a scan of the issue with
-  **pypdfium2** (~168 dpi, in a throwaway venv); the full 100-page magazine is not committed. Same green
-  doc-page styling.
-- `docs/SNEEKIE.BAS` — the canonical 1988 GW-BASIC source, recovered by OCR from the magazine listing (served,
-  linked for download from the listings). This is the **specification**: the game's JS is a faithful port of it,
-  so read it to understand intended behavior and to check that changes stay true to the original. A frozen 1988
-  artifact. Its first 10 lines are a `'`-comment header; the listing pages (`source`/`explained`/`migration`)
-  **embed this whole file as base64**, so if you edit it, regenerate those `B64`/`atob(...)` blobs — and keep the
-  header at 10 lines so `slice(10)` and migration's absolute `SECTIONS` line ranges stay valid.
-- `docs/favicon.png` plus `docs/images/{apple-touch-icon.png,icon-192.png,icon-512.png,og.png,logo.png}` —
-  site icons, social card, and the **`♥ SNEEKIE ♥` header wordmark** (green letters, red hearts,
-  transparent), all drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py`
-  (pure Python, no deps; reads the font straight out of `docs/js/index.js`). Every page carries matching
-  `<link rel="icon">` + Open Graph / Twitter meta pointing at `images/og.png`. `images/logo.png` is the
-  shared top-left brand on **every** page (see the nav note below).
+- `docs/index.html` - the root Play page shell. It loads `css/site.css`, `css/index.css`,
+  `js/site.js`, and `js/index.js`.
+- `docs/html/*.html` - the eight secondary pages: `manual`, `live`, `bot`, `magazine`,
+  `source`, `explained`, `migration`, and `vram`. Each one loads `../css/site.css`, its own
+  `../css/<page>.css`, `../js/site.js`, and its own `../js/<page>.js`.
+- `docs/css/site.css` - shared variables, layout primitives, doc-page styling, injected
+  header/footer chrome, dialogs, buttons, and responsive rules.
+- `docs/css/<page>.css` - page-specific styles. Keep shared visual language in `site.css`;
+  only page-only layout and components belong in page CSS.
+- `docs/js/site.js` - shared site behavior: injects the standard `header.top` and footer,
+  marks the current nav link, routes the print button to Source, registers the service worker,
+  and exposes the shared BASIC tokenizer used by the listing pages.
+- `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
+  are used by more than one page.
+- `docs/images/` - logo/social/icon PNGs, manual GIFs, and magazine scans. `favicon.png` stays
+  at `docs/favicon.png`.
+- `docs/sw.js` - service worker precache. Bump `CACHE_NAME` when changing existing precached
+  files so deployed users do not keep stale assets.
+- `tools/make-icons.py` - regenerates icon/social/logo PNGs using the CP437 font embedded in
+  `docs/js/index.js`.
 
-To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
-to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
+Only `docs/index.html` remains at the site root. Secondary pages live under `docs/html/`, so
+root-level links should use `html/<page>.html`; links between secondary pages can use
+`<page>.html`.
 
-All nine pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**, now driven by the shared **`site.css`** (the nav/footer/title CSS used to be copy-pasted,
-with drift, into all nine `<style>` blocks). The **top-left is the `♥ SNEEKIE ♥` logo**
-(`<a class="brand" href="index.html"><img src="images/logo.png">`, the same on every page — no more
-per-page brand text), then the same page links (current page marked `aria-current="page"`) plus a
-`#print` button that **always prints the Source page** (`source.html`; the other eight pages
-navigate there with `?print`, which auto-prints). Each page also carries **one big white centered
-title** (`h1.page-title`, styled in `site.css`) naming the page's purpose, just under the nav — on
-the doc pages this is the page's existing intro `<h1>`; `index` and `source` get a dedicated one
-("The 1988 Game" / "Source Listing"). The old per-page brand descriptor became that title.
-Footers are unified into one `site.css` style. To restyle the nav/footer/title, edit `site.css`
-(chrome colours are the `--c-*` vars there); to recolour a page's *body*, edit that page's `:root`. There is **no Light/Dark mode** anywhere. The game + plain listing keep the Green/Amber/White/CGA
-`#themes` switcher (`sneekie.theme`); the doc pages (Manual, Live, Bot, Magazine, Explained, Migration, Visualizer)
-are a fixed green palette with no switcher. The doc pages keep a readable **sans-serif for prose** (code stays monospace); their
-colours are driven by CSS vars in `:root` (token classes `ln/kw/fn/str/num/com/id/op/pn` = a
-fixed green set, like the listing's green theme), so re-theming is mostly editing `:root`. On the
-game + listing the page title lives in a separate `header.hero` (renamed so the generic
-`header{}` rules don't style the nav bar).
+To ship a change: edit under `docs/`, commit, and push to `master`. GitHub Pages is configured
+to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
 
-## Running it
+## Pages
+
+- `docs/html/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
+  listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64, drops the first 10 banner lines
+  for display, and shows only the BASIC line numbers.
+- `docs/html/explained.html` + `docs/js/explained.js` - annotated walkthrough of the same
+  source. Prose lives in the `SECTIONS` array and `NOTES` map in `explained.js`.
+- `docs/html/migration.html` + `docs/js/migration.js` - BASIC and JavaScript side by side.
+  `migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/index.js` as base64, then slices
+  them by line ranges in `SECTIONS`. If `docs/js/index.js` changes substantially, regenerate
+  the embedded JS and re-check those line ranges.
+- `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
+  model. It is a focused sandbox, not the full game engine.
+- `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
+  Layout GIFs live in `docs/images/manual/scene-1..8.gif`.
+- `docs/html/live.html` + `docs/js/live.js` - one real game iframe controlled by a smart bot.
+  The bot source is the `BOT` string in `live.js`, injected into the iframe on load.
+- `docs/html/bot.html` + `docs/js/bot.js` - explanation of the live bot. Keep this page in
+  sync with the `BOT` string in `docs/js/live.js` when planner behavior changes.
+- `docs/html/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
+  page images. Media lives in `docs/images/magazine/`.
+- `docs/index.html` + `docs/js/index.js` - the playable port. Keep BASIC line-number comments
+  and the original variable names when changing game behavior.
+
+## Shared Chrome
+
+All nine pages share one standard top nav and footer injected by `docs/js/site.js`; do not
+copy-paste `header.top` or `<footer>` markup back into the HTML files. The top-left brand is
+`docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
+
+The print button always prints the Source page. From the root page it navigates to
+`html/source.html?print`; from secondary pages it navigates to `source.html?print`.
+
+The game page and plain Source listing keep the Green/Amber/White/CGA theme switcher
+(`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
+There is no Light/Dark mode.
+
+## Source Embeds
+
+`docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
+behavior. The listing pages embed it as base64:
+
+- `docs/js/source.js`
+- `docs/js/explained.js`
+- `docs/js/migration.js`
+
+If `docs/SNEEKIE.BAS` changes, regenerate those blobs and keep its 10-line header intact
+because the display code uses `slice(10)`.
+
+`docs/js/migration.js` also embeds `docs/js/index.js`. If the game port changes in a way that
+affects line ranges, regenerate the embedded JS copy and update `SECTIONS`.
+
+## Running & Verification
 
 No build/lint/test commands exist. To preview, serve the site folder:
-`python3 -m http.server` from `docs/` (or from the root and open `/docs/index.html`), then
-open it in a browser. Verify changes by playing in the browser; the page surfaces JS errors
-via a `window.onerror` banner rather than failing silently (`docs/index.html`, near the top).
+
+```sh
+cd docs
+python3 -m http.server
+```
+
+Then open `http://localhost:8000/`. You can also serve from the repo root and open
+`/docs/index.html`.
+
+Useful checks after edits:
+
+```sh
+node --check docs/js/*.js docs/sw.js
+```
+
+For frontend changes, verify the relevant pages in a browser at desktop and mobile widths.
+`docs/index.html` surfaces runtime JS errors through an on-page error banner.
 
 ## Architecture
 
@@ -143,65 +128,36 @@ The port's organizing principle is that **it emulates the original's direct vide
 model rather than building a modern game-object model.** Everything follows from that.
 
 - **VRAM is the game state.** The 1988 code POKEd CP437 character codes straight into PC
-  text-mode video RAM at `&HB000`/`&HB800`. The port keeps `vram`, a `Uint8Array(4000)`
-  with the *same* layout: `offset = (row-1)*160 + (col-1)*2`; even byte = CP437 char code,
-  odd byte = attribute (only `7` normal / `15` bright occur). All game logic — snake
-  movement, collision, item pickup, walls, pushable stones, enemy arrows — reads and writes
-  the playfield through `peek(off)` / `poke(off, v)`. There is no separate model of "where
-  the snake is"; you find out by peeking the bytes, exactly as the BASIC did.
-
+  text-mode video RAM at `&HB000`/`&HB800`. The port keeps `vram`, a `Uint8Array(4000)` with
+  the same layout: `offset = (row-1)*160 + (col-1)*2`; even byte = CP437 char code, odd byte
+  = attribute. All game logic reads and writes the playfield through `peek(off)` and
+  `poke(off, v)`.
 - **Rendering is decoupled from logic.** `poke` adds changed cells to a `dirty` set; a
-  `requestAnimationFrame` loop redraws only dirty cells (`drawCell`). Glyphs come from the
-  real IBM VGA 8×16 CP437 ROM font, embedded as a 4096-byte base64 `FONT` array and
-  pre-rendered into per-color "atlas" canvases by `buildAtlas`. Themes (`THEMES`):
-  green/amber/white monochrome plus a colorized CGA mode; in CGA mode `cgaColor(ch, at)`
-  picks a color per character class.
+  `requestAnimationFrame` loop redraws dirty cells with `drawCell`. Glyphs come from the IBM
+  VGA 8x16 CP437 ROM font embedded in `docs/js/index.js`.
+- **The BASIC's line-numbered control flow is preserved.** `program()` calls `playLevels()`,
+  helpers are named after BASIC line numbers (`lay1230`, `sub1830`, etc.), and comments cite
+  original line ranges. Preserve this convention.
+- **Two dispatch tables reproduce `ON LEVEL GOSUB`.** `CFG[]` handles per-level speed, item
+  count, bonus decrement, and wall layout. `ENEMY[]` handles per-tick enemy routines.
+- **Game-state variables keep BASIC names.** Examples: `T`, `S`, `B`, `D`, `ZORE`, `ZCORE`,
+  `LIVE`, `LEVEL`, `BTEL`, `ETEL`, `E`, `F`, `HART`, `KLAVER`, `BONUS`, `AANTAL`, `BMIN`,
+  `Z`, and `K1`.
+- **Async emulates blocking BASIC I/O.** The Promise-based keyboard buffer (`kbuf`, `pushKey`,
+  `keyOrTimeout`, `waitKey`) stands in for `INKEY$`/`INPUT$`; `throw DEATH` mirrors the BASIC
+  death jump.
+- **Input mirrors DOS scancodes.** Arrow keys map to the two-byte extended-key strings DOS
+  `INKEY$` returned; Escape and the F9/F10 cheats are preserved.
+- **Audio mirrors `SOUND f,d`.** Web Audio square-wave oscillators reproduce GW-BASIC `SOUND`
+  durations in 1/18.2-second ticks.
 
-- **The BASIC's line-numbered control flow is preserved, and names cite line numbers.**
-  `program()` (boot + restart loop, lines 80-230/1090-1130) calls `playLevels()` (the
-  `FOR LEVEL=1 TO 32` loop, 240-1080), which contains the move loop (420-1020). Helpers are
-  named after their BASIC line: `lay1230`/`lay1400`/`lay1500`/… draw per-level maze walls;
-  `sub1830`/`sub1970`/`sub2130` animate per-level enemies (moving arrows, gates);
-  `keyOrTimeout` is lines 430-460; `deathSeq` is 510-630. Comments throughout cite the
-  original line numbers — keep that convention when editing.
+## Modern Additions
 
-- **Two dispatch tables reproduce the `ON LEVEL GOSUB` lines.** `CFG[]` (line 310: per-level
-  speed `Z`, item count `AANTAL`, bonus decrement `BMIN`, and which `lay*` walls to draw)
-  and `ENEMY[]` (line 1010: which `sub*` enemy routine runs each tick) are both indexed by
-  `(LEVEL-1) % 16`. There are only **8 distinct wall layouts** (one is "no walls"); they cycle
-  every 8 levels (`(LEVEL-1) % 8`), so each layout is used **4 times** across the 32 levels.
-  The 16 `CFG` entries are those 8 layouts ×2 speed regimes: levels 1-8 are turn-based
-  (`Z=999`, snake waits for a key), levels 9-16 are the same layouts auto-moving and speeding
-  up (`Z` 0.4-1.2 s). Levels 17-32 are an **exact repeat** of 1-16 (the `ON LEVEL GOSUB` list
-  is the 16 targets written out twice) — not faster.
+These intentionally go beyond the 1988 source: localStorage persistence (`sneekie.theme`,
+`sneekie.muted`, `sneekie.highscore`), theme switching and CGA colorization, fullscreen,
+touch controls, responsive scaling, the on-page error banner, the CRT monitor shell, the
+short 1988-style BIOS/DOS/GW-BASIC boot animation, shared injected nav/footer, page dialogs,
+the service worker cache, and English UI strings.
 
-- **Game-state variables keep the exact BASIC names** so the port reads against the source:
-  `T` (snake cell offsets), `S` (popup backup), `B` (gate positions), `D` (arrows),
-  `ZORE`/`ZCORE` (highscore/score), `LIVE`, `LEVEL`, `BTEL`/`ETEL` (snake head/tail
-  indices), `E`/`F` (current/previous direction scancode), `HART`/`KLAVER` (hearts/clubs
-  remaining), `BONUS`, `AANTAL`, `BMIN`, `Z`, `K1`.
-
-- **Async emulates blocking BASIC I/O.** GW-BASIC's `INKEY$`/`INPUT$` blocked; here the main
-  loop is `async` and a Promise-based keyboard buffer (`kbuf`, `pushKey`, `keyOrTimeout`,
-  `waitKey`) mimics the BIOS buffer and the per-level `INKEY$` timeout. Death is signalled
-  by `throw DEATH` (a sentinel) caught in the move loop, standing in for the BASIC's
-  `GOTO 510` / `RETURN 510`.
-
-- **Input mirrors DOS scancodes.** `keydown` maps arrows to the two-byte extended-key
-  strings DOS `INKEY$` returned (`'\0H'`/`'\0P'`/`'\0K'`/`'\0M'` = up/down/left/right, scan
-  72/80/75/77), plus Escape and the cheats F9 (extra life, scan 67) / F10 (skip level, scan
-  68). Touch: swipe = direction, tap = key.
-
-- **Audio mirrors `SOUND f,d`.** `sound(freq, ticks)` reproduces GW-BASIC `SOUND` (duration
-  in 1/18.2 s ticks) with Web Audio square-wave oscillators; `playDrained` mirrors
-  `IF PLAY(0)<>0 GOTO 540`.
-
-## Modern additions (beyond the faithful port)
-
-These deviate from the 1988 source intentionally: localStorage persistence (keys
-`sneekie.theme`, `sneekie.muted`, `sneekie.highscore` — the persisted highscore is new),
-theme switching + CGA colorization, fullscreen, touch controls, responsive scaling (`fit`),
-the on-page error banner, the title-bar canvas, the CRT-monitor shell (molded `#bezel`, recessed
-`#tube`/`#glass` with scanlines, and a `#panel` control chin), and English UI strings (the original
-was Dutch). When changing behavior, decide whether you're fixing the *port* (match the BASIC) or
-extending the *modern shell* — and preserve the line-number comments either way.
+When changing behavior, decide whether you are fixing the faithful port or extending the modern
+shell, and keep the BASIC line-number comments intact either way.
