@@ -47,7 +47,6 @@ const PRECACHE_ASSETS = [
   'js/game.js',
   'js/manual.js',
   'js/live.js',
-  'js/bot.js',
   'js/magazine.js',
   'js/source.js',
   'js/explained.js',
