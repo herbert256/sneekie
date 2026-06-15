@@ -26,6 +26,14 @@ function siteNavigate(href){
   else location.href = href;
 }
 
+function useCleanUrls(){
+  return location.hostname === 'sneekie.xyz' || location.hostname === 'www.sneekie.xyz';
+}
+
+function sitePageHref(slug){
+  return useCleanUrls() ? slug : slug + '.html';
+}
+
 function currentPage(){
   const file = location.pathname.split('/').pop() || 'index.html';
   return file.replace(/\.html$/, '') || 'index';
@@ -52,7 +60,7 @@ function renderTopHeader(){
 
   const brand = document.createElement('a');
   brand.className = 'brand';
-  brand.href = 'game.html';
+  brand.href = sitePageHref('game');
   if(embedded) brand.target = '_top';
   brand.setAttribute('aria-label', 'Sneekie home');
   const logo = document.createElement('img');
@@ -64,7 +72,7 @@ function renderTopHeader(){
   const nav = document.createElement('nav');
   for(const [slug, label] of links){
     const a = document.createElement('a');
-    a.href = slug + '.html';
+    a.href = sitePageHref(slug);
     a.textContent = label;
     if(embedded) a.target = '_top';
     if(slug === current) a.setAttribute('aria-current', 'page');
@@ -117,9 +125,21 @@ function setupPrintButton(){
   const isSource = currentPage() === 'source';
   btn.addEventListener('click', () => {
     if(isSource) window.print();
-    else siteNavigate('source.html?print');
+    else siteNavigate(sitePageHref('source') + '?print');
   });
   if(isSource && location.search.indexOf('print') > -1) setTimeout(() => window.print(), 120);
+}
+
+function normalizeCleanLinks(){
+  if(!useCleanUrls()) return;
+  document.querySelectorAll('a[href]').forEach(a => {
+    const raw = a.getAttribute('href');
+    if(!raw || !/\.html([?#]|$)/.test(raw)) return;
+    const url = new URL(raw, location.href);
+    if(url.origin !== location.origin) return;
+    url.pathname = url.pathname.replace(/\.html$/, '');
+    a.href = url.href;
+  });
 }
 
 function registerOfflineCache(){
@@ -133,6 +153,7 @@ function registerOfflineCache(){
 renderTopHeader();
 renderPageFooter();
 setupPrintButton();
+normalizeCleanLinks();
 registerOfflineCache();
 
 /* ---------- GW-BASIC token classification ---------- */
