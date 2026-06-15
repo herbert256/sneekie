@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v26';
+const CACHE_NAME = 'sneekie-offline-v27';
 
 /* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
    source, the manifest, and the small icons. The heavy magazine scans and manual

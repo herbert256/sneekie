@@ -90,17 +90,18 @@ There is no Light/Dark mode.
 ## Source Embeds
 
 `docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
-behavior. The listing pages embed it as base64:
+behavior. The source-listing pages render it at runtime:
 
-- `docs/js/source.js`
-- `docs/js/explained.js`
-- `docs/js/migration.js`
-
-If `docs/SNEEKIE.BAS` changes, regenerate those blobs and keep its 10-line header intact
-because the display code uses `slice(10)`.
-
-`docs/js/migration.js` also embeds `docs/js/index.js`. If the game port changes in a way that
-affects line ranges, regenerate the embedded JS copy and update `SECTIONS`.
+- `docs/js/source.js` and `docs/js/explained.js` `fetch('../SNEEKIE.BAS')` (the service worker
+  caches it, so offline still works) and key off it directly — no embedded copy. The display
+  code drops the 10-line header with `slice(10)`, so keep that header intact. (This means
+  those two pages need the file served over http(s), not opened via `file://`.)
+- `docs/js/migration.js` still embeds **both** `docs/SNEEKIE.BAS` and `docs/js/index.js` as
+  base64. This is deliberate: the side-by-side view pairs hard-coded BASIC and JS line ranges
+  (`SECTIONS`), so the embeds are a frozen snapshot co-calibrated with those ranges — fetching
+  a live, changing `index.js` would silently misalign them. To refresh the migration page
+  against a newer `index.js`, regenerate the embedded JS base64 and re-check the `SECTIONS`
+  ranges together.
 
 ## Running & Verification
 
