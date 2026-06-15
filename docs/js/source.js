@@ -27,9 +27,9 @@ listing.appendChild(frag);
 /* ---------- themes (shared with the game via localStorage) ---------- */
 const THEMES = {
   hercules:{ bg:'#020503', phos:'#7dff7d', glow:'rgba(125,255,125,.13)',
-    gut:'#1f4a27', ln:'#46c95a', kw:'#d6ffd6', fn:'#7ff09a', str:'#5ad06f', num:'#a9f4b6', com:'#3c8f49', id:'#86ff86', op:'#54bf69', pn:'#367a43' },
+    gut:'#44864f', ln:'#46c95a', kw:'#d6ffd6', fn:'#7ff09a', str:'#5ad06f', num:'#a9f4b6', com:'#3c8f49', id:'#86ff86', op:'#54bf69', pn:'#4a9a5a' },
   amber:{ bg:'#070401', phos:'#ffc438', glow:'rgba(255,196,56,.12)',
-    gut:'#5a3c0d', ln:'#ffb732', kw:'#ffe7a0', fn:'#ffc861', str:'#f0a838', num:'#ffd873', com:'#9a6a18', id:'#ffcb52', op:'#cf9a2c', pn:'#6f4e14' },
+    gut:'#8a6a2a', ln:'#ffb732', kw:'#ffe7a0', fn:'#ffc861', str:'#f0a838', num:'#ffd873', com:'#9a6a18', id:'#ffcb52', op:'#cf9a2c', pn:'#a07d34' },
   white:{ bg:'#050607', phos:'#e8eef0', glow:'rgba(232,238,240,.10)',
     gut:'#3a4146', ln:'#aeb7bb', kw:'#ffffff', fn:'#cdd6da', str:'#aab4b8', num:'#d7dee2', com:'#6b7479', id:'#e8eef0', op:'#9aa3a8', pn:'#525a5e' },
   cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)',
