@@ -217,7 +217,7 @@ addEventListener('keydown', e => {
     default: if(e.key.length === 1) s = e.key;
   }
   if(s !== null){
-    if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape') e.preventDefault();
+    if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
     pushKey(s);
   }
 });
