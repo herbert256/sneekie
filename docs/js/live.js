@@ -547,7 +547,12 @@ function stepLevel(dir){
   setLevel(LEVEL_CHOICES[n]);                 // wraps: after 32 back to 1, before 1 back to 32
 }
 document.addEventListener('keydown', e => {
-  if(e.target === speed) return;              // leave the speed slider's own arrow/space handling alone
+  // Leave focused controls to handle their own Space/Arrow keys: the speed
+  // slider, the theme/mute/fullscreen buttons, the level tabs, and links.
+  // Without this, Space on a focused button both activated it and stepped the
+  // level, and arrows moved levels instead of moving within the control.
+  const t = e.target;
+  if(t && t.closest && t.closest('a, button, input, select, textarea, [role="tab"]')) return;
   if(e.key === ' ' || e.key === 'Spacebar' || e.key === 'ArrowRight'){ e.preventDefault(); stepLevel(1); }
   else if(e.key === 'ArrowLeft'){ e.preventDefault(); stepLevel(-1); }
 });
