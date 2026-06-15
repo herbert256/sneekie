@@ -91,7 +91,7 @@ function renderPageFooter(){
 function setupPrintButton(){
   const btn = document.getElementById('print');
   if(!btn) return;
-  const isSource = location.pathname.split('/').pop() === 'source.html';
+  const isSource = currentPage() === 'source';
   btn.addEventListener('click', () => {
     if(isSource) window.print();
     else location.href = htmlPageHref('source') + '?print';
