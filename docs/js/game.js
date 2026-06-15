@@ -320,7 +320,9 @@ function startBootFromGesture(){
 }
 function shouldSkipBoot(){
   try {
-    return window.self !== window.top || new URLSearchParams(location.search).has('noboot');
+    return window.self !== window.top ||
+      new URLSearchParams(location.search).has('noboot') ||
+      matchMedia('(prefers-reduced-motion: reduce)').matches;   // honor reduced-motion: skip the JS-timed boot show
   } catch(_){ return true; }
 }
 function bootSleep(ms){
