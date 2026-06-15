@@ -100,7 +100,7 @@
         <h2>The one deep change: blocking becomes <code>async</code></h2>
         <p>GW-BASIC ran top-to-bottom and simply <em>stopped</em> at <code>INKEY$</code>/<code>INPUT$</code> until you pressed a key. A browser tab can never block like that &mdash; so the waiting points became <code>await</code>s, which forced <code>playLevels()</code> and <code>program()</code> to be <code>async</code>. A small Promise-based keyboard buffer stands in for the BIOS key buffer, and because <code>GOTO</code> doesn't exist, the "jump out and die" lines turn into a thrown <code>DEATH</code> sentinel caught around the loop. Those two tricks &mdash; <em>await for input, throw to die</em> &mdash; are what let the rest of the code stay a literal translation.</p>
       </div>
-      <nav class="toc">
+      <nav class="toc" aria-label="On this page">
         <h2>The pairings</h2>
         <ol id="toc-list"></ol>
       </nav>

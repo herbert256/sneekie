@@ -70,6 +70,7 @@ function renderTopHeader(){
   header.appendChild(brand);
 
   const nav = document.createElement('nav');
+  nav.setAttribute('aria-label', 'Primary');
   for(const [slug, label] of links){
     const a = document.createElement('a');
     a.href = sitePageHref(slug);
