@@ -2,6 +2,7 @@
 /* Click a page → show it in real browser fullscreen, just the image on black. Esc exits. */
 const pageFs = document.getElementById('page-fs');
 const pageFsImg = document.getElementById('page-fs-img');
+const pageFsClose = document.getElementById('page-fs-close');
 let pageLastFocus = null;
 
 function openPage(thumb){
@@ -11,7 +12,7 @@ function openPage(thumb){
   pageFs.classList.add('on');                                  // shows it (also the fullscreen target / fallback overlay)
   pageFs.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
-  pageFs.focus({preventScroll:true});
+  pageFsClose.focus({preventScroll:true});   // land focus on the Close button so keyboard users can reach it
   if(pageFs.requestFullscreen) pageFs.requestFullscreen().catch(() => {});
 }
 
@@ -34,7 +35,7 @@ function closePage(){
 }
 
 document.querySelectorAll('.thumb').forEach(t => t.addEventListener('click', () => openPage(t)));
-document.getElementById('page-fs-close').addEventListener('click', e => { e.stopPropagation(); closePage(); });
+pageFsClose.addEventListener('click', e => { e.stopPropagation(); closePage(); });
 pageFs.addEventListener('click', e => { if(e.target === pageFs) closePage(); });
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) finishClose(); });
 document.addEventListener('keydown', e => {
@@ -44,6 +45,6 @@ document.addEventListener('keydown', e => {
     closePage();
   } else if(e.key === 'Tab'){
     e.preventDefault();
-    pageFs.focus({preventScroll:true});
+    pageFsClose.focus({preventScroll:true});
   }
 });
