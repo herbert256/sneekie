@@ -169,7 +169,7 @@ function sectionEndLine(sec){
 }
 
 function renderExplained(src){
-lines = src.replace(/\n$/, '').split('\n');
+lines = src.replace(/\n$/, '').split('\n').slice(10);   // drop the 9-line OCR banner + blank, like source.js
 freshBlock();
 for(const line of lines){
   const no = lineNo(line);
