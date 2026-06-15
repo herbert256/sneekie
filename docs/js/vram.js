@@ -165,7 +165,8 @@ const colorOf = ch => ch===HEAD ? getCss('--greenhi') : ch===3 ? getCss('--red')
   ch===5 ? getCss('--club') : ch===1 ? getCss('--smiley') : ch===10 ? getCss('--stone') :
   ARROWSET.has(ch) ? getCss('--arrow') :
   SNAKE.has(ch) ? getCss('--green') : WALLSET.has(ch) ? getCss('--wall') : null;
-function getCss(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+const _cssCache = {};   // the visualizer has no theme switcher, so the CRT palette vars never change — read each once
+function getCss(v){ return _cssCache[v] ?? (_cssCache[v] = getComputedStyle(document.documentElement).getPropertyValue(v).trim()); }
 
 let hover = null;                                              // {c,r}
 function drawScreen(){
@@ -224,7 +225,9 @@ function logMove(info, ops){
 }
 const insp = document.getElementById('inspect');
 function setHover(c, r){
-  hover = (c && r) ? {c, r} : null; render();
+  const next = (c && r) ? {c, r} : null;
+  if((!next && !hover) || (next && hover && next.c === hover.c && next.r === hover.r)) return;   // same cell — skip the full screen+grid re-render
+  hover = next; render();
   if(!hover){ insp.innerHTML = '<span class="dim">Hover a cell to read its bytes.</span>'; return; }
   const o = off(c, r), ch = vram[o], at = vram[o+1];
   const g = ch === 32 ? '·' : String.fromCharCode(ch < 128 ? ch : 63);
