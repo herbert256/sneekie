@@ -35,10 +35,15 @@
 }
 .page-live .leveltabs button{
   min-height:40px;
-  color:#98a1a6;
+  font:inherit;
   font-size:12px;
   letter-spacing:.03em;
+  color:#98a1a6;
+  background:var(--button);
+  border:1px solid var(--border);
   border-radius:5px;
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
 .page-live .leveltabs button[aria-selected="true"]{
   color:var(--accent);
@@ -129,8 +134,7 @@
   margin-top:16px;
 }
 .page-live #controls .grp{ display:flex; gap:6px; }
-.page-live #controls button,
-.page-live .leveltabs button{
+.page-live #controls button{
   font:inherit;
   color:var(--ink);
   background:var(--button);
