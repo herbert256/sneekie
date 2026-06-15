@@ -484,6 +484,7 @@ section.card .prose,
 }
 @media (max-width:640px){
   .page-doc .toc ol{ columns:1; }
+  .page-doc table{ display:block; width:100%; overflow-x:auto; }
   .page-doc .gloss td:first-child,
   .page-doc .chars td:first-child,
   .page-doc .map td:first-child{ white-space:normal; }
