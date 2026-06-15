@@ -99,7 +99,7 @@ function renderPageFooter(){
     'Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>' +
     'Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>' +
     'Browser version: June 2026.';
-  document.body.insertBefore(footer, document.currentScript || null);
+  document.body.appendChild(footer);   // end of <body>; robust regardless of where site.js is loaded
 }
 
 function setupPrintButton(){

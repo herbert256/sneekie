@@ -405,23 +405,29 @@ window.botStatus = (idx, score, left) => {
   cell.st.textContent = left <= 0 ? ' — clearing…' : ' — score ' + score + ' · ' + left + ' left';
 };
 
+let flashTimers = [];
+function clearFlash(){
+  flashTimers.forEach(clearTimeout);
+  flashTimers = [];
+}
 function flash(el, color, done){
+  clearFlash();   // cancel any in-flight flash so rapid switches don't stack or double-advance
   // Honor a reduced-motion preference: show a single static win/stuck tint and
   // advance, instead of pulsing the overlay five times.
   if(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){
     el.style.background = color;
     el.style.opacity = '0.4';
-    setTimeout(() => { el.style.opacity = '0'; done(); }, 1400);
+    flashTimers.push(setTimeout(() => { el.style.opacity = '0'; done(); }, 1400));
     return;
   }
   el.style.background = color;
   let k = 0;
   (function tick(){
-    if(k >= 5){ setTimeout(done, 320); return; }
+    if(k >= 5){ flashTimers.push(setTimeout(done, 320)); return; }
     el.style.opacity = '0.82';
-    setTimeout(() => { el.style.opacity = '0'; }, 300);
+    flashTimers.push(setTimeout(() => { el.style.opacity = '0'; }, 300));
     k++;
-    setTimeout(tick, 1000);   // 1 s between flashes
+    flashTimers.push(setTimeout(tick, 1000));   // 1 s between flashes
   })();
 }
 
@@ -435,6 +441,8 @@ window.botEnd = (idx, win) => {
 function setLevel(level){
   if(activeLevel === level) return;
   activeLevel = level; gen++;   // invalidate any in-flight flash restarts
+  clearFlash();                 // stop the leaving level's pulse and its auto-advance
+  if(cell.flash) cell.flash.style.opacity = '0';
   updateLabel();
   cell.st.className = 'st'; cell.st.textContent = ' — restarting…';
   fitFullscreenFrame();
