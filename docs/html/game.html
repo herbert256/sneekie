@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sneekie (1988) by HerbySoft — the original GW-BASIC game from MS(X)DOS Computer Magazine, reborn as a faithful, dependency-free browser game." />
+    <title>Sneekie — a 1988 MS-DOS snake/maze game by HerbySoft</title>
+    <link rel="canonical" href="https://sneekie.xyz/" />
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie (1988)" />
+    <meta property="og:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
+    <meta property="og:url" content="https://sneekie.xyz/" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie (1988)" />
+    <meta name="twitter:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/game.css" />
+  </head>
+  <body class="page-index">
+    <main id="main" tabindex="-1">
+      <header class="hero">
+        <h1 class="page-title">The 1988 Game</h1>
+        <p class="sub">A MS-DOS text game from 1988 &mdash; reborn as a browser game</p>
+      </header>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+        <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
+       (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
+       Shown only in fullscreen on a coarse pointer; see CSS. -->
+        <div id="fstouch">
+          <button data-key="esc">ESC</button>
+          <button data-key="left" aria-label="Left">&#8592;</button>
+          <button data-key="up" aria-label="Up">&#8593;</button>
+          <button data-key="down" aria-label="Down">&#8595;</button>
+          <button data-key="right" aria-label="Right">&#8594;</button>
+          <button data-key="y">Y</button>
+          <button data-key="n">N</button>
+          <button data-key="f9">F9</button>
+          <button data-key="f10">F10</button>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button data-theme="hercules">Green</button>
+          <button data-theme="amber">Amber</button>
+          <button data-theme="white">White</button>
+          <button data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button id="mute">Sound: on</button>
+          <button id="fs">Fullscreen</button>
+        </div>
+      </div>
+      <div id="touchbar">
+        <button data-key="esc">ESC</button>
+        <button data-key="y">Y</button>
+        <button data-key="n">N</button>
+      </div>
+      <p id="hint">
+        <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
+        <span class="tc">Swipe to steer &middot; tap = any key</span>
+      </p>
+    </main>
+    <script src="../js/site.js"></script>
+    <script src="../js/game.js"></script>
+  </body>
+</html>

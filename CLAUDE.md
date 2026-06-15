@@ -13,7 +13,7 @@ There is no framework, no build step, no package dependency, and no dedicated au
 test suite. The current site is **not** a single inline HTML file anymore: it is a GitHub
 Pages site under `docs/`, split into shared and page-specific HTML/CSS/JS files. The
 canonical 1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in
-`docs/js/index.js`.
+`docs/js/game.js`.
 
 ## Layout & Deployment
 
@@ -21,15 +21,20 @@ The repository root **is** the git repo (remote `github.com:herbert256/sneekie`)
 publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
 https://sneekie.xyz/.
 
-- `docs/index.html` - the root Play page shell. It loads `css/site.css`, `css/index.css`,
-  `js/site.js`, and `js/index.js`.
-- `docs/html/*.html` - the eight secondary pages: `manual`, `live`, `bot`, `magazine`,
-  `source`, `explained`, `migration`, and `vram`. Each one loads `../css/site.css`, its own
-  `../css/<page>.css`, `../js/site.js`, and its own `../js/<page>.js`.
+- `docs/index.html` - the root Play entry shell. It is intentionally only an iframe wrapper
+  around `html/game.html`. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
+  structured-data script inline for search crawlers.
+- `docs/html/game.html` - the game page shell. It loads `../css/site.css`,
+  `../css/game.css`, `../js/site.js`, and `../js/game.js`.
+- `docs/html/*.html` - the game page plus the eight secondary pages: `game`, `manual`, `live`,
+  `bot`, `magazine`, `source`, `explained`, `migration`, and `vram`. Each content page loads
+  `../css/site.css`, page-specific CSS when present (`game` uses `../css/game.css`),
+  `../js/site.js`, and its own page JS.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, injected
   header/footer chrome, dialogs, buttons, and responsive rules.
-- `docs/css/<page>.css` - page-specific styles. Keep shared visual language in `site.css`;
-  only page-only layout and components belong in page CSS.
+- `docs/css/<page>.css` - page-specific styles.
+  Keep shared visual language in `site.css`; only page-only layout and components belong in
+  page CSS.
 - `docs/js/site.js` - shared site behavior: injects the standard `header.top` and footer,
   marks the current nav link, routes the print button to Source, registers the service worker,
   and exposes the shared BASIC tokenizer used by the listing pages.
@@ -41,11 +46,11 @@ https://sneekie.xyz/.
 - `docs/sw.js` - service worker precache. Bump `CACHE_NAME` when changing existing precached
   files so deployed users do not keep stale assets.
 - `tools/make-icons.py` - regenerates icon/social/logo PNGs using the CP437 font embedded in
-  `docs/js/index.js`.
+  `docs/js/game.js`.
 
-Only `docs/index.html` remains at the site root. Secondary pages live under `docs/html/`, so
-root-level links should use `html/<page>.html`; links between secondary pages can use
-`<page>.html`.
+Only the iframe wrapper `docs/index.html` remains at the site root. Content pages live under
+`docs/html/`, so root-level links should use `html/<page>.html`; links between content pages
+can use `<page>.html`.
 
 To ship a change: edit under `docs/`, commit, and push to `master`. GitHub Pages is configured
 to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
@@ -58,30 +63,31 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
 - `docs/html/explained.html` + `docs/js/explained.js` - annotated walkthrough of the same
   source. Prose lives in the `SECTIONS` array and `NOTES` map in `explained.js`.
 - `docs/html/migration.html` + `docs/js/migration.js` - BASIC and JavaScript side by side.
-  `migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/index.js` as base64, then slices
-  them by line ranges in `SECTIONS`. If `docs/js/index.js` changes substantially, regenerate
+  `migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64, then slices
+  them by line ranges in `SECTIONS`. If `docs/js/game.js` changes substantially, regenerate
   the embedded JS and re-check those line ranges.
 - `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
-- `docs/html/live.html` + `docs/js/live.js` - one real game iframe controlled by a smart bot.
+- `docs/html/live.html` + `docs/js/live.js` - one real `game.html` iframe controlled by a smart bot.
   The bot source is the `BOT` string in `live.js`, injected into the iframe on load.
 - `docs/html/bot.html` + `docs/js/bot.js` - explanation of the live bot. Keep this page in
   sync with the `BOT` string in `docs/js/live.js` when planner behavior changes.
 - `docs/html/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`.
-- `docs/index.html` + `docs/js/index.js` - the playable port. Keep BASIC line-number comments
-  and the original variable names when changing game behavior.
+- `docs/html/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
+  comments and the original variable names when changing game behavior.
+- `docs/index.html` - the root iframe wrapper for the playable port.
 
 ## Shared Chrome
 
-All nine pages share one standard top nav and footer injected by `docs/js/site.js`; do not
-copy-paste `header.top` or `<footer>` markup back into the HTML files. The top-left brand is
-`docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
+All nine content pages share one standard top nav and footer injected by `docs/js/site.js`;
+do not copy-paste `header.top` or `<footer>` markup back into the HTML files. The top-left
+brand is `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
 
-The print button always prints the Source page. From the root page it navigates to
-`html/source.html?print`; from secondary pages it navigates to `source.html?print`.
+The print button always prints the Source page. From the root iframe shell it is not shown;
+from `game.html` and the other content pages it navigates to `source.html?print`.
 
 The game page and plain Source listing keep the Green/Amber/White/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
@@ -96,11 +102,11 @@ behavior. The source-listing pages render it at runtime:
   caches it, so offline still works) and key off it directly — no embedded copy. The display
   code drops the 10-line header with `slice(10)`, so keep that header intact. (This means
   those two pages need the file served over http(s), not opened via `file://`.)
-- `docs/js/migration.js` still embeds **both** `docs/SNEEKIE.BAS` and `docs/js/index.js` as
+- `docs/js/migration.js` still embeds **both** `docs/SNEEKIE.BAS` and `docs/js/game.js` as
   base64. This is deliberate: the side-by-side view pairs hard-coded BASIC and JS line ranges
   (`SECTIONS`), so the embeds are a frozen snapshot co-calibrated with those ranges — fetching
-  a live, changing `index.js` would silently misalign them. To refresh the migration page
-  against a newer `index.js`, regenerate the embedded JS base64 and re-check the `SECTIONS`
+  a live, changing `game.js` would silently misalign them. To refresh the migration page
+  against a newer `game.js`, regenerate the embedded JS base64 and re-check the `SECTIONS`
   ranges together.
 
 ## Running & Verification
@@ -122,7 +128,7 @@ node --check docs/js/*.js docs/sw.js
 ```
 
 For frontend changes, verify the relevant pages in a browser at desktop and mobile widths.
-`docs/index.html` surfaces runtime JS errors through an on-page error banner.
+`docs/html/game.html` surfaces runtime JS errors through an on-page error banner.
 
 ## Architecture
 
@@ -136,7 +142,7 @@ model rather than building a modern game-object model.** Everything follows from
   `poke(off, v)`.
 - **Rendering is decoupled from logic.** `poke` adds changed cells to a `dirty` set; a
   `requestAnimationFrame` loop redraws dirty cells with `drawCell`. Glyphs come from the IBM
-  VGA 8x16 CP437 ROM font embedded in `docs/js/index.js`.
+  VGA 8x16 CP437 ROM font embedded in `docs/js/game.js`.
 - **The BASIC's line-numbered control flow is preserved.** `program()` calls `playLevels()`,
   helpers are named after BASIC line numbers (`lay1230`, `sub1830`, etc.), and comments cite
   original line ranges. Preserve this convention.

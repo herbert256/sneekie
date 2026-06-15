@@ -1,107 +1,88 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="An interactive look at how Sneekie works: steer the snake and watch the actual screen-memory bytes (poke/peek) change in lock-step.">
-<title>Sneekie — the screen is the memory</title>
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
-<link rel="manifest" href="../site.webmanifest">
-<link rel="canonical" href="https://sneekie.xyz/html/vram">
-<meta name="theme-color" content="#0a0c0d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sneekie">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="Sneekie">
-<meta property="og:title" content="Sneekie — the screen is the memory">
-<meta property="og:description" content="Steer the snake and watch the actual screen-memory bytes change — the model behind the 1988 game, made interactive.">
-<meta property="og:url" content="https://sneekie.xyz/html/vram">
-<meta property="og:image" content="https://sneekie.xyz/images/og.png">
-<meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sneekie — the screen is the memory">
-<meta name="twitter:description" content="Steer the snake and watch the actual screen-memory bytes change — the model behind the 1988 game.">
-<meta name="twitter:image" content="https://sneekie.xyz/images/og.png">
-<link rel="stylesheet" href="../css/site.css">
-<link rel="stylesheet" href="../css/vram.css">
-
-</head>
-<body class="page-doc page-vram">
-
-
-<main>
-  <h1 class="page-title">Watch the bytes move</h1>
-  <p class="lead">
-    Sneekie has no "snake object". The snake, the walls, the hearts and the <em>arrows</em> are just
-    <em>characters living in the screen's memory</em>, and the game reads and writes that memory directly. Steer
-    below and watch it happen: the <strong>screen</strong> on top and the <strong>raw memory</strong> beneath it
-    are the <em>same bytes</em>. Every move is a few <code>peek</code>s and <code>poke</code>s &mdash; shown live
-    on the right. Eat a heart and a club <em>pops up</em> somewhere; the four arrows patrol on their own.
-  </p>
-  <p class="lead" style="color:var(--muted);font-size:13.5px">
-    Each cell is two bytes (character, then a brightness/color attribute), addressed by
-    <span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>.
-    This is a 22&times;15 corner of the real 80&times;25 screen &mdash; same formula, same 160-byte row stride.
-  </p>
-
-  <div class="demo" id="demo">
-    <div class="stage">
-      <div class="panel">
-        <div class="ptitle">The screen &mdash; what you see</div>
-        <canvas id="screen" width="352" height="480" role="img" aria-label="Text-mode video memory rendered as the screen"></canvas>
-      </div>
-      <div class="panel">
-        <div class="ptitle">Inspector</div>
-        <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
-      </div>
-    </div>
-
-    <div class="side">
-      <div class="panel">
-        <div class="ptitle">The memory &mdash; the byte in each cell</div>
-        <div class="mem" id="mem"></div>
-      </div>
-      <div class="sxo">
-        <div class="panel">
-          <div class="ptitle">Steer</div>
-          <div class="pad">
-            <button class="up"    data-d="U" aria-label="Up">&#9650;</button>
-            <button class="left"  data-d="L" aria-label="Left">&#9664;</button>
-            <button class="down"  data-d="D" aria-label="Down">&#9660;</button>
-            <button class="right" data-d="R" aria-label="Right">&#9654;</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="An interactive look at how Sneekie works: steer the snake and watch the actual screen-memory bytes (poke/peek) change in lock-step." />
+    <title>Sneekie — the screen is the memory</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/html/vram" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie — the screen is the memory" />
+    <meta property="og:description" content="Steer the snake and watch the actual screen-memory bytes change — the model behind the 1988 game, made interactive." />
+    <meta property="og:url" content="https://sneekie.xyz/html/vram" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie — the screen is the memory" />
+    <meta name="twitter:description" content="Steer the snake and watch the actual screen-memory bytes change — the model behind the 1988 game." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/vram.css" />
+  </head>
+  <body class="page-doc page-vram">
+    <main>
+      <h1 class="page-title">Watch the bytes move</h1>
+      <p class="lead">Sneekie has no "snake object". The snake, the walls, the hearts and the <em>arrows</em> are just <em>characters living in the screen's memory</em>, and the game reads and writes that memory directly. Steer below and watch it happen: the <strong>screen</strong> on top and the <strong>raw memory</strong> beneath it are the <em>same bytes</em>. Every move is a few <code>peek</code>s and <code>poke</code>s &mdash; shown live on the right. Eat a heart and a club <em>pops up</em> somewhere; the four arrows patrol on their own.</p>
+      <p class="lead" style="color: var(--muted); font-size: 13.5px">
+        Each cell is two bytes (character, then a brightness/color attribute), addressed by
+        <span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>. This is a 22&times;15 corner of the real 80&times;25 screen &mdash; same formula, same 160-byte row stride.
+      </p>
+      <div class="demo" id="demo">
+        <div class="stage">
+          <div class="panel">
+            <div class="ptitle">The screen &mdash; what you see</div>
+            <canvas id="screen" width="352" height="480" role="img" aria-label="Text-mode video memory rendered as the screen"></canvas>
           </div>
-          <div class="btns" style="margin-top:10px">
-            <button id="tour">&#9654; Tour</button>
-            <button id="reset">Reset</button>
+          <div class="panel">
+            <div class="ptitle">Inspector</div>
+            <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
           </div>
-          <div class="cap" style="margin-top:10px">Arrow keys steer too.</div>
         </div>
-
-        <div class="panel">
-          <div class="ptitle">Operations (this move)</div>
-          <div class="log" id="log"></div>
+        <div class="side">
+          <div class="panel">
+            <div class="ptitle">The memory &mdash; the byte in each cell</div>
+            <div class="mem" id="mem"></div>
+          </div>
+          <div class="sxo">
+            <div class="panel">
+              <div class="ptitle">Steer</div>
+              <div class="pad">
+                <button class="up" data-d="U" aria-label="Up">&#9650;</button>
+                <button class="left" data-d="L" aria-label="Left">&#9664;</button>
+                <button class="down" data-d="D" aria-label="Down">&#9660;</button>
+                <button class="right" data-d="R" aria-label="Right">&#9654;</button>
+              </div>
+              <div class="btns" style="margin-top: 10px">
+                <button id="tour">&#9654; Tour</button>
+                <button id="reset">Reset</button>
+              </div>
+              <div class="cap" style="margin-top: 10px">Arrow keys steer too.</div>
+            </div>
+            <div class="panel">
+              <div class="ptitle">Operations (this move)</div>
+              <div class="log" id="log"></div>
+            </div>
+          </div>
         </div>
       </div>
-
-    </div>
-  </div>
-
-  <p class="lead" style="margin-top:26px;color:var(--muted);font-size:13.5px">
-    That's the whole trick behind the 1988 code. See it in the source on the
-    <a href="explained.html">explained</a> page, or next to the JavaScript port on
-    the&nbsp;<a href="migration.html">migration</a> page.
-  </p>
-</main>
-
-
-<script src="../js/site.js"></script>
-<script src="../js/vram.js"></script>
-
-</body>
+      <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
+        That's the whole trick behind the 1988 code. See it in the source on the
+        <a href="explained.html">explained</a> page, or next to the JavaScript port on the&nbsp;<a href="migration.html">migration</a> page.
+      </p>
+    </main>
+    <script src="../js/site.js"></script>
+    <script src="../js/vram.js"></script>
+  </body>
 </html>

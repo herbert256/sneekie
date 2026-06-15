@@ -5,7 +5,7 @@ drawn with the game's own embedded IBM VGA 8x16 CP437 ROM font so they
 match the on-page "♥ SNEEKIE ♥" title.
 
 No third-party deps: the PNGs are written with a tiny hand-rolled encoder.
-The font is read straight out of docs/js/index.js, so this stays in sync
+The font is read straight out of docs/js/game.js, so this stays in sync
 with the game. Run from the repo root:
 
     python3 tools/make-icons.py
@@ -18,7 +18,7 @@ IMAGES = DOCS / "images"
 IMAGES.mkdir(exist_ok=True)
 
 # ---- pull the CP437 font out of the game (the atob('...') for const FONT) ----
-game_js = (DOCS / "js" / "index.js").read_text(encoding="utf-8")
+game_js = (DOCS / "js" / "game.js").read_text(encoding="utf-8")
 m = re.search(r"const FONT = Uint8Array\.from\(atob\('([A-Za-z0-9+/=]+)'\)", game_js)
 FONT = base64.b64decode(m.group(1))            # 4096 bytes = 256 glyphs x 16 rows
 

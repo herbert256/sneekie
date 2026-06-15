@@ -1,217 +1,292 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="How to play Sneekie: controls, scoring, the eight maze layouts (with screen-prints) and all 32 levels explained.">
-<title>Sneekie — Player's Manual</title>
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
-<link rel="manifest" href="../site.webmanifest">
-<link rel="canonical" href="https://sneekie.xyz/html/manual">
-<meta name="theme-color" content="#0a0c0d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sneekie">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="en_US">
-<meta property="og:site_name" content="Sneekie">
-<meta property="og:title" content="Sneekie — Player's Manual">
-<meta property="og:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game.">
-<meta property="og:url" content="https://sneekie.xyz/html/manual">
-<meta property="og:image" content="https://sneekie.xyz/images/og.png">
-<meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sneekie — Player's Manual">
-<meta name="twitter:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game.">
-<meta name="twitter:image" content="https://sneekie.xyz/images/og.png">
-<link rel="stylesheet" href="../css/site.css">
-<link rel="stylesheet" href="../css/manual.css">
-
-</head>
-<body class="page-doc page-manual">
-
-
-<main>
-  <h1 class="page-title">Player's Manual</h1>
-  <p class="lead"><strong>Sneekie</strong> is a snake-in-a-maze game from July 1988. You steer a growing snake
-  around a walled arena, hoovering up <span class="ico h">&hearts;</span> hearts. Clear every heart and you
-  advance &mdash; through <em>32 levels</em> built from <em>8 maze layouts</em>. Mind the walls, the deadly
-  arrows, and the smileys that <em>cost</em> you points. This page explains everything: the controls, the
-  scoring, each of the 8 layouts, and how the 32 levels are put together.</p>
-
-  <div class="note"><strong>New here?</strong> Just hit <a href="../index.html">&#9654; Play</a> and start
-  collecting hearts &mdash; the first few levels are turn-based and forgiving. Come back when you want to know
-  what the smileys do or why the arrows keep killing you.</div>
-
-  <h2>The goal</h2>
-  <p>Each level scatters a crowd of <span class="ico h">&hearts;</span> <strong>hearts</strong> across the
-  arena. <strong>Eat them all</strong> and the level is cleared &mdash; whatever <strong>bonus</strong> time is
-  left pours into your score, you earn a life, and the next level begins. The snake <strong>grows by one
-  segment every time it eats</strong> anything, so the playfield gets tighter as you go.</p>
-
-  <h2>Controls</h2>
-  <table>
-    <thead><tr><th>Key</th><th>Touch</th><th>What it does</th></tr></thead>
-    <tbody>
-      <tr><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td><td>Swipe</td><td>Steer the snake. It can't reverse straight back into itself.</td></tr>
-      <tr><td>any key</td><td>Tap</td><td>Dismiss the <em>&ldquo;Press any key&rdquo;</em> pop-ups between levels.</td></tr>
-      <tr><td><kbd>Esc</kbd></td><td>&mdash;</td><td><strong>Give up</strong> when you're boxed in. Costs one life and restarts the level.</td></tr>
-      <tr><td><kbd>F9</kbd></td><td>&mdash;</td><td>Cheat: <strong>extra life</strong> &mdash; and skips you to the next level.</td></tr>
-      <tr><td><kbd>F10</kbd></td><td>&mdash;</td><td>Cheat: <strong>skip the level</strong>.</td></tr>
-    </tbody>
-  </table>
-  <p>Pressing a <em>letter</em> key (or steering into a wall) just bonks you: you stay put and lose a little
-  bonus. Below the screen are the cabinet controls: the <strong>Green / Amber / White / CGA</strong> display
-  themes, a <strong>Sound</strong> toggle, and <strong>Fullscreen</strong> (in fullscreen, press &amp; hold
-  <kbd>Esc</kbd> to leave &mdash; a single tap still works as &ldquo;give up&rdquo;).</p>
-
-  <h2>The screen</h2>
-  <p>The play area is framed by a border you can't cross. The status strip along the bottom shows:</p>
-  <ul>
-    <li><strong>Level</strong> &mdash; which of the 32 levels you're on.</li>
-    <li><strong>Score</strong> / <strong>Highscore</strong> &mdash; your points; the best is kept between visits.</li>
-    <li><strong>Lives</strong> &mdash; how many tries you have left.</li>
-    <li><strong>Bonus</strong> &mdash; a timer that starts at <code>10000</code> and ticks down every step.
-      Clear the level fast and the leftover is added to your score.</li>
-  </ul>
-
-  <h2>Items &amp; scoring</h2>
-  <table>
-    <thead><tr><th>Symbol</th><th>Item</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td><span class="ico h">&hearts;</span></td><td>Heart</td><td><strong>+10</strong>. Collect <em>all</em> of them to clear the level.</td></tr>
-      <tr><td><span class="ico c">&clubs;</span></td><td>Club</td><td><strong>+25</strong>. A juicier treat (from level 17 on, hearts can drop one).</td></tr>
-      <tr><td><span class="ico s">&#9786;</span></td><td>Smiley</td><td><strong>&minus;50!</strong> &mdash; the trap. Eating one stings and grows you for nothing. Steer around them.</td></tr>
-      <tr><td><span class="ico t">&#9689;</span></td><td>Stone</td><td>A boulder. No points &mdash; but you can <strong>push</strong> it one cell if the space behind is clear.</td></tr>
-      <tr><td><span class="ico a">&uarr;&rarr;&larr;</span></td><td>Arrow</td><td><strong>Deadly.</strong> Touch a moving arrow and you lose a life.</td></tr>
-      <tr><td><span class="ico w">&#9474;&#9472;</span></td><td>Wall / yourself</td><td>Solid. You can't move into a wall or your own body &mdash; you just bonk (&minus;bonus).</td></tr>
-    </tbody>
-  </table>
-
-  <h2>Lives</h2>
-  <p>You start with <strong>3 lives</strong>. You <strong>lose one</strong> whenever you die &mdash; by hitting a
-  moving arrow, or by pressing <kbd>Esc</kbd> to give up when you're trapped. But you <strong>gain a
-  life every time you clear a level</strong> (and <kbd>F9</kbd> hands you one too), so a steady player keeps
-  the count healthy. Run out and it's <em>game over</em> &mdash; then you can play again.</p>
-
-  <h2>The eight layouts</h2>
-  <p>Every level is one of these eight arenas. Layouts <strong>1&ndash;4</strong> are pure mazes &mdash; the only
-  danger is getting stuck. Layouts <strong>5&ndash;8</strong> add a <span style="color:var(--red)">moving
-  hazard</span>. Each one below is a clip of the game playing itself &mdash; an autoplay snake hunting hearts,
-  pushing stones, and dodging arrows:</p>
-
-  <div class="gallery">
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-1.webp" alt="Autoplay gameplay on the open arena: the snake sweeps the empty playfield eating hearts.">
-      <div class="body"><span class="num">1</span><h3>The Open Arena</h3>
-        <div class="lv">Levels 1 &middot; 9 &middot; 17 &middot; 25</div>
-        <p>Nothing but the four border walls. Pure heart-collecting &mdash; the gentlest introduction.</p></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="How to play Sneekie: controls, scoring, the eight maze layouts (with screen-prints) and all 32 levels explained." />
+    <title>Sneekie — Player's Manual</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/html/manual" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie — Player's Manual" />
+    <meta property="og:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game." />
+    <meta property="og:url" content="https://sneekie.xyz/html/manual" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie — Player's Manual" />
+    <meta name="twitter:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/manual.css" />
+  </head>
+  <body class="page-doc page-manual">
+    <main>
+      <h1 class="page-title">Player's Manual</h1>
+      <p class="lead"><strong>Sneekie</strong> is a snake-in-a-maze game from July 1988. You steer a growing snake around a walled arena, hoovering up <span class="ico h">&hearts;</span> hearts. Clear every heart and you advance &mdash; through <em>32 levels</em> built from <em>8 maze layouts</em>. Mind the walls, the deadly arrows, and the smileys that <em>cost</em> you points. This page explains everything: the controls, the scoring, each of the 8 layouts, and how the 32 levels are put together.</p>
+      <div class="note"><strong>New here?</strong> Just hit <a href="game.html">&#9654; Play</a> and start collecting hearts &mdash; the first few levels are turn-based and forgiving. Come back when you want to know what the smileys do or why the arrows keep killing you.</div>
+      <h2>The goal</h2>
+      <p>Each level scatters a crowd of <span class="ico h">&hearts;</span> <strong>hearts</strong> across the arena. <strong>Eat them all</strong> and the level is cleared &mdash; whatever <strong>bonus</strong> time is left pours into your score, you earn a life, and the next level begins. The snake <strong>grows by one segment every time it eats</strong> anything, so the playfield gets tighter as you go.</p>
+      <h2>Controls</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Touch</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
+            <td>Swipe</td>
+            <td>Steer the snake. It can't reverse straight back into itself.</td>
+          </tr>
+          <tr>
+            <td>any key</td>
+            <td>Tap</td>
+            <td>Dismiss the <em>&ldquo;Press any key&rdquo;</em> pop-ups between levels.</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>&mdash;</td>
+            <td><strong>Give up</strong> when you're boxed in. Costs one life and restarts the level.</td>
+          </tr>
+          <tr>
+            <td><kbd>F9</kbd></td>
+            <td>&mdash;</td>
+            <td>Cheat: <strong>extra life</strong> &mdash; and skips you to the next level.</td>
+          </tr>
+          <tr>
+            <td><kbd>F10</kbd></td>
+            <td>&mdash;</td>
+            <td>Cheat: <strong>skip the level</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Pressing a <em>letter</em> key (or steering into a wall) just bonks you: you stay put and lose a little bonus. Below the screen are the cabinet controls: the <strong>Green / Amber / White / CGA</strong> display themes, a <strong>Sound</strong> toggle, and <strong>Fullscreen</strong> (in fullscreen, press &amp; hold <kbd>Esc</kbd> to leave &mdash; a single tap still works as &ldquo;give up&rdquo;).</p>
+      <h2>The screen</h2>
+      <p>The play area is framed by a border you can't cross. The status strip along the bottom shows:</p>
+      <ul>
+        <li><strong>Level</strong> &mdash; which of the 32 levels you're on.</li>
+        <li><strong>Score</strong> / <strong>Highscore</strong> &mdash; your points; the best is kept between visits.</li>
+        <li><strong>Lives</strong> &mdash; how many tries you have left.</li>
+        <li><strong>Bonus</strong> &mdash; a timer that starts at <code>10000</code> and ticks down every step. Clear the level fast and the leftover is added to your score.</li>
+      </ul>
+      <h2>Items &amp; scoring</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Item</th>
+            <th>Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ico h">&hearts;</span></td>
+            <td>Heart</td>
+            <td><strong>+10</strong>. Collect <em>all</em> of them to clear the level.</td>
+          </tr>
+          <tr>
+            <td><span class="ico c">&clubs;</span></td>
+            <td>Club</td>
+            <td><strong>+25</strong>. A juicier treat (from level 17 on, hearts can drop one).</td>
+          </tr>
+          <tr>
+            <td><span class="ico s">&#9786;</span></td>
+            <td>Smiley</td>
+            <td><strong>&minus;50!</strong> &mdash; the trap. Eating one stings and grows you for nothing. Steer around them.</td>
+          </tr>
+          <tr>
+            <td><span class="ico t">&#9689;</span></td>
+            <td>Stone</td>
+            <td>A boulder. No points &mdash; but you can <strong>push</strong> it one cell if the space behind is clear.</td>
+          </tr>
+          <tr>
+            <td><span class="ico a">&uarr;&rarr;&larr;</span></td>
+            <td>Arrow</td>
+            <td><strong>Deadly.</strong> Touch a moving arrow and you lose a life.</td>
+          </tr>
+          <tr>
+            <td><span class="ico w">&#9474;&#9472;</span></td>
+            <td>Wall / yourself</td>
+            <td>Solid. You can't move into a wall or your own body &mdash; you just bonk (&minus;bonus).</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Lives</h2>
+      <p>You start with <strong>3 lives</strong>. You <strong>lose one</strong> whenever you die &mdash; by hitting a moving arrow, or by pressing <kbd>Esc</kbd> to give up when you're trapped. But you <strong>gain a life every time you clear a level</strong> (and <kbd>F9</kbd> hands you one too), so a steady player keeps the count healthy. Run out and it's <em>game over</em> &mdash; then you can play again.</p>
+      <h2>The eight layouts</h2>
+      <p>Every level is one of these eight arenas. Layouts <strong>1&ndash;4</strong> are pure mazes &mdash; the only danger is getting stuck. Layouts <strong>5&ndash;8</strong> add a <span style="color: var(--red)">moving hazard</span>. Each one below is a clip of the game playing itself &mdash; an autoplay snake hunting hearts, pushing stones, and dodging arrows:</p>
+      <div class="gallery">
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-1.webp" alt="Autoplay gameplay on the open arena: the snake sweeps the empty playfield eating hearts." />
+          <div class="body">
+            <span class="num">1</span>
+            <h3>The Open Arena</h3>
+            <div class="lv">Levels 1 &middot; 9 &middot; 17 &middot; 25</div>
+            <p>Nothing but the four border walls. Pure heart-collecting &mdash; the gentlest introduction.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-2.webp" alt="Autoplay gameplay weaving through the combs-and-crosses walls." />
+          <div class="body">
+            <span class="num">2</span>
+            <h3>Combs &amp; Crosses</h3>
+            <div class="lv">Levels 2 &middot; 10 &middot; 18 &middot; 26</div>
+            <p>Clusters of comb-like pickets and plus-shaped crosses scattered through the quadrants to weave around.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-3.webp" alt="Autoplay gameplay slipping through the room-grid door gaps." />
+          <div class="body">
+            <span class="num">3</span>
+            <h3>The Room Grid</h3>
+            <div class="lv">Levels 3 &middot; 11 &middot; 19 &middot; 27</div>
+            <p>The arena is carved into a grid of rooms by vertical and horizontal walls, each with a door gap to slip through.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-4.webp" alt="Autoplay gameplay pushing stones aside in the stone field." />
+          <div class="body">
+            <span class="num">4</span>
+            <h3>The Stone Field</h3>
+            <div class="lv">Levels 4 &middot; 12 &middot; 20 &middot; 28</div>
+            <p>A dense lattice of pushable <span class="ico t">&#9689;</span> stones. Shove them aside to carve your own paths to the hearts.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-5.webp" alt="Autoplay gameplay among the picket columns with crawling wall-gaps." />
+          <div class="body">
+            <span class="num">5</span>
+            <h3>The Picket Columns</h3>
+            <div class="lv">Levels 5 &middot; 13 &middot; 21 &middot; 29</div>
+            <p>Tall walls hang from the top and bottom edges. <span class="enemy">Hazard:</span> the gaps in them crawl up and down &mdash; an opening can close on you.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-6.webp" alt="Autoplay gameplay dodging the rising up-arrows." />
+          <div class="body">
+            <span class="num">6</span>
+            <h3>The Rising Arrows</h3>
+            <div class="lv">Levels 6 &middot; 14 &middot; 22 &middot; 30</div>
+            <p>An open field seeded with <span class="ico a">&uarr;</span> arrows that <span class="enemy">march upward</span> a step at a time. Touching one is fatal.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-7.webp" alt="Autoplay gameplay timing crossings between the sweeping side-arrows." />
+          <div class="body">
+            <span class="num">7</span>
+            <h3>The Sweeping Arrows</h3>
+            <div class="lv">Levels 7 &middot; 15 &middot; 23 &middot; 31</div>
+            <p>An open field with <span class="ico a">&larr;&rarr;</span> arrows <span class="enemy">sliding left and right</span> across every row. Time your crossings.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-8.webp" alt="Autoplay gameplay threading the vault's walls and stone columns." />
+          <div class="body">
+            <span class="num">8</span>
+            <h3>The Vault</h3>
+            <div class="lv">Levels 8 &middot; 16 &middot; 24 &middot; 32</div>
+            <p>Vertical walls with columns of <span class="ico t">&#9689;</span> stones between them &mdash; <span class="enemy">and the wall-gaps crawl</span>. The toughest mix in the game.</p>
+          </div>
+        </div>
+      </div>
+      <h2>The 32 levels</h2>
+      <p>There are only 8 layouts, so the game cycles through them <strong>four times</strong>. Each time around, the same eight arenas come back &mdash; but how the snake <em>moves</em> changes:</p>
+      <ul>
+        <li><strong>Levels 1&ndash;8 &mdash; turn-based.</strong> The snake waits for your key; take your time (the bonus still ticks down).</li>
+        <li><strong>Levels 9&ndash;16 &mdash; it moves on its own.</strong> If you don't steer within the level's pace (<code>0.4</code>&ndash;<code>1.2</code> seconds &mdash; quicker on the open arenas, roomier on the cluttered ones), the snake keeps going by itself. You can still steer any time.</li>
+        <li><strong>Levels 17&ndash;32 &mdash; an encore.</strong> Levels 17&ndash;24 repeat 1&ndash;8 (turn-based) and 25&ndash;32 repeat 9&ndash;16 (self-moving) &mdash; with one twist: from level 17 on, eating a heart can leave a <span class="ico c">&clubs;</span> club behind for bonus points.</li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Layout</th>
+            <th>Hazard</th>
+            <th>Turn-based levels</th>
+            <th>Self-moving levels (pace)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1 &middot; Open Arena</td>
+            <td>&mdash;</td>
+            <td class="mono">1, 17</td>
+            <td class="mono">9, 25 &nbsp;(0.4 s)</td>
+          </tr>
+          <tr>
+            <td>2 &middot; Combs &amp; Crosses</td>
+            <td>walls</td>
+            <td class="mono">2, 18</td>
+            <td class="mono">10, 26 &nbsp;(0.6 s)</td>
+          </tr>
+          <tr>
+            <td>3 &middot; Room Grid</td>
+            <td>walls</td>
+            <td class="mono">3, 19</td>
+            <td class="mono">11, 27 &nbsp;(0.6 s)</td>
+          </tr>
+          <tr>
+            <td>4 &middot; Stone Field</td>
+            <td>stones</td>
+            <td class="mono">4, 20</td>
+            <td class="mono">12, 28 &nbsp;(0.9 s)</td>
+          </tr>
+          <tr>
+            <td>5 &middot; Picket Columns</td>
+            <td class="enemy" style="color: var(--red)">crawling gaps</td>
+            <td class="mono">5, 21</td>
+            <td class="mono">13, 29 &nbsp;(0.9 s)</td>
+          </tr>
+          <tr>
+            <td>6 &middot; Rising Arrows</td>
+            <td class="enemy" style="color: var(--red)">up-arrows</td>
+            <td class="mono">6, 22</td>
+            <td class="mono">14, 30 &nbsp;(1.0 s)</td>
+          </tr>
+          <tr>
+            <td>7 &middot; Sweeping Arrows</td>
+            <td class="enemy" style="color: var(--red)">side-arrows</td>
+            <td class="mono">7, 23</td>
+            <td class="mono">15, 31 &nbsp;(1.0 s)</td>
+          </tr>
+          <tr>
+            <td>8 &middot; The Vault</td>
+            <td class="enemy" style="color: var(--red)">stones + crawling gaps</td>
+            <td class="mono">8, 24</td>
+            <td class="mono">16, 32 &nbsp;(1.2 s)</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Tips</h2>
+      <ul>
+        <li><strong>Clear fast.</strong> The bonus is real points &mdash; dawdling on level 1 throws away up to 10 000.</li>
+        <li><strong>Give the smileys a wide berth.</strong> A stray <span class="ico s">&#9786;</span> costs 50 points <em>and</em> grows you, making the arena harder.</li>
+        <li><strong>You won't die from your own tail</strong> &mdash; you just can't pass through it. But a long snake can box itself in; when truly stuck, <kbd>Esc</kbd> cuts your losses to a single life.</li>
+        <li><strong>Push stones into dead ends</strong> to clear a lane &mdash; but you can only shove one if the cell behind it is empty.</li>
+        <li><strong>On arrow levels, keep moving.</strong> Read the arrows' direction and slip through the gaps; never park in a column (level 6) or a row (level 7) that an arrow is sweeping.</li>
+      </ul>
+      <h2>About</h2>
+      <p>Sneekie was written in GW-BASIC in July 1988 by <strong>HerbySoft</strong> and published in MS(X)DOS Computer Magazine no. 25. In 2026 its printed listing was recovered by OCR and ported, line for line, to this website. Curious how it works? The <a href="vram.html">Visualizer</a> shows the screen-is-the-memory trick at the heart of it, and the <a href="explained.html">Explained</a> edition walks through the original code.</p>
+    </main>
+    <div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" aria-hidden="true" tabindex="-1">
+      <button id="lb-close" type="button" aria-label="Close">&times;</button>
+      <img id="lb-img" alt="" />
     </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-2.webp" alt="Autoplay gameplay weaving through the combs-and-crosses walls.">
-      <div class="body"><span class="num">2</span><h3>Combs &amp; Crosses</h3>
-        <div class="lv">Levels 2 &middot; 10 &middot; 18 &middot; 26</div>
-        <p>Clusters of comb-like pickets and plus-shaped crosses scattered through the quadrants to weave around.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-3.webp" alt="Autoplay gameplay slipping through the room-grid door gaps.">
-      <div class="body"><span class="num">3</span><h3>The Room Grid</h3>
-        <div class="lv">Levels 3 &middot; 11 &middot; 19 &middot; 27</div>
-        <p>The arena is carved into a grid of rooms by vertical and horizontal walls, each with a door gap to slip through.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-4.webp" alt="Autoplay gameplay pushing stones aside in the stone field.">
-      <div class="body"><span class="num">4</span><h3>The Stone Field</h3>
-        <div class="lv">Levels 4 &middot; 12 &middot; 20 &middot; 28</div>
-        <p>A dense lattice of pushable <span class="ico t">&#9689;</span> stones. Shove them aside to carve your own paths to the hearts.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-5.webp" alt="Autoplay gameplay among the picket columns with crawling wall-gaps.">
-      <div class="body"><span class="num">5</span><h3>The Picket Columns</h3>
-        <div class="lv">Levels 5 &middot; 13 &middot; 21 &middot; 29</div>
-        <p>Tall walls hang from the top and bottom edges. <span class="enemy">Hazard:</span> the gaps in them crawl up and down &mdash; an opening can close on you.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-6.webp" alt="Autoplay gameplay dodging the rising up-arrows.">
-      <div class="body"><span class="num">6</span><h3>The Rising Arrows</h3>
-        <div class="lv">Levels 6 &middot; 14 &middot; 22 &middot; 30</div>
-        <p>An open field seeded with <span class="ico a">&uarr;</span> arrows that <span class="enemy">march upward</span> a step at a time. Touching one is fatal.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-7.webp" alt="Autoplay gameplay timing crossings between the sweeping side-arrows.">
-      <div class="body"><span class="num">7</span><h3>The Sweeping Arrows</h3>
-        <div class="lv">Levels 7 &middot; 15 &middot; 23 &middot; 31</div>
-        <p>An open field with <span class="ico a">&larr;&rarr;</span> arrows <span class="enemy">sliding left and right</span> across every row. Time your crossings.</p></div>
-    </div>
-    <div class="lay">
-      <img loading="lazy" width="640" height="384" src="../images/manual/scene-8.webp" alt="Autoplay gameplay threading the vault's walls and stone columns.">
-      <div class="body"><span class="num">8</span><h3>The Vault</h3>
-        <div class="lv">Levels 8 &middot; 16 &middot; 24 &middot; 32</div>
-        <p>Vertical walls with columns of <span class="ico t">&#9689;</span> stones between them &mdash; <span class="enemy">and the wall-gaps crawl</span>. The toughest mix in the game.</p></div>
-    </div>
-  </div>
-
-  <h2>The 32 levels</h2>
-  <p>There are only 8 layouts, so the game cycles through them <strong>four times</strong>. Each time around,
-  the same eight arenas come back &mdash; but how the snake <em>moves</em> changes:</p>
-  <ul>
-    <li><strong>Levels 1&ndash;8 &mdash; turn-based.</strong> The snake waits for your key; take your time
-      (the bonus still ticks down).</li>
-    <li><strong>Levels 9&ndash;16 &mdash; it moves on its own.</strong> If you don't steer within the level's
-      pace (<code>0.4</code>&ndash;<code>1.2</code> seconds &mdash; quicker on the open arenas, roomier on the
-      cluttered ones), the snake keeps going by itself. You can still steer any time.</li>
-    <li><strong>Levels 17&ndash;32 &mdash; an encore.</strong> Levels 17&ndash;24 repeat 1&ndash;8 (turn-based)
-      and 25&ndash;32 repeat 9&ndash;16 (self-moving) &mdash; with one twist: from level 17 on, eating a heart
-      can leave a <span class="ico c">&clubs;</span> club behind for bonus points.</li>
-  </ul>
-
-  <table>
-    <thead><tr><th>Layout</th><th>Hazard</th><th>Turn-based levels</th><th>Self-moving levels (pace)</th></tr></thead>
-    <tbody>
-      <tr><td>1 &middot; Open Arena</td><td>&mdash;</td><td class="mono">1, 17</td><td class="mono">9, 25 &nbsp;(0.4 s)</td></tr>
-      <tr><td>2 &middot; Combs &amp; Crosses</td><td>walls</td><td class="mono">2, 18</td><td class="mono">10, 26 &nbsp;(0.6 s)</td></tr>
-      <tr><td>3 &middot; Room Grid</td><td>walls</td><td class="mono">3, 19</td><td class="mono">11, 27 &nbsp;(0.6 s)</td></tr>
-      <tr><td>4 &middot; Stone Field</td><td>stones</td><td class="mono">4, 20</td><td class="mono">12, 28 &nbsp;(0.9 s)</td></tr>
-      <tr><td>5 &middot; Picket Columns</td><td class="enemy" style="color:var(--red)">crawling gaps</td><td class="mono">5, 21</td><td class="mono">13, 29 &nbsp;(0.9 s)</td></tr>
-      <tr><td>6 &middot; Rising Arrows</td><td class="enemy" style="color:var(--red)">up-arrows</td><td class="mono">6, 22</td><td class="mono">14, 30 &nbsp;(1.0 s)</td></tr>
-      <tr><td>7 &middot; Sweeping Arrows</td><td class="enemy" style="color:var(--red)">side-arrows</td><td class="mono">7, 23</td><td class="mono">15, 31 &nbsp;(1.0 s)</td></tr>
-      <tr><td>8 &middot; The Vault</td><td class="enemy" style="color:var(--red)">stones + crawling gaps</td><td class="mono">8, 24</td><td class="mono">16, 32 &nbsp;(1.2 s)</td></tr>
-    </tbody>
-  </table>
-
-  <h2>Tips</h2>
-  <ul>
-    <li><strong>Clear fast.</strong> The bonus is real points &mdash; dawdling on level 1 throws away up to 10 000.</li>
-    <li><strong>Give the smileys a wide berth.</strong> A stray <span class="ico s">&#9786;</span> costs 50 points
-      <em>and</em> grows you, making the arena harder.</li>
-    <li><strong>You won't die from your own tail</strong> &mdash; you just can't pass through it. But a long snake
-      can box itself in; when truly stuck, <kbd>Esc</kbd> cuts your losses to a single life.</li>
-    <li><strong>Push stones into dead ends</strong> to clear a lane &mdash; but you can only shove one if the cell
-      behind it is empty.</li>
-    <li><strong>On arrow levels, keep moving.</strong> Read the arrows' direction and slip through the gaps; never
-      park in a column (level 6) or a row (level 7) that an arrow is sweeping.</li>
-  </ul>
-
-  <h2>About</h2>
-  <p>Sneekie was written in GW-BASIC in July 1988 by <strong>HerbySoft</strong> and published in MS(X)DOS
-  Computer Magazine no. 25. In 2026 its printed listing was recovered by OCR and ported, line for
-  line, to this website. Curious how it works? The <a href="vram.html">Visualizer</a> shows the
-  screen-is-the-memory trick at the heart of it, and the <a href="explained.html">Explained</a>
-  edition walks through the original code.</p>
-</main>
-
-
-<div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" aria-hidden="true" tabindex="-1">
-  <button id="lb-close" type="button" aria-label="Close">&times;</button>
-  <img id="lb-img" alt="">
-</div>
-
-<script src="../js/site.js"></script>
-<script src="../js/manual.js"></script>
-
-</body>
+    <script src="../js/site.js"></script>
+    <script src="../js/manual.js"></script>
+  </body>
 </html>

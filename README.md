@@ -39,8 +39,8 @@ test suite. The published site lives in `docs/` and is served by GitHub Pages.
 
 ```
 docs/
-  index.html          # game page shell
-  html/               # the eight secondary pages
+  index.html          # root iframe shell that loads html/game.html
+  html/               # game page plus the eight secondary pages
   css/                # shared site.css plus one page CSS file per page
   js/                 # shared site.js plus one page JS file per page
   images/             # logo, social images, manual GIFs, magazine scans
@@ -54,7 +54,8 @@ AGENTS.md             # guidance for Codex
 CLAUDE.md             # guidance for Claude Code
 ```
 
-The faithful game logic lives in `docs/js/index.js`. `docs/index.html` provides
-the game page markup, `docs/css/index.css` styles the monitor shell, and
-`docs/css/site.css` plus `docs/js/site.js` provide shared site chrome used by
-all nine pages.
+The faithful game logic lives in `docs/js/game.js`. `docs/html/game.html`
+provides the game page markup, `docs/index.html` embeds it at the site root
+using `docs/css/index.css` and `docs/js/index.js`, `docs/css/game.css` styles
+the monitor shell, and `docs/css/site.css` plus `docs/js/site.js` provide
+shared site chrome used by the content pages.

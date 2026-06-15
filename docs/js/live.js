@@ -397,7 +397,7 @@ function inject(){
 }
 
 function reloadCell(){
-  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = '../index.html'; }
+  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = 'game.html'; }
 }
 
 window.botStatus = (idx, score, left) => {
@@ -568,4 +568,4 @@ document.addEventListener('keydown', e => {
 // start the selected level
 updateLabel();
 cell.frame.addEventListener('load', inject);
-cell.frame.src = '../index.html';
+cell.frame.src = 'game.html';

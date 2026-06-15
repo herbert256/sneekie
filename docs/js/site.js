@@ -16,8 +16,14 @@ function pageRoot(){
   return inHtmlDir() ? '../' : '';
 }
 
-function htmlPageHref(slug){
-  return inHtmlDir() ? slug + '.html' : 'html/' + slug + '.html';
+function isEmbedded(){
+  try { return window.self !== window.top; }
+  catch(_) { return true; }
+}
+
+function siteNavigate(href){
+  if(isEmbedded()) window.top.location.href = new URL(href, location.href).href;
+  else location.href = href;
 }
 
 function currentPage(){
@@ -29,23 +35,25 @@ function renderTopHeader(){
   if(document.querySelector('header.top')) return;
   const root = pageRoot();
   const current = currentPage();
+  const embedded = isEmbedded();
   const links = [
-    ['index', '\u25b6 Play', root + 'index.html'],
-    ['manual', 'Manual', htmlPageHref('manual')],
-    ['live', 'Live', htmlPageHref('live')],
-    ['bot', 'Bot', htmlPageHref('bot')],
-    ['magazine', 'Magazine', htmlPageHref('magazine')],
-    ['source', 'Source', htmlPageHref('source')],
-    ['explained', 'Explained', htmlPageHref('explained')],
-    ['migration', 'Migration', htmlPageHref('migration')],
-    ['vram', 'Visualizer', htmlPageHref('vram')],
+    ['game', '\u25b6 Play'],
+    ['manual', 'Manual'],
+    ['live', 'Live'],
+    ['bot', 'Bot'],
+    ['magazine', 'Magazine'],
+    ['source', 'Source'],
+    ['explained', 'Explained'],
+    ['migration', 'Migration'],
+    ['vram', 'Visualizer'],
   ];
   const header = document.createElement('header');
   header.className = 'top';
 
   const brand = document.createElement('a');
   brand.className = 'brand';
-  brand.href = root + 'index.html';
+  brand.href = 'game.html';
+  if(embedded) brand.target = '_top';
   brand.setAttribute('aria-label', 'Sneekie home');
   const logo = document.createElement('img');
   logo.src = root + 'images/logo.png';
@@ -54,10 +62,11 @@ function renderTopHeader(){
   header.appendChild(brand);
 
   const nav = document.createElement('nav');
-  for(const [slug, label, href] of links){
+  for(const [slug, label] of links){
     const a = document.createElement('a');
-    a.href = href;
+    a.href = slug + '.html';
     a.textContent = label;
+    if(embedded) a.target = '_top';
     if(slug === current) a.setAttribute('aria-current', 'page');
     nav.appendChild(a);
   }
@@ -108,7 +117,7 @@ function setupPrintButton(){
   const isSource = currentPage() === 'source';
   btn.addEventListener('click', () => {
     if(isSource) window.print();
-    else location.href = htmlPageHref('source') + '?print';
+    else siteNavigate('source.html?print');
   });
   if(isSource && location.search.indexOf('print') > -1) setTimeout(() => window.print(), 120);
 }
