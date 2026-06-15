@@ -144,7 +144,6 @@
   }
   .page-source .themebar,
   .page-source .hero .sub,
-  .page-source footer .link,
   .page-source .screen::after{ display:none !important; }
   .page-source #bezel,
   .page-source .screen{

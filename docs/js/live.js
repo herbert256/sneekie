@@ -366,7 +366,7 @@ for(const level of LEVEL_CHOICES){
   const fig = document.createElement('figure'); fig.className = 'cell';
   fig.innerHTML =
     '<figcaption><span class="lv"></span> <span class="dim"></span><span class="st"></span></figcaption>' +
-    '<div class="frame"><iframe scrolling="no" tabindex="-1" allow="autoplay; fullscreen" allowfullscreen></iframe><div class="flash"></div></div>';
+    '<div class="frame"><iframe tabindex="-1" allow="autoplay; fullscreen" allowfullscreen></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
   cell.frame = fig.querySelector('iframe');
   cell.frameBox = fig.querySelector('.frame');

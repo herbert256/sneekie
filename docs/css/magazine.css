@@ -46,7 +46,8 @@
   box-shadow:0 14px 34px -16px var(--glow), 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
   outline:none;
 }
-.page-magazine .thumb figcaption{
+.page-magazine .thumb .cap-wrap{
+  display:block;
   font-size:12.5px;
   line-height:1.45;
 }
