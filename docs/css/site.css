@@ -89,6 +89,18 @@ body{
   transition:top .15s ease;
 }
 .skip:focus{ top:0; }
+
+/* Keyboard-focus affordance for every interactive control. :focus-visible keeps
+   mouse/touch clicks ringless while giving keyboard users a clear, consistent
+   indicator (the hover glow is otherwise invisible to them). */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+[role="tab"]:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
 header.top{
   position:sticky;
   top:0;
