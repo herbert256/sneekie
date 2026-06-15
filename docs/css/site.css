@@ -246,11 +246,6 @@ footer a:hover{
   padding-bottom:6px;
   border-bottom:1px solid var(--border);
 }
-.page-doc h2.sec,
-.page-doc h3.sub{
-  border:0;
-  padding:0;
-}
 .page-doc h3{
   color:var(--greenhi);
   font-size:15px;
