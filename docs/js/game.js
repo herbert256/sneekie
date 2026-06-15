@@ -279,7 +279,7 @@ function ensureAudio(){
   if(!actx){
     try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(_){ }
   }
-  if(actx && actx.state === 'suspended') actx.resume();
+  if(actx && actx.state === 'suspended') actx.resume()?.catch(() => {});
 }
 function sound(freq, ticks){
   if(!actx) return;
@@ -1101,8 +1101,8 @@ const bezel = document.getElementById('bezel');
 if(bezel.requestFullscreen){
   fsBtn.addEventListener('click', () => {
     ensureAudio();
-    if(document.fullscreenElement) document.exitFullscreen();
-    else bezel.requestFullscreen();
+    if(document.fullscreenElement) document.exitFullscreen()?.catch(() => {});
+    else bezel.requestFullscreen()?.catch(() => {});
   });
   document.addEventListener('fullscreenchange', () => {
     const fs = !!document.fullscreenElement;
