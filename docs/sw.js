@@ -54,7 +54,12 @@ self.addEventListener('install', event => {
     const urls = PRECACHE_ASSETS.map(path =>
       new Request(new URL(path, self.registration.scope), { cache: 'reload' })
     );
-    await cache.addAll(urls);
+    // Cache each asset independently: cache.addAll() is all-or-nothing, so a
+    // single missing/renamed/transiently-failing asset would reject the whole
+    // install, skipWaiting() would never run, and users would stay pinned to the
+    // old worker and a stale cache — silently. allSettled lets the install
+    // succeed with whatever fetched; the rest is filled in on demand later.
+    await Promise.allSettled(urls.map(req => cache.add(req)));
     await self.skipWaiting();
   })());
 });
