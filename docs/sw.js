@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v28';
+const CACHE_NAME = 'sneekie-offline-v29';
 
 /* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
    source, the manifest, and the small icons. The heavy magazine scans and manual
@@ -45,7 +45,8 @@ const PRECACHE_ASSETS = [
   'images/logo.png',
   'images/apple-touch-icon.png',
   'images/icon-192.png',
-  'images/icon-512.png'
+  'images/icon-512.png',
+  'images/icon-512-maskable.png'
 ];
 
 self.addEventListener('install', event => {
