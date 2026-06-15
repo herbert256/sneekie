@@ -250,7 +250,7 @@ cv.addEventListener('mousemove', e => {
 mcs.forEach(d => d.addEventListener('mouseenter', () => setHover(+d.dataset.c, +d.dataset.r)));
 
 /* ---------- buttons ---------- */
-document.getElementById('reset').addEventListener('click', init);
+document.getElementById('reset').addEventListener('click', () => { stopTour(); init(); });
 let tourTimer = null;
 const tourBtn = document.getElementById('tour');
 function stopTour(){ if(tourTimer){ clearInterval(tourTimer); tourTimer = null; tourBtn.innerHTML = '&#9654; Tour'; } }
