@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v37';
+const CACHE_NAME = 'sneekie-offline-v39';
 
 /* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
    source, the manifest, and the small icons. The heavy magazine scans and manual
@@ -71,6 +71,8 @@ self.addEventListener('install', event => {
     // install, skipWaiting() would never run, and users would stay pinned to the
     // old worker and a stale cache — silently. allSettled lets the install
     // succeed with whatever fetched; the rest is filled in on demand later.
+    // The clean URL entries (html/manual, etc.) are production-only conveniences:
+    // GitHub Pages/Cloudflare serve them, while a plain local http.server 404s.
     await Promise.allSettled(urls.map(req => cache.add(req)));
     await self.skipWaiting();
   })());

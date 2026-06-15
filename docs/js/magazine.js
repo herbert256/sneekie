@@ -1,14 +1,24 @@
 'use strict';
 /* Click a page → show it in real browser fullscreen, just the image on black. Esc exits. */
 const pageFs = document.getElementById('page-fs');
-const pageFsImg = document.getElementById('page-fs-img');
 const pageFsClose = document.getElementById('page-fs-close');
+let pageFsImg = null;
 let pageLastFocus = null;
+
+function ensurePageFsImg(){
+  if(pageFsImg) return pageFsImg;
+  pageFsImg = document.createElement('img');
+  pageFsImg.id = 'page-fs-img';
+  pageFsImg.alt = '';
+  pageFs.appendChild(pageFsImg);
+  return pageFsImg;
+}
 
 function openPage(thumb){
   pageLastFocus = document.activeElement;
-  pageFsImg.src = thumb.dataset.full;
-  pageFsImg.alt = thumb.dataset.cap || thumb.querySelector('img')?.alt || 'Magazine page preview';
+  const preview = ensurePageFsImg();
+  preview.src = thumb.dataset.full;
+  preview.alt = thumb.dataset.cap || thumb.querySelector('img')?.alt || 'Magazine page preview';
   pageFs.classList.add('on');                                  // shows it (also the fullscreen target / fallback overlay)
   pageFs.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
@@ -21,8 +31,7 @@ function finishClose(){
   pageFs.classList.remove('on');
   pageFs.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
-  pageFsImg.removeAttribute('src');
-  pageFsImg.alt = '';
+  if(pageFsImg){ pageFsImg.remove(); pageFsImg = null; }
   if(pageLastFocus && typeof pageLastFocus.focus === 'function'){
     pageLastFocus.focus({preventScroll:true});
   }

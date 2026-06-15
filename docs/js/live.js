@@ -385,14 +385,12 @@ function updateLabel(){
   tabs.forEach((btn, level) => btn.setAttribute('aria-selected', String(level === activeLevel)));
 }
 
-let liveAudioForced = false;   // default the demo to sound-on once; respect the user's toggle after that
 function liveGameHref(){ return sitePageHref('game') + '?noboot'; }
 function inject(){
   try {
     cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
     fitFullscreenFrame();
-    primeGameAudio(!liveAudioForced);   // only force-unmute on the first load, not on every level reload
-    liveAudioForced = true;
+    primeGameAudio();   // mirror the saved sound preference into the demo (sound-on unless the user muted)
     cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);
     wireGameFullscreenEvents();
     syncControls();
@@ -454,13 +452,17 @@ function setLevel(level){
 
 /* ---- the six game controls below the screen (drive the iframe's own hidden controls) ---- */
 function gameDoc(){ try { return cell.frame.contentDocument; } catch(e){ return null; } }
-function primeGameAudio(forceOn=false, startAudio=false){
-  if(forceOn) lsSet('sneekie.muted', '0');
+// Mirror the saved sound preference into the demo iframe. This must NOT persist
+// anything: writing sneekie.muted here would clobber the mute the user set in the
+// real game (the key is shared). A first-time or unmuted visitor still gets
+// sound-on because a missing or '0' key reads as unmuted; an explicit mute is
+// honored. Only an explicit toggle of the live mute button persists (via the
+// game's own mute handler).
+function primeGameAudio(startAudio=false){
   const unmuted = lsGet('sneekie.muted') !== '1';
   try {
     cell.frame.contentWindow.eval(
-      "try{muted=" + JSON.stringify(!unmuted) + ";lsSet('sneekie.muted'," +
-      JSON.stringify(unmuted ? '0' : '1') + ");" +
+      "try{muted=" + JSON.stringify(!unmuted) + ";" +
       (unmuted && startAudio ? "ensureAudio();" : "") +
       "paintMute();}catch(e){}"
     );
@@ -544,14 +546,14 @@ document.addEventListener('fullscreenchange', () => { if(!fullscreenElement(docu
 document.addEventListener('webkitfullscreenchange', () => { if(!fullscreenElement(document)) exitFallbackFullscreen(); fitFullscreenFrame(); syncControls(); });
 addEventListener('resize', fitFullscreenFrame);
 addEventListener('keydown', e => {
-  primeGameAudio(false, true);
+  primeGameAudio(true);
   if(e.key === 'Escape' && cell.frameBox.classList.contains('live-fullscreen')){
     exitFallbackFullscreen();
   }
 });
-addEventListener('pointerdown', () => primeGameAudio(false, true));
-addEventListener('touchstart', () => primeGameAudio(false, true), {passive:true});
-primeGameAudio(true);
+addEventListener('pointerdown', () => primeGameAudio(true));
+addEventListener('touchstart', () => primeGameAudio(true), {passive:true});
+primeGameAudio();
 syncControls();
 
 /* ---- viewer keyboard: step through levels (the game itself can't be steered — the iframe is inert) ---- */

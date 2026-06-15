@@ -9,6 +9,9 @@ function pageHref(path){
 }
 
 const game = document.getElementById('game');
-game.src = pageHref('html/game.html');
+const src = pageHref('html/game.html');
+if(new URL(game.getAttribute('src') || '', location.href).href !== new URL(src, location.href).href){
+  game.src = src;
+}
 game.addEventListener('load', () => game.focus());
 addEventListener('pointerdown', () => game.focus(), {passive:true});

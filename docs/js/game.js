@@ -624,6 +624,7 @@ function place(L){
    wasteful. A trailing debounce coalesces a burst into one write; pagehide
    flushes a still-pending write so the latest value isn't lost on exit. */
 let hsTimer = 0;
+let movePhase = false;   // true only while the move loop is actively reading keys (gates fullscreen auto-move)
 function saveHighscore(){
   if(hsTimer) clearTimeout(hsTimer);
   hsTimer = setTimeout(() => { hsTimer = 0; lsSet('sneekie.highscore', String(ZORE)); }, 500);
@@ -889,6 +890,7 @@ async function playLevels(){
 
     /* 420-1020: the move loop */
     let died = false, skip = false;
+    movePhase = true;                                          // arm fullscreen auto-move for this level
     while(HART + KLAVER > 0){
       try{
         const A$ = await keyOrTimeout(Z * 1000);              // 430-460
@@ -946,11 +948,13 @@ async function playLevels(){
         ENEMY[(LEVEL-1) % 16]();                              // 1010
       } catch(sig){
         if(sig !== DEATH) throw sig;
+        movePhase = false;                                     // stop auto-move during the death animation
         await deathSeq();
         died = true;
         break;
       }
     }
+    movePhase = false;                                         // level cleared / skipped: pause auto-move
     if(!died && !skip){
       /* 1030-1060: drain bonus into score */
       let n = 0;
@@ -1059,9 +1063,10 @@ paintMute();
 function fit(){
   if(document.fullscreenElement){
     /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384).
-       On touch, leave a strip below the canvas for the on-screen key bar (see #bezel:fullscreen
-       padding-bottom) so the game screen and the buttons never overlap. */
-    const reserve = matchMedia('(pointer:coarse)').matches ? 64 : 0;
+       On touch, leave a strip below the canvas for the on-screen key bar and a strip above it
+       for the auto-move slider (see #bezel:fullscreen padding) so the game screen never overlaps
+       either. 52 top + 64 bottom = 116. */
+    const reserve = matchMedia('(pointer:coarse)').matches ? 116 : 0;
     const s = Math.min(innerWidth/640, (innerHeight - reserve)/384);
     cv.style.width = (640*s) + 'px';
     cv.style.height = (384*s) + 'px';
@@ -1116,6 +1121,41 @@ if(bezel.requestFullscreen){
 }
 
 applyTheme(themeName);
+
+/* ---------- fullscreen touch extra: auto-move slider (inject N moves/sec) ----------
+   A 0-10 slider above the screen (touch + fullscreen only) injects the snake's current
+   heading as the same INKEY$ string a key/swipe produces, so it advances hands-free —
+   handy on the early turn-based levels (Z=999) where the snake otherwise waits for input.
+   It tops up at most one pending move (so it never bursts) and only fires during the
+   active move loop in fullscreen, so it can't auto-dismiss the between-level pop-ups. */
+const autoRange = document.getElementById('autorate');
+const autoOut = document.getElementById('autoval');
+let autoRate = Math.min(10, Math.max(0, parseInt(lsGet('sneekie.automove') || '0', 10) || 0));
+let autoTimer = 0;
+function autoTick(){
+  if(document.fullscreenElement && movePhase && !bootActive && kbuf.length === 0){
+    pushKey('\0' + String.fromCharCode(F || 72));    // F = current heading: 72/80/75/77 = up/down/left/right
+  }
+}
+function scheduleAuto(){
+  if(autoTimer){ clearInterval(autoTimer); autoTimer = 0; }
+  if(autoRate > 0) autoTimer = setInterval(autoTick, 1000 / autoRate);
+}
+function paintAuto(){
+  autoRange.value = String(autoRate);
+  const txt = autoRate ? autoRate + '/s' : 'off';
+  autoOut.textContent = txt;
+  autoRange.setAttribute('aria-valuetext', txt);
+}
+autoRange.addEventListener('input', () => {
+  autoRate = Math.min(10, Math.max(0, parseInt(autoRange.value, 10) || 0));
+  lsSet('sneekie.automove', String(autoRate));
+  paintAuto();
+  scheduleAuto();
+});
+paintAuto();
+scheduleAuto();
+
 fit();
 (async () => {
   await bootSequence();

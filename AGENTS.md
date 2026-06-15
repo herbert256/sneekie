@@ -57,14 +57,14 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
 ## Pages
 
 - `docs/html/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
-  listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64, drops the first 10 banner lines
-  for display, and shows only the BASIC line numbers.
+  listing. `source.js` fetches `docs/SNEEKIE.BAS` at runtime, drops the first 10 banner
+  lines for display, and shows only the BASIC line numbers.
 - `docs/html/explained.html` + `docs/js/explained.js` - annotated walkthrough of the same
   source. Prose lives in the `SECTIONS` array and `NOTES` map in `explained.js`.
 - `docs/html/migration.html` + `docs/js/migration.js` - BASIC and JavaScript side by side.
   `migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64, then slices
-  them by line ranges in `SECTIONS`. If `docs/js/game.js` changes substantially, regenerate
-  the embedded JS and re-check those line ranges.
+  them by line ranges in `SECTIONS`. If either source changes substantially, regenerate the
+  embedded copy and re-check those line ranges.
 - `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
@@ -95,17 +95,13 @@ There is no Light/Dark mode.
 ## Source Embeds
 
 `docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
-behavior. The listing pages embed it as base64:
+behavior. Keep its 10-line header intact because the display code uses `slice(10)`.
 
-- `docs/js/source.js`
-- `docs/js/explained.js`
-- `docs/js/migration.js`
-
-If `docs/SNEEKIE.BAS` changes, regenerate those blobs and keep its 10-line header intact
-because the display code uses `slice(10)`.
-
-`docs/js/migration.js` also embeds `docs/js/game.js`. If the game port changes in a way that
-affects line ranges, regenerate the embedded JS copy and update `SECTIONS`.
+- `docs/js/source.js` and `docs/js/explained.js` fetch `docs/SNEEKIE.BAS` at runtime. The
+  service worker precaches the BASIC file, so these pages still work offline after install.
+- `docs/js/migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64. If
+  either file changes, regenerate those embedded copies and update `SECTIONS` if line ranges
+  shifted.
 
 ## Running & Verification
 
@@ -118,6 +114,10 @@ python3 -m http.server
 
 Then open `http://localhost:8000/`. You can also serve from the repo root and open
 `/docs/index.html`.
+
+The service worker precaches production clean URL variants such as `html/manual`; those resolve
+on GitHub Pages/Cloudflare but return 404 under a plain `python3 -m http.server`. Use the `.html`
+paths for local manual testing, or test clean URL caching against production.
 
 Useful checks after edits:
 

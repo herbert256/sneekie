@@ -14,3 +14,16 @@ iframe{
   border:0;
   background:#0a0c0d;
 }
+
+.noscript{
+  position:fixed;
+  inset:auto 16px 16px;
+  margin:0;
+  color:#7dff7d;
+  font:14px/1.4 ui-monospace, Menlo, Consolas, monospace;
+  text-align:center;
+}
+
+.noscript a{
+  color:inherit;
+}

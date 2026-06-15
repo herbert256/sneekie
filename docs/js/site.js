@@ -87,12 +87,17 @@ function renderTopHeader(){
   nav.appendChild(download);
 
   const print = document.createElement('button');
+  print.type = 'button';
   print.id = 'print';
   print.textContent = 'Print';
   nav.appendChild(print);
 
   header.appendChild(nav);
   document.body.insertBefore(header, document.body.firstChild);
+  requestAnimationFrame(() => {
+    const active = nav.querySelector('[aria-current="page"]');
+    if(active && nav.scrollWidth > nav.clientWidth) active.scrollIntoView({inline:'center', block:'nearest'});
+  });
 
   // skip-to-content link, inserted as the first focusable element on the page
   const skip = document.createElement('a');

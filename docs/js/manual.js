@@ -2,13 +2,23 @@
 
 /* ---- lightbox: click a layout image to pop up a big version (X / Esc / backdrop to close) ---- */
 const lb = document.getElementById('lb');
-const lbImg = document.getElementById('lb-img');
 const lbClose = document.getElementById('lb-close');
+let lbImg = null;
 let lbLastFocus = null;
+
+function ensureLbImg(){
+  if(lbImg) return lbImg;
+  lbImg = document.createElement('img');
+  lbImg.id = 'lb-img';
+  lbImg.alt = '';
+  lb.appendChild(lbImg);
+  return lbImg;
+}
 
 function openLb(img){
   lbLastFocus = document.activeElement;
-  lbImg.src = img.src; lbImg.alt = img.alt || '';
+  const preview = ensureLbImg();
+  preview.src = img.src; preview.alt = img.alt || '';
   lb.classList.add('on'); lb.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   lbClose.focus({preventScroll:true});
@@ -17,7 +27,8 @@ function openLb(img){
 function closeLb(){
   if(!lb.classList.contains('on')) return;
   lb.classList.remove('on'); lb.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = ''; lbImg.removeAttribute('src');
+  document.body.style.overflow = '';
+  if(lbImg){ lbImg.remove(); lbImg = null; }
   if(lbLastFocus && typeof lbLastFocus.focus === 'function'){
     lbLastFocus.focus({preventScroll:true});
   }

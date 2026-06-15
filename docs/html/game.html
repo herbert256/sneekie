@@ -53,33 +53,44 @@
        (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
        Shown only in fullscreen on a coarse pointer; see CSS. -->
         <div id="fstouch">
-          <button data-key="esc">ESC</button>
-          <button data-key="left" aria-label="Left">&#8592;</button>
-          <button data-key="up" aria-label="Up">&#8593;</button>
-          <button data-key="down" aria-label="Down">&#8595;</button>
-          <button data-key="right" aria-label="Right">&#8594;</button>
-          <button data-key="y">Y</button>
-          <button data-key="n">N</button>
-          <button data-key="f9">F9</button>
-          <button data-key="f10">F10</button>
+          <button type="button" data-key="esc">ESC</button>
+          <button type="button" data-key="left" aria-label="Left">&#8592;</button>
+          <button type="button" data-key="up" aria-label="Up">&#8593;</button>
+          <button type="button" data-key="down" aria-label="Down">&#8595;</button>
+          <button type="button" data-key="right" aria-label="Right">&#8594;</button>
+          <button type="button" data-key="y">Y</button>
+          <button type="button" data-key="n">N</button>
+          <button type="button" data-key="f9">F9</button>
+          <button type="button" data-key="f10">F10</button>
+        </div>
+        <!-- fullscreen-only (touch) auto-move slider: injects the snake's current
+       heading N times/second so it advances hands-free. Lives inside #bezel so it
+       survives fullscreen; shown only in fullscreen on a coarse pointer (see CSS). -->
+        <div id="autobar">
+          <span class="lbl">Auto&nbsp;move</span>
+          <span class="end" aria-hidden="true">0</span>
+          <input type="range" id="autorate" min="0" max="10" step="1" value="0"
+                 aria-label="Automatic moves per second" aria-valuetext="off" />
+          <span class="end" aria-hidden="true">10</span>
+          <output id="autoval" for="autorate">off</output>
         </div>
       </div>
       <div id="controls">
         <div class="grp" id="themes">
-          <button data-theme="hercules">Green</button>
-          <button data-theme="amber">Amber</button>
-          <button data-theme="white">White</button>
-          <button data-theme="cga">CGA</button>
+          <button type="button" data-theme="hercules">Green</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="white">White</button>
+          <button type="button" data-theme="cga">CGA</button>
         </div>
         <div class="grp">
-          <button id="mute">Sound: on</button>
-          <button id="fs">Fullscreen</button>
+          <button type="button" id="mute">Sound: on</button>
+          <button type="button" id="fs">Fullscreen</button>
         </div>
       </div>
       <div id="touchbar">
-        <button data-key="esc">ESC</button>
-        <button data-key="y">Y</button>
-        <button data-key="n">N</button>
+        <button type="button" data-key="esc">ESC</button>
+        <button type="button" data-key="y">Y</button>
+        <button type="button" data-key="n">N</button>
       </div>
       <p id="hint">
         <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
