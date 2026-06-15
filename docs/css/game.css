@@ -212,34 +212,6 @@
 .page-index #bezel:fullscreen #fstouch button[data-key="left"],
 .page-index #bezel:fullscreen #fstouch button[data-key="y"],
 .page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ margin-left:14px; }
-.page-index #autobar{ display:none; }
-.page-index #bezel:fullscreen #autobar{
-  position:fixed;
-  top:8px;
-  left:0;
-  right:0;
-  z-index:10;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  padding:5px 14px;
-  font-size:12px;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:var(--ink-dim);
-}
-.page-index #bezel:fullscreen #autobar .lbl{ color:var(--ink); }
-.page-index #bezel:fullscreen #autobar input[type="range"]{
-  width:min(56vw, 320px);
-  height:26px;
-  accent-color:var(--accent);
-  touch-action:manipulation;
-}
-.page-index #bezel:fullscreen #autobar #autoval{
-  min-width:2.6em;
-  text-align:left;
-  color:var(--accent);
-}
 .page-index #touchbar{
   display:none;
   margin-top:12px;
@@ -259,8 +231,7 @@
 @media (pointer:coarse){
   .page-index #touchbar{ display:flex; }
   .page-index:not(.booting) #bezel:fullscreen #fstouch{ display:flex; }
-  .page-index:not(.booting) #bezel:fullscreen #autobar{ display:flex; }
-  .page-index #bezel:fullscreen{ padding-top:52px; padding-bottom:64px; }
+  .page-index #bezel:fullscreen{ padding-bottom:64px; }
   .page-index #hint .kb{ display:none; }
   .page-index #hint .tc{ display:inline; }
 }
