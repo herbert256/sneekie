@@ -70,21 +70,11 @@
   background:#000;
   cursor:default;
 }
-.page-manual #lb-close{
+.page-manual #lb-close{   /* shared look in site.css .fs-close; only the placement is page-specific */
   position:absolute;
   top:16px;
   right:18px;
-  width:44px;
-  height:44px;
-  font:22px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
-  color:#cfd6da;
-  background:rgba(22,24,27,.82);
-  border:1px solid var(--border);
-  border-radius:8px;
-  cursor:pointer;
-  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
-.page-manual #lb-close:hover{ color:var(--accent); border-color:var(--accent); background:var(--button); }
 @media print{
   .page-manual #lb{ display:none !important; }
 }
