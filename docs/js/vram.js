@@ -13,7 +13,7 @@ function poke(o, v){ if(vram[o] !== v){ vram[o] = v; if(cellByOff[o]) flashSet.a
 function peek(o){ return vram[o]; }
 
 /* ---------- snake state (names as in the game) ---------- */
-const T = []; let BTEL, ETEL, DIR, FDIR, score, hearts;
+const T = []; let BTEL, ETEL, DIR, FDIR, score, hearts, heartsBannerShown = false;
 const HEAD = 219, BODY_H = 205, BODY_V = 186;
 const WALL_H = 196, WALL_V = 179, C_TL = 218, C_TR = 191, C_BL = 192, C_BR = 217;
 const SNAKE = new Set([219,205,186,187,188,201,200]);          // head + double-line body
@@ -112,7 +112,7 @@ function init(){
   // scatter the goodies — no clubs up front: each heart you eat pops one up
   hearts = scatter(3, 14);   // hearts  (+10)
   scatter(1, 6);             // smileys (yellow, -50)
-  score = 0; flashSet.clear();
+  score = 0; heartsBannerShown = false; flashSet.clear();
   render(); logMove(null, []);
   arrowTimer = setInterval(stepArrows, 480);                    // the enemies move on their own
 }
@@ -155,7 +155,7 @@ function move(dir){
     DIR = E; FDIR = E;
   }
   render(); logMove({dir, grow}, ops);
-  if(hearts === 0) setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">★ all hearts collected!</div>') , 10);
+  if(hearts === 0 && !heartsBannerShown){ heartsBannerShown = true; setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">★ all hearts collected!</div>') , 10); }
 }
 
 /* ---------- rendering ---------- */
