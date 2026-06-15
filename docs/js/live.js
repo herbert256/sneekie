@@ -386,6 +386,7 @@ function updateLabel(){
 }
 
 let liveAudioForced = false;   // default the demo to sound-on once; respect the user's toggle after that
+function liveGameHref(){ return sitePageHref('game') + '?noboot'; }
 function inject(){
   try {
     cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
@@ -399,7 +400,7 @@ function inject(){
 }
 
 function reloadCell(){
-  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = sitePageHref('game'); }
+  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = liveGameHref(); }
 }
 
 window.botStatus = (idx, score, left) => {
@@ -573,4 +574,4 @@ document.addEventListener('keydown', e => {
 // start the selected level
 updateLabel();
 cell.frame.addEventListener('load', inject);
-cell.frame.src = sitePageHref('game');
+cell.frame.src = liveGameHref();

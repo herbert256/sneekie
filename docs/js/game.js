@@ -319,11 +319,9 @@ function startBootFromGesture(){
   if(bootStartResolve){ const r = bootStartResolve; bootStartResolve = null; r(); }
 }
 function shouldSkipBoot(){
-  try {
-    return window.self !== window.top ||
-      new URLSearchParams(location.search).has('noboot') ||
-      matchMedia('(prefers-reduced-motion: reduce)').matches;   // honor reduced-motion: skip the JS-timed boot show
-  } catch(_){ return true; }
+  return new URLSearchParams(location.search).has('noboot') ||
+    (typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches);  // honor reduced-motion: skip the JS-timed boot show
 }
 function bootSleep(ms){
   return new Promise(resolve => {
@@ -550,7 +548,7 @@ async function bootSequence(){
   bootLine('');                               // drop to the line below the RAM tally
   bootLine('BIOS ROM checksum . . . . . . . . . . . . . . . . OK', 7);
   await bootSleep(140);
-  bootLine('Keyboard controller test . . . . . . . . . . . . OK', 7);
+  bootLine('Keyboard controller test . . . . . . . . . . . .  OK', 7);
   bootLine('CGA display adapter . . . . . . . . . . . . . . . OK', 7);
   await bootSleep(150);
   bootBeep();                                 // POST passed: the one short beep
@@ -572,12 +570,6 @@ async function bootSequence(){
   bootLine('(C)Copyright Microsoft Corp 1981, 1986', 7);
   bootLine('');
   await bootDiskBurst(260);
-  bootLine('Current date is Tue 1-01-1980', 7);
-  await bootType('Enter new date (mm-dd-yy): ', 7, 12, 22);
-  await bootTypeLine('07-15-88', 15, 42, 78);
-  bootLine('Current time is  0:00:00.00', 7);
-  await bootType('Enter new time: ', 7, 12, 22);
-  await bootTypeLine('8:08a', 15, 42, 78);
   bootLine('');
   await bootTypeLine('C:\\>CD \\GAMES', 15);
   await bootDiskBurst(150);
