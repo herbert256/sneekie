@@ -1,6 +1,13 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v22';
+const CACHE_NAME = 'sneekie-offline-v23';
+
+/* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
+   source, the manifest, and the small icons. The heavy magazine scans and manual
+   clips are NOT precached — the fetch handler's cacheFirstAsset() caches them on
+   demand the first time a visitor actually opens those pages, so offline still
+   works after a real visit without forcing every first-time visitor to download
+   several megabytes of media up front. */
 const PRECACHE_ASSETS = [
   './',
   'index.html',
@@ -38,34 +45,7 @@ const PRECACHE_ASSETS = [
   'images/logo.png',
   'images/apple-touch-icon.png',
   'images/icon-192.png',
-  'images/icon-512.png',
-  'images/og.png',
-  'images/manual/scene-1.gif',
-  'images/manual/scene-2.gif',
-  'images/manual/scene-3.gif',
-  'images/manual/scene-4.gif',
-  'images/manual/scene-5.gif',
-  'images/manual/scene-6.gif',
-  'images/manual/scene-7.gif',
-  'images/manual/scene-8.gif',
-  'images/magazine/cover.jpg',
-  'images/magazine/cover.thumb.jpg',
-  'images/magazine/p58.jpg',
-  'images/magazine/p58.thumb.jpg',
-  'images/magazine/p59.jpg',
-  'images/magazine/p59.thumb.jpg',
-  'images/magazine/p60.jpg',
-  'images/magazine/p60.thumb.jpg',
-  'images/magazine/p61.jpg',
-  'images/magazine/p61.thumb.jpg',
-  'images/magazine/p62.jpg',
-  'images/magazine/p62.thumb.jpg',
-  'images/magazine/p63.jpg',
-  'images/magazine/p63.thumb.jpg',
-  'images/magazine/p58.en.jpg',
-  'images/magazine/p58.en.thumb.jpg',
-  'images/magazine/p59.en.jpg',
-  'images/magazine/p59.en.thumb.jpg'
+  'images/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
