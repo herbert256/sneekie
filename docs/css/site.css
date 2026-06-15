@@ -553,6 +553,7 @@ section.card .prose,
     font-size:10px;
     letter-spacing:.06em;
     padding:6px 9px;
+    min-height:32px;
   }
   h1.page-title,
   body h1.page-title{

@@ -304,6 +304,7 @@
     padding:8px 6px;
     font-size:10px;
     letter-spacing:.055em;
+    min-height:32px;
   }
   .page-index #touchbar{
     width:100%;
