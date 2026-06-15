@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A line-by-line, plain-English walkthrough of the 1988 GW-BASIC source of Sneekie by HerbySoft.">
+<title>SNEEKIE.BAS — explained</title>
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<meta name="theme-color" content="#0a0c0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sneekie">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Sneekie">
+<meta property="og:title" content="SNEEKIE.BAS — explained">
+<meta property="og:description" content="The 1988 GW-BASIC source with a plain-English, line-by-line walkthrough.">
+<meta property="og:url" content="https://sneekie.xyz/html/explained.html">
+<meta property="og:image" content="https://sneekie.xyz/images/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SNEEKIE.BAS — explained">
+<meta name="twitter:description" content="The 1988 GW-BASIC source with a plain-English, line-by-line walkthrough.">
+<meta name="twitter:image" content="https://sneekie.xyz/images/og.png">
+<link rel="stylesheet" href="../css/site.css">
+<link rel="stylesheet" href="../css/explained.css">
+
+</head>
+<body class="page-doc page-explained">
+
+
+<main>
+  <div class="hero">
+    <h1 class="page-title">Sneekie, line by line
+      <span class="sub">A plain-English tour of the 1988 GW-BASIC source &mdash; annotated 38 years later.</span>
+    </h1>
+  </div>
+
+  <p class="lead">
+    This is the original <code>SNEEKIE.BAS</code> with the story added back in. The code is shown exactly as
+    you wrote it; the <span style="color:var(--annot)">amber notes</span> under a line and the cards between
+    sections are the new explanations. If a routine is a mystery, find its line number below &mdash; everything
+    is grouped the way GW-BASIC numbered it.
+  </p>
+
+  <div class="callout">
+    <h2>The one idea that explains everything: the screen <em>is</em> the game</h2>
+    <p>There are no sprites, no game objects, no "snake" data structure to speak of. The snake, the walls, the
+      hearts and the arrows are just <em>characters sitting in the PC's text-screen memory</em>, and the program
+      reads and writes that memory directly with <code>PEEK</code> and <code>POKE</code>.</p>
+    <p>The text screen is 80&times;25 cells. Each cell is <b>two bytes</b>: the character code, then its colour
+      ("attribute"). So a cell's address is</p>
+    <p><span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>
+      &nbsp;&mdash; 160 because a row is 80 cells &times; 2 bytes.</p>
+    <p>The even byte holds the glyph; the odd byte holds the attribute (<code>7</code> = normal, <code>15</code> =
+      bright). To find out what's in front of the snake, the code just <code>PEEK</code>s the character byte of the
+      target cell and switches on the number it finds. That single trick &mdash; <em>the picture and the state are
+      the same bytes</em> &mdash; is why so much of the program is arithmetic on screen offsets.</p>
+    <p style="margin-bottom:0"><a href="vram.html">&#9654; See it live</a> &mdash; steer a snake and watch the actual bytes change.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>The variables (many are Dutch)</h3>
+      <table class="gloss">
+        <tr><td class="g">T()</td><td>the snake &mdash; a list of screen offsets, from tail <code>T(ETEL)</code> to head <code>T(BTEL)</code></td></tr>
+        <tr><td class="g">BTEL / ETEL</td><td>index of the <b>head</b> / <b>tail</b> inside <code>T()</code> (<i>teller</i> = counter)</td></tr>
+        <tr><td class="g">E / F</td><td>current / previous heading (scancodes 72 80 75 77)</td></tr>
+        <tr><td class="g">HART</td><td>hearts &#9829; still to collect (<i>hart</i> = heart)</td></tr>
+        <tr><td class="g">KLAVER</td><td>clubs &#9827; still to collect (<i>klaver</i> = club)</td></tr>
+        <tr><td class="g">BONUS / BMIN</td><td>time bonus, and how much it drops per move</td></tr>
+        <tr><td class="g">AANTAL</td><td>how many of each item to scatter (<i>aantal</i> = number)</td></tr>
+        <tr><td class="g">Z</td><td>seconds allowed per move; <code>999</code> = turn-based, small = real-time</td></tr>
+        <tr><td class="g">LIVE / LEVEL</td><td>lives left / current level</td></tr>
+        <tr><td class="g">ZCORE / ZORE</td><td>score / high score (kept floating-point on purpose &mdash; see line 80)</td></tr>
+        <tr><td class="g">OP</td><td>points to add this time (handed to the score routine, 1190)</td></tr>
+        <tr><td class="g">S() B() D()</td><td>pop-up backup / gate rows / moving-arrow state</td></tr>
+        <tr><td class="g">VIDEO</td><td>the screen's memory segment (<code>&amp;HB000</code> mono / <code>&amp;HB800</code> colour)</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>What the characters mean (CP437)</h3>
+      <table class="chars">
+        <tr><td class="g">32</td><td>&nbsp;</td><td>empty cell</td></tr>
+        <tr><td class="g">219</td><td>&#9608;</td><td>snake head</td></tr>
+        <tr><td class="g">186 205 187 188 201 200</td><td>&#9553;&#9552;&#9559;&#9565;&#9556;&#9562;</td><td>snake body: straight + corners</td></tr>
+        <tr><td class="g">179 196 197 &hellip;</td><td>&#9474;&#9472;&#9532;</td><td>maze &amp; frame walls (single line)</td></tr>
+        <tr><td class="g">1</td><td>&#9786;</td><td>smiley &mdash; <b>bad</b> (&minus;50)</td></tr>
+        <tr><td class="g">3</td><td>&#9829;</td><td>heart (+10)</td></tr>
+        <tr><td class="g">5</td><td>&#9827;</td><td>club (+25)</td></tr>
+        <tr><td class="g">10</td><td>&#9689;</td><td>stone &mdash; pushable</td></tr>
+        <tr><td class="g">24 26 27</td><td>&#8593;&#8594;&#8592;</td><td>moving arrows &mdash; <b>deadly</b></td></tr>
+        <tr><td class="g">attr 7 / 15</td><td>&nbsp;</td><td>normal / bright</td></tr>
+      </table>
+      <h3>Keys (the scancodes in E)</h3>
+      <table class="chars">
+        <tr><td class="g">72 80 75 77</td><td>&#8593;&#8595;&#8592;&#8594;</td><td>steer the snake</td></tr>
+        <tr><td class="g">27</td><td>ESC</td><td>give up when stuck (costs a life)</td></tr>
+        <tr><td class="g">67 / 68</td><td>F9 / F10</td><td>cheat: +life &amp; skip / skip level</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h2>How one move plays out (lines 420&ndash;1010)</h2>
+    <ol style="margin:6px 0; padding-left:22px;">
+      <li>Wait up to <code>Z</code> seconds for an arrow key (or let the snake keep its heading).</li>
+      <li>Knock <code>BMIN</code> off the bonus.</li>
+      <li>Turn the heading into a step and work out the cell the head is about to enter.</li>
+      <li><code>PEEK</code> that cell and react: move into empty space, eat a heart/club, push a stone, die on an arrow, or get blocked by a wall.</li>
+      <li>Turn the old head cell into the right <span class="mono">&#9552;&#9553;&#9559;&#9565;&#9556;&#9562;</span> piece and draw a new <span class="mono">&#9608;</span> head.</li>
+      <li>Shimmer the body and advance the level's arrows/gates by one step.</li>
+      <li>Repeat until every heart and club is gone.</li>
+    </ol>
+  </div>
+
+  <nav class="toc" id="toc"><h2>The routines</h2><ol id="toc-list"></ol></nav>
+
+  <div id="listing"></div>
+</main>
+
+
+<script src="../js/site.js"></script>
+<script src="../js/explained.js"></script>
+
+</body>
+</html>

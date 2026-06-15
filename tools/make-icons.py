@@ -5,7 +5,7 @@ drawn with the game's own embedded IBM VGA 8x16 CP437 ROM font so they
 match the on-page "♥ SNEEKIE ♥" title.
 
 No third-party deps: the PNGs are written with a tiny hand-rolled encoder.
-The font is read straight out of docs/index.html, so this stays in sync
+The font is read straight out of docs/js/index.js, so this stays in sync
 with the game. Run from the repo root:
 
     python3 tools/make-icons.py
@@ -14,10 +14,12 @@ import base64, re, struct, zlib, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
+IMAGES = DOCS / "images"
+IMAGES.mkdir(exist_ok=True)
 
 # ---- pull the CP437 font out of the game (the atob('...') for const FONT) ----
-html = (DOCS / "index.html").read_text(encoding="utf-8")
-m = re.search(r"const FONT = Uint8Array\.from\(atob\('([A-Za-z0-9+/=]+)'\)", html)
+game_js = (DOCS / "js" / "index.js").read_text(encoding="utf-8")
+m = re.search(r"const FONT = Uint8Array\.from\(atob\('([A-Za-z0-9+/=]+)'\)", game_js)
 FONT = base64.b64decode(m.group(1))            # 4096 bytes = 256 glyphs x 16 rows
 
 HEART = 3          # CP437 ♥
@@ -94,9 +96,9 @@ def icon(size):
 
 # favicon, install icons and apple-touch share the snake mark
 icon(32).save("favicon.png")
-icon(192).save("icon-192.png")
-icon(512).save("icon-512.png")
-icon(180).save("apple-touch-icon.png")
+icon(192).save("images/icon-192.png")
+icon(512).save("images/icon-512.png")
+icon(180).save("images/apple-touch-icon.png")
 
 # ---- social card 1200x630 ----
 og = Canvas(1200, 630, BG)
@@ -117,7 +119,7 @@ url = "sneekie.xyz"
 us = 3
 og.text((og.w - og.text_w(url, us)) // 2, 470, url, us, GREY)
 og.scanlines()
-og.save("og.png")
+og.save("images/og.png")
 
 # ---- header wordmark logo: transparent "♥ SNEEKIE ♥" for every page's top-left ----
 def write_png_rgba(path, w, h, rgba):
@@ -152,8 +154,8 @@ def logo(scale=8):
                             i = ((row * scale + sy) * w + cx + col * scale + sx) * 4
                             buf[i:i + 4] = bytes(color) + b"\xff"
         cx += 8 * scale
-    write_png_rgba(DOCS / "logo.png", w, h, bytes(buf))
-    print("wrote logo.png", f"{w}x{h}")
+    write_png_rgba(IMAGES / "logo.png", w, h, bytes(buf))
+    print("wrote images/logo.png", f"{w}x{h}")
 
 logo()
 

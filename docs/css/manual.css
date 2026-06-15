@@ -1,0 +1,89 @@
+/* Page-specific styles for manual.html. */
+/* Manual */
+.page-manual .gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap:18px;
+  max-width:none;
+  margin:16px 0 4px;
+}
+.page-manual .lay{
+  overflow:hidden;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+.page-manual .lay img{
+  display:block;
+  width:100%;
+  height:auto;
+  image-rendering:pixelated;
+  background:#000;
+  border-bottom:1px solid var(--border);
+  cursor:zoom-in;
+}
+.page-manual .lay .body{ padding:11px 14px 14px; }
+.page-manual .lay h3{
+  margin:0 0 4px;
+  font-size:14.5px;
+}
+.page-manual .lay .lv{
+  font-family:ui-monospace, monospace;
+  font-size:11px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.page-manual .lay p{
+  margin:7px 0 0;
+  font-size:13px;
+}
+.page-manual .lay .enemy{ color:var(--red); }
+.page-manual .lay .num{
+  float:right;
+  font:700 12px/1 ui-monospace, monospace;
+  color:var(--border);
+}
+.page-manual #lb{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(4,6,7,.92);
+  backdrop-filter:blur(3px);
+  padding:30px 16px;
+  cursor:zoom-out;
+}
+.page-manual #lb.on{ display:flex; }
+.page-manual #lb img{
+  max-width:min(96vw, 900px);
+  max-height:92vh;
+  width:auto;
+  height:auto;
+  image-rendering:pixelated;
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:0 24px 70px -20px #000;
+  background:#000;
+  cursor:default;
+}
+.page-manual #lb-close{
+  position:absolute;
+  top:16px;
+  right:18px;
+  width:38px;
+  height:38px;
+  font:20px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color:#cfd6da;
+  background:rgba(22,24,27,.82);
+  border:1px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
+}
+.page-manual #lb-close:hover{ color:var(--accent); border-color:var(--accent); background:var(--button); }
+@media print{
+  .page-manual #lb{ display:none !important; }
+}

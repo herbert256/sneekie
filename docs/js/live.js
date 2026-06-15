@@ -1,166 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A smart bot playing one Sneekie level at a time, live in your browser — pick from levels 1-8 and 25-32.">
-<title>Sneekie — Live bot</title>
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="site.webmanifest">
-<meta name="theme-color" content="#0a0c0d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sneekie">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Sneekie">
-<meta property="og:title" content="Sneekie — Live bot">
-<meta property="og:description" content="A smart bot playing one Sneekie level at a time, live — pick from levels 1-8 and 25-32.">
-<meta property="og:url" content="https://sneekie.xyz/live.html">
-<meta property="og:image" content="https://sneekie.xyz/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Sneekie — Live bot">
-<meta name="twitter:description" content="A smart bot playing one Sneekie level at a time, live — pick from levels 1-8 and 25-32.">
-<meta name="twitter:image" content="https://sneekie.xyz/og.png">
-<link rel="stylesheet" href="site.css">
-<style>
-  :root{
-    --bg:#0a0c0d; --panel:#13171a; --border:#33383d; --text:#c2cace; --muted:#889196;
-    --accent:#7dff7d; --heading:#b6ffb6; --codebg:#06090a; --glow:rgba(125,255,125,.13);
-    --red:#ff5e5e; --smiley:#ffd93d; --stone:#d08a43;
-  }
-  *{ box-sizing:border-box; }
-  body{ margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
-    font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  code,.mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Cascadia Mono",monospace; }
-  a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
-  /* top nav, brand, page title + footer are shared — see site.css */
-
-  main{ max-width:960px; margin:0 auto; padding:28px 20px 24px; }
-  h1{ font-size:28px; margin:6px 0; color:var(--heading); }
-  .lead{ color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
-  strong{ color:var(--heading); font-weight:600; }
-  .ico{ font-family:ui-monospace,monospace; font-weight:700; }
-  .ico.h{ color:var(--red); } .ico.s{ color:var(--smiley); } .ico.a{ color:#d886ff; } .ico.t{ color:var(--stone); }
-  .ico.g{ color:#66e066; } .ico.green{ color:var(--accent); } .ico.r{ color:var(--red); }
-
-  .speedbar{ display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; margin-top:18px;
-    font-family:ui-monospace,monospace; }
-  .speedbar label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0; white-space:nowrap; }
-  .speedbar output{ min-width:3ch; text-align:right; font-size:13px; color:var(--accent); }
-  .speedbar input{ width:100%; accent-color:var(--accent); cursor:pointer; }
-  @media (max-width:520px){ .speedbar{ grid-template-columns:1fr auto; gap:7px 10px; }
-    .speedbar label{ grid-column:1 / -1; } }
-
-  .leveltabs{ display:grid; grid-template-columns:repeat(8, minmax(0, 1fr)); gap:7px; margin-top:18px; font-family:ui-monospace,monospace; }
-  .leveltabs button{ min-height:40px; font:inherit; font-size:12px; letter-spacing:.03em; color:#98a1a6; background:#16181b;
-    border:1px solid var(--border); border-radius:5px; cursor:pointer; transition:background .12s, color .12s, border-color .12s, box-shadow .12s; }
-  .leveltabs button:hover{ color:var(--accent); border-color:color-mix(in srgb, var(--accent) 70%, var(--border)); }
-  .leveltabs button[aria-selected="true"]{ color:var(--accent); border-color:var(--accent);
-    background:color-mix(in srgb, var(--accent) 18%, #16181b); box-shadow:0 0 16px -8px var(--accent); cursor:default; }
-  @media (max-width:900px){ .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); } }
-  @media (max-width:360px){ .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-
-  .cells{ margin-top:18px; }
-  figure.cell{ margin:0 auto; max-width:640px; }            /* just as wide as the 640x384 game screen, centered */
-  figure.cell figcaption{ margin-bottom:9px; font-size:14px; text-align:center; }
-  figcaption .lv{ font:700 13px/1 ui-monospace,monospace; letter-spacing:.04em; text-transform:uppercase; color:var(--heading); }
-  figcaption .dim{ color:var(--muted); } figcaption .st{ color:var(--muted); font-family:ui-monospace,monospace; font-size:12.5px; }
-  figcaption .st.win{ color:var(--accent); } figcaption .st.stuck{ color:var(--red); }
-  .frame{ position:relative; line-height:0; }
-  .frame iframe{ display:block; width:100%; aspect-ratio:5 / 3; border:0; background:#000; pointer-events:none; }  /* the bot plays — the viewer can't steer the game */
-  .frame .flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition:opacity .06s linear; }
-  .frame:fullscreen,
-  .frame.live-fullscreen{ width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; background:#000; }
-  .frame.live-fullscreen{ position:fixed; inset:0; z-index:1000; }
-  .frame:fullscreen iframe,
-  .frame.live-fullscreen iframe{ width:min(100vw, calc(100vh * 5 / 3)); height:min(100vh, calc(100vw * 3 / 5)); max-width:none; }
-
-  /* the six game controls, same as below the game on index.html (they drive the iframe's own hidden controls) */
-  #controls{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; }
-  #controls .grp{ display:flex; gap:6px; }
-  #controls button{ background:#16181b; color:#98a1a6; border:1px solid var(--border); border-radius:3px;
-    font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase; padding:7px 13px; cursor:pointer;
-    touch-action:manipulation; transition:color .12s, border-color .12s, box-shadow .12s; }
-  #controls button:hover{ color:var(--accent); border-color:var(--accent); }
-  #controls button[aria-pressed="true"]{ color:var(--accent); border-color:var(--accent); box-shadow:0 0 12px -5px var(--accent); }
-  .live-note{ margin:12px 0 0; color:var(--muted); font-size:13px; text-align:center; }
-
-  main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
-  @media (max-width: 520px){
-    body{ overflow-x:hidden; }
-  }
-</style>
-</head>
-<body>
-
-<header class="top">
-  <a class="brand" href="index.html" aria-label="Sneekie home"><img src="logo.png" alt="Sneekie"></a>
-  <nav>
-    <a href="index.html">&#9654; Play</a>
-    <a href="manual.html">Manual</a>
-    <a href="live.html" aria-current="page">Live</a>
-    <a href="bot.html">Bot</a>
-    <a href="magazine.html">Magazine</a>
-    <a href="source.html">Source</a>
-    <a href="explained.html">Explained</a>
-    <a href="migration.html">Migration</a>
-    <a href="vram.html">Visualizer</a>
-    <a href="SNEEKIE.BAS" download="SNEEKIE.BAS">Download</a>
-    <button id="print">Print</button>
-  </nav>
-</header>
-
-<main>
-  <h1 class="page-title">One live bot — sixteen levels</h1>
-  <p class="lead">One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch the
-  <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving
-  levels where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span>
-  heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest
-  target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges
-  <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will
-  <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its
-  screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck
-  and it <strong><span class="ico r">flashes red</span></strong> and restarts.</p>
-
-  <div class="speedbar">
-    <label for="speed">Bot speed</label>
-    <input id="speed" type="range" min="0" max="100" value="50">
-    <output id="speedout" for="speed">50</output>
-  </div>
-
-  <div class="cells" id="cells"></div>
-
-  <div id="controls">
-    <div class="grp" id="themes">
-      <button data-theme="hercules">Green</button>
-      <button data-theme="amber">Amber</button>
-      <button data-theme="white">White</button>
-      <button data-theme="cga">CGA</button>
-    </div>
-    <div class="grp">
-      <button id="mute">Sound: on</button>
-      <button id="fs">Fullscreen</button>
-    </div>
-  </div>
-
-  <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level"></div>
-
-  <p class="lead live-note">It's live, not a recording. Keep this
-  tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
-</main>
-
-<footer>
-  Sneekie &copy; July '88 by HerbySoft<br>
-  Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>
-  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
-</footer>
-
-<script>
 'use strict';
-document.getElementById('print').addEventListener('click', () => { location.href = 'source.html?print'; });
 
 const SCENES = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
 const LEVEL_CHOICES = [1,2,3,4,5,6,7,8,25,26,27,28,29,30,31,32];
@@ -559,7 +397,7 @@ function inject(){
 }
 
 function reloadCell(){
-  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = 'index.html'; }
+  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = '../index.html'; }
 }
 
 window.botStatus = (idx, score, left) => {
@@ -597,11 +435,9 @@ function setLevel(level){
 
 /* ---- the six game controls below the screen (drive the iframe's own hidden controls) ---- */
 function gameDoc(){ try { return cell.frame.contentDocument; } catch(e){ return null; } }
-function getPref(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
-function setPref(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 function primeGameAudio(forceOn=false){
-  if(forceOn) setPref('sneekie.muted', '0');
-  const unmuted = getPref('sneekie.muted') !== '1';
+  if(forceOn) lsSet('sneekie.muted', '0');
+  const unmuted = lsGet('sneekie.muted') !== '1';
   try {
     cell.frame.contentWindow.eval(
       "try{if(" + JSON.stringify(unmuted) + "){muted=false;lsSet('sneekie.muted','0');ensureAudio();}paintMute();}catch(e){}"
@@ -626,9 +462,9 @@ function isLiveFullscreen(){
     cell.frameBox.classList.contains('live-fullscreen');
 }
 function syncControls(){
-  const theme = getPref('sneekie.theme') || 'cga';
+  const theme = lsGet('sneekie.theme') || 'cga';
   ctlThemes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
-  ctlMute.textContent = getPref('sneekie.muted') === '1' ? 'Sound: off' : 'Sound: on';
+  ctlMute.textContent = lsGet('sneekie.muted') === '1' ? 'Sound: off' : 'Sound: on';
   ctlFs.setAttribute('aria-pressed', String(isLiveFullscreen()));
 }
 function fitFullscreenFrame(){
@@ -668,14 +504,14 @@ function exitAnyFullscreen(){
   return false;
 }
 ctlThemes.forEach(b => b.addEventListener('click', () => {
-  setPref('sneekie.theme', b.dataset.theme);                              // persists across the frequent iframe reloads
+  lsSet('sneekie.theme', b.dataset.theme);                                // persists across the frequent iframe reloads
   const d = gameDoc(), gb = d && d.querySelector('#themes button[data-theme="' + b.dataset.theme + '"]');
   if(gb) gb.click();                                                      // apply to the running game now (reuses applyTheme)
   syncControls();
 }));
 ctlMute.addEventListener('click', () => {
   const d = gameDoc(), gm = d && d.getElementById('mute');
-  if(gm) gm.click(); else setPref('sneekie.muted', getPref('sneekie.muted') === '1' ? '0' : '1');
+  if(gm) gm.click(); else lsSet('sneekie.muted', lsGet('sneekie.muted') === '1' ? '0' : '1');
   syncControls();
 });
 ctlFs.addEventListener('click', () => {
@@ -711,14 +547,4 @@ document.addEventListener('keydown', e => {
 // start the selected level
 updateLabel();
 cell.frame.addEventListener('load', inject);
-cell.frame.src = 'index.html';
-</script>
-<script>
-if("serviceWorker" in navigator){
-  addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
-}
-</script>
-</body>
-</html>
+cell.frame.src = '../index.html';

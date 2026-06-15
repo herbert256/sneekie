@@ -1,0 +1,115 @@
+/* Page-specific styles for magazine.html. */
+.page-magazine main{ max-width:1040px; padding-bottom:30px; }
+/* Magazine */
+.page-magazine .lead,
+.page-magazine .recap{ max-width:760px; }
+.page-magazine .hint{
+  margin:10px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+.page-magazine .gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(168px, 1fr));
+  gap:22px 20px;
+  margin-top:26px;
+}
+.page-magazine .thumb{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+  font:inherit;
+}
+.page-magazine .thumb img{
+  display:block;
+  width:100%;
+  aspect-ratio:360 / 517;
+  object-fit:cover;
+  object-position:top center;
+  background:#000;
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:0 8px 26px -14px #000;
+  transition:transform .14s, border-color .14s, box-shadow .14s;
+}
+.page-magazine .thumb:hover img,
+.page-magazine .thumb:focus-visible img{
+  transform:translateY(-3px);
+  border-color:var(--accent);
+  box-shadow:0 14px 34px -16px var(--glow), 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+  outline:none;
+}
+.page-magazine .thumb figcaption{
+  font-size:12.5px;
+  line-height:1.45;
+}
+.page-magazine .thumb .lbl{
+  color:var(--accent);
+  font:700 11px/1 ui-monospace, monospace;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.page-magazine .thumb .cap{
+  display:block;
+  margin-top:3px;
+  color:var(--text);
+}
+.page-magazine .thumb.cover img{ border-color:color-mix(in srgb, var(--accent) 28%, var(--border)); }
+.page-magazine hr.sep{
+  border:0;
+  border-top:1px solid var(--border);
+  margin:40px 0 0;
+}
+.page-magazine .recap h2{ font-size:22px; }
+.page-magazine .recap h3{
+  color:var(--accent);
+  margin:22px 0 2px;
+}
+.page-magazine .recap .note{
+  max-width:none;
+  margin:0;
+  padding:0;
+  background:none;
+  border:0;
+  color:var(--muted);
+  font-size:13px;
+}
+.page-magazine .translated-scans .gallery{
+  max-width:520px;
+  grid-template-columns:repeat(2, minmax(168px, 1fr));
+}
+.page-magazine #page-fs{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  place-items:center;
+  background:#000;
+  outline:none;
+}
+.page-magazine #page-fs.on,
+.page-magazine #page-fs:fullscreen{ display:grid; }
+.page-magazine #page-fs img{
+  display:block;
+  max-width:100vw;
+  max-height:100vh;
+  width:auto;
+  height:auto;
+}
+
+@media (max-width:520px){
+  .page-magazine .translated-scans .gallery{
+    grid-template-columns:1fr;
+    max-width:260px;
+  }
+}
+@media print{
+  .page-magazine #page-fs{ display:none !important; }
+}

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="How to play Sneekie: controls, scoring, the eight maze layouts (with screen-prints) and all 32 levels explained.">
 <title>Sneekie — Player's Manual</title>
-<link rel="icon" type="image/png" href="favicon.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="site.webmanifest">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
 <meta name="theme-color" content="#0a0c0d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Sneekie">
@@ -16,98 +16,20 @@
 <meta property="og:site_name" content="Sneekie">
 <meta property="og:title" content="Sneekie — Player's Manual">
 <meta property="og:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game.">
-<meta property="og:url" content="https://sneekie.xyz/manual.html">
-<meta property="og:image" content="https://sneekie.xyz/og.png">
+<meta property="og:url" content="https://sneekie.xyz/html/manual.html">
+<meta property="og:image" content="https://sneekie.xyz/images/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sneekie — Player's Manual">
 <meta name="twitter:description" content="Controls, scoring, the eight maze layouts and all 32 levels of the 1988 snake game.">
-<meta name="twitter:image" content="https://sneekie.xyz/og.png">
-<link rel="stylesheet" href="site.css">
-<style>
-  :root{
-    --bg:#0a0c0d; --panel:#13171a; --panel2:#1b2025; --border:#33383d;
-    --text:#c2cace; --muted:#889196; --accent:#7dff7d; --heading:#b6ffb6;
-    --codebg:#06090a; --glow:rgba(125,255,125,.13);
-    --green:#7dff7d; --greenhi:#c8ffc8; --red:#ff5e5e; --wall:#8b949e; --club:#66e066; --smiley:#ffd93d; --stone:#d08a43;
-  }
-  *{ box-sizing:border-box; }
-  body{ margin:0; color:var(--text); background:radial-gradient(1300px 760px at 50% 12%, #14171a 0%, #0a0c0d 55%, #060708 100%);
-    font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  code,.mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Cascadia Mono",monospace; }
-  a{ color:var(--accent); text-decoration:none; } a:hover{ text-decoration:underline; }
-  /* top nav, brand, page title + footer are shared — see site.css */
+<meta name="twitter:image" content="https://sneekie.xyz/images/og.png">
+<link rel="stylesheet" href="../css/site.css">
+<link rel="stylesheet" href="../css/manual.css">
 
-  main{ max-width:960px; margin:0 auto; padding:28px 20px 70px; }
-  h1{ font-size:28px; margin:6px 0; color:var(--heading); }
-  .lead{ color:var(--text); } .lead em{ color:var(--heading); font-style:normal; font-weight:600; }
-  h2{ font-size:19px; color:var(--heading); margin:38px 0 6px; padding-bottom:6px; border-bottom:1px solid var(--border); }
-  h3{ font-size:15px; color:var(--greenhi); margin:22px 0 4px; }
-  p{ max-width:760px; }
-  ul{ max-width:760px; padding-left:20px; } li{ margin:3px 0; }
-  strong{ color:var(--heading); font-weight:600; }
-  code{ background:var(--codebg); border:1px solid var(--border); border-radius:4px; padding:.5px 5px; font-size:.86em; color:var(--heading); }
-  kbd{ font-family:ui-monospace,monospace; font-size:.82em; background:var(--panel2); color:var(--greenhi);
-    border:1px solid var(--border); border-bottom-width:2px; border-radius:4px; padding:1px 6px; white-space:nowrap; }
-  .ico{ font-family:ui-monospace,monospace; font-weight:700; }
-  .ico.h{ color:var(--red); } .ico.c{ color:var(--club); } .ico.s{ color:var(--smiley); }
-  .ico.t{ color:var(--stone); } .ico.a{ color:#d886ff; } .ico.w{ color:#5ad0d0; }
-
-  table{ border-collapse:collapse; width:100%; max-width:840px; margin:12px 0; font-size:13.5px; }
-  th,td{ border:1px solid var(--border); padding:6px 10px; text-align:left; vertical-align:top; }
-  th{ background:var(--panel); color:var(--muted); font:600 11px/1.3 ui-monospace,monospace; letter-spacing:.06em; text-transform:uppercase; }
-  td.mono, td .lv{ font-family:ui-monospace,monospace; }
-  tbody tr:nth-child(odd){ background:rgba(255,255,255,.015); }
-
-  .gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:18px; margin:16px 0 4px; max-width:none; }
-  .lay{ background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-  .lay img{ display:block; width:100%; height:auto; image-rendering:pixelated; background:#000; border-bottom:1px solid var(--border); cursor:zoom-in; }
-  .lay .body{ padding:11px 14px 14px; }
-  .lay h3{ margin:0 0 4px; font-size:14.5px; color:var(--greenhi); }
-  .lay .lv{ font-family:ui-monospace,monospace; font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
-  .lay p{ margin:7px 0 0; font-size:13px; }
-  .lay .enemy{ color:var(--red); }
-  .lay .num{ float:right; font:700 12px/1 ui-monospace,monospace; color:var(--border); }
-
-  .note{ background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:6px;
-    padding:10px 14px; margin:14px 0; max-width:760px; font-size:13.5px; }
-
-  /* lightbox: click a layout image to see it big */
-  #lb{ position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center;
-    background:rgba(4,6,7,.92); backdrop-filter:blur(3px); padding:30px 16px; cursor:zoom-out; }
-  #lb.on{ display:flex; }
-  #lb img{ max-width:min(96vw, 900px); max-height:92vh; width:auto; height:auto; image-rendering:pixelated;
-    border:1px solid var(--border); border-radius:8px; box-shadow:0 24px 70px -20px #000; background:#000; cursor:default; }
-  #lb-close{ position:absolute; top:16px; right:18px; width:38px; height:38px; font-size:20px; line-height:1; cursor:pointer;
-    background:rgba(22,24,27,.82); color:#cfd6da; border:1px solid var(--border); border-radius:8px;
-    transition:color .12s, border-color .12s, background .12s; }
-  #lb-close:hover{ color:var(--accent); border-color:var(--accent); background:#16181b; }
-  @media print{ header.top, #lb{ display:none } body{ background:#fff; color:#111 } }
-  main{ padding-top:12px; }                               /* title sits 34px below the nav, matching index.html */
-  @media (max-width: 520px){
-    body{ overflow-x:hidden; }
-  }
-</style>
 </head>
-<body>
+<body class="page-doc page-manual">
 
-<header class="top">
-  <a class="brand" href="index.html" aria-label="Sneekie home"><img src="logo.png" alt="Sneekie"></a>
-  <nav>
-    <a href="index.html">&#9654; Play</a>
-    <a href="manual.html" aria-current="page">Manual</a>
-    <a href="live.html">Live</a>
-    <a href="bot.html">Bot</a>
-    <a href="magazine.html">Magazine</a>
-    <a href="source.html">Source</a>
-    <a href="explained.html">Explained</a>
-    <a href="migration.html">Migration</a>
-    <a href="vram.html">Visualizer</a>
-    <a href="SNEEKIE.BAS" download="SNEEKIE.BAS">Download</a>
-    <button id="print">Print</button>
-  </nav>
-</header>
 
 <main>
   <h1 class="page-title">Player's Manual</h1>
@@ -117,7 +39,7 @@
   arrows, and the smileys that <em>cost</em> you points. This page explains everything: the controls, the
   scoring, each of the 8 layouts, and how the 32 levels are put together.</p>
 
-  <div class="note"><strong>New here?</strong> Just hit <a href="index.html">&#9654; Play</a> and start
+  <div class="note"><strong>New here?</strong> Just hit <a href="../index.html">&#9654; Play</a> and start
   collecting hearts &mdash; the first few levels are turn-based and forgiving. Come back when you want to know
   what the smileys do or why the arrows keep killing you.</div>
 
@@ -180,49 +102,49 @@
 
   <div class="gallery">
     <div class="lay">
-      <img loading="lazy" src="manual/scene-1.gif" alt="Autoplay gameplay on the open arena: the snake sweeps the empty playfield eating hearts.">
+      <img loading="lazy" src="../images/manual/scene-1.gif" alt="Autoplay gameplay on the open arena: the snake sweeps the empty playfield eating hearts.">
       <div class="body"><span class="num">1</span><h3>The Open Arena</h3>
         <div class="lv">Levels 1 &middot; 9 &middot; 17 &middot; 25</div>
         <p>Nothing but the four border walls. Pure heart-collecting &mdash; the gentlest introduction.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-2.gif" alt="Autoplay gameplay weaving through the combs-and-crosses walls.">
+      <img loading="lazy" src="../images/manual/scene-2.gif" alt="Autoplay gameplay weaving through the combs-and-crosses walls.">
       <div class="body"><span class="num">2</span><h3>Combs &amp; Crosses</h3>
         <div class="lv">Levels 2 &middot; 10 &middot; 18 &middot; 26</div>
         <p>Clusters of comb-like pickets and plus-shaped crosses scattered through the quadrants to weave around.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-3.gif" alt="Autoplay gameplay slipping through the room-grid door gaps.">
+      <img loading="lazy" src="../images/manual/scene-3.gif" alt="Autoplay gameplay slipping through the room-grid door gaps.">
       <div class="body"><span class="num">3</span><h3>The Room Grid</h3>
         <div class="lv">Levels 3 &middot; 11 &middot; 19 &middot; 27</div>
         <p>The arena is carved into a grid of rooms by vertical and horizontal walls, each with a door gap to slip through.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-4.gif" alt="Autoplay gameplay pushing stones aside in the stone field.">
+      <img loading="lazy" src="../images/manual/scene-4.gif" alt="Autoplay gameplay pushing stones aside in the stone field.">
       <div class="body"><span class="num">4</span><h3>The Stone Field</h3>
         <div class="lv">Levels 4 &middot; 12 &middot; 20 &middot; 28</div>
         <p>A dense lattice of pushable <span class="ico t">&#9689;</span> stones. Shove them aside to carve your own paths to the hearts.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-5.gif" alt="Autoplay gameplay among the picket columns with crawling wall-gaps.">
+      <img loading="lazy" src="../images/manual/scene-5.gif" alt="Autoplay gameplay among the picket columns with crawling wall-gaps.">
       <div class="body"><span class="num">5</span><h3>The Picket Columns</h3>
         <div class="lv">Levels 5 &middot; 13 &middot; 21 &middot; 29</div>
         <p>Tall walls hang from the top and bottom edges. <span class="enemy">Hazard:</span> the gaps in them crawl up and down &mdash; an opening can close on you.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-6.gif" alt="Autoplay gameplay dodging the rising up-arrows.">
+      <img loading="lazy" src="../images/manual/scene-6.gif" alt="Autoplay gameplay dodging the rising up-arrows.">
       <div class="body"><span class="num">6</span><h3>The Rising Arrows</h3>
         <div class="lv">Levels 6 &middot; 14 &middot; 22 &middot; 30</div>
         <p>An open field seeded with <span class="ico a">&uarr;</span> arrows that <span class="enemy">march upward</span> a step at a time. Touching one is fatal.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-7.gif" alt="Autoplay gameplay timing crossings between the sweeping side-arrows.">
+      <img loading="lazy" src="../images/manual/scene-7.gif" alt="Autoplay gameplay timing crossings between the sweeping side-arrows.">
       <div class="body"><span class="num">7</span><h3>The Sweeping Arrows</h3>
         <div class="lv">Levels 7 &middot; 15 &middot; 23 &middot; 31</div>
         <p>An open field with <span class="ico a">&larr;&rarr;</span> arrows <span class="enemy">sliding left and right</span> across every row. Time your crossings.</p></div>
     </div>
     <div class="lay">
-      <img loading="lazy" src="manual/scene-8.gif" alt="Autoplay gameplay threading the vault's walls and stone columns.">
+      <img loading="lazy" src="../images/manual/scene-8.gif" alt="Autoplay gameplay threading the vault's walls and stone columns.">
       <div class="body"><span class="num">8</span><h3>The Vault</h3>
         <div class="lv">Levels 8 &middot; 16 &middot; 24 &middot; 32</div>
         <p>Vertical walls with columns of <span class="ico t">&#9689;</span> stones between them &mdash; <span class="enemy">and the wall-gaps crawl</span>. The toughest mix in the game.</p></div>
@@ -278,44 +200,14 @@
   edition walks through the original code.</p>
 </main>
 
-<footer>
-  Sneekie &copy; July '88 by HerbySoft<br>
-  Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>
-  Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
-</footer>
 
-<div id="lb" aria-hidden="true">
-  <button id="lb-close" aria-label="Close">&times;</button>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" aria-hidden="true" tabindex="-1">
+  <button id="lb-close" type="button" aria-label="Close">&times;</button>
   <img id="lb-img" alt="">
 </div>
 
-<script>
-'use strict';
-document.getElementById('print').addEventListener('click', () => { location.href = 'source.html?print'; });
+<script src="../js/site.js"></script>
+<script src="../js/manual.js"></script>
 
-/* ---- lightbox: click a layout image to pop up a big version (X / Esc / backdrop to close) ---- */
-const lb = document.getElementById('lb');
-const lbImg = document.getElementById('lb-img');
-function openLb(img){
-  lbImg.src = img.src; lbImg.alt = img.alt || '';
-  lb.classList.add('on'); lb.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-}
-function closeLb(){
-  lb.classList.remove('on'); lb.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = ''; lbImg.removeAttribute('src');
-}
-document.querySelectorAll('.gallery .lay img').forEach(img => img.addEventListener('click', () => openLb(img)));
-document.getElementById('lb-close').addEventListener('click', closeLb);
-lb.addEventListener('click', e => { if(e.target !== lbImg) closeLb(); });          // click anywhere but the image closes
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && lb.classList.contains('on')) closeLb(); });
-</script>
-<script>
-if("serviceWorker" in navigator){
-  addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  });
-}
-</script>
 </body>
 </html>

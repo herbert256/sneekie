@@ -1,0 +1,184 @@
+/* Page-specific styles for vram.html. */
+.page-vram main{ max-width:1100px; }
+/* VRAM visualizer */
+.page-vram .lead{ max-width:941px; }
+.page-vram .demo{
+  display:flex;
+  gap:22px;
+  flex-wrap:wrap;
+  align-items:stretch;
+  margin-top:22px;
+}
+.page-vram .stage,
+.page-vram .side{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-width:0;
+}
+.page-vram .stage{ flex:1 1 360px; max-width:100%; }
+.page-vram .stage > .panel:last-child{ flex:1 1 auto; }
+.page-vram .side{ flex:1 1 460px; max-width:100%; }
+.page-vram .panel{
+  padding:12px 14px;
+  max-width:100%;
+  min-width:0;
+  overflow:auto;
+}
+.page-vram .ptitle{
+  margin-bottom:8px;
+  color:var(--muted);
+  font:600 11px/1 ui-monospace, monospace;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.page-vram canvas#screen{
+  display:block;
+  max-width:100%;
+  height:auto;
+  background:#000;
+  border-radius:4px;
+  image-rendering:pixelated;
+}
+.page-vram .memwrap{ margin-top:14px; }
+.page-vram .mem{
+  display:grid;
+  gap:1px;
+  width:min(100%, 507px);
+  max-width:100%;
+  background:var(--border);
+  border:1px solid var(--border);
+  border-radius:4px;
+  overflow:hidden;
+}
+.page-vram .mc{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  height:20px;
+  background:var(--codebg);
+  color:var(--empty);
+  cursor:default;
+  font:600 8.5px/1 ui-monospace, monospace;
+}
+.page-vram .mc.snake{ color:var(--green); }
+.page-vram .mc.head{
+  color:var(--greenhi);
+  background:color-mix(in srgb, var(--green) 16%, var(--codebg));
+}
+.page-vram .mc.heart{ color:var(--red); }
+.page-vram .mc.wall{ color:var(--wall); }
+.page-vram .mc.club{ color:var(--club); }
+.page-vram .mc.smiley{ color:var(--smiley); }
+.page-vram .mc.stone{ color:var(--stone); }
+.page-vram .mc.arrow{ color:var(--arrow); }
+.page-vram .mc.room{ color:var(--room); }
+.page-vram .mc.hl{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+  z-index:1;
+}
+@keyframes flash{
+  from{ background:var(--accent); color:#fff; }
+  to{}
+}
+.page-vram .mc.flash{ animation:flash .55s ease-out; }
+.page-vram .cap{
+  max-width:384px;
+  margin-top:10px;
+  color:var(--muted);
+  font-size:12px;
+}
+.page-vram .sxo{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:wrap;
+  gap:14px;
+  flex:1 1 auto;
+  width:0;
+  min-width:100%;
+}
+.page-vram .sxo > .panel:first-child{ flex:0 0 auto; }
+.page-vram .sxo > .panel:last-child{
+  flex:1 1 220px;
+  min-width:0;
+}
+.page-vram .pad{
+  display:grid;
+  grid-template-columns:repeat(3, 44px);
+  grid-template-rows:repeat(2, 44px);
+  gap:6px;
+  justify-content:start;
+}
+.page-vram .pad button{
+  color:var(--text);
+  background:var(--panel2);
+  border-radius:8px;
+  font-size:16px;
+}
+.page-vram .pad .up{ grid-column:2; }
+.page-vram .pad .left{ grid-column:1; grid-row:2; }
+.page-vram .pad .down{ grid-column:2; grid-row:2; }
+.page-vram .pad .right{ grid-column:3; grid-row:2; }
+@media (max-width:520px){
+  .page-vram .demo{ gap:14px; }
+  .page-vram .panel{ padding:10px; }
+  .page-vram .mc{
+    height:18px;
+    font-size:7px;
+  }
+}
+.page-vram .btns{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.page-vram .btns button{
+  padding:7px 12px;
+  color:var(--text);
+  font-size:13px;
+  border-radius:7px;
+}
+.page-vram .stats{
+  display:flex;
+  gap:18px;
+  font-size:13px;
+}
+.page-vram .stats b{ color:var(--heading); }
+.page-vram .inspect{
+  min-height:2.6em;
+  color:var(--text);
+  font:12.5px/1.55 ui-monospace, monospace;
+}
+.page-vram .inspect .dim,
+.page-vram .formula .dim{ color:var(--muted); }
+.page-vram .log{
+  height:190px;
+  overflow-y:auto;
+  background:var(--codebg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 12px;
+  font:12px/1.55 ui-monospace, monospace;
+}
+.page-vram .log .mv{
+  margin-top:6px;
+  color:var(--accent);
+  font-weight:600;
+}
+.page-vram .log .op{ color:var(--text); }
+.page-vram .log .op .a{ color:var(--green); }
+.page-vram .log .op .b{ color:var(--muted); }
+.page-vram .log .blk{ color:var(--red); }
+
+.page-vram .btns button,
+.page-vram .pad button{
+  font:inherit;
+  color:var(--text);
+  background:var(--button);
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
+}
+.page-vram button:hover{ color:var(--accent); border-color:var(--accent); }

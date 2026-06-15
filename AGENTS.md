@@ -38,7 +38,7 @@ https://sneekie.xyz/.
   that reuses the embedded font; not the full game engine.
 - `docs/manual.html` — a player-facing **user manual** (nav label **Manual**): goal, controls,
   scoring, lives, a gallery of the 8 maze layouts, and a 32-level breakdown. The gallery shows
-  one **full-length autoplay gameplay GIF per layout** (`docs/manual/scene-1..8.gif`, 640×384 — the long clips
+  one **full-length autoplay gameplay GIF per layout** (`docs/images/manual/scene-1..8.gif`, 640×384 — the long clips
   that used to be the Demo page, hundreds of moves each); **clicking a layout image pops up a big version**
   (X / Esc / backdrop to close). They were produced by a smart autoplay bot
   (BFS-to-heart, stone-pushing, tail-reach anti-trap, arrow-dodging) driven via the browser:
@@ -74,12 +74,12 @@ https://sneekie.xyz/.
   this page in sync with the `BOT` string in `docs/live.html` when the planner changes.
 - `docs/magazine.html` — a **Magazine** page (nav label **Magazine**): the original 1988 publication of
   Sneekie as a **type-in program** in *MS(X)DOS Computer Magazine* no. 25. A thumbnail grid of the **cover +
-  pages 58–63** (`docs/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking any page opens it in
+  pages 58–63** (`docs/images/magazine/{cover,p58..p63}.jpg` full + `*.thumb.jpg`); clicking any page opens it in
   **real browser fullscreen** (`requestFullscreen` on a bare `#page-fs` box — just the page on black, no
   chrome or caption; Esc exits, with a fixed-overlay fallback). Below the scans, two English takes on the
   Dutch feature: an **original-words recap** (explicitly *not* a verbatim translation of the magazine's
   editorial) and a **"translated scans"** pair — copies of pages 58/59 with the text rendered in English
-  (`magazine/p58.en.jpg`, `p59.en.jpg` + thumbs). Page images were rasterised from a scan of the issue with
+  (`images/magazine/p58.en.jpg`, `p59.en.jpg` + thumbs). Page images were rasterised from a scan of the issue with
   **pypdfium2** (~168 dpi, in a throwaway venv); the full 100-page magazine is not committed. Same green
   doc-page styling.
 - `docs/SNEEKIE.BAS` — the canonical 1988 GW-BASIC source, recovered by OCR from the magazine listing (served,
@@ -88,18 +88,18 @@ https://sneekie.xyz/.
   artifact. Its first 10 lines are a `'`-comment header; the listing pages (`source`/`explained`/`migration`)
   **embed this whole file as base64**, so if you edit it, regenerate those `B64`/`atob(...)` blobs — and keep the
   header at 10 lines so `slice(10)` and migration's absolute `SECTIONS` line ranges stay valid.
-- `docs/favicon.png`, `docs/apple-touch-icon.png`, `docs/og.png`, `docs/logo.png` — site icon,
-  social card, and the **`♥ SNEEKIE ♥` header wordmark** (green letters, red hearts, transparent),
-  all drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py` (pure
-  Python, no deps; reads the font straight out of `docs/index.html`). Every page carries
-  matching `<link rel="icon">` + Open Graph / Twitter meta pointing at `og.png`. `logo.png` is the
+- `docs/favicon.png` plus `docs/images/{apple-touch-icon.png,icon-192.png,icon-512.png,og.png,logo.png}` —
+  site icons, social card, and the **`♥ SNEEKIE ♥` header wordmark** (green letters, red hearts,
+  transparent), all drawn with the game's own CP437 font. Regenerate with `python3 tools/make-icons.py`
+  (pure Python, no deps; reads the font straight out of `docs/js/index.js`). Every page carries matching
+  `<link rel="icon">` + Open Graph / Twitter meta pointing at `images/og.png`. `images/logo.png` is the
   shared top-left brand on **every** page (see the nav note below).
 
 To ship a change: edit under `docs/`, commit, push to `master`. GitHub Pages is configured
 to publish from `master` → `/docs` (`gh api repos/herbert256/sneekie/pages` to verify).
 
 All nine pages share one standard top nav (`header.top`) **and the same green-phosphor CRT
-look**: the **top-left is the `♥ SNEEKIE ♥` logo** (`<a class="brand" href="index.html"><img src="logo.png">`,
+look**: the **top-left is the `♥ SNEEKIE ♥` logo** (`<a class="brand" href="index.html"><img src="images/logo.png">`,
 the same on every page — no more per-page brand text), then the same page links (current page marked
 `aria-current="page"`) plus a `#print` button that **always prints the Source page** (`source.html`; the other
 eight pages navigate there with `?print`, which auto-prints). Each page also carries **one big white centered
