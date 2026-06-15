@@ -35,7 +35,8 @@ https://sneekie.xyz/.
   and exposes the shared BASIC tokenizer used by the listing pages.
 - `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
   are used by more than one page.
-- `docs/images/` - logo/social/icon PNGs, manual GIFs, and magazine scans. `favicon.png` stays
+- `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
+  WebP). `favicon.png` stays
   at `docs/favicon.png`.
 - `docs/sw.js` - service worker precache. Bump `CACHE_NAME` when changing existing precached
   files so deployed users do not keep stale assets.
