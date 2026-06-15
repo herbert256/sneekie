@@ -549,3 +549,16 @@ section.card .prose,
   pre,
   .formula{ break-inside:avoid; }
 }
+/* Respect a reduced-motion preference: neutralize CSS animations/transitions
+   (the CRT power-on, mode-flicker, and the VRAM cell pulse). The tiny non-zero
+   duration keeps animationend events firing so boot/transition chains still
+   complete. JS-driven motion (the Live page's win/stuck flash) is gated
+   separately in live.js. */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}

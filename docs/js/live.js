@@ -406,6 +406,14 @@ window.botStatus = (idx, score, left) => {
 };
 
 function flash(el, color, done){
+  // Honor a reduced-motion preference: show a single static win/stuck tint and
+  // advance, instead of pulsing the overlay five times.
+  if(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.style.background = color;
+    el.style.opacity = '0.4';
+    setTimeout(() => { el.style.opacity = '0'; done(); }, 1400);
+    return;
+  }
   el.style.background = color;
   let k = 0;
   (function tick(){
