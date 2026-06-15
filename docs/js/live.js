@@ -366,7 +366,7 @@ for(const level of LEVEL_CHOICES){
   const fig = document.createElement('figure'); fig.className = 'cell';
   fig.innerHTML =
     '<figcaption><span class="lv"></span> <span class="dim"></span><span class="st"></span></figcaption>' +
-    '<div class="frame"><iframe tabindex="-1" allow="autoplay; fullscreen" allowfullscreen></iframe><div class="flash"></div></div>';
+    '<div class="frame"><iframe tabindex="-1" allow="fullscreen"></iframe><div class="flash"></div></div>';
   grid.appendChild(fig);
   cell.frame = fig.querySelector('iframe');
   cell.frameBox = fig.querySelector('.frame');
@@ -385,11 +385,13 @@ function updateLabel(){
   tabs.forEach((btn, level) => btn.setAttribute('aria-selected', String(level === activeLevel)));
 }
 
+let liveAudioForced = false;   // default the demo to sound-on once; respect the user's toggle after that
 function inject(){
   try {
     cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
     fitFullscreenFrame();
-    primeGameAudio(true);
+    primeGameAudio(!liveAudioForced);   // only force-unmute on the first load, not on every level reload
+    liveAudioForced = true;
     cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);
     wireGameFullscreenEvents();
     syncControls();
@@ -397,7 +399,7 @@ function inject(){
 }
 
 function reloadCell(){
-  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = 'game.html'; }
+  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = sitePageHref('game'); }
 }
 
 window.botStatus = (idx, score, left) => {
@@ -451,12 +453,15 @@ function setLevel(level){
 
 /* ---- the six game controls below the screen (drive the iframe's own hidden controls) ---- */
 function gameDoc(){ try { return cell.frame.contentDocument; } catch(e){ return null; } }
-function primeGameAudio(forceOn=false){
+function primeGameAudio(forceOn=false, startAudio=false){
   if(forceOn) lsSet('sneekie.muted', '0');
   const unmuted = lsGet('sneekie.muted') !== '1';
   try {
     cell.frame.contentWindow.eval(
-      "try{if(" + JSON.stringify(unmuted) + "){muted=false;lsSet('sneekie.muted','0');ensureAudio();}paintMute();}catch(e){}"
+      "try{muted=" + JSON.stringify(!unmuted) + ";lsSet('sneekie.muted'," +
+      JSON.stringify(unmuted ? '0' : '1') + ");" +
+      (unmuted && startAudio ? "ensureAudio();" : "") +
+      "paintMute();}catch(e){}"
     );
   } catch(e){}
 }
@@ -538,13 +543,13 @@ document.addEventListener('fullscreenchange', () => { if(!fullscreenElement(docu
 document.addEventListener('webkitfullscreenchange', () => { if(!fullscreenElement(document)) exitFallbackFullscreen(); fitFullscreenFrame(); syncControls(); });
 addEventListener('resize', fitFullscreenFrame);
 addEventListener('keydown', e => {
-  primeGameAudio();
+  primeGameAudio(false, true);
   if(e.key === 'Escape' && cell.frameBox.classList.contains('live-fullscreen')){
     exitFallbackFullscreen();
   }
 });
-addEventListener('pointerdown', () => primeGameAudio());
-addEventListener('touchstart', () => primeGameAudio(), {passive:true});
+addEventListener('pointerdown', () => primeGameAudio(false, true));
+addEventListener('touchstart', () => primeGameAudio(false, true), {passive:true});
 primeGameAudio(true);
 syncControls();
 
@@ -568,4 +573,4 @@ document.addEventListener('keydown', e => {
 // start the selected level
 updateLabel();
 cell.frame.addEventListener('load', inject);
-cell.frame.src = 'game.html';
+cell.frame.src = sitePageHref('game');
