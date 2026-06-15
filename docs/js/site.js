@@ -75,6 +75,20 @@ function renderTopHeader(){
 
   header.appendChild(nav);
   document.body.insertBefore(header, document.body.firstChild);
+
+  // skip-to-content link, inserted as the first focusable element on the page
+  const skip = document.createElement('a');
+  skip.className = 'skip';
+  skip.href = '#main';
+  skip.textContent = 'Skip to content';
+  document.body.insertBefore(skip, document.body.firstChild);
+
+  // ensure the skip target exists and is focusable on every page
+  const main = document.querySelector('main');
+  if(main){
+    if(!main.id) main.id = 'main';
+    if(!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+  }
 }
 
 function renderPageFooter(){

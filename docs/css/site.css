@@ -75,6 +75,20 @@ body{
 }
 
 /* Shared chrome */
+.skip{
+  position:fixed;
+  left:8px;
+  top:-50px;
+  z-index:40;
+  padding:9px 14px;
+  background:var(--button);
+  color:var(--ink);
+  border:1px solid var(--border);
+  border-radius:0 0 5px 5px;
+  text-decoration:none;
+  transition:top .15s ease;
+}
+.skip:focus{ top:0; }
 header.top{
   position:sticky;
   top:0;
