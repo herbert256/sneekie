@@ -36,7 +36,7 @@
     <main>
       <h1 class="page-title">How the live bot thinks</h1>
       <p class="lead">The <a href="live.html">Live</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
-      <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>live.html</code>; it reads the port's live variables and sends keys, but it does not change the game rules.</div>
+      <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>live.html</code>; it reads the port's live variables and presses keys like a player would. Beyond two bookkeeping writes &mdash; jumping to the selected <code>LEVEL</code> and zeroing the leftover <code>BONUS</code> near a clear (both described below) &mdash; it leaves the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">
         <h2>On this page</h2>
         <ol>
@@ -87,6 +87,10 @@
           <div class="card">
             <h3>Level jump</h3>
             <p>It dismisses level 1, sets <code>LEVEL = TARGET - 1</code>, presses F10 once, and lets the game's own loop enter the selected level.</p>
+          </div>
+          <div class="card">
+            <h3>Bonus reset</h3>
+            <p>Once two or fewer items remain it sets <code>BONUS = 0</code>, draining the leftover-bonus countdown before the final pickup so the level clears at once. Without it, at high speeds the &ldquo;stuck&rdquo; watchdog could trip and flash red on a genuine win.</p>
           </div>
           <div class="card">
             <h3>Real input</h3>
@@ -404,7 +408,7 @@
       </section>
       <section id="restart">
         <h2>11. Win, stuck, restart</h2>
-        <p>The live page has 16 selectable tabs: levels 1-8 and 25-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 1. The flash pulses five times, one second apart, before the next level loads.</p>
+        <p>The live page has 16 selectable tabs: levels 1-8 and 25-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 1. The flash pulses five times, one second apart, before the next level loads &mdash; or, if you ask for reduced motion, it shows a single steady tint for about a second and a half instead.</p>
         <table>
           <thead>
             <tr>
