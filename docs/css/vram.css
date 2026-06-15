@@ -139,10 +139,14 @@
   flex-wrap:wrap;
 }
 .page-vram .btns button{
+  font:inherit;
   padding:7px 12px;
   color:var(--text);
-  font-size:13px;
+  background:var(--button);
+  border:1px solid var(--border);
   border-radius:7px;
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
 .page-vram .stats{
   display:flex;
@@ -176,12 +180,4 @@
 .page-vram .log .op .b{ color:var(--muted); }
 .page-vram .log .blk{ color:var(--red); }
 
-.page-vram .btns button{
-  font:inherit;
-  color:var(--text);
-  background:var(--button);
-  border:1px solid var(--border);
-  cursor:pointer;
-  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
-}
 .page-vram button:hover{ color:var(--accent); border-color:var(--accent); }
