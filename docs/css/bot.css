@@ -14,44 +14,44 @@
 }
 .page-bot .formula .dim{ color:var(--muted); }
 .page-bot td:first-child{ white-space:nowrap; }
-.cards,
-.ladder,
-.flow{
+.page-bot .cards,
+.page-bot .ladder,
+.page-bot .flow{
   display:grid;
   gap:12px;
   max-width:960px;
   margin:16px 0;
 }
-.cards{ grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
-.ladder{ grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }
-.flow{ grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }
-.step{
+.page-bot .cards{ grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
+.page-bot .ladder{ grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }
+.page-bot .flow{ grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }
+.page-bot .step{
   background:var(--panel);
   border:1px solid var(--border);
   border-radius:8px;
 }
-.card,
-.step{ padding:13px 15px; }
-.step b,
-.flow b{
+.page-bot .card,
+.page-bot .step{ padding:13px 15px; }
+.page-bot .step b,
+.page-bot .flow b{
   display:block;
   font:700 12px/1 ui-monospace, monospace;
   letter-spacing:.05em;
   text-transform:uppercase;
   margin-bottom:6px;
 }
-.step b{ color:var(--accent); }
-.step p,
-.card p{ margin:7px 0 0; font-size:13.5px; }
-.flow div{
+.page-bot .step b{ color:var(--accent); }
+.page-bot .step p,
+.page-bot .card p{ margin:7px 0 0; font-size:13.5px; }
+.page-bot .flow div{
   min-height:64px;
   background:var(--codebg);
   border:1px solid var(--border);
   border-radius:7px;
   padding:10px 12px;
 }
-.flow b{ color:var(--blue); }
-.flow span{ font-size:13px; }
+.page-bot .flow b{ color:var(--blue); }
+.page-bot .flow span{ font-size:13px; }
 @media (max-width:640px){
   .page-bot table{
     display:block;
