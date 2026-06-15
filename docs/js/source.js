@@ -41,15 +41,15 @@ const THEMES = {
   cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)',
     gut:'#0a6a6a', ln:'#55ffff', kw:'#55ff55', fn:'#55ffff', str:'#ffff55', num:'#ff55ff', com:'#aaaaaa', id:'#ffffff', op:'#ff5555', pn:'#888888' },
 };
-function applyTheme(name){
+function applyTheme(name, persist){
   const t = THEMES[name] || THEMES.hercules;
   const r = document.body.style;
   for(const k in t) r.setProperty('--' + k, t[k]);
   document.querySelectorAll('#themes button').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset.theme === name)));
-  lsSet('sneekie.theme', name);                                                   // same key the game uses
+  if(persist) lsSet('sneekie.theme', name);                                       // same key the game uses; only on an explicit pick
 }
 document.querySelectorAll('#themes button').forEach(b =>
-  b.addEventListener('click', () => applyTheme(b.dataset.theme)));
+  b.addEventListener('click', () => applyTheme(b.dataset.theme, true)));
 
-applyTheme(THEMES[lsGet('sneekie.theme')] ? lsGet('sneekie.theme') : 'hercules');
+applyTheme(THEMES[lsGet('sneekie.theme')] ? lsGet('sneekie.theme') : 'hercules', false);
