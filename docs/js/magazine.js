@@ -34,6 +34,7 @@ function closePage(){
 }
 
 document.querySelectorAll('.thumb').forEach(t => t.addEventListener('click', () => openPage(t)));
+document.getElementById('page-fs-close').addEventListener('click', e => { e.stopPropagation(); closePage(); });
 pageFs.addEventListener('click', e => { if(e.target === pageFs) closePage(); });
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement) finishClose(); });
 document.addEventListener('keydown', e => {
