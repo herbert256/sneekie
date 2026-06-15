@@ -63,7 +63,7 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
 - `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
-  Layout GIFs live in `docs/images/manual/scene-1..8.gif`.
+  Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
 - `docs/html/live.html` + `docs/js/live.js` - one real game iframe controlled by a smart bot.
   The bot source is the `BOT` string in `live.js`, injected into the iframe on load.
 - `docs/html/bot.html` + `docs/js/bot.js` - explanation of the live bot. Keep this page in
