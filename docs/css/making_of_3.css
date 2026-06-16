@@ -1,0 +1,21 @@
+.page-making-of .story-section {
+  display: flow-root;
+  margin-bottom: 2rem;
+  clear: both;
+}
+.page-making-of .story-img {
+  max-width: 300px;
+  border-radius: 8px;
+  border: 2px solid var(--fg);
+  margin-bottom: 1rem;
+}
+@media (min-width: 600px) {
+  .page-making-of .story-img.right {
+    float: right;
+    margin-left: 1.5rem;
+  }
+  .page-making-of .story-img.left {
+    float: left;
+    margin-right: 1.5rem;
+  }
+}

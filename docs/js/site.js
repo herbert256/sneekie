@@ -22,6 +22,8 @@ const SITE_I18N = {
     navExplained: 'Explained',
     navMigration: 'Migration',
     navVram: 'Visualizer',
+    navMakingOf1: 'The making off - 1',
+    navMakingOf3: 'The making off - 3',
     download: 'Download',
     print: 'Print',
     language: 'Language',
@@ -50,9 +52,9 @@ const SITE_I18N = {
     gameHintTouch: 'Swipe to steer &middot; tap = any key',
     yesKey: 'Y',
     noKey: 'N',
-    liveTitle: 'One live bot &mdash; sixteen levels',
+    liveTitle: 'One live bot &mdash; levels 26-32',
     liveLead:
-      'One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch the <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving levels where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck and it <strong><span class="ico r">flashes red</span></strong> and restarts.',
+      'One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch levels <strong>26-32</strong> &mdash; the self-moving late-game mazes where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck and it <strong><span class="ico r">flashes red</span></strong> and restarts.',
     botSpeed: 'Bot speed',
     liveTabsLabel: 'Live bot level',
     liveNote: "It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.",
@@ -113,6 +115,8 @@ const SITE_I18N = {
     navExplained: 'Uitleg',
     navMigration: 'Migratie',
     navVram: 'Visualizer',
+    navMakingOf1: 'The making off - 1',
+    navMakingOf3: 'The making off - 3',
     download: 'Download',
     print: 'Print',
     language: 'Taal',
@@ -141,9 +145,9 @@ const SITE_I18N = {
     gameHintTouch: 'Veeg om te sturen &middot; tik = willekeurige toets',
     yesKey: 'J',
     noKey: 'N',
-    liveTitle: 'Een livebot &mdash; zestien levels',
+    liveTitle: 'Een livebot &mdash; levels 26-32',
     liveLead:
-      'Er draait telkens een exemplaar van het <em>echte</em> spel uit 1988. Kies een leveltab om de <strong>rustige eerste levels</strong> of de <strong>brute tweede helft</strong> te bekijken &mdash; de zelfbewegende levels waar de slang ongeveer <strong>twee keer zo lang</strong> wordt en ieder <span class="ico h">&hearts;</span> hart een <span class="ico g">&clubs;</span> klaver in leeg terrein strooit. De bot loopt naar het dichtstbijzijnde doel, <strong>duwt <span class="ico t">&#9689;</span> stenen</strong>, <strong>ontwijkt <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, houdt een route terug naar zijn staart vrij, en <strong>eet een <span class="ico s">&#9786;</span> smiley</strong> om zichzelf niet op te sluiten. Haalt hij een level, dan <strong><span class="ico green">flitst het scherm groen</span></strong> en gaat hij door; loopt hij vast, dan <strong><span class="ico r">flitst het scherm rood</span></strong> en start hij opnieuw.',
+      'Er draait telkens een exemplaar van het <em>echte</em> spel uit 1988. Kies een leveltab om levels <strong>26-32</strong> te bekijken &mdash; de zelfbewegende eindlevels waar de slang ongeveer <strong>twee keer zo lang</strong> wordt en ieder <span class="ico h">&hearts;</span> hart een <span class="ico g">&clubs;</span> klaver in leeg terrein strooit. De bot loopt naar het dichtstbijzijnde doel, <strong>duwt <span class="ico t">&#9689;</span> stenen</strong>, <strong>ontwijkt <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, houdt een route terug naar zijn staart vrij, en <strong>eet een <span class="ico s">&#9786;</span> smiley</strong> om zichzelf niet op te sluiten. Haalt hij een level, dan <strong><span class="ico green">flitst het scherm groen</span></strong> en gaat hij door; loopt hij vast, dan <strong><span class="ico r">flitst het scherm rood</span></strong> en start hij opnieuw.',
     botSpeed: 'Botsnelheid',
     liveTabsLabel: 'Livebot level',
     liveNote: 'Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.',
@@ -341,6 +345,8 @@ function renderTopHeader(){
     ['explained', 'navExplained'],
     ['migration', 'navMigration'],
     ['vram', 'navVram'],
+    ['making_of_1', 'navMakingOf1'],
+    ['making_of_3', 'navMakingOf3'],
   ];
   const header = document.createElement('header');
   header.className = 'top';
