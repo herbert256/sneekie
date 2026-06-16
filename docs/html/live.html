@@ -34,30 +34,29 @@
   </head>
   <body class="page-doc page-live">
     <main>
-      <h1 class="page-title">One live bot — sixteen levels</h1>
-      <p class="lead">
+      <h1 class="page-title" data-i18n="liveTitle">One live bot &mdash; sixteen levels</h1>
+      <p class="lead" data-i18n="liveLead">
         One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch the <strong>gentle opening levels</strong> or the <strong>brutal back half</strong> &mdash; the self-moving levels where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck and it <strong><span class="ico r">flashes red</span></strong> and restarts.
       </p>
       <div class="speedbar">
-        <label for="speed">Bot speed</label>
+        <label for="speed" data-i18n="botSpeed">Bot speed</label>
         <input id="speed" type="range" min="0" max="100" value="50" />
         <output id="speedout" for="speed">50</output>
       </div>
       <div class="cells" id="cells"></div>
       <div id="controls">
         <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Green</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="white">White</button>
-          <button type="button" data-theme="cga">CGA</button>
+          <button type="button" data-theme="hercules" data-i18n="themeGreen">Green</button>
+          <button type="button" data-theme="amber" data-i18n="themeAmber">Amber</button>
+          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
         </div>
         <div class="grp">
-          <button type="button" id="mute">Sound: on</button>
-          <button type="button" id="fs">Fullscreen</button>
+          <button type="button" id="mute" data-i18n="soundOn">Sound: on</button>
+          <button type="button" id="fs" data-i18n="fullscreen">Fullscreen</button>
         </div>
       </div>
-      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level"></div>
-      <p class="lead live-note">It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Live bot level" data-i18n-aria="liveTabsLabel"></div>
+      <p class="lead live-note" data-i18n="liveNote">It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
     </main>
     <script src="../js/site.js"></script>
     <script src="../js/live.js"></script>

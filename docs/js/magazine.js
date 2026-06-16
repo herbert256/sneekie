@@ -4,6 +4,7 @@ const pageFs = document.getElementById('page-fs');
 const pageFsClose = document.getElementById('page-fs-close');
 let pageFsImg = null;
 let pageLastFocus = null;
+const magText = key => typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
 
 function ensurePageFsImg(){
   if(pageFsImg) return pageFsImg;
@@ -18,7 +19,7 @@ function openPage(thumb){
   pageLastFocus = document.activeElement;
   const preview = ensurePageFsImg();
   preview.src = thumb.dataset.full;
-  preview.alt = thumb.dataset.cap || thumb.querySelector('img')?.alt || 'Magazine page preview';
+  preview.alt = thumb.dataset.cap || thumb.querySelector('img')?.alt || magText('magazinePreviewFallback');
   pageFs.classList.add('on');                                  // shows it (also the fullscreen target / fallback overlay)
   pageFs.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';

@@ -136,6 +136,135 @@ const NOTES = {
   2410:'From level 9 (Z<1) the snake moves on its own and speeds up; 2410-2480 mirror 2320-2390 but real-time.',
 };
 
+const EXPLAINED_UI = {
+  en: { line: 'line ', lines: 'lines ', loadError: 'Could not load SNEEKIE.BAS — ' },
+  nl: { line: 'regel ', lines: 'regels ', loadError: 'Kan SNEEKIE.BAS niet laden — ' }
+};
+const explainedLang = () => (typeof window.sneekieLang === 'function' && window.sneekieLang() === 'nl') ? 'nl' : 'en';
+const exText = key => EXPLAINED_UI[explainedLang()][key] || EXPLAINED_UI.en[key] || key;
+
+const EXPLAINED_NL_SECTIONS = [
+  ['Opstarten &amp; het scherm vinden', `Drie dingen in twee regels. <code>DEFINT A-Y</code> maakt variabelen A&hellip;Y integer en laat de <code>Z*</code>-namen floating-point; daarom heten timer en score <code>Z</code>, <code>ZCORE</code>, <code>ZORE</code>. <code>SCREEN 0:WIDTH 80</code> kiest 80&times;25 tekst, en <code>PEEK(&amp;H449)</code> vraagt de BIOS of dit een mono- of kleurenscherm is.`],
+  ['Het kader &amp; scorepaneel tekenen', `Gewone <code>LOCATE&hellip;PRINT</code> tekent de vaste meubels: buitenkader, titelbalk en legenda onderaan. De laatste regel <code>POKE</code>t de vier icoontjes rechtstreeks op vaste schermoffsets.`],
+  ['Nieuw spel starten', `Zet de score op nul, geef drie levens en speel levels 1&rarr;32.`],
+  ['De levelloop', `Elk level wist de binnenste 17 rijen, zet een tweecellige slang in het midden en springt via <code>ON LEVEL GOSUB</code> naar het recept van dat level.`],
+  ['Statusregel &amp; items strooien', `Toon bonus, levens en level, en strooi daarna <code>AANTAL</code> harten en <code>AANTAL</code> smileys op willekeurige lege vakken.`],
+  ['De &ldquo;Level n&rdquo;-popup', `Kopieer het schermdeel onder de popup naar <code>S()</code>, teken de box, wacht op een toets en plak het scherm terug zodat er geen gat achterblijft.`],
+  ['De move-loop &mdash; een toets lezen', `Het hart van het spel. Per tick wacht de code maximaal <code>Z</code> seconden op een toets. Vroege levels wachten voor altijd; latere levels bewegen vanzelf door.`],
+  ['Bonus uitgeven en toets sorteren', `Elke tick haalt <code>BMIN</code> van de bonus. Daarna bepaalt de code of de toets een pijltje, ESC of rommel is.`],
+  ['Cheats en de kop draaien', `F10 slaat over, F9 geeft een leven en slaat over. Anders wordt de richting vertaald naar een schermstap: &plusmn;160 voor een rij, &plusmn;2 voor een kolom.`],
+  ['Wat staat er in het volgende vak?', `De grote beslissing: leeg vak, klaver, hart, steen, smiley of pijl. Eten laat de slang groeien; pijlen doden; stenen kunnen worden geduwd.`],
+  ['Geblokkeerd &mdash; muren en eigen staart', `Een muur of eigen lijf doodt je niet. De slang blijft staan, houdt de oude richting, verliest wat bonus en zoemt.`],
+  ['Lijf tekenen, kop laten groeien, animeren', `Het oude kopvak wordt het juiste box-drawing-stuk, de nieuwe kop wordt toegevoegd, het lijf glimt en de vijandroutine van dit level doet een stap.`],
+  ['Level gehaald &mdash; bonus innen', `De resterende bonus gaat vijf punten per keer naar de score, daarna krijg je een extra leven.`],
+  ['Einde / opnieuw spelen', `Na alle 32 levels of wanneer de levens op zijn, toont de code <i>Einde</i>, vraagt of je opnieuw wilt spelen, en start opnieuw of stopt.`],
+  ['Item op een willekeurig vak zetten', `Kies een willekeurige even offset in het speelveld. Even betekent: tekenbyte, niet kleurbyte. Alleen een leeg vak wordt gevuld.`],
+  ['Score &amp; highscore', `Tel <code>OP</code> bij de score op en werk de highscore bij als die wordt verbeterd.`],
+  ['Layout: het labyrint', `Geneste lussen tekenen een web van enkele lijnen en kruisingen: het dichtste doolhof.`],
+  ['Layout: verspreide stenen', `Legt &#9689; stenen in zigzag. De helper op regel 1480 zet een teken op kolom X, rij Y.`],
+  ['Layout: kamers met deuropeningen', `Bouwt een raster van kamers en leest daarna DATA-coordinaten om doorgangen in de muren te slaan.`],
+  ['Layout: verticale poorten', `Kolommen met een opening van drie vakken; <code>B(I)</code> onthoudt per poort waar de opening zit.`],
+  ['Layout: poorten + stenen', `De poortlayout plus een strooiing stenen.`],
+  ['Gevaar: omhoogpijlen', `Elke even kolom krijgt een omhoogpijl die per tick een rij stijgt en bovenaan terugwikkelt. Een pijl op de kop is fataal.`],
+  ['Gevaar: horizontale pijlen', `Per rij bewegen twee pijlen: een naar rechts en een naar links. Ze wikkelen aan de rand terug.`],
+  ['Gevaar: bewegende poorten', `De negen poortopeningen schuiven. De <code>=96</code>-tests controleren of drie vakken leeg zijn voordat een opening verplaatst.`],
+  ['Het pickup-jingletje', `<code>PLAY "mb"</code> betekent achtergrondmuziek, gevolgd door drie stijgende bliepjes.`],
+  ['De popupbox', `Tekent de dubbele kaderbox achter "Level n" en "Einde".`],
+  ['De 32 levelrecepten', `Elke regel zet <code>Z</code>, <code>AANTAL</code> en <code>BMIN</code> en kiest een layout. De tabellen hergebruiken de eerste 16 recepten voor levels 17&ndash;32.`],
+];
+
+const EXPLAINED_NL_NOTES = {
+  80:'DEFINT A-Y = integers; Z* blijft floating-point voor timer en score. SCREEN 0:WIDTH 80 kiest 80x25 tekst.',
+  90:'PEEK(&H449) is de BIOS-videomodus. Mode 7 = mono op &HB000; anders kleur op &HB800.',
+  100:'DEF SEG=VIDEO richt PEEK/POKE op schermgeheugen. De arrays: T()=slang, S()=popup-backup, B()=poorten, D()=pijlen.',
+  110:'Bovenrand van het kader: hoek + 78 lijnen + hoek.',
+  130:'De titel in de bovenbalk.',
+  200:'Onderkant van het kader.',
+  210:'Zet de vier legenda-icoontjes direct in schermgeheugen: smiley(1), steen(10), klaver(5), hart(3).',
+  230:'Nieuw spel: score 0, drie levens.',
+  250:'Wis de 17 binnenrijen, maar laat de zijmuren staan.',
+  280:'Startslang: staart op offset 2000, kop op 1840; hij begint omhoog. BTEL=kopslot, ETEL=staartslot.',
+  290:'Teken de kop als blok (219), de staart als dubbele lijn (186), kop helder (15).',
+  300:'Per-level reset: richting omhoog, nog niets verzameld, bonus 10000.',
+  310:'ON LEVEL GOSUB kiest het levelrecept: snelheid, itemaantal, bonusstap en doolhof.',
+  340:'Strooi AANTAL smileys en AANTAL harten.',
+  350:'GOSUB 1150 zet een teken op een willekeurig leeg vak; K1=1 betekent dat het hart landde.',
+  370:'Bewaar het 4x42-gebied onder de popup in S().',
+  400:'Leeg de BIOS-toetsenbuffer en wacht op een toets.',
+  410:'Plak het bewaarde schermdeel terug en wis de popup.',
+  420:'Speel dit level tot alle harten en klavers weg zijn.',
+  430:'Lees een wachtende toets en start een timer.',
+  450:'Blijf INKEY$ pollen tot een toets komt of Z seconden voorbij zijn.',
+  470:'Elke zet kost BMIN bonus.',
+  490:'Een echte pijltjestoets is twee tekens; lengte <> 1 gaat naar de bewegingscode.',
+  500:'Een enkel teken dat geen ESC is, is rommel en wordt als botsing behandeld.',
+  510:'ESC of een dodelijke hit: de dood/opgeven-routine.',
+  540:'Wacht tot de geluidswachtrij leeg is.',
+  550:'Rol de slang staart-eerst af...',
+  580:'...wis elk vak met een bliep...',
+  590:'...schuif de staart op en trek bonus af.',
+  610:'Verlies een leven; reset hart- en klavertellers.',
+  620:'Geen levens? Zet LEVEL=32 zodat de FOR-loop eindigt; anders speel dit level opnieuw.',
+  640:'Twee-tekentoets: haal de scancode uit byte twee. Bij timeout blijft E gelijk en beweegt de slang door.',
+  650:'A = waar de kop nu staat.',
+  660:'Scancode 68 = F10, level overslaan.',
+  670:'Scancode 67 = F9, gratis leven en overslaan.',
+  680:'Richting naar schermstap: +/-160 voor rij, +/-2 voor kolom.',
+  700:'Kijk wat er al in het doelvak staat.',
+  710:'32 = leeg, dus gewoon bewegen.',
+  720:'Wis de staart en schuif de staartpointer op.',
+  740:'5 = klaver, 25 punten.',
+  750:'Strooi een nieuwe smiley en speel de jingle.',
+  760:'+25, een klaver minder. Geen staart wissen, dus groei.',
+  770:'3 = hart, 10 punten.',
+  780:'In de harde helft kan een hart een nieuwe klaver maken.',
+  790:'Strooi smiley, jingle, +10, een hart minder, groei.',
+  800:'10 = steen; probeer hem te duwen.',
+  810:'TA = het vak achter de steen.',
+  840:'Als dat vak niet leeg is, kan de steen niet bewegen.',
+  850:'Duw de steen, wis de staart en beweeg.',
+  870:'1 = smiley, de slechte.',
+  880:'Een dalende klaagtoon van 50 noten.',
+  890:'-50, strooi nog een smiley, en groei erop.',
+  900:'24/26/27 = bewegende pijl, instant dood.',
+  910:'Muur of eigen lijf: niet naar binnen. Oude richting houden, bonus verliezen, zoemen.',
+  920:'Horizontaal recht stuk wordt 205.',
+  930:'Verticaal recht stuk wordt 186.',
+  940:'Deze regels kiezen de hoekglyph voor een bocht uit nieuwe richting E en oude richting F.',
+  980:'Voeg de nieuwe kop toe: BTEL+1, offset bewaren, kop tekenen.',
+  990:'Trail-array vol? Dan kan de slang nergens meer groeien: dood.',
+  1000:'De glans: alternerende lijfvakken worden helder. Omdat BTEL van pariteit wisselt, lijkt het te lopen.',
+  1010:'ON LEVEL GOSUB kiest de animatie van dit level: niets, pijlen of poorten.',
+  1030:'Level gehaald: stort de resterende bonus in de score.',
+  1070:'Geef een extra leven voor het halen van het level.',
+  1090:'Alle 32 klaar of geen levens: toon Einde.',
+  1130:'j = ja: opnieuw starten; anders bedanken en END.',
+  1150:'Willekeurige even offset in het speelveld; even = tekenbyte.',
+  1160:'Alleen als het vak leeg is: schrijf L en zet K1=1.',
+  1190:'Tel OP bij de score op en teken opnieuw.',
+  1200:'Highscore verbeterd? Werk ZORE bij en toon hem.',
+  1480:'Werkpaard: POKE een teken op kolom X, rij Y.',
+  1580:'Lees 13 coordinaatparen en maak deuropeningen in de kamermuren.',
+  1630:'DATA met deurcoordinaten.',
+  1670:'B(I) is de rij van opening I; teken een kolom en maak een drie-vaks gat.',
+  1850:'Loopt een pijl boven uit beeld, dan wikkelt hij terug naar de andere kant.',
+  1860:'Pijl stapt op de kop? RETURN 510 = dood.',
+  1890:'Herstel het verlaten vak, verplaats de pijl en onthoud wat eronder lag.',
+  1970:'Beweeg horizontale pijlen: een naar rechts en een naar links per rij.',
+  2000:'Raakt hij de kop? dood.',
+  2070:'Raakt hij de kop? dood.',
+  2130:'Schuif elke poortopening; de =96-sommen testen drie lege vakken.',
+  2230:'Beweeg de opening omlaag; voorbij rij 16 wikkelt hij terug naar rij 4.',
+  2260:'PLAY "mb" = muziek op de achtergrond, daarna drie stijgende bliepjes.',
+  2320:'Level 1: Z=999, 75 items, bonus daalt 10 per zet, geen doolhof.',
+  2410:'Vanaf level 9 beweegt de slang vanzelf; 2410-2480 spiegelen 2320-2390 maar realtime.',
+};
+
+if(explainedLang() === 'nl'){
+  EXPLAINED_NL_SECTIONS.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
+  Object.assign(NOTES, EXPLAINED_NL_NOTES);
+}
+
 /* ---------- render ---------- */
 let lines = [];
 const listing = document.getElementById('listing');
@@ -147,7 +276,7 @@ function addCard(sec){
   const c = document.createElement('section');
   c.className = 'card'; c.id = 's-' + sec.num;
   const lastLine = sectionEndLine(sec);
-  const range = (lastLine && lastLine !== sec.at) ? 'lines ' + sec.at + '&ndash;' + lastLine : 'line ' + sec.at;
+  const range = (lastLine && lastLine !== sec.at) ? exText('lines') + sec.at + '&ndash;' + lastLine : exText('line') + sec.at;
   c.innerHTML =
     '<div class="head"><span class="badge">' + sec.num + '</span>' +
     '<h2>' + sec.t + '</h2><span class="lines">' + range + '</span></div>' +
@@ -194,4 +323,4 @@ for(const line of lines){
 fetch('../SNEEKIE.BAS')
   .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
   .then(renderExplained)
-  .catch(err => { listing.textContent = 'Could not load SNEEKIE.BAS — ' + err.message; });
+  .catch(err => { listing.textContent = exText('loadError') + err.message; });

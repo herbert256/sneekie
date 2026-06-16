@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="../css/migration.css" />
   </head>
   <body class="page-doc page-migration">
-    <main>
+    <main data-lang-template>
       <div class="hero">
         <h1 class="page-title">From GW-BASIC to JavaScript, side by side</h1>
         <p class="sub">The 1988 source on the left, the 2026 port on the right &mdash; and how the new one is put together.</p>
@@ -106,6 +106,64 @@
       </nav>
       <div id="pairs"></div>
     </main>
+    <template id="main-template-nl">
+      <div class="hero">
+        <h1 class="page-title">Van GW-BASIC naar JavaScript, naast elkaar</h1>
+        <p class="sub">De bron uit 1988 links, de port uit 2026 rechts &mdash; en hoe de nieuwe laag in elkaar zit.</p>
+      </div>
+      <p class="lead">De webversie is geen herschrijving &mdash; het is een <em>trouwe port</em>. De spellogica is statement voor statement vertaald uit <code>SNEEKIE.BAS</code>, met de originele variabelenamen en zelfs BASIC-regelnummers als commentaar. Wat echt veranderde is de dunne laag eronder: wat GW-BASIC gratis gaf &mdash; schermgeheugen, toetsenbord, geluid, <code>GOTO</code> &mdash; moest voor de browser opnieuw worden gebouwd. Deze pagina koppelt representatieve stukken en legt die laag uit; gebruik <a href="explained.html">Uitleg</a> voor elke BASIC-regel.</p>
+      <div class="callout">
+        <h2>De brug: het scherm is de datastructuur</h2>
+        <p>GW-BASIC <code>POKE</code>te tekens rechtstreeks in het 80&times;25 tekstschermgeheugen van de PC en <code>PEEK</code>te ze terug om te zien wat waar stond. Er was geen apart "slang"- of "muur"-object &mdash; het beeld <em>was</em> de toestand. De port houdt dat model exact aan, als een 4000-byte <code>Uint8Array</code> (<code>vram</code>): twee bytes per cel, teken en attribuut, geadresseerd met</p>
+        <p><span class="formula">offset = (rij &minus; 1) &times; 160 + (kolom &minus; 1) &times; 2</span></p>
+        <p>Omdat het model identiek is, verandert de gamecode nauwelijks &mdash; alleen de woorden <code>POKE</code> en <code>PEEK</code> worden de functies <code>poke()</code> en <code>peek()</code>. De rest van deze pagina volgt uit het opnieuw bouwen van GW-BASIC's runtime rond die ene gedeelde array.</p>
+      </div>
+      <h2 style="color: var(--heading); max-width: 900px">Wat opnieuw gebouwd moest worden</h2>
+      <table class="map">
+        <tr><th>Het mechanisme uit 1988</th><th>De vervanging uit 2026</th></tr>
+        <tr>
+          <td><code>POKE</code> / <code>PEEK</code> in videogeheugen op <code>&amp;HB000</code>/<code>&amp;HB800</code></td>
+          <td><b><code>poke()</code> / <code>peek()</code></b> op een 4000-byte <code>Uint8Array</code></td>
+        </tr>
+        <tr>
+          <td><code>LOCATE r,c : PRINT CHR$(n)</code></td>
+          <td><b><code>locate(r,c); pc(n)</code></b> &mdash; dezelfde cursor, dezelfde tekencodes</td>
+        </tr>
+        <tr>
+          <td>het scherm ververst zichzelf (het <em>is</em> videogeheugen)</td>
+          <td>een <b>dirty-cell set + <code>requestAnimationFrame</code></b>-redraw, met glyphs uit een ingebed IBM CP437-font</td>
+        </tr>
+        <tr>
+          <td><code>INKEY$</code> / <code>INPUT$</code> blokkeren tot er een toets is</td>
+          <td><b><code>async</code> + een Promise-toetsenbuffer</b> (<code>keyOrTimeout</code>/<code>waitKey</code>)</td>
+        </tr>
+        <tr>
+          <td><code>SOUND freq, ticks</code></td>
+          <td>een <b>Web Audio</b>-blokgolfoscillator op dezelfde 1/18.2&nbsp;s-klok</td>
+        </tr>
+        <tr>
+          <td><code>ON LEVEL GOSUB &hellip;</code></td>
+          <td>de dispatch-arrays <b><code>CFG[]</code> en <code>ENEMY[]</code></b></td>
+        </tr>
+        <tr>
+          <td><code>GOTO 510</code> / <code>RETURN 510</code> (sterven)</td>
+          <td><b><code>throw DEATH</code></b>, gevangen rond de move-loop</td>
+        </tr>
+        <tr>
+          <td>variabelen (<code>DEFINT A-Y</code>, Nederlandse namen)</td>
+          <td>de <b>zelfde namen letterlijk behouden</b> (<code>T</code>, <code>BTEL</code>, <code>HART</code>, <code>KLAVER</code>&hellip;)</td>
+        </tr>
+      </table>
+      <div class="callout">
+        <h2>De ene diepe wijziging: blokkeren wordt <code>async</code></h2>
+        <p>GW-BASIC liep van boven naar beneden en <em>stopte</em> gewoon bij <code>INKEY$</code>/<code>INPUT$</code> tot je een toets indrukte. Een browsertab mag nooit zo blokkeren &mdash; daarom werden de wachtpunten <code>await</code>s, waardoor <code>playLevels()</code> en <code>program()</code> <code>async</code> moesten worden. Een kleine Promise-toetsenbuffer vervangt de BIOS-buffer, en omdat <code>GOTO</code> niet bestaat, wordt de "spring eruit en sterf"-logica een geworpen <code>DEATH</code>-signaal dat rond de loop wordt opgevangen. Die twee trucs &mdash; <em>await voor invoer, throw om te sterven</em> &mdash; laten de rest een letterlijke vertaling blijven.</p>
+      </div>
+      <nav class="toc" aria-label="Op deze pagina">
+        <h2>De koppelingen</h2>
+        <ol id="toc-list"></ol>
+      </nav>
+      <div id="pairs"></div>
+    </template>
     <script src="../js/site.js"></script>
     <script src="../js/migration.js"></script>
   </body>

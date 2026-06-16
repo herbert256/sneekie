@@ -1,6 +1,41 @@
 'use strict';
 
-const SCENES = ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'];
+const LIVE_TEXT = {
+  en: {
+    scenes: ['Open Arena','Combs & Crosses','Room Grid','Stone Field','Picket Columns','Rising Arrows','Sweeping Arrows','The Vault'],
+    level: 'Level ',
+    frameTitle: 'Sneekie level ',
+    clearing: ' — clearing...',
+    score: (score, left) => ' — score ' + score + ' · ' + left + ' left',
+    cleared: ' — cleared! next level...',
+    stuck: ' — stuck — next level...',
+    restarting: ' — restarting...',
+    soundOn: 'Sound: on',
+    soundOff: 'Sound: off'
+  },
+  nl: {
+    scenes: ['Open veld','Kammen en kruisen','Kamerraster','Stenenveld','Piketkolommen','Stijgende pijlen','Veegpijlen','De kluis'],
+    level: 'Level ',
+    frameTitle: 'Sneekie level ',
+    clearing: ' — afronden...',
+    score: (score, left) => ' — score ' + score + ' · ' + left + ' over',
+    cleared: ' — gehaald! volgend level...',
+    stuck: ' — vastgelopen — volgend level...',
+    restarting: ' — herstarten...',
+    soundOn: 'Geluid: aan',
+    soundOff: 'Geluid: uit'
+  }
+};
+
+function liveLang(){
+  return typeof window.sneekieLang === 'function' ? window.sneekieLang() : 'en';
+}
+function lt(key, ...args){
+  const lang = liveLang() === 'nl' ? 'nl' : 'en';
+  const value = (LIVE_TEXT[lang] && LIVE_TEXT[lang][key]) || LIVE_TEXT.en[key] || key;
+  return typeof value === 'function' ? value(...args) : value;
+}
+
 const LEVEL_CHOICES = [1,2,3,4,5,6,7,8,25,26,27,28,29,30,31,32];
 const GREEN = '#46ff64', RED = '#ff4040';
 
@@ -355,7 +390,7 @@ for(const level of LEVEL_CHOICES){
   btn.type = 'button';
   btn.setAttribute('role', 'tab');
   btn.dataset.level = String(level);
-  btn.textContent = 'Level ' + level;
+  btn.textContent = lt('level') + level;
   btn.setAttribute('aria-selected', String(level === activeLevel));
   btn.addEventListener('click', () => setLevel(level));
   tablist.appendChild(btn);
@@ -376,16 +411,23 @@ for(const level of LEVEL_CHOICES){
   cell.scene = fig.querySelector('.dim');
 }
 
-function sceneFor(level){ return SCENES[(level - 1) % 8]; }
+function sceneFor(level){ return lt('scenes')[(level - 1) % 8]; }
+
+function updateTabLabels(){
+  tabs.forEach((btn, level) => { btn.textContent = lt('level') + level; });
+}
 
 function updateLabel(){
-  cell.lv.textContent = 'Level ' + activeLevel;
+  cell.lv.textContent = lt('level') + activeLevel;
   cell.scene.innerHTML = '&middot; ' + sceneFor(activeLevel);
-  cell.frame.title = 'Sneekie level ' + activeLevel;
+  cell.frame.title = lt('frameTitle') + activeLevel;
   tabs.forEach((btn, level) => btn.setAttribute('aria-selected', String(level === activeLevel)));
 }
 
-function liveGameHref(){ return sitePageHref('game') + '?noboot'; }
+function liveGameHref(){
+  const href = sitePageHref('game');
+  return href + (href.includes('?') ? '&' : '?') + 'noboot&lang=' + encodeURIComponent(liveLang());
+}
 function inject(){
   try {
     cell.frame.contentDocument.head.insertAdjacentHTML('beforeend', HIDE);
@@ -398,12 +440,21 @@ function inject(){
 }
 
 function reloadCell(){
-  try { cell.frame.contentWindow.location.reload(); } catch(e){ cell.frame.src = liveGameHref(); }
+  const src = liveGameHref();
+  try {
+    if(new URL(cell.frame.getAttribute('src') || '', location.href).href !== new URL(src, location.href).href){
+      cell.frame.src = src;
+      return;
+    }
+    cell.frame.contentWindow.location.reload();
+  } catch(e){
+    cell.frame.src = src;
+  }
 }
 
 window.botStatus = (idx, score, left) => {
   cell.st.className = 'st';
-  cell.st.textContent = left <= 0 ? ' — clearing…' : ' — score ' + score + ' · ' + left + ' left';
+  cell.st.textContent = left <= 0 ? lt('clearing') : lt('score', score, left);
 };
 
 let flashTimers = [];
@@ -435,7 +486,7 @@ function flash(el, color, done){
 window.botEnd = (idx, win) => {
   const g = gen;
   cell.st.className = win ? 'st win' : 'st stuck';
-  cell.st.textContent = win ? ' — cleared! next level…' : ' — stuck — next level…';
+  cell.st.textContent = win ? lt('cleared') : lt('stuck');
   flash(cell.flash, win ? GREEN : RED, () => { if(g === gen) stepLevel(1); });
 };
 
@@ -445,7 +496,7 @@ function setLevel(level){
   clearFlash();                 // stop the leaving level's pulse and its auto-advance
   if(cell.flash) cell.flash.style.opacity = '0';
   updateLabel();
-  cell.st.className = 'st'; cell.st.textContent = ' — restarting…';
+  cell.st.className = 'st'; cell.st.textContent = lt('restarting');
   fitFullscreenFrame();
   reloadCell();
 }
@@ -471,6 +522,13 @@ function primeGameAudio(startAudio=false){
 const ctlThemes = [...document.querySelectorAll('#controls #themes button')];
 const ctlMute = document.getElementById('mute');
 const ctlFs = document.getElementById('fs');
+const LIVE_THEMES = new Set(['hercules', 'amber', 'cga']);
+function liveThemeName(){
+  const stored = lsGet('sneekie.theme');
+  const theme = LIVE_THEMES.has(stored) ? stored : 'cga';
+  if(stored !== theme) lsSet('sneekie.theme', theme);
+  return theme;
+}
 function fullscreenElement(doc){ return doc && (doc.fullscreenElement || doc.webkitFullscreenElement) || null; }
 function requestFullscreen(el){
   const fn = el && (el.requestFullscreen || el.webkitRequestFullscreen);
@@ -486,11 +544,30 @@ function isLiveFullscreen(){
     cell.frameBox.classList.contains('live-fullscreen');
 }
 function syncControls(){
-  const theme = lsGet('sneekie.theme') || 'cga';
+  const theme = liveThemeName();
   ctlThemes.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === theme)));
-  ctlMute.textContent = lsGet('sneekie.muted') === '1' ? 'Sound: off' : 'Sound: on';
+  ctlMute.textContent = lsGet('sneekie.muted') === '1' ? lt('soundOff') : lt('soundOn');
   ctlFs.setAttribute('aria-pressed', String(isLiveFullscreen()));
 }
+function keepLanguageInUrl(){
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set('lang', liveLang());
+    history.replaceState(null, '', url.href);
+  } catch(e){}
+}
+addEventListener('sneekie:languagechange', () => {
+  keepLanguageInUrl();
+  updateTabLabels();
+  updateLabel();
+  syncControls();
+  gen++;
+  clearFlash();
+  if(cell.flash) cell.flash.style.opacity = '0';
+  cell.st.className = 'st';
+  cell.st.textContent = lt('restarting');
+  reloadCell();
+});
 function fitFullscreenFrame(){
   if(fullscreenElement(document) === cell.frameBox || cell.frameBox.classList.contains('live-fullscreen')){
     const scale = Math.min(innerWidth / 640, innerHeight / 384);

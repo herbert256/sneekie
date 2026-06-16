@@ -150,8 +150,14 @@ header.top nav{
   flex-wrap:wrap;
   margin-left:auto;
 }
+header.top .lang-switch{
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
 header.top nav a,
-header.top nav button{
+header.top nav button,
+header.top .lang-switch button{
   font:inherit;
   font-size:11px;
   letter-spacing:.1em;
@@ -166,14 +172,33 @@ header.top nav button{
   white-space:nowrap;
   transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
+header.top .lang-switch button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  padding:0;
+}
+header.top .lang-icon{
+  display:block;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:.08em;
+}
 header.top nav a:hover,
 header.top nav button:hover,
-header.top nav a[aria-current="page"]{
+header.top nav a[aria-current="page"],
+header.top .lang-switch button:hover,
+header.top .lang-switch button[aria-pressed="true"]{
   color:var(--accent);
   border-color:var(--accent);
 }
-header.top nav a[aria-current="page"]{
+header.top nav a[aria-current="page"],
+header.top .lang-switch button[aria-pressed="true"]{
   box-shadow:0 0 12px -5px var(--accent);
+}
+header.top nav a[aria-current="page"]{
   cursor:default;
 }
 
@@ -534,6 +559,9 @@ section.card .prose,
     padding:8px 10px 7px;
   }
   header.top .brand img{ height:22px; }
+  header.top .lang-switch{
+    margin-left:auto;
+  }
   header.top nav{
     flex:1 1 100%;
     order:2;
@@ -554,6 +582,10 @@ section.card .prose,
     letter-spacing:.06em;
     padding:6px 9px;
     min-height:32px;
+  }
+  header.top .lang-switch button{
+    width:32px;
+    height:32px;
   }
   h1.page-title,
   body h1.page-title{

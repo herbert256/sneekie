@@ -1,5 +1,6 @@
 'use strict';
 const FONT = Uint8Array.from(atob("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AAB4zMzM2MzGxsbMAAAAAAAA/sbGwMDAwMDAwAAAAAAAAAAA/mxsbGxsbGwAAAAAAAAA/sZgMBgwYMb+AAAAAAAAAAAAftjY2NjYcAAAAAAAAAAAZmZmZmZ8YGDAAAAAAAAAAHbcGBgYGBgYAAAAAAAAAH4YPGZmZjwYfgAAAAAAAAA4bMbG/sbGbDgAAAAAAAA4bMbGxmxsbGzuAAAAAAAAHjAYDD5mZmZmPAAAAAAAAAAAAH7b29t+AAAAAAAAAAAAAwZ+29vzfmDAAAAAAAAAHDBgYHxgYGAwHAAAAAAAAAB8xsbGxsbGxsYAAAAAAAAAAP4AAP4AAP4AAAAAAAAAAAAYGH4YGAAA/wAAAAAAAAAwGAwGDBgwAH4AAAAAAAAADBgwYDAYDAB+AAAAAAAADhsbGBgYGBgYGBgYGBgYGBgYGBgYGNjY2HAAAAAAAAAAABgYAH4AGBgAAAAAAAAAAAAAdtwAdtwAAAAAAAAAOGxsOAAAAAAAAAAAAAAAAAAAAAAAABgYAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAADwwMDAwM7GxsPBwAAAAAANhsbGxsbAAAAAAAAAAAAABw2DBgyPgAAAAAAAAAAAAAAAAAfHx8fHx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="), c => c.charCodeAt(0));
+const vt = key => typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
 
 /* ---------- a 22x15 corner of the real 80x25 text screen ---------- */
 const W = 22, H = 15, STRIDE = 160, SCALE = 2, CW = 8 * SCALE, CH = 16 * SCALE;
@@ -117,12 +118,12 @@ function init(){
   arrowTimer = setInterval(stepArrows, 480);                    // the enemies move on their own
 }
 
-const cdesc = d => d===32 ? 'empty' : d===3 ? '♥ heart (+10)' :
-  d===5 ? '♣ club (+25)' : d===1 ? '☺ smiley (-50)' : d===10 ? '◙ stone (push it)' :
-  d===24 ? '↑ arrow (enemy)' : d===25 ? '↓ arrow (enemy)' :
-  d===26 ? '→ arrow (enemy)' : d===27 ? '← arrow (enemy)' :
-  d===HEAD ? 'snake head' : SNAKE.has(d) ? 'snake body' :
-  WALLSET.has(d) ? 'wall' : 'space';
+const cdesc = d => d===32 ? vt('vramEmpty') : d===3 ? vt('vramHeart') :
+  d===5 ? vt('vramClub') : d===1 ? vt('vramSmiley') : d===10 ? vt('vramStone') :
+  d===24 ? vt('vramArrowUp') : d===25 ? vt('vramArrowDown') :
+  d===26 ? vt('vramArrowRight') : d===27 ? vt('vramArrowLeft') :
+  d===HEAD ? vt('vramSnakeHead') : SNAKE.has(d) ? vt('vramSnakeBody') :
+  WALLSET.has(d) ? vt('vramWall') : vt('vramSpace');
 
 function move(dir){
   const E = dir, F = DIR, A = T[BTEL] + D[dir].d;
@@ -130,32 +131,32 @@ function move(dir){
   const d = peek(A);
   ops.push(['peek', A, d, cdesc(d)]);
   let grow = false, moved = true;
-  if(d === 32){ poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, 'erase tail']); ETEL++; }
-  else if(d === 3){ score += 10; hearts--; grow = true; ops.push(['+', 'score += 10 — eat the heart', '', '']);
+  if(d === 32){ poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, vt('vramEraseTail')]); ETEL++; }
+  else if(d === 3){ score += 10; hearts--; grow = true; ops.push(['+', vt('vramEatHeart'), '', '']);
     const co = popClub();                                      // the heart spawns a club elsewhere
-    if(co != null) ops.push(['poke', co, 5, 'a ♣ club pops up where the heart sent it']); }
-  else if(d === 5){ score += 25; grow = true; ops.push(['+', 'score += 25 — eat the club', '', '']); }
-  else if(d === 1){ score -= 50; grow = true; ops.push(['+', 'score -= 50 — ouch, a smiley!', '', '']); }
+    if(co != null) ops.push(['poke', co, 5, vt('vramClubPops')]); }
+  else if(d === 5){ score += 25; grow = true; ops.push(['+', vt('vramEatClub'), '', '']); }
+  else if(d === 1){ score -= 50; grow = true; ops.push(['+', vt('vramEatSmiley'), '', '']); }
   else if(d === 10){                                          // push the stone (like level 4)
     const TA = A + D[dir].d, beyond = peek(TA);               // the cell on the far side of the stone
-    ops.push(['peek', TA, beyond, cdesc(beyond) + ' (behind the stone)']);
+    ops.push(['peek', TA, beyond, cdesc(beyond) + vt('vramBehindStone')]);
     if(beyond === 32){
-      poke(TA, 10); ops.push(['poke', TA, 10, 'shove the stone ◙ along']);
-      poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, 'erase tail']); ETEL++;
-    } else { moved = false; ops.push(['blk', '→ blocked: stone has nowhere to go, stay put', '', '']); }
+      poke(TA, 10); ops.push(['poke', TA, 10, vt('vramShoveStone')]);
+      poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, vt('vramEraseTail')]); ETEL++;
+    } else { moved = false; ops.push(['blk', vt('vramStoneBlocked'), '', '']); }
   }
-  else { moved = false; ops.push(['blk', '→ blocked: ' + cdesc(d) + ', stay put', '', '']); }
+  else { moved = false; ops.push(['blk', vt('vramBlocked') + cdesc(d) + vt('vramStayPut'), '', '']); }
 
   if(moved){
     const bg = corner(E, F);
     poke(T[BTEL], bg); poke(T[BTEL]+1, 7);
-    ops.push(['poke', T[BTEL], bg, 'old head → body']);
+    ops.push(['poke', T[BTEL], bg, vt('vramOldHeadBody')]);
     BTEL++; T[BTEL] = A; poke(A, HEAD); poke(A+1, 15);
-    ops.push(['poke', A, HEAD, 'draw new head █']);
+    ops.push(['poke', A, HEAD, vt('vramDrawHead')]);
     DIR = E; FDIR = E;
   }
   render(); logMove({dir, grow}, ops);
-  if(hearts === 0 && !heartsBannerShown){ heartsBannerShown = true; setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">★ all hearts collected!</div>') , 10); }
+  if(hearts === 0 && !heartsBannerShown){ heartsBannerShown = true; setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">' + vt('vramAllHearts') + '</div>') , 10); }
 }
 
 /* ---------- rendering ---------- */
@@ -213,8 +214,8 @@ function render(){ drawScreen(); updateMemory(); }
 /* ---------- log + stats + inspector ---------- */
 const log = document.getElementById('log');
 function logMove(info, ops){
-  if(!info){ log.innerHTML = '<div class="op b">Steer the snake — each move\'s peeks and pokes show up here.</div>'; return; }
-  let h = '<div class="mv">move ' + arrow[info.dir] + (info.grow ? '  (grow)' : '') + '</div>';
+  if(!info){ log.innerHTML = '<div class="op b">' + vt('vramSteerLog') + '</div>'; return; }
+  let h = '<div class="mv">' + vt('vramMove') + arrow[info.dir] + (info.grow ? vt('vramGrow') : '') + '</div>';
   for(const op of ops){
     if(op[0]==='peek') h += '<div class="op"><span class="a">peek(' + op[1] + ')</span> → ' + op[2] + '  <span class="b">' + op[3] + '</span></div>';
     else if(op[0]==='poke') h += '<div class="op"><span class="a">poke(' + op[1] + ', ' + op[2] + ')</span>  <span class="b">' + op[3] + '</span></div>';
@@ -228,12 +229,12 @@ function setHover(c, r){
   const next = (c && r) ? {c, r} : null;
   if((!next && !hover) || (next && hover && next.c === hover.c && next.r === hover.r)) return;   // same cell — skip the full screen+grid re-render
   hover = next; render();
-  if(!hover){ insp.innerHTML = '<span class="dim">Hover a cell to read its bytes.</span>'; return; }
+  if(!hover){ insp.innerHTML = '<span class="dim">' + vt('vramHover') + '</span>'; return; }
   const o = off(c, r), ch = vram[o], at = vram[o+1];
   const g = ch === 32 ? '·' : String.fromCharCode(ch < 128 ? ch : 63);
-  insp.innerHTML = '<span class="dim">cell (col ' + c + ', row ' + r + ')</span><br>' +
+  insp.innerHTML = '<span class="dim">' + vt('vramCell') + c + vt('vramRow') + r + ')</span><br>' +
     'offset = (' + r + '−1)×160 + (' + c + '−1)×2 = <b>' + o + '</b><br>' +
-    'char = ' + ch + ' &nbsp;<span class="dim">' + cdesc(ch) + '</span> &nbsp; attr = ' + at;
+    vt('vramChar') + ch + ' &nbsp;<span class="dim">' + cdesc(ch) + '</span> &nbsp; ' + vt('vramAttr') + at;
 }
 
 /* ---------- input ---------- */
@@ -256,7 +257,7 @@ mcs.forEach(d => d.addEventListener('mouseenter', () => setHover(+d.dataset.c, +
 document.getElementById('reset').addEventListener('click', () => { stopTour(); init(); });
 let tourTimer = null;
 const tourBtn = document.getElementById('tour');
-function stopTour(){ if(tourTimer){ clearInterval(tourTimer); tourTimer = null; tourBtn.innerHTML = '&#9654; Tour'; } }
+function stopTour(){ if(tourTimer){ clearInterval(tourTimer); tourTimer = null; tourBtn.innerHTML = vt('vramTourStart'); } }
 const STEPS = [[-STRIDE,'U'],[STRIDE,'D'],[-2,'L'],[2,'R']];
 function tourPlan(){                                             // BFS from the head to the nearest heart/club, dodging walls, stones, arrows
   const head = T[BTEL];
@@ -281,7 +282,7 @@ function tourPlan(){                                             // BFS from the
 tourBtn.addEventListener('click', () => {
   if(tourTimer){ stopTour(); return; }
   init();
-  tourBtn.innerHTML = '■ Stop';
+  tourBtn.innerHTML = vt('vramTourStop');
   tourTimer = setInterval(() => {
     if(hearts === 0){ stopTour(); return; }
     const dir = tourPlan();

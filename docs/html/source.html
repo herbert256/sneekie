@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="../css/source.css" />
   </head>
   <body class="page-source">
-    <main id="main" tabindex="-1">
+    <main id="main" tabindex="-1" data-lang-template>
       <header class="hero">
         <h1 class="page-title">Source Listing</h1>
         <p class="sub">The original 1988 GW-BASIC source</p>
@@ -42,7 +42,6 @@
         <div class="grp" id="themes">
           <button type="button" data-theme="hercules">Green</button>
           <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="white">White</button>
           <button type="button" data-theme="cga">CGA</button>
         </div>
       </div>
@@ -50,6 +49,22 @@
         <div class="screen"><div class="listing" id="listing"></div></div>
       </div>
     </main>
+    <template id="main-template-nl">
+      <header class="hero">
+        <h1 class="page-title">Broncode</h1>
+        <p class="sub">De originele GW-BASIC-bron uit 1988</p>
+      </header>
+      <div class="themebar">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Groen</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+      </div>
+      <div id="bezel">
+        <div class="screen"><div class="listing" id="listing"></div></div>
+      </div>
+    </template>
     <script src="../js/site.js"></script>
     <script src="../js/source.js"></script>
   </body>

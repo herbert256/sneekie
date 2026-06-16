@@ -34,6 +34,51 @@ const THEMES = {
   cga:     { cga:true, dim:[170,170,170], bright:[255,255,255], css:'#55ffff', glow:'rgba(85,255,255,.12)' },
 };
 
+const GAME_TEXT = {
+  en: {
+    bootPress: 'Press any key to boot',
+    bootTap: 'or tap the monitor screen',
+    titleLine: "**** Sneekie ****         (c) July '88 by HerbySoft",
+    scoreLine: '10 points      -50 points    Highscore',
+    levelScore: 'Level       Score',
+    itemLine: '25 points      Stone         <ESC> when stuck',
+    livesBonus: 'Lives       Bonus',
+    level: 'Level ',
+    pressAny: 'Press any key',
+    end: 'The End',
+    playAgain: 'Play again (y/n)',
+    thanks: 'Thanks for playing',
+    soundOn: 'Sound: on',
+    soundOff: 'Sound: off',
+    yesInput: 'y'
+  },
+  nl: {
+    bootPress: 'Druk op een toets om te starten',
+    bootTap: 'of tik op het monitorscherm',
+    titleLine: "**** Sneekie ****         (c) juli '88 door HerbySoft",
+    scoreLine: '10 punten      -50 punten    Highscore',
+    levelScore: 'Level       Score',
+    itemLine: '25 punten      Steen         <ESC> als vast',
+    livesBonus: 'Levens      Bonus',
+    level: 'Level ',
+    pressAny: 'Druk op een toets',
+    end: 'Einde',
+    playAgain: 'Nog eens (j/n)',
+    thanks: 'Bedankt voor het spelen',
+    soundOn: 'Geluid: aan',
+    soundOff: 'Geluid: uit',
+    yesInput: 'j'
+  }
+};
+
+function gameLang(){
+  return typeof window.sneekieLang === 'function' ? window.sneekieLang() : 'en';
+}
+function gt(key){
+  const lang = gameLang() === 'nl' ? 'nl' : 'en';
+  return (GAME_TEXT[lang] && GAME_TEXT[lang][key]) || GAME_TEXT.en[key] || key;
+}
+
 /* CGA 16-color palette entries used by the colorized theme */
 const CGA_RGB = {
   2:[0,170,0], 3:[0,170,170], 6:[170,85,0], 7:[170,170,170], 10:[85,255,85],
@@ -53,7 +98,11 @@ function cgaColor(ch, at){
   if(ch >= 179 && ch <= 218) return 3;                      // walls: cyan
   return (at & 8) ? 15 : 7;                                 // text: white / light gray
 }
-let themeName = lsGet('sneekie.theme') || 'cga';
+const PLAYABLE_THEMES = new Set(['hercules', 'amber', 'cga']);
+function playableThemeName(name){
+  return PLAYABLE_THEMES.has(name) ? name : 'cga';
+}
+let themeName = playableThemeName(lsGet('sneekie.theme'));
 let theme = THEMES[themeName] || THEMES.cga;
 
 /* ---------- VIDEO: 80x25 text VRAM, identical to B000/B800 layout ----------
@@ -256,7 +305,7 @@ cv.addEventListener('pointerdown', e => {
 /* on-screen button -> the same INKEY$ strings the keyboard produces */
 const TOUCHKEYS = {
   esc:'\x1b', up:'\0H', down:'\0P', left:'\0K', right:'\0M',
-  f9:'\0C', f10:'\0D', y:'y', n:'n',          // F9/F10 = extra life / skip level
+  f9:'\0C', f10:'\0D', y:() => gt('yesInput'), n:'n',          // F9/F10 = extra life / skip level
 };
 document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
   b.addEventListener('click', () => {
@@ -268,7 +317,8 @@ document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
     }
     ensureAudio();
     const k = b.dataset.key;
-    pushKey(TOUCHKEYS[k] || k);
+    const value = TOUCHKEYS[k] || k;
+    pushKey(typeof value === 'function' ? value() : value);
   });
 });
 
@@ -529,8 +579,8 @@ async function bootSequence(){
   bootBiosLogo(4);
   bootCenter(11, 'Acme Corporation PC/XT compatible', 15);
   bootCenter(13, '8088  4.77 MHz   640K RAM', 7);
-  bootCenter(15, 'Press any key to boot', 15);
-  bootCenter(17, 'or tap the monitor glass', 7);
+  bootCenter(22, gt('bootPress'), 15);
+  bootCenter(23, gt('bootTap'), 7);
   await waitForBootGesture();
 
   await bootCls();
@@ -652,6 +702,11 @@ function sub2280(){
   locate(11,30); pc(186); sp(19); pc(186);
   locate(12,30); pc(186); sp(19); pc(186);
   locate(13,30); pc(200); pcn(205,19); pc(188);
+}
+function popupText(row, text){
+  const s = String(text).slice(0, 19);
+  locate(row, 31 + Math.max(0, Math.floor((19 - s.length) / 2)));
+  ps(s);
 }
 
 /* 1480 */
@@ -880,8 +935,8 @@ async function playLevels(){
     for(let I = 1; I <= 42; I++) for(let I3 = 0; I3 <= 3; I3++) S[I+I3*42] = peek(1497+I+I3*160);
     /* 380-400: "Level n" popup */
     sub2280();
-    locate(11,37); ps('Level '); ps(' ' + LEVEL + ' ');
-    locate(12,34); ps('Press any key');
+    popupText(11, gt('level') + ' ' + LEVEL + ' ');
+    popupText(12, gt('pressAny'));
     clearKbd();
     await waitKey();
     /* 410: restore */
@@ -971,13 +1026,13 @@ async function program(){
   cls();                                                      // 100
   locate(1,1);  pc(218); pcn(196,78); pc(191);                // 110
   locate(2,1);  pc(179); sp(78); pc(179);                     // 120
-  locate(2,17); ps("**** Sneekie ****         (c) July '88 by HerbySoft");
+  locate(2,17); ps(gt('titleLine'));
   locate(22,1); pc(179); sp(78); pc(179);                     // 140
-  locate(22,6); ps('10 points      -50 points    Highscore'); // 150
+  locate(22,6); ps(gt('scoreLine'));                          // 150
   locate(23,1); pc(179); sp(78); pc(179);                     // 160
-  locate(22,55); ps('Level       Score');                     // 170
-  locate(23,6); ps('25 points      Stone         <ESC> when stuck'); // 180
-  locate(23,55); ps('Lives       Bonus');                     // 190
+  locate(22,55); ps(gt('levelScore'));                        // 170
+  locate(23,6); ps(gt('itemLine'));                           // 180
+  locate(23,55); ps(gt('livesBonus'));                        // 190
   locate(24,1); pc(192); pcn(196,78); pc(217);                // 200
   poke(3396,1); poke(3556,10); poke(3526,5); poke(3366,3);    // 210: legend icons
   if(ZORE > 0){ locate(22,46); pu(6,ZORE); }                  // persisted highscore
@@ -985,14 +1040,14 @@ async function program(){
     ZCORE = 0; LIVE = 3;                                      // 230
     await playLevels();                                       // 240-1080
     sub2280();                                                // 1090
-    locate(11,37); ps('The End');
-    locate(12,33); ps('Play again (y/n)');                  // 1100
+    popupText(11, gt('end'));
+    popupText(12, gt('playAgain'));                           // 1100
     clearKbd();                                               // 1110
     let A$;
     do { A$ = await waitKey(); } while(!(A$.length === 1 && 'YyNnJj'.includes(A$))); // 1120
     if(A$ === 'Y' || A$ === 'y' || A$ === 'J' || A$ === 'j') continue;                    // 1130
     cls();
-    locate(1,1); ps('Thanks for playing');
+    locate(1,1); ps(gt('thanks'));
     break;
   }
   await waitKey();                                            // modern: any key reboots
@@ -1028,7 +1083,7 @@ function drawTitle(){
 }
 
 function applyTheme(name){
-  themeName = THEMES[name] ? name : 'cga';
+  themeName = playableThemeName(name);
   theme = THEMES[themeName];
   if(theme.cga && !cgaAtlas[15]){
     for(const k in CGA_RGB) cgaAtlas[k] = buildAtlas(CGA_RGB[k]);
@@ -1047,7 +1102,7 @@ document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => { ensureAudio(); applyTheme(b.dataset.theme); }));
 
 const muteBtn = document.getElementById('mute');
-function paintMute(){ muteBtn.textContent = muted ? 'Sound: off' : 'Sound: on'; }
+function paintMute(){ muteBtn.textContent = muted ? gt('soundOff') : gt('soundOn'); }
 muteBtn.addEventListener('click', () => {
   ensureAudio();
   muted = !muted;
@@ -1055,6 +1110,12 @@ muteBtn.addEventListener('click', () => {
   paintMute();
 });
 paintMute();
+addEventListener('sneekie:languagechange', () => {
+  paintMute();
+  const url = new URL(location.href);
+  url.searchParams.set('lang', gameLang());
+  location.href = url.href;
+});
 
 function fit(){
   if(document.fullscreenElement){

@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="../css/manual.css" />
   </head>
   <body class="page-doc page-manual">
-    <main>
+    <main data-lang-template>
       <h1 class="page-title">Player's Manual</h1>
       <p class="lead"><strong>Sneekie</strong> is a snake-in-a-maze game from July 1988. You steer a growing snake around a walled arena, hoovering up <span class="ico h">&hearts;</span> hearts. Clear every heart and you advance &mdash; through <em>32 levels</em> built from <em>8 maze layouts</em>. Mind the walls, the deadly arrows, and the smileys that <em>cost</em> you points. This page explains everything: the controls, the scoring, each of the 8 layouts, and how the 32 levels are put together.</p>
       <div class="note"><strong>New here?</strong> Just hit <a href="game.html">&#9654; Play</a> and start collecting hearts &mdash; the first few levels are turn-based and forgiving. Come back when you want to know what the smileys do or why the arrows keep killing you.</div>
@@ -283,8 +283,258 @@
       <h2>About</h2>
       <p>Sneekie was written in GW-BASIC in July 1988 by <strong>HerbySoft</strong> and published in MS(X)DOS Computer Magazine no. 25. In 2026 its printed listing was recovered by OCR and ported, line for line, to this website. Curious how it works? The <a href="vram.html">Visualizer</a> shows the screen-is-the-memory trick at the heart of it, and the <a href="explained.html">Explained</a> edition walks through the original code.</p>
     </main>
-    <div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" aria-hidden="true" tabindex="-1">
-      <button id="lb-close" class="fs-close" type="button" aria-label="Close">&times;</button>
+    <template id="main-template-nl">
+      <h1 class="page-title">Spelhandleiding</h1>
+      <p class="lead"><strong>Sneekie</strong> is een slang-in-een-doolhofspel uit juli 1988. Je stuurt een groeiende slang door een ommuurde arena en verzamelt <span class="ico h">&hearts;</span> harten. Verzamel alle harten en je gaat door &mdash; door <em>32 levels</em>, opgebouwd uit <em>8 doolhoflayouts</em>. Let op muren, dodelijke pijlen en smileys die punten <em>kosten</em>. Deze pagina legt alles uit: de besturing, de puntentelling, alle 8 layouts en hoe de 32 levels zijn opgebouwd.</p>
+      <div class="note"><strong>Nieuw?</strong> Druk gewoon op <a href="game.html">&#9654; Spelen</a> en begin harten te verzamelen &mdash; de eerste levels zijn beurt voor beurt en vergevingsgezind. Kom terug als je wilt weten wat de smileys doen of waarom de pijlen je steeds raken.</div>
+      <h2>Het doel</h2>
+      <p>Elk level strooit een veld vol <span class="ico h">&hearts;</span> <strong>harten</strong> door de arena. <strong>Eet ze allemaal</strong> en het level is gehaald &mdash; de resterende <strong>bonus</strong> wordt bij je score opgeteld, je krijgt een leven, en het volgende level begint. De slang <strong>groeit met een segment telkens wanneer hij iets eet</strong>, dus het speelveld wordt steeds krapper.</p>
+      <h2>Besturing</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Toets</th>
+            <th>Aanraken</th>
+            <th>Wat het doet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
+            <td>Veeg</td>
+            <td>Stuur de slang. Hij kan niet direct terug zijn eigen lijf in.</td>
+          </tr>
+          <tr>
+            <td>elke toets</td>
+            <td>Tik</td>
+            <td>Sluit de <em>&ldquo;Druk op een toets&rdquo;</em>-vensters tussen levels.</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>&mdash;</td>
+            <td><strong>Geef op</strong> als je vastzit. Kost een leven en start het level opnieuw.</td>
+          </tr>
+          <tr>
+            <td><kbd>F9</kbd></td>
+            <td>&mdash;</td>
+            <td>Cheat: <strong>extra leven</strong> &mdash; en meteen door naar het volgende level.</td>
+          </tr>
+          <tr>
+            <td><kbd>F10</kbd></td>
+            <td>&mdash;</td>
+            <td>Cheat: <strong>level overslaan</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Een <em>letter</em>toets indrukken (of tegen een muur sturen) laat je alleen botsen: je blijft staan en verliest een beetje bonus. Onder het scherm staan de kastknoppen: de <strong>Groen / Amber / Wit / CGA</strong>-thema's, een <strong>Geluid</strong>-schakelaar en <strong>Volledig scherm</strong> (in volledig scherm houd je <kbd>Esc</kbd> ingedrukt om te sluiten &mdash; een korte tik werkt nog steeds als &ldquo;opgeven&rdquo;).</p>
+      <h2>Het scherm</h2>
+      <p>Het speelveld heeft een rand waar je niet doorheen kunt. De statusbalk onderaan toont:</p>
+      <ul>
+        <li><strong>Level</strong> &mdash; in welk van de 32 levels je zit.</li>
+        <li><strong>Score</strong> / <strong>Highscore</strong> &mdash; je punten; de beste score blijft bewaard.</li>
+        <li><strong>Levens</strong> &mdash; hoeveel pogingen je nog hebt.</li>
+        <li><strong>Bonus</strong> &mdash; een timer die begint op <code>10000</code> en elke stap aftelt. Haal het level snel en de rest wordt bij je score opgeteld.</li>
+      </ul>
+      <h2>Items &amp; punten</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Symbool</th>
+            <th>Item</th>
+            <th>Effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ico h">&hearts;</span></td>
+            <td>Hart</td>
+            <td><strong>+10</strong>. Verzamel ze <em>allemaal</em> om het level te halen.</td>
+          </tr>
+          <tr>
+            <td><span class="ico c">&clubs;</span></td>
+            <td>Klaver</td>
+            <td><strong>+25</strong>. Een betere beloning (vanaf level 17 kan een hart er een achterlaten).</td>
+          </tr>
+          <tr>
+            <td><span class="ico s">&#9786;</span></td>
+            <td>Smiley</td>
+            <td><strong>&minus;50!</strong> &mdash; de val. Eentje eten doet pijn en laat je voor niets groeien. Stuur eromheen.</td>
+          </tr>
+          <tr>
+            <td><span class="ico t">&#9689;</span></td>
+            <td>Steen</td>
+            <td>Een rotsblok. Geen punten &mdash; maar je kunt hem een vakje <strong>duwen</strong> als de ruimte erachter leeg is.</td>
+          </tr>
+          <tr>
+            <td><span class="ico a">&uarr;&rarr;&larr;</span></td>
+            <td>Pijl</td>
+            <td><strong>Dodelijk.</strong> Raak een bewegende pijl en je verliest een leven.</td>
+          </tr>
+          <tr>
+            <td><span class="ico w">&#9474;&#9472;</span></td>
+            <td>Muur / jezelf</td>
+            <td>Massief. Je kunt niet een muur of je eigen lijf in &mdash; je botst alleen (&minus;bonus).</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Levens</h2>
+      <p>Je begint met <strong>3 levens</strong>. Je <strong>verliest er een</strong> wanneer je doodgaat &mdash; door een bewegende pijl te raken, of door met <kbd>Esc</kbd> op te geven als je vastzit. Je <strong>krijgt er een bij wanneer je een level haalt</strong> (en <kbd>F9</kbd> geeft er ook een), dus een vaste speler houdt de teller gezond. Zijn ze op, dan is het <em>game over</em> &mdash; daarna kun je opnieuw spelen.</p>
+      <h2>De acht layouts</h2>
+      <p>Elk level is een van deze acht arena's. Layouts <strong>1&ndash;4</strong> zijn gewone doolhoven &mdash; vastlopen is het enige gevaar. Layouts <strong>5&ndash;8</strong> voegen een <span style="color: var(--red)">bewegend gevaar</span> toe. Hieronder zie je clips waarin het spel zichzelf speelt &mdash; een automatische slang die harten jaagt, stenen duwt en pijlen ontwijkt:</p>
+      <div class="gallery">
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-1.webp" alt="Automatisch spel in de open arena: de slang veegt door een leeg speelveld en eet harten." />
+          <div class="body">
+            <span class="num">1</span>
+            <h3>De open arena</h3>
+            <div class="lv">Levels 1 &middot; 9 &middot; 17 &middot; 25</div>
+            <p>Alleen de vier buitenmuren. Puur harten verzamelen &mdash; de vriendelijkste introductie.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-2.webp" alt="Automatisch spel dat door kammen en kruisen van muren slingert." />
+          <div class="body">
+            <span class="num">2</span>
+            <h3>Kammen &amp; kruisen</h3>
+            <div class="lv">Levels 2 &middot; 10 &middot; 18 &middot; 26</div>
+            <p>Groepen kamachtige paaltjes en plusvormige kruisen liggen door de kwadranten verspreid.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-3.webp" alt="Automatisch spel dat door deuropeningen in het kamerraster glipt." />
+          <div class="body">
+            <span class="num">3</span>
+            <h3>Het kamerraster</h3>
+            <div class="lv">Levels 3 &middot; 11 &middot; 19 &middot; 27</div>
+            <p>De arena is in kamers verdeeld door verticale en horizontale muren, met in elke muur een doorgang.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-4.webp" alt="Automatisch spel dat stenen in het stenenveld opzij duwt." />
+          <div class="body">
+            <span class="num">4</span>
+            <h3>Het stenenveld</h3>
+            <div class="lv">Levels 4 &middot; 12 &middot; 20 &middot; 28</div>
+            <p>Een dicht raster van duwbare <span class="ico t">&#9689;</span> stenen. Schuif ze opzij en maak je eigen route naar de harten.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-5.webp" alt="Automatisch spel tussen kolommen met kruipende openingen." />
+          <div class="body">
+            <span class="num">5</span>
+            <h3>De palenkolommen</h3>
+            <div class="lv">Levels 5 &middot; 13 &middot; 21 &middot; 29</div>
+            <p>Hoge muren hangen vanaf de boven- en onderrand. <span class="enemy">Gevaar:</span> de openingen schuiven op en neer &mdash; een doorgang kan dichtklappen.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-6.webp" alt="Automatisch spel dat stijgende pijlen ontwijkt." />
+          <div class="body">
+            <span class="num">6</span>
+            <h3>De stijgende pijlen</h3>
+            <div class="lv">Levels 6 &middot; 14 &middot; 22 &middot; 30</div>
+            <p>Een open veld met <span class="ico a">&uarr;</span> pijlen die stap voor stap <span class="enemy">omhoog marcheren</span>. Aanraken is fataal.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-7.webp" alt="Automatisch spel dat oversteken tussen horizontaal bewegende pijlen timet." />
+          <div class="body">
+            <span class="num">7</span>
+            <h3>De veegpijlen</h3>
+            <div class="lv">Levels 7 &middot; 15 &middot; 23 &middot; 31</div>
+            <p>Een open veld met <span class="ico a">&larr;&rarr;</span> pijlen die <span class="enemy">links en rechts schuiven</span> over elke rij. Tim je oversteek.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-8.webp" alt="Automatisch spel door muren en steenkolommen van de kluis." />
+          <div class="body">
+            <span class="num">8</span>
+            <h3>De kluis</h3>
+            <div class="lv">Levels 8 &middot; 16 &middot; 24 &middot; 32</div>
+            <p>Verticale muren met kolommen <span class="ico t">&#9689;</span> stenen ertussen &mdash; <span class="enemy">en kruipende openingen</span>. De zwaarste mix in het spel.</p>
+          </div>
+        </div>
+      </div>
+      <h2>De 32 levels</h2>
+      <p>Er zijn maar 8 layouts, dus het spel doorloopt ze <strong>vier keer</strong>. Elke ronde komen dezelfde arena's terug &mdash; maar hoe de slang <em>beweegt</em>, verandert:</p>
+      <ul>
+        <li><strong>Levels 1&ndash;8 &mdash; beurt voor beurt.</strong> De slang wacht op je toets; neem je tijd (de bonus telt wel af).</li>
+        <li><strong>Levels 9&ndash;16 &mdash; hij beweegt vanzelf.</strong> Als je niet binnen het tempo van het level stuurt (<code>0.4</code>&ndash;<code>1.2</code> seconden &mdash; sneller in open arena's, ruimer in drukke), gaat de slang zelf door. Je kunt nog steeds elk moment sturen.</li>
+        <li><strong>Levels 17&ndash;32 &mdash; de reprise.</strong> Levels 17&ndash;24 herhalen 1&ndash;8 (beurt voor beurt) en 25&ndash;32 herhalen 9&ndash;16 (zelfbewegend) &mdash; met een twist: vanaf level 17 kan een hart een <span class="ico c">&clubs;</span> klaver achterlaten voor extra punten.</li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Layout</th>
+            <th>Gevaar</th>
+            <th>Beurtlevels</th>
+            <th>Zelfbewegende levels (tempo)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1 &middot; Open arena</td>
+            <td>&mdash;</td>
+            <td class="mono">1, 17</td>
+            <td class="mono">9, 25 &nbsp;(0.4 s)</td>
+          </tr>
+          <tr>
+            <td>2 &middot; Kammen &amp; kruisen</td>
+            <td>muren</td>
+            <td class="mono">2, 18</td>
+            <td class="mono">10, 26 &nbsp;(0.6 s)</td>
+          </tr>
+          <tr>
+            <td>3 &middot; Kamerraster</td>
+            <td>muren</td>
+            <td class="mono">3, 19</td>
+            <td class="mono">11, 27 &nbsp;(0.6 s)</td>
+          </tr>
+          <tr>
+            <td>4 &middot; Stenenveld</td>
+            <td>stenen</td>
+            <td class="mono">4, 20</td>
+            <td class="mono">12, 28 &nbsp;(0.9 s)</td>
+          </tr>
+          <tr>
+            <td>5 &middot; Palenkolommen</td>
+            <td class="enemy" style="color: var(--red)">kruipende openingen</td>
+            <td class="mono">5, 21</td>
+            <td class="mono">13, 29 &nbsp;(0.9 s)</td>
+          </tr>
+          <tr>
+            <td>6 &middot; Stijgende pijlen</td>
+            <td class="enemy" style="color: var(--red)">omhoogpijlen</td>
+            <td class="mono">6, 22</td>
+            <td class="mono">14, 30 &nbsp;(1.0 s)</td>
+          </tr>
+          <tr>
+            <td>7 &middot; Veegpijlen</td>
+            <td class="enemy" style="color: var(--red)">zijpijlen</td>
+            <td class="mono">7, 23</td>
+            <td class="mono">15, 31 &nbsp;(1.0 s)</td>
+          </tr>
+          <tr>
+            <td>8 &middot; De kluis</td>
+            <td class="enemy" style="color: var(--red)">stenen + kruipende openingen</td>
+            <td class="mono">8, 24</td>
+            <td class="mono">16, 32 &nbsp;(1.2 s)</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Tips</h2>
+      <ul>
+        <li><strong>Speel snel.</strong> De bonus zijn echte punten &mdash; treuzelen in level 1 kan tot 10 000 punten kosten.</li>
+        <li><strong>Blijf ruim uit de buurt van smileys.</strong> Een losse <span class="ico s">&#9786;</span> kost 50 punten <em>en</em> laat je groeien.</li>
+        <li><strong>Je sterft niet door je eigen staart</strong> &mdash; je kunt er alleen niet doorheen. Maar een lange slang sluit zichzelf snel op; als je echt vastzit, beperkt <kbd>Esc</kbd> de schade tot een leven.</li>
+        <li><strong>Duw stenen doodlopende stukken in</strong> om een baan vrij te maken &mdash; maar je kunt alleen duwen als het vak erachter leeg is.</li>
+        <li><strong>Blijf bewegen in pijlenlevels.</strong> Lees de richting van de pijlen en glip door de gaten; blijf nooit stilstaan in een kolom (level 6) of rij (level 7) waar een pijl doorheen veegt.</li>
+      </ul>
+      <h2>Over</h2>
+      <p>Sneekie werd in juli 1988 in GW-BASIC geschreven door <strong>HerbySoft</strong> en gepubliceerd in MS(X)DOS Computer Magazine nr. 25. In 2026 werd de gedrukte listing via OCR teruggehaald en regel voor regel naar deze website geport. Benieuwd hoe het werkt? De <a href="vram.html">Visualizer</a> toont de truc waarbij het scherm het geheugen is, en de <a href="explained.html">Uitleg</a>-editie loopt door de originele code.</p>
+    </template>
+    <div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" data-i18n-aria="layoutPreview" aria-hidden="true" tabindex="-1">
+      <button id="lb-close" class="fs-close" type="button" aria-label="Close" data-i18n-aria="close">&times;</button>
     </div>
     <script src="../js/site.js"></script>
     <script src="../js/manual.js"></script>

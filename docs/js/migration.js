@@ -90,6 +90,28 @@ const SECTIONS = [
     h:`DOS returned an arrow from <code>INKEY$</code> as two bytes &mdash; <code>CHR$(0)</code> then a scancode &mdash; which line 640 takes apart with <code>ASC(MID$(A$,2,1))</code>. The browser's <code>keydown</code> handler manufactures those very same 2-byte strings (<code>'\\0H'</code> = up, &hellip;), so the loop sees exactly what it saw in 1988.`},
 ];
 
+const MIGRATION_NL_SECTIONS = [
+  ['Het scherm is het datamodel', `De code uit 1988 richt <code>PEEK</code>/<code>POKE</code> op videogeheugen en kiest zelfs mono (<code>&amp;HB000</code>) of kleur (<code>&amp;HB800</code>). De port heeft maar een in-memory raster nodig: <code>vram</code> is een 4000-byte array en <code>poke()</code>/<code>peek()</code> zijn kleine helpers.`],
+  ['Het vaste kader tekenen', `<code>LOCATE r,c : PRINT CHR$(n)</code> wordt <code>locate(r,c); pc(n)</code>; <code>STRING$(78,&hellip;)</code> wordt <code>pcn(196,78)</code>; <code>SPC(78)</code> wordt <code>sp(78)</code>. De woorden zijn vertaald, maar de box-drawing-codes blijven gelijk.`],
+  ['De levelloop &amp; de startslang', `<code>FOR LEVEL=1 TO 32</code> is een <code>for</code>-loop; de slang start op dezelfde offsets (2000 staart, 1840 kop); <code>ON LEVEL GOSUB</code> wordt een indexed call in de <code>CFG</code>-tabel.`],
+  ['Een toets lezen: blokkerende INKEY$ wordt async', `<em>De grootste structurele wijziging.</em> De <code>INKEY$</code>-wachtlus kan een browser niet blokkeren, dus hij wordt een Promise: <code>keyOrTimeout(ms)</code> resolved bij een toets of bij timeout. De gameloop <code>await</code> daarop.`],
+  ['Toets sorteren, en ESC', `<code>LEN(A$)</code> onderscheidt een tweekarakter-pijltje van een enkele toets; JavaScript gebruikt <code>A$.length</code>. ESC wordt een geworpen doodsignaal in plaats van <code>GOTO 510</code>.`],
+  ['De kop omzetten naar een schermstap', `Identieke offset-rekenkunde: een richting wordt &plusmn;160 voor een rij of &plusmn;2 voor een kolom. <code>A</code> is het doelvak; <code>peek(A)</code> vertelt wat daar staat.`],
+  ['Wat staat er in het volgende vak?', `De <code>IF D&lt;&gt;n THEN GOTO</code>-ladder wordt een <code>if / else if</code>-keten op dezelfde tekencodes: leeg, klaver, hart, steen, smiley, pijl.`],
+  ['Geblokkeerd door muur of staart', `Alles anders betekent: je kunt er niet in. BASIC valt door naar regel 910; JavaScript zet <code>blocked = true</code>. Beide houden de oude richting, trekken bonus af en slaan de zet over.`],
+  ['De lichaamsbocht tekenen', `Zes gevallen kiezen het box-drawing-stuk voor de bocht uit nieuwe richting <code>E</code> en oude richting <code>F</code>, en voegen daarna een nieuwe <span class="mono">&#9608;</span> kop toe.`],
+  ['Glans &amp; levelgevaar', `De helderheids-"shimmer" en de <code>ON LEVEL GOSUB</code> die pijlen/poorten animeert worden een <code>for</code>-loop en een indexed call in <code>ENEMY</code>.`],
+  ['Dood: GOTO/RETURN 510 wordt throw', `BASIC sterft met <code>GOTO 510</code> of <code>RETURN 510</code> vanuit een GOSUB. JavaScript gebruikt <code>throw DEATH</code>, gevangen rond de loop: dezelfde sprong naar buiten, maar met exceptions.`],
+  ['Twee dispatch-tabellen (ON LEVEL GOSUB)', `<code>ON LEVEL GOSUB</code> is een jumptable. De port maakt dat letterlijk: <code>CFG[]</code> bevat levelrecepten en <code>ENEMY[]</code> bevat de animatie per tick.`],
+  ['Een item willekeurig neerzetten', `<code>RND</code> wordt <code>Math.random()</code>. De even-offsettruc en de "is het leeg?"-test blijven hetzelfde.`],
+  ['Scoren', `Tel <code>OP</code> bij de score op en werk de highscore bij. <code>PRINT USING "######"</code> wordt de helper <code>pu(6, &hellip;)</code>.`],
+  ['Geluid: SOUND f,d wordt Web Audio', `<code>SOUND freq, ticks</code> wordt een korte blokgolf op de Web Audio-klok, met dezelfde frequenties en dezelfde 1/18.2&nbsp;s-ticks.`],
+  ['Invoer: INKEY$-scancodes worden keydown', `DOS gaf een pijltje uit <code>INKEY$</code> terug als twee bytes. De browser-handler maakt precies zulke strings (<code>'\\0H'</code> = omhoog), zodat de loop hetzelfde ziet als in 1988.`],
+];
+if(typeof window.sneekieLang === 'function' && window.sneekieLang() === 'nl'){
+  MIGRATION_NL_SECTIONS.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
+}
+
 /* ---------- render ---------- */
 const pairs = document.getElementById('pairs');
 const tocList = document.getElementById('toc-list');
