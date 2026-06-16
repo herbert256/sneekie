@@ -403,12 +403,12 @@
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
           <li>The page speed slider changes the delay between key presses, not the search itself.</li>
         </ul>
-        <p>The slider maps 0&ndash;100 onto a nonlinear delay. At low values the bot waits longer between moves; at high values it presses keys much faster, down to roughly 45&nbsp;ms per move.</p>
-        <pre><code>delay = round(45 + 375 * ((100 - sliderValue) / 100) ** 1.6)</code></pre>
+        <p>The slider snaps to the page's speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move.</p>
+        <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
         <h2>11. Win, stuck, restart</h2>
-        <p>The live page has 16 selectable tabs: levels 1-8 and 25-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 1. The flash pulses five times, one second apart, before the next level loads &mdash; or, if you ask for reduced motion, it shows a single steady tint for about a second and a half instead.</p>
+        <p>The live page has seven selectable tabs: levels 26-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 26. The flash pulses five times, one second apart, before the next level loads &mdash; or, if you ask for reduced motion, it shows a single steady tint for about a second and a half instead.</p>
         <table>
           <thead>
             <tr>
@@ -616,11 +616,12 @@
           <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
           <li>De schuifregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
         </ul>
-        <pre><code>delay = round(45 + 375 * ((100 - sliderValue) / 100) ** 1.6)</code></pre>
+        <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet.</p>
+        <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
         <h2>11. Win, vast, herstart</h2>
-        <p>De livepagina heeft 16 tabs: levels 1-8 en 25-32. Winst flitst groen, falen flitst rood, en beide gaan daarna door naar de volgende tab. Na level 32 gaat hij terug naar level 1.</p>
+        <p>De livepagina heeft zeven tabs: levels 26-32. Winst flitst groen, falen flitst rood, en beide gaan daarna door naar de volgende tab. Na level 32 gaat hij terug naar level 26.</p>
         <table>
           <thead><tr><th>Voorwaarde</th><th>Resultaat</th></tr></thead>
           <tbody>

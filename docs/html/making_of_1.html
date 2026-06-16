@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The legend of Sneekie, half-remembered 38 years later: a 1988 GW-BASIC game, its life in print, the OCR resurrection (0 vs O), and the 2026 browser port by Claude Fable and Claude Opus." />
+    <title>Sneekie — The Making Of (Part 1)</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/html/making_of_1" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie — The Making Of (Part 1)" />
+    <meta property="og:description" content="The legendary, half-remembered story of Sneekie: from a 1988 GW-BASIC summer to print, to an OCR resurrection, to the 2026 browser port." />
+    <meta property="og:url" content="https://sneekie.xyz/html/making_of_1" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie — The Making Of (Part 1)" />
+    <meta name="twitter:description" content="The legend of Sneekie, as half-remembered 38 years later — and the dramatic 2026 port by Fable and Opus." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/making_of_1.css" />
+  </head>
+  <body class="page-doc page-making_of_1">
+    <main data-lang-template>
+      <h1 class="page-title">The Making Of <span class="sub">Part 1 · the legend of Sneekie</span></h1>
+      <p class="lead">Every other page on this site is engineering. This one is mythology. What follows is the story of Sneekie as I remember it &mdash; and after thirty-eight years, a few careers, and a generous quantity of beer, I remember it about as reliably as a goldfish remembers last Tuesday. I have no memory of this place. We&rsquo;re going in anyway.</p>
+      <div class="hazy"><strong>Narrator&rsquo;s disclaimer.</strong> Dates are approximate. Details are reconstructed. Some of this may have happened to someone else entirely. I have decided to believe all of it.</div>
+
+      <section>
+        <span class="kicker">I &middot; 1988</span>
+        <h2>A beige box and a warm summer</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <rect x="28" y="28" width="116" height="92" rx="4" fill="#08140d" stroke="var(--border)" />
+            <line x1="86" y1="28" x2="86" y2="120" stroke="var(--border)" />
+            <line x1="28" y1="74" x2="144" y2="74" stroke="var(--border)" />
+            <circle cx="116" cy="54" r="13" fill="var(--smiley)" />
+            <circle cx="121" cy="50" r="11" fill="#08140d" />
+            <circle cx="46" cy="44" r="1.6" fill="var(--heading)" />
+            <circle cx="60" cy="96" r="1.6" fill="var(--heading)" />
+            <circle cx="40" cy="104" r="1.4" fill="var(--heading)" />
+            <circle cx="132" cy="40" r="1.4" fill="var(--heading)" />
+            <rect x="300" y="32" width="58" height="42" rx="3" fill="var(--panel2)" stroke="var(--border)" />
+            <text x="329" y="59" text-anchor="middle" font-family="ui-monospace,monospace" font-size="16" font-weight="700" fill="var(--stone)">1988</text>
+            <rect x="0" y="238" width="480" height="14" fill="var(--panel2)" />
+            <line x1="0" y1="238" x2="480" y2="238" stroke="var(--border)" />
+            <rect x="288" y="118" width="168" height="120" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
+            <rect x="300" y="130" width="144" height="86" rx="6" fill="#03130a" stroke="var(--border)" />
+            <text x="312" y="150" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">10 SCREEN 0</text>
+            <text x="312" y="168" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">RUN</text>
+            <text x="312" y="190" font-family="ui-monospace,monospace" font-size="11" fill="var(--heading)">Ok</text>
+            <rect x="330" y="181" width="8" height="11" fill="var(--accent)" />
+            <circle cx="112" cy="150" r="26" fill="var(--heading)" />
+            <circle cx="120" cy="148" r="2.4" fill="#05140a" />
+            <path d="M116 158 q6 5 12 0" fill="none" stroke="#05140a" stroke-width="2" stroke-linecap="round" />
+            <path d="M70 238 C70 196 90 184 112 184 C134 184 154 196 154 238 Z" fill="var(--accent)" />
+            <path d="M140 206 L196 226" stroke="var(--heading)" stroke-width="8" stroke-linecap="round" />
+            <path d="M132 214 L196 230" stroke="var(--heading)" stroke-width="8" stroke-linecap="round" />
+            <rect x="170" y="224" width="104" height="14" rx="3" fill="var(--panel2)" stroke="var(--border)" />
+            <circle cx="182" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="196" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="210" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="224" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="238" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="252" cy="231" r="1.6" fill="var(--muted)" />
+            <rect x="278" y="214" width="20" height="22" rx="3" fill="var(--stone)" />
+            <path d="M298 219 q10 0 10 7 q0 7 -10 7" fill="none" stroke="var(--stone)" stroke-width="3" />
+            <path d="M286 208 q5 -6 0 -12" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <figcaption>1988. A warm room, a green glow, and HerbySoft &mdash; <b>a software empire of exactly one</b>.</figcaption>
+        </figure>
+        <p>The legend begins in 1988, in front of a humming machine the colour of weak coffee. I was young, the room was too warm, and the only light came from a green phosphor glow and the blinking <code>Ok</code> of GW-BASIC.</p>
+        <p>HerbySoft &mdash; my software empire, staffed entirely by me &mdash; set out to make a game. There was no engine, no framework, no Stack Overflow to copy from. To draw something on the screen you <code>POKE</code>d character codes straight into video memory and hoped. I did a great deal of hoping.</p>
+      </section>
+
+      <section>
+        <span class="kicker">II &middot; the snake</span>
+        <h2>Why a snake? I genuinely don&rsquo;t know</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <rect x="20" y="24" width="440" height="252" rx="8" fill="none" stroke="var(--border)" stroke-dasharray="10 8" />
+            <rect x="92" y="150" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="92" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="120" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="148" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="176" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="204" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="230" y="171" width="34" height="34" rx="9" fill="var(--heading)" />
+            <circle cx="250" cy="183" r="3.4" fill="#05140a" />
+            <circle cx="258" cy="183" r="3.4" fill="#05140a" />
+            <path d="M266 190 L280 190 M280 190 L286 186 M280 190 L286 194" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" />
+            <g transform="translate(322,150)" fill="var(--red)">
+              <circle cx="-7" cy="-4" r="9" />
+              <circle cx="7" cy="-4" r="9" />
+              <path d="M-15 0 L15 0 L0 20 Z" />
+            </g>
+            <g transform="translate(150,118)" fill="var(--club)">
+              <circle cx="0" cy="-6" r="7" />
+              <circle cx="-7" cy="4" r="7" />
+              <circle cx="7" cy="4" r="7" />
+              <path d="M-3 4 L3 4 L5 18 L-5 18 Z" />
+            </g>
+            <path d="M372 150 L352 168 L372 186" fill="none" stroke="var(--arrow)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="372" y1="168" x2="408" y2="168" stroke="var(--arrow)" stroke-width="5" stroke-linecap="round" />
+            <rect x="120" y="232" width="16" height="16" rx="2" fill="var(--stone)" />
+            <rect x="138" y="232" width="16" height="16" rx="2" fill="var(--stone)" />
+          </svg>
+          <figcaption>Sneekie: a snake, a maze, hearts, clubs, stones, and arrows with a grudge. <b>It&rsquo;s dangerous to go alone.</b></figcaption>
+        </figure>
+        <p>Of all the things to spend a summer on, I built a snake in a maze. It ate hearts and clubs, shoved stones around, and fled little arrows that wandered the corridors with what I can only describe as malice. Then I did it again, thirty-two times, each level meaner than the last.</p>
+        <p>It was dangerous to go alone, so I gave the player a fistful of hearts and the snake a personality it absolutely did not need.</p>
+      </section>
+
+      <section>
+        <span class="kicker">III &middot; October 1988</span>
+        <h2>It went to print</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g transform="rotate(-4 240 152)">
+              <polygon points="78,98 234,88 234,214 78,206" fill="var(--text)" stroke="var(--border)" />
+              <polygon points="246,88 402,98 402,206 246,214" fill="var(--text)" stroke="var(--border)" />
+              <line x1="240" y1="88" x2="240" y2="214" stroke="var(--border)" stroke-width="2" />
+              <rect x="92" y="110" width="118" height="6" rx="2" fill="#3a4046" />
+              <rect x="92" y="124" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="134" width="100" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="144" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="154" width="88" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="170" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="180" width="106" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="190" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="262" y="106" width="120" height="14" rx="2" fill="var(--accent)" opacity="0.85" />
+              <rect x="262" y="128" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="138" width="104" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="148" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="158" width="92" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="168" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="178" width="110" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="188" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+            </g>
+            <g transform="translate(398,72)">
+              <path d="M0 -26 L7 -9 L25 -9 L11 3 L17 21 L0 10 L-17 21 L-11 3 L-25 -9 L-7 -9 Z" fill="var(--smiley)" />
+              <text x="0" y="5" text-anchor="middle" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="#3a2a00">25</text>
+            </g>
+          </svg>
+          <figcaption><b>MS(X)DOS Computer Magazine no.&nbsp;25</b> &mdash; the listing in print, ready to be typed back in by hand.</figcaption>
+        </figure>
+        <p>Here&rsquo;s the part even I find suspicious: Sneekie was published. Printed. In <em>MS(X)DOS Computer Magazine</em> no.&nbsp;25, October 1988 &mdash; page after page of my BASIC set in tiny type, so a total stranger could type the whole thing back in, line by line, semicolon by semicolon.</p>
+        <p>People actually did this. In 1988, that was the App Store.</p>
+        <div class="hazy">I&rsquo;d love to tell you how it felt to see my name in print. Honestly? I remember it the way you remember a dream that someone else described to you over the phone.</div>
+      </section>
+
+      <section>
+        <span class="kicker">IV &middot; 1988&ndash;2026</span>
+        <h2>The lost years</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g opacity="0.5">
+              <rect x="300" y="64" width="150" height="112" rx="8" fill="#0a0f0d" stroke="var(--border)" />
+              <rect x="312" y="76" width="126" height="78" rx="4" fill="#120808" stroke="var(--border)" />
+              <text x="375" y="124" text-anchor="middle" font-family="ui-monospace,monospace" font-size="34" font-weight="700" fill="var(--red)">404</text>
+            </g>
+            <text x="64" y="58" font-family="ui-monospace,monospace" font-size="13" fill="var(--muted)" opacity="0.7">1988 &#8594; 2026</text>
+            <g stroke="var(--muted)" stroke-width="1" opacity="0.55" fill="none">
+              <line x1="24" y1="24" x2="86" y2="24" />
+              <line x1="24" y1="24" x2="24" y2="86" />
+              <line x1="24" y1="24" x2="78" y2="78" />
+              <path d="M24 50 Q44 50 50 78" />
+              <path d="M50 24 Q50 44 78 50" />
+            </g>
+            <g transform="rotate(-8 168 178)">
+              <rect x="92" y="100" width="152" height="152" rx="6" fill="#20262b" stroke="var(--border)" />
+              <rect x="92" y="100" width="152" height="42" rx="6" fill="#b9c2c6" />
+              <text x="110" y="128" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="#222">SNEEKIE</text>
+              <rect x="150" y="100" width="44" height="30" fill="#8b949e" stroke="#5a626a" />
+              <circle cx="168" cy="186" r="22" fill="#05080a" stroke="var(--border)" />
+              <circle cx="168" cy="186" r="11" fill="#20262b" stroke="var(--border)" />
+              <circle cx="150" cy="166" r="4" fill="#05080a" />
+              <rect x="134" y="232" width="68" height="16" rx="8" fill="#05080a" />
+              <rect x="232" y="150" width="10" height="20" rx="2" fill="#05080a" />
+            </g>
+            <text x="288" y="214" font-family="ui-monospace,monospace" font-size="26" font-weight="700" fill="var(--muted)" opacity="0.55">?</text>
+            <text x="356" y="246" font-family="ui-monospace,monospace" font-size="20" font-weight="700" fill="var(--muted)" opacity="0.45">?</text>
+          </svg>
+          <figcaption>The disk is long gone. <b>Press F.</b> For years, the only Sneekie left was ink on paper.</figcaption>
+        </figure>
+        <p>Then time did what time does. Floppies rot. Drives vanish into drawers, and drawers vanish into house moves. The original disk &mdash; the actual source &mdash; is gone. Press F.</p>
+        <p>For decades the only surviving copy of Sneekie was ink on paper, in a magazine that almost nobody kept. The game existed the way a folk song exists: only because someone once wrote it down, somewhere, by hand. This is fine, I told myself. This is fine.</p>
+      </section>
+
+      <section>
+        <span class="kicker">V &middot; OCR, 2026</span>
+        <h2>Reading it back from the dead</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g transform="rotate(-3 116 156)">
+              <rect x="44" y="62" width="146" height="190" rx="4" fill="#c2cace" stroke="var(--border)" />
+              <rect x="58" y="80" width="118" height="7" rx="2" fill="#2f343a" />
+              <rect x="58" y="98" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="108" width="100" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="118" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="206" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="216" width="92" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="226" width="118" height="4" rx="2" fill="#4a5158" />
+            </g>
+            <rect x="40" y="150" width="150" height="10" rx="2" fill="var(--accent)" opacity="0.45" />
+            <line x1="40" y1="150" x2="190" y2="150" stroke="var(--accent)" stroke-width="2" />
+            <rect x="300" y="86" width="96" height="80" rx="14" fill="var(--bezel1)" stroke="var(--border)" />
+            <line x1="348" y1="86" x2="348" y2="68" stroke="var(--border)" stroke-width="2" />
+            <circle cx="348" cy="64" r="5" fill="var(--smiley)" />
+            <circle cx="324" cy="124" r="12" fill="#05140a" />
+            <circle cx="324" cy="124" r="6" fill="var(--accent)" />
+            <circle cx="372" cy="124" r="12" fill="#05140a" />
+            <circle cx="372" cy="124" r="6" fill="var(--accent)" />
+            <rect x="326" y="148" width="44" height="6" rx="3" fill="var(--muted)" />
+            <path d="M404 116 q8 12 0 18 q-8 -6 0 -18 Z" fill="var(--blue)" />
+            <path d="M300 150 L228 196" stroke="var(--bezel1)" stroke-width="12" stroke-linecap="round" />
+            <line x1="210" y1="186" x2="186" y2="160" stroke="#8b949e" stroke-width="9" stroke-linecap="round" />
+            <circle cx="160" cy="138" r="40" fill="#0a1f12" fill-opacity="0.9" stroke="var(--accent)" stroke-width="5" />
+            <text x="160" y="134" text-anchor="middle" font-family="ui-monospace,monospace" font-size="22" font-weight="700" fill="var(--heading)">0 O</text>
+            <text x="160" y="156" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--accent)">1 l I  5 S</text>
+            <text x="356" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--muted)">0 = O ?</text>
+          </svg>
+          <figcaption>Is it a <b>0</b>, or an <b>O</b>? One does not simply OCR a 1988 listing.</figcaption>
+        </figure>
+        <p>To revive it, we first had to <em>read</em> it &mdash; feed a scan of the printed listing to OCR, the technology that confidently turns pictures of letters back into letters. Mostly correct. It&rsquo;s the &ldquo;mostly&rdquo; that ruins your week.</p>
+        <p>In a BASIC listing, <code>0</code> and <code>O</code> are identical twins separated at birth, and OCR cannot tell the zero from the oh. Nor <code>1</code> from <code>l</code> from <code>I</code>, nor <code>8</code> from <code>B</code>, nor <code>5</code> from <code>S</code>. One does not simply OCR a 1988 listing. Every wrong guess is a syntax error lying in ambush &mdash; and a single <code>O</code> where a <code>0</code> belongs is enough to stop the snake from ever being born.</p>
+      </section>
+
+      <section>
+        <span class="kicker">VI &middot; June 2026</span>
+        <h2>Fable lit the spark, Opus built the house</h2>
+        <figure class="panel-fig wide">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g opacity="0.6">
+              <rect x="300" y="40" width="150" height="72" rx="6" fill="#0a0f0d" stroke="var(--accent)" stroke-dasharray="7 6" />
+              <line x1="300" y1="58" x2="450" y2="58" stroke="var(--accent)" stroke-dasharray="7 6" />
+              <circle cx="312" cy="49" r="3" fill="var(--red)" />
+              <circle cx="322" cy="49" r="3" fill="var(--smiley)" />
+              <circle cx="332" cy="49" r="3" fill="var(--club)" />
+            </g>
+            <rect x="60" y="118" width="70" height="58" rx="12" fill="var(--panel2)" stroke="var(--border)" />
+            <line x1="95" y1="118" x2="95" y2="100" stroke="var(--border)" stroke-width="2" />
+            <path d="M95 100 l5 -9 l5 9 l-5 4 Z" fill="var(--smiley)" />
+            <circle cx="84" cy="144" r="8" fill="#05140a" />
+            <circle cx="84" cy="144" r="4" fill="var(--accent)" />
+            <circle cx="112" cy="144" r="8" fill="#05140a" />
+            <circle cx="112" cy="144" r="4" fill="var(--accent)" />
+            <path d="M84 162 q11 7 22 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+            <rect x="70" y="178" width="50" height="44" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
+            <path d="M118 196 L168 162" stroke="var(--bezel1)" stroke-width="9" stroke-linecap="round" />
+            <g>
+              <rect x="40" y="186" width="20" height="34" rx="3" fill="none" stroke="var(--stone)" stroke-width="2" />
+              <path d="M42 190 L58 190 L50 203 Z" fill="var(--smiley)" />
+              <path d="M42 216 L58 216 L50 203 Z" fill="var(--smiley)" opacity="0.5" />
+            </g>
+            <g transform="rotate(-12 200 150)">
+              <rect x="168" y="134" width="64" height="36" rx="4" fill="var(--text)" stroke="var(--border)" />
+              <ellipse cx="168" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
+              <ellipse cx="232" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
+              <line x1="180" y1="144" x2="220" y2="144" stroke="#4a5158" stroke-width="2" />
+              <line x1="180" y1="152" x2="216" y2="152" stroke="#4a5158" stroke-width="2" />
+              <line x1="180" y1="160" x2="220" y2="160" stroke="#4a5158" stroke-width="2" />
+            </g>
+            <path d="M148 198 Q240 230 300 200" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="6 5" />
+            <path d="M300 200 l-12 -5 l3 7 Z" fill="var(--accent)" />
+            <rect x="300" y="120" width="92" height="72" rx="14" fill="var(--panel2)" stroke="var(--border)" />
+            <path d="M298 128 a48 30 0 0 1 96 0 Z" fill="var(--smiley)" />
+            <rect x="290" y="124" width="112" height="7" rx="3" fill="var(--smiley)" />
+            <circle cx="326" cy="156" r="11" fill="#05140a" />
+            <circle cx="326" cy="156" r="5.5" fill="var(--accent)" />
+            <circle cx="366" cy="156" r="11" fill="#05140a" />
+            <circle cx="366" cy="156" r="5.5" fill="var(--accent)" />
+            <path d="M326 176 q20 9 40 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+            <rect x="306" y="196" width="80" height="58" rx="12" fill="var(--bezel1)" stroke="var(--border)" />
+            <path d="M306 214 L236 168" stroke="var(--bezel1)" stroke-width="11" stroke-linecap="round" />
+          </svg>
+          <figcaption>June 2026: <b>Fable</b> ported the BASIC line for line; <b>Opus</b> built the site around it. <b>The torch, passed.</b></figcaption>
+        </figure>
+        <p>And now the genuinely dramatic part. The line-for-line port &mdash; from 1988 BASIC to a game that runs in your browser &mdash; was done by <strong>Claude Fable</strong>, a model that was only available for a handful of days. A blink. It read the recovered listing and rebuilt Sneekie move for move, faithfully, while the window it existed in was already closing.</p>
+        <p>Then <strong>Claude Opus</strong> built everything <em>around</em> that port: the pages you&rsquo;re reading, the chrome, the words, this very story. A relay race across thirty-eight years &mdash; a teenager with a <code>POKE</code>, a model that barely existed, and a model that turned it all into a website. The torch, passed in the dark.</p>
+        <div class="hazy"><strong>The strange truth.</strong> The oldest part of this project is the only part that&rsquo;s really mine, and it&rsquo;s the part I remember least. The newest part was built in days, by machines I&rsquo;d known for an afternoon.</div>
+      </section>
+
+      <p class="endcap">&mdash; To be continued &middot; Part 1 of ? &mdash;</p>
+    </main>
+
+    <template id="main-template-nl">
+      <h1 class="page-title">De Making Of <span class="sub">Deel 1 · de legende van Sneekie</span></h1>
+      <p class="lead">Elke andere pagina op deze site is techniek. Deze is mythologie. Wat volgt is het verhaal van Sneekie zoals ik het me herinner &mdash; en na achtendertig jaar, een paar loopbanen en een royale hoeveelheid bier herinner ik het me ongeveer zo betrouwbaar als een goudvis zich afgelopen dinsdag herinnert. Ik heb geen herinnering aan deze plek. We gaan toch naar binnen.</p>
+      <div class="hazy"><strong>Disclaimer van de verteller.</strong> Datums zijn bij benadering. Details zijn gereconstrueerd. Een deel hiervan is misschien iemand anders overkomen. Ik heb besloten alles te geloven.</div>
+
+      <section>
+        <span class="kicker">I &middot; 1988</span>
+        <h2>Een beige kast en een warme zomer</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <rect x="28" y="28" width="116" height="92" rx="4" fill="#08140d" stroke="var(--border)" />
+            <line x1="86" y1="28" x2="86" y2="120" stroke="var(--border)" />
+            <line x1="28" y1="74" x2="144" y2="74" stroke="var(--border)" />
+            <circle cx="116" cy="54" r="13" fill="var(--smiley)" />
+            <circle cx="121" cy="50" r="11" fill="#08140d" />
+            <circle cx="46" cy="44" r="1.6" fill="var(--heading)" />
+            <circle cx="60" cy="96" r="1.6" fill="var(--heading)" />
+            <circle cx="40" cy="104" r="1.4" fill="var(--heading)" />
+            <circle cx="132" cy="40" r="1.4" fill="var(--heading)" />
+            <rect x="300" y="32" width="58" height="42" rx="3" fill="var(--panel2)" stroke="var(--border)" />
+            <text x="329" y="59" text-anchor="middle" font-family="ui-monospace,monospace" font-size="16" font-weight="700" fill="var(--stone)">1988</text>
+            <rect x="0" y="238" width="480" height="14" fill="var(--panel2)" />
+            <line x1="0" y1="238" x2="480" y2="238" stroke="var(--border)" />
+            <rect x="288" y="118" width="168" height="120" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
+            <rect x="300" y="130" width="144" height="86" rx="6" fill="#03130a" stroke="var(--border)" />
+            <text x="312" y="150" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">10 SCREEN 0</text>
+            <text x="312" y="168" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">RUN</text>
+            <text x="312" y="190" font-family="ui-monospace,monospace" font-size="11" fill="var(--heading)">Ok</text>
+            <rect x="330" y="181" width="8" height="11" fill="var(--accent)" />
+            <circle cx="112" cy="150" r="26" fill="var(--heading)" />
+            <circle cx="120" cy="148" r="2.4" fill="#05140a" />
+            <path d="M116 158 q6 5 12 0" fill="none" stroke="#05140a" stroke-width="2" stroke-linecap="round" />
+            <path d="M70 238 C70 196 90 184 112 184 C134 184 154 196 154 238 Z" fill="var(--accent)" />
+            <path d="M140 206 L196 226" stroke="var(--heading)" stroke-width="8" stroke-linecap="round" />
+            <path d="M132 214 L196 230" stroke="var(--heading)" stroke-width="8" stroke-linecap="round" />
+            <rect x="170" y="224" width="104" height="14" rx="3" fill="var(--panel2)" stroke="var(--border)" />
+            <circle cx="182" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="196" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="210" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="224" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="238" cy="231" r="1.6" fill="var(--muted)" />
+            <circle cx="252" cy="231" r="1.6" fill="var(--muted)" />
+            <rect x="278" y="214" width="20" height="22" rx="3" fill="var(--stone)" />
+            <path d="M298 219 q10 0 10 7 q0 7 -10 7" fill="none" stroke="var(--stone)" stroke-width="3" />
+            <path d="M286 208 q5 -6 0 -12" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <figcaption>1988. Een warme kamer, een groene gloed, en HerbySoft &mdash; <b>een software-imperium van precies &eacute;&eacute;n</b>.</figcaption>
+        </figure>
+        <p>De legende begint in 1988, voor een zoemende machine in de kleur van slappe koffie. Ik was jong, de kamer was te warm, en het enige licht kwam van een groene fosforgloed en de knipperende <code>Ok</code> van GW-BASIC.</p>
+        <p>HerbySoft &mdash; mijn software-imperium, met mij als enige werknemer &mdash; wilde een spel maken. Geen engine, geen framework, geen Stack Overflow om van te jatten. Om iets op het scherm te tekenen <code>POKE</code>te je tekencodes regelrecht in het videogeheugen en hoopte je. Ik hoopte heel veel.</p>
+      </section>
+
+      <section>
+        <span class="kicker">II &middot; de slang</span>
+        <h2>Waarom een slang? Ik heb echt geen idee</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <rect x="20" y="24" width="440" height="252" rx="8" fill="none" stroke="var(--border)" stroke-dasharray="10 8" />
+            <rect x="92" y="150" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="92" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="120" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="148" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="176" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="204" y="178" width="28" height="28" rx="8" fill="var(--accent)" />
+            <rect x="230" y="171" width="34" height="34" rx="9" fill="var(--heading)" />
+            <circle cx="250" cy="183" r="3.4" fill="#05140a" />
+            <circle cx="258" cy="183" r="3.4" fill="#05140a" />
+            <path d="M266 190 L280 190 M280 190 L286 186 M280 190 L286 194" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" />
+            <g transform="translate(322,150)" fill="var(--red)">
+              <circle cx="-7" cy="-4" r="9" />
+              <circle cx="7" cy="-4" r="9" />
+              <path d="M-15 0 L15 0 L0 20 Z" />
+            </g>
+            <g transform="translate(150,118)" fill="var(--club)">
+              <circle cx="0" cy="-6" r="7" />
+              <circle cx="-7" cy="4" r="7" />
+              <circle cx="7" cy="4" r="7" />
+              <path d="M-3 4 L3 4 L5 18 L-5 18 Z" />
+            </g>
+            <path d="M372 150 L352 168 L372 186" fill="none" stroke="var(--arrow)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="372" y1="168" x2="408" y2="168" stroke="var(--arrow)" stroke-width="5" stroke-linecap="round" />
+            <rect x="120" y="232" width="16" height="16" rx="2" fill="var(--stone)" />
+            <rect x="138" y="232" width="16" height="16" rx="2" fill="var(--stone)" />
+          </svg>
+          <figcaption>Sneekie: een slang, een doolhof, harten, klavers, stenen en pijlen met een wrok. <b>Alleen op pad gaan is gevaarlijk.</b></figcaption>
+        </figure>
+        <p>Van alle dingen om een zomer aan te besteden bouwde ik een slang in een doolhof. Hij at harten en klavers, duwde stenen rond, en vluchtte voor pijltjes die met &mdash; ik kan het niet anders omschrijven &mdash; kwade wil door de gangen dwaalden. Daarna deed ik het nog eens, twee&euml;ndertig keer, elk level gemener dan het vorige.</p>
+        <p>Alleen op pad gaan was gevaarlijk, dus gaf ik de speler een handvol harten en de slang een karakter dat hij absoluut niet nodig had.</p>
+      </section>
+
+      <section>
+        <span class="kicker">III &middot; oktober 1988</span>
+        <h2>Het ging naar de drukker</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g transform="rotate(-4 240 152)">
+              <polygon points="78,98 234,88 234,214 78,206" fill="var(--text)" stroke="var(--border)" />
+              <polygon points="246,88 402,98 402,206 246,214" fill="var(--text)" stroke="var(--border)" />
+              <line x1="240" y1="88" x2="240" y2="214" stroke="var(--border)" stroke-width="2" />
+              <rect x="92" y="110" width="118" height="6" rx="2" fill="#3a4046" />
+              <rect x="92" y="124" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="134" width="100" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="144" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="154" width="88" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="170" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="180" width="106" height="4" rx="2" fill="#4a5158" />
+              <rect x="92" y="190" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="262" y="106" width="120" height="14" rx="2" fill="var(--accent)" opacity="0.85" />
+              <rect x="262" y="128" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="138" width="104" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="148" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="158" width="92" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="168" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="178" width="110" height="3.5" rx="2" fill="#2f7a3c" />
+              <rect x="262" y="188" width="120" height="3.5" rx="2" fill="#2f7a3c" />
+            </g>
+            <g transform="translate(398,72)">
+              <path d="M0 -26 L7 -9 L25 -9 L11 3 L17 21 L0 10 L-17 21 L-11 3 L-25 -9 L-7 -9 Z" fill="var(--smiley)" />
+              <text x="0" y="5" text-anchor="middle" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="#3a2a00">25</text>
+            </g>
+          </svg>
+          <figcaption><b>MS(X)DOS Computer Magazine nr.&nbsp;25</b> &mdash; de listing in druk, klaar om met de hand te worden ingetypt.</figcaption>
+        </figure>
+        <p>Nu het deel dat zelfs ik verdacht vind: Sneekie werd gepubliceerd. Gedrukt. In <em>MS(X)DOS Computer Magazine</em> nr.&nbsp;25, oktober 1988 &mdash; pagina na pagina van mijn BASIC in piepklein lettertype, zodat een volslagen vreemde het hele ding regel voor regel, puntkomma voor puntkomma, weer kon intypen.</p>
+        <p>Mensen deden dat echt. In 1988 was dat de App Store.</p>
+        <div class="hazy">Ik zou je graag vertellen hoe het voelde om mijn naam in druk te zien. Eerlijk? Ik herinner het me zoals je je een droom herinnert die iemand anders je door de telefoon heeft beschreven.</div>
+      </section>
+
+      <section>
+        <span class="kicker">IV &middot; 1988&ndash;2026</span>
+        <h2>De verloren jaren</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g opacity="0.5">
+              <rect x="300" y="64" width="150" height="112" rx="8" fill="#0a0f0d" stroke="var(--border)" />
+              <rect x="312" y="76" width="126" height="78" rx="4" fill="#120808" stroke="var(--border)" />
+              <text x="375" y="124" text-anchor="middle" font-family="ui-monospace,monospace" font-size="34" font-weight="700" fill="var(--red)">404</text>
+            </g>
+            <text x="64" y="58" font-family="ui-monospace,monospace" font-size="13" fill="var(--muted)" opacity="0.7">1988 &#8594; 2026</text>
+            <g stroke="var(--muted)" stroke-width="1" opacity="0.55" fill="none">
+              <line x1="24" y1="24" x2="86" y2="24" />
+              <line x1="24" y1="24" x2="24" y2="86" />
+              <line x1="24" y1="24" x2="78" y2="78" />
+              <path d="M24 50 Q44 50 50 78" />
+              <path d="M50 24 Q50 44 78 50" />
+            </g>
+            <g transform="rotate(-8 168 178)">
+              <rect x="92" y="100" width="152" height="152" rx="6" fill="#20262b" stroke="var(--border)" />
+              <rect x="92" y="100" width="152" height="42" rx="6" fill="#b9c2c6" />
+              <text x="110" y="128" font-family="ui-monospace,monospace" font-size="15" font-weight="700" fill="#222">SNEEKIE</text>
+              <rect x="150" y="100" width="44" height="30" fill="#8b949e" stroke="#5a626a" />
+              <circle cx="168" cy="186" r="22" fill="#05080a" stroke="var(--border)" />
+              <circle cx="168" cy="186" r="11" fill="#20262b" stroke="var(--border)" />
+              <circle cx="150" cy="166" r="4" fill="#05080a" />
+              <rect x="134" y="232" width="68" height="16" rx="8" fill="#05080a" />
+              <rect x="232" y="150" width="10" height="20" rx="2" fill="#05080a" />
+            </g>
+            <text x="288" y="214" font-family="ui-monospace,monospace" font-size="26" font-weight="700" fill="var(--muted)" opacity="0.55">?</text>
+            <text x="356" y="246" font-family="ui-monospace,monospace" font-size="20" font-weight="700" fill="var(--muted)" opacity="0.45">?</text>
+          </svg>
+          <figcaption>De diskette is allang weg. <b>Press F.</b> Jarenlang was de enige Sneekie inkt op papier.</figcaption>
+        </figure>
+        <p>Toen deed de tijd wat de tijd doet. Diskettes vergaan. Drives verdwijnen in laden, en laden verdwijnen in verhuizingen. De oorspronkelijke diskette &mdash; de echte broncode &mdash; is weg. Press F.</p>
+        <p>Decennialang was de enige overgebleven kopie van Sneekie inkt op papier, in een blad dat vrijwel niemand bewaarde. Het spel bestond zoals een volksliedje bestaat: alleen omdat iemand het ooit, ergens, met de hand had opgeschreven. This is fine, hield ik mezelf voor. This is fine.</p>
+      </section>
+
+      <section>
+        <span class="kicker">V &middot; OCR, 2026</span>
+        <h2>Teruglezen uit de dood</h2>
+        <figure class="panel-fig">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g transform="rotate(-3 116 156)">
+              <rect x="44" y="62" width="146" height="190" rx="4" fill="#c2cace" stroke="var(--border)" />
+              <rect x="58" y="80" width="118" height="7" rx="2" fill="#2f343a" />
+              <rect x="58" y="98" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="108" width="100" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="118" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="206" width="118" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="216" width="92" height="4" rx="2" fill="#4a5158" />
+              <rect x="58" y="226" width="118" height="4" rx="2" fill="#4a5158" />
+            </g>
+            <rect x="40" y="150" width="150" height="10" rx="2" fill="var(--accent)" opacity="0.45" />
+            <line x1="40" y1="150" x2="190" y2="150" stroke="var(--accent)" stroke-width="2" />
+            <rect x="300" y="86" width="96" height="80" rx="14" fill="var(--bezel1)" stroke="var(--border)" />
+            <line x1="348" y1="86" x2="348" y2="68" stroke="var(--border)" stroke-width="2" />
+            <circle cx="348" cy="64" r="5" fill="var(--smiley)" />
+            <circle cx="324" cy="124" r="12" fill="#05140a" />
+            <circle cx="324" cy="124" r="6" fill="var(--accent)" />
+            <circle cx="372" cy="124" r="12" fill="#05140a" />
+            <circle cx="372" cy="124" r="6" fill="var(--accent)" />
+            <rect x="326" y="148" width="44" height="6" rx="3" fill="var(--muted)" />
+            <path d="M404 116 q8 12 0 18 q-8 -6 0 -18 Z" fill="var(--blue)" />
+            <path d="M300 150 L228 196" stroke="var(--bezel1)" stroke-width="12" stroke-linecap="round" />
+            <line x1="210" y1="186" x2="186" y2="160" stroke="#8b949e" stroke-width="9" stroke-linecap="round" />
+            <circle cx="160" cy="138" r="40" fill="#0a1f12" fill-opacity="0.9" stroke="var(--accent)" stroke-width="5" />
+            <text x="160" y="134" text-anchor="middle" font-family="ui-monospace,monospace" font-size="22" font-weight="700" fill="var(--heading)">0 O</text>
+            <text x="160" y="156" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--accent)">1 l I  5 S</text>
+            <text x="356" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--muted)">0 = O ?</text>
+          </svg>
+          <figcaption>Is het een <b>0</b> of een <b>O</b>? Je OCR&rsquo;t niet zomaar een listing uit 1988.</figcaption>
+        </figure>
+        <p>Om het te laten herleven moesten we het eerst <em>lezen</em> &mdash; een scan van de gedrukte listing door OCR halen, de techniek die plaatjes van letters vol zelfvertrouwen weer in letters omzet. Meestal correct. Het is dat &ldquo;meestal&rdquo; dat je week verpest.</p>
+        <p>In een BASIC-listing zijn <code>0</code> en <code>O</code> een eeneiige tweeling die bij de geboorte gescheiden is, en OCR kan de nul niet van de o onderscheiden. Net zomin <code>1</code> van <code>l</code> van <code>I</code>, of <code>8</code> van <code>B</code>, of <code>5</code> van <code>S</code>. Je OCR&rsquo;t niet zomaar een listing uit 1988. Elke verkeerde gok is een syntaxisfout die in een hinderlaag ligt &mdash; en &eacute;&eacute;n <code>O</code> waar een <code>0</code> hoort is genoeg om de slang nooit geboren te laten worden.</p>
+      </section>
+
+      <section>
+        <span class="kicker">VI &middot; juni 2026</span>
+        <h2>Fable ontstak de vonk, Opus bouwde het huis</h2>
+        <figure class="panel-fig wide">
+          <svg viewBox="0 0 480 300" aria-hidden="true">
+            <g opacity="0.6">
+              <rect x="300" y="40" width="150" height="72" rx="6" fill="#0a0f0d" stroke="var(--accent)" stroke-dasharray="7 6" />
+              <line x1="300" y1="58" x2="450" y2="58" stroke="var(--accent)" stroke-dasharray="7 6" />
+              <circle cx="312" cy="49" r="3" fill="var(--red)" />
+              <circle cx="322" cy="49" r="3" fill="var(--smiley)" />
+              <circle cx="332" cy="49" r="3" fill="var(--club)" />
+            </g>
+            <rect x="60" y="118" width="70" height="58" rx="12" fill="var(--panel2)" stroke="var(--border)" />
+            <line x1="95" y1="118" x2="95" y2="100" stroke="var(--border)" stroke-width="2" />
+            <path d="M95 100 l5 -9 l5 9 l-5 4 Z" fill="var(--smiley)" />
+            <circle cx="84" cy="144" r="8" fill="#05140a" />
+            <circle cx="84" cy="144" r="4" fill="var(--accent)" />
+            <circle cx="112" cy="144" r="8" fill="#05140a" />
+            <circle cx="112" cy="144" r="4" fill="var(--accent)" />
+            <path d="M84 162 q11 7 22 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+            <rect x="70" y="178" width="50" height="44" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
+            <path d="M118 196 L168 162" stroke="var(--bezel1)" stroke-width="9" stroke-linecap="round" />
+            <g>
+              <rect x="40" y="186" width="20" height="34" rx="3" fill="none" stroke="var(--stone)" stroke-width="2" />
+              <path d="M42 190 L58 190 L50 203 Z" fill="var(--smiley)" />
+              <path d="M42 216 L58 216 L50 203 Z" fill="var(--smiley)" opacity="0.5" />
+            </g>
+            <g transform="rotate(-12 200 150)">
+              <rect x="168" y="134" width="64" height="36" rx="4" fill="var(--text)" stroke="var(--border)" />
+              <ellipse cx="168" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
+              <ellipse cx="232" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
+              <line x1="180" y1="144" x2="220" y2="144" stroke="#4a5158" stroke-width="2" />
+              <line x1="180" y1="152" x2="216" y2="152" stroke="#4a5158" stroke-width="2" />
+              <line x1="180" y1="160" x2="220" y2="160" stroke="#4a5158" stroke-width="2" />
+            </g>
+            <path d="M148 198 Q240 230 300 200" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="6 5" />
+            <path d="M300 200 l-12 -5 l3 7 Z" fill="var(--accent)" />
+            <rect x="300" y="120" width="92" height="72" rx="14" fill="var(--panel2)" stroke="var(--border)" />
+            <path d="M298 128 a48 30 0 0 1 96 0 Z" fill="var(--smiley)" />
+            <rect x="290" y="124" width="112" height="7" rx="3" fill="var(--smiley)" />
+            <circle cx="326" cy="156" r="11" fill="#05140a" />
+            <circle cx="326" cy="156" r="5.5" fill="var(--accent)" />
+            <circle cx="366" cy="156" r="11" fill="#05140a" />
+            <circle cx="366" cy="156" r="5.5" fill="var(--accent)" />
+            <path d="M326 176 q20 9 40 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
+            <rect x="306" y="196" width="80" height="58" rx="12" fill="var(--bezel1)" stroke="var(--border)" />
+            <path d="M306 214 L236 168" stroke="var(--bezel1)" stroke-width="11" stroke-linecap="round" />
+          </svg>
+          <figcaption>Juni 2026: <b>Fable</b> portte de BASIC regel voor regel; <b>Opus</b> bouwde de site eromheen. <b>De fakkel, doorgegeven.</b></figcaption>
+        </figure>
+        <p>En nu het echt dramatische deel. De regel-voor-regel-port &mdash; van BASIC uit 1988 naar een spel dat in je browser draait &mdash; werd gedaan door <strong>Claude Fable</strong>, een model dat maar een handvol dagen beschikbaar was. Een oogwenk. Het las de herstelde listing en bouwde Sneekie zet voor zet trouw na, terwijl het venster waarin het bestond alweer dichtviel.</p>
+        <p>Daarna bouwde <strong>Claude Opus</strong> alles <em>eromheen</em>: de pagina&rsquo;s die je leest, de vormgeving, de woorden, dit verhaal. Een estafette over achtendertig jaar &mdash; een tiener met een <code>POKE</code>, een model dat amper bestond, en een model dat er een website van maakte. De fakkel, doorgegeven in het donker.</p>
+        <div class="hazy"><strong>De vreemde waarheid.</strong> Het oudste deel van dit project is het enige deel dat echt van mij is, en het is het deel dat ik me het minst herinner. Het nieuwste deel werd in dagen gebouwd, door machines die ik pas een middag kende.</div>
+      </section>
+
+      <p class="endcap">&mdash; Wordt vervolgd &middot; Deel 1 van ? &mdash;</p>
+    </template>
+
+    <script src="../js/site.js"></script>
+  </body>
+</html>

@@ -3,15 +3,16 @@
 /* Live */
 .page-live .speedbar{
   display:grid;
-  grid-template-columns:auto 1fr auto;
+  grid-template-columns:auto minmax(120px, 220px) auto;
   align-items:center;
-  gap:12px;
-  margin-top:18px;
+  gap:8px;
+  max-width:340px;
+  margin:14px auto 0;
   font-family:ui-monospace, monospace;
 }
 .page-live .speedbar label{
   color:var(--muted);
-  font-size:12px;
+  font-size:11px;
   text-transform:uppercase;
   white-space:nowrap;
 }
@@ -19,7 +20,7 @@
   min-width:3ch;
   color:var(--accent);
   text-align:right;
-  font-size:13px;
+  font-size:12px;
 }
 .page-live .speedbar input{
   width:100%;
@@ -28,7 +29,7 @@
 }
 .page-live .leveltabs{
   display:grid;
-  grid-template-columns:repeat(8, minmax(0, 1fr));
+  grid-template-columns:repeat(7, minmax(0, 1fr));
   gap:7px;
   margin-top:18px;
   font-family:ui-monospace, monospace;
@@ -160,10 +161,10 @@
 }
 @media (max-width:520px){
   .page-live .speedbar{
-    grid-template-columns:1fr auto;
-    gap:7px 10px;
+    grid-template-columns:auto minmax(120px, 1fr) auto;
+    gap:6px;
+    max-width:300px;
   }
-  .page-live .speedbar label{ grid-column:1 / -1; }
   .page-live .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .page-live #controls .grp{
     width:100%;

@@ -36,7 +36,8 @@ function lt(key, ...args){
   return typeof value === 'function' ? value(...args) : value;
 }
 
-const LEVEL_CHOICES = [1,2,3,4,5,6,7,8,25,26,27,28,29,30,31,32];
+const LEVEL_CHOICES = [26,27,28,29,30,31,32];
+const SPEED_CHOICES = [10,10,20,30,49,50,60,70,80,90,100];
 const GREEN = '#46ff64', RED = '#ff4040';
 
 // --- the smarter bot, eval'd inside the game iframe (IDX + TARGET are injected before it) ---
@@ -362,23 +363,36 @@ const HIDE = '<style>header.top,.hero,#controls,#touchbar,#hint,footer{display:n
   '#glass,#panel{display:none!important}' +
   '#screen{display:block!important;width:100%!important;height:100%!important;margin:0!important;image-rendering:pixelated!important;border-radius:0!important;box-shadow:none!important}</style>';
 
-let activeLevel = 25, gen = 0;
+let activeLevel = LEVEL_CHOICES[0], gen = 0;
 const cell = {};
 const tabs = new Map();
 const tablist = document.getElementById('leveltabs');
 const grid = document.getElementById('cells');
 const speed = document.getElementById('speed');
 const speedout = document.getElementById('speedout');
-let botSpeed = Number(speed.value);
+let botSpeed = 50;
+
+speed.min = '0';
+speed.max = String(SPEED_CHOICES.length - 1);
+speed.step = '1';
 
 function speedToDelay(value){
   return Math.round(45 + 375 * Math.pow((100 - value) / 100, 1.6));
 }
 
+function speedIndex(){
+  const value = Number(speed.value);
+  if(Number.isFinite(value)) return Math.max(0, Math.min(SPEED_CHOICES.length - 1, Math.round(value)));
+  return SPEED_CHOICES.indexOf(50);
+}
+
 function updateSpeed(){
-  botSpeed = Number(speed.value);
+  const index = speedIndex();
+  botSpeed = SPEED_CHOICES[index];
+  speed.value = String(index);
   speedout.value = String(botSpeed);
   speedout.textContent = String(botSpeed);
+  speed.setAttribute('aria-valuetext', String(botSpeed));
 }
 speed.addEventListener('input', updateSpeed);
 updateSpeed();
@@ -637,7 +651,7 @@ syncControls();
 function stepLevel(dir){
   const i = LEVEL_CHOICES.indexOf(activeLevel);
   const n = ((i < 0 ? 0 : i) + dir + LEVEL_CHOICES.length) % LEVEL_CHOICES.length;
-  setLevel(LEVEL_CHOICES[n]);                 // wraps: after 32 back to 1, before 1 back to 32
+  setLevel(LEVEL_CHOICES[n]);                 // wraps: after 32 back to 26, before 26 back to 32
 }
 document.addEventListener('keydown', e => {
   // Leave focused controls to handle their own Space/Arrow keys: the speed
