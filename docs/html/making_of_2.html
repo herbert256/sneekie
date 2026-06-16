@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The unreliable, legendary story of Sneekie: a 1988 GW-BASIC snake game, a paper magazine listing, OCR confusion, and the dramatic 2026 web revival." />
+    <title>Sneekie &mdash; The Making Off - 2</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/html/making_of_2" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie &mdash; The Making Off - 2" />
+    <meta property="og:description" content="A deliberately unreliable memory of how Sneekie may have happened, from a 1988 BASIC listing to a 2026 browser revival." />
+    <meta property="og:url" content="https://sneekie.xyz/html/making_of_2" />
+    <meta property="og:image" content="https://sneekie.xyz/images/making-of-2/legend-1988.webp" />
+    <meta property="og:image:alt" content="Cartoon illustration of a late-1980s desk with a glowing CRT showing a snake game." />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="676" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie &mdash; The Making Off - 2" />
+    <meta name="twitter:description" content="The unreliable, legendary story of Sneekie: 1988, OCR, and the 2026 web version." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/making-of-2/legend-1988.webp" />
+    <meta name="twitter:image:alt" content="Cartoon illustration of a late-1980s desk with a glowing CRT showing a snake game." />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/making_of_2.css" />
+  </head>
+  <body class="page-doc page-making-of-2">
+    <main data-lang-template>
+      <p class="kicker">An unreliable reconstruction</p>
+      <h1 class="page-title">The Making Off - 2</h1>
+      <p class="lead">Most pages on this site behave like engineers: line numbers, memory maps, source listings, proof. This page is the opposite. It is the story Sneekie might tell after 38 years in a shoebox, after enough life happened that memory became a lossy compression format.</p>
+
+      <figure class="story-figure hero-figure">
+        <img src="../images/making-of-2/legend-1988.webp" width="1200" height="676" alt="Cartoon of a young 1988 hobby programmer at a CRT computer with notes, floppy disks, and a glowing snake maze." />
+        <figcaption>Somewhere in 1988, or at least in the version of 1988 that survived.</figcaption>
+      </figure>
+
+      <section class="story-band opening">
+        <h2>This Is Not History. This Is Better.</h2>
+        <p>I do not really remember how I wrote Sneekie. That sounds like a problem, but it is actually perfect. Accurate memories are for tax offices. Games from 1988 deserve fog, lamp light, a plastic keyboard, and a teenage certainty that <code>POKE</code> was not a command but a spell.</p>
+        <p>The facts are small and stubborn: Sneekie was written in July 1988, signed by HerbySoft, and printed in <em>MS(X)DOS Computer Magazine</em> no.&nbsp;25. The rest is where the legend starts. Maybe there was a plan. Maybe there was only a snake, a maze, and the dangerous realization that video memory could be bullied directly.</p>
+        <p>Thirty-eight years later I can look at the code and recognize the handwriting of the idea, but not the evening it arrived. There were decades in between. Work. Computers. The internet. Things worth celebrating. Things that may have come in glasses. Let us not interrogate the witness too hard.</p>
+      </section>
+
+      <blockquote class="story-pull">
+        The snake was not designed. It escaped from a line number and found food.
+      </blockquote>
+
+      <section class="story-band">
+        <h2>In The Beginning There Was A Prompt</h2>
+        <p>Not an AI prompt. The old kind. A blinking cursor, green and patient, asking what you wanted from the universe. In 1988 the machine did not help you. It waited. You typed. If you typed nonsense, it accepted the nonsense with professional silence and punished you later.</p>
+        <p>Sneekie probably began with the oldest programmer thought in the world: <em>what if the screen itself is the world?</em> No sprites. No engine. No framework. Just character cells and attributes, two bytes at a time, the way nature intended if nature had shipped with GW-BASIC.</p>
+        <p>That is how the game became a small haunted room. Hearts appeared. Stones waited to be pushed. Arrows wandered like they had somewhere important to be. The snake grew longer and more inconvenient, which is also a reasonable summary of most software projects.</p>
+      </section>
+
+      <section class="story-band memory-ledger" aria-label="Things the legend claims">
+        <h2>Things The Legend Claims</h2>
+        <div class="legend-list">
+          <div class="legend-item">
+            <span class="legend-mark">1</span>
+            <p>A school notebook contained maps, arrows, and at least one drawing that looked important at the time.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">2</span>
+            <p>The first working version immediately became too hard, because every maze game secretly wants revenge.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">3</span>
+            <p>Somewhere, a line number was chosen not because it was elegant, but because there was still room before the next one.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">4</span>
+            <p>When the magazine accepted it, the game stopped being a private experiment and became a public typing endurance test.</p>
+          </div>
+        </div>
+      </section>
+
+      <figure class="story-figure">
+        <img src="../images/making-of-2/ocr-detective.webp" width="1200" height="676" alt="Cartoon of old magazine pages being scanned while a zero and capital O argue under a magnifying glass." />
+        <figcaption>It was dangerous to go alone; take this magnifying glass.</figcaption>
+      </figure>
+
+      <section class="story-band">
+        <h2>The Paper Dragon</h2>
+        <p>The 1988 game did not come back from a disk. It came back from paper. A printed magazine listing is both a miracle and a trap: the code is there, but it is trapped inside ink, aging paper, scan blur, and the optimistic belief that OCR can read a BASIC listing like a normal sentence.</p>
+        <p>One does not simply OCR a BASIC listing. A human sees <code>0</code> and <code>O</code> and thinks, yes, probably different. The scanner sees two small ovals and chooses chaos. Was that <code>ZORE</code> or <code>Z0RE</code>? Was the loop variable an <code>O</code>, a zero, or a tiny portal to debugging?</p>
+        <p>Every wrong character mattered. A magazine article can survive a typo. A BASIC program cannot. Change one digit in a line number and the snake walks into a wall in another dimension. Misread a colon, and suddenly the program has opinions. The OCR did its best, but the 0/O feud was the final boss.</p>
+        <p>So the recovery became detective work. Compare the scan. Read the line. Run the port. Watch it fail. Look again. Whisper to the page. Consider coffee. Consider stronger archaeology. Eventually the old listing became text again, and the text became code that could move.</p>
+      </section>
+
+      <section class="story-band">
+        <h2>Maybe This Was The Real Trick</h2>
+        <p>Sneekie survived because it was simple enough to print, but strange enough to remember. It was not a file in a cloud, not a repository, not a release artifact with a changelog. It was a snake in a magazine, waiting for somebody patient enough to type it back into the future.</p>
+        <p>The beautiful absurdity is that the original readers had already done the first restoration in 1988. They bought the magazine, opened the listing, and typed page after page by hand. Every home became a compiler farm with one operator, one keyboard, and no undo stack. The meme had not been invented yet, but the spirit was there: this is fine.</p>
+      </section>
+
+      <figure class="story-figure">
+        <img src="../images/making-of-2/web-resurrection.webp" width="1200" height="676" alt="Cartoon of an old CRT BASIC game transforming into a modern browser game with two glowing AI helper silhouettes." />
+        <figcaption>In 2026 the snake discovered the browser and, frankly, behaved as if it had been expecting this.</figcaption>
+      </figure>
+
+      <section class="story-band finale">
+        <h2>Then 2026 Got Dramatic</h2>
+        <p>The modern version should have been straightforward: take an old GW-BASIC program and make it run on the web. Of course it was not straightforward. The original game did not have a modern game model. It had video memory. The screen was the state. The walls, hearts, arrows, stones, score line, and snake body all lived where the old PC expected them to live.</p>
+        <p>Then, for only a few days, Claude Fable appeared like a comet in the tooling sky. In this legend, Fable did the impossible first translation: the original BASIC became a browser game, not by politely redesigning it, but by keeping the old soul intact. The port still thinks in bytes, cells, line numbers, and <code>POKE</code>s. It did not become a new game wearing an old hat. It became Sneekie again.</p>
+        <p>After that, Claude Opus built the house around it: the manual, source pages, magazine scans, visualizers, explanations, live bot, and the kind of website a 1988 type-in game absolutely did not ask for and absolutely deserved.</p>
+        <p>So now the game exists in three times at once: 1988, where it was written; the printed magazine, where it slept; and 2026, where a browser, some AI, and a suspicious amount of nostalgia convinced it to wake up.</p>
+      </section>
+
+      <section class="story-ending">
+        <h2>The Moral, If A Snake Game Needs One</h2>
+        <p>Maybe the true story is lost. Maybe it was never very cinematic. Maybe it was just a young programmer, a keyboard, and enough curiosity to turn text-mode memory into a maze. That is enough.</p>
+        <p>The rest can be legend. After 38 years, Sneekie still moves. It still eats hearts. It still punishes impatience. And somewhere between the magazine ink and the browser canvas, the little snake looked at all our modern machinery and quietly said: all your base address are belong to me.</p>
+        <p class="story-links"><a href="game.html">&#9654; Play the resurrected game</a><a href="magazine.html">See the magazine scans</a><a href="source.html">Read the recovered source</a></p>
+      </section>
+    </main>
+
+    <template id="main-template-nl">
+      <p class="kicker">Een onbetrouwbare reconstructie</p>
+      <h1 class="page-title">The Making Off - 2</h1>
+      <p class="lead">De meeste pagina's op deze site gedragen zich als ingenieurs: regelnummers, geheugenkaarten, broncode, bewijs. Deze pagina doet precies het tegenovergestelde. Dit is het verhaal dat Sneekie misschien zou vertellen na 38 jaar in een doos, nadat het leven zoveel is gebeurd dat geheugen een compressieformaat met verlies werd.</p>
+
+      <figure class="story-figure hero-figure">
+        <img src="../images/making-of-2/legend-1988.webp" width="1200" height="676" alt="Cartoon van een jonge hobbyprogrammeur in 1988 achter een CRT-computer met notities, diskettes en een gloeiend slangen-doolhof." />
+        <figcaption>Ergens in 1988, of in ieder geval in de versie van 1988 die is blijven hangen.</figcaption>
+      </figure>
+
+      <section class="story-band opening">
+        <h2>Dit Is Geen Geschiedenis. Dit Is Beter.</h2>
+        <p>Ik weet niet echt meer hoe ik Sneekie heb geschreven. Dat klinkt als een probleem, maar eigenlijk is het perfect. Nauwkeurige herinneringen zijn voor belastingdiensten. Spellen uit 1988 verdienen mist, bureaulamplicht, een plastic toetsenbord en de jeugdige zekerheid dat <code>POKE</code> geen commando was maar een toverspreuk.</p>
+        <p>De feiten zijn klein en koppig: Sneekie werd in juli 1988 geschreven, ondertekend door HerbySoft, en gedrukt in <em>MS(X)DOS Computer Magazine</em> nr.&nbsp;25. De rest is waar de legende begint. Misschien was er een plan. Misschien was er alleen een slang, een doolhof, en de gevaarlijke ontdekking dat videogeheugen zich rechtstreeks liet pesten.</p>
+        <p>Achtendertig jaar later herken ik in de code het handschrift van het idee, maar niet de avond waarop het idee binnenkwam. Er zat een leven tussen. Werk. Computers. Internet. Dingen die gevierd moesten worden. Dingen die mogelijk in glazen kwamen. Laten we de getuige niet te hard ondervragen.</p>
+      </section>
+
+      <blockquote class="story-pull">
+        De slang is niet ontworpen. Ze ontsnapte uit een regelnummer en vond eten.
+      </blockquote>
+
+      <section class="story-band">
+        <h2>In Het Begin Was Er Een Prompt</h2>
+        <p>Niet een AI-prompt. De oude soort. Een knipperende cursor, groen en geduldig, die vroeg wat je van het universum wilde. In 1988 hielp de machine je niet. Ze wachtte. Jij typte. Als je onzin typte, accepteerde ze die met professionele stilte en strafte ze je later.</p>
+        <p>Sneekie begon waarschijnlijk met de oudste programmeergedachte ter wereld: <em>wat als het scherm zelf de wereld is?</em> Geen sprites. Geen engine. Geen framework. Alleen karaktercellen en attributen, twee bytes per keer, zoals de natuur het bedoeld had als de natuur met GW-BASIC was geleverd.</p>
+        <p>Zo werd het spel een kleine bezeten kamer. Hartjes verschenen. Stenen wachtten tot ze geduwd werden. Pijlen dwaalden rond alsof ze ergens belangrijk moesten zijn. De slang werd langer en lastiger, wat ook een redelijke samenvatting is van de meeste softwareprojecten.</p>
+      </section>
+
+      <section class="story-band memory-ledger" aria-label="Wat de legende beweert">
+        <h2>Wat De Legende Beweert</h2>
+        <div class="legend-list">
+          <div class="legend-item">
+            <span class="legend-mark">1</span>
+            <p>Een schoolschrift bevatte plattegronden, pijlen, en minstens een tekening die toen heel belangrijk leek.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">2</span>
+            <p>De eerste werkende versie was meteen te moeilijk, omdat ieder doolhofspel stiekem wraak wil.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">3</span>
+            <p>Ergens werd een regelnummer gekozen, niet omdat het mooi was, maar omdat er nog ruimte was voor het volgende nummer.</p>
+          </div>
+          <div class="legend-item">
+            <span class="legend-mark">4</span>
+            <p>Toen het tijdschrift het plaatste, stopte het spel met een priv&eacute;-experiment zijn en werd het een publieke typ-uithoudingsproef.</p>
+          </div>
+        </div>
+      </section>
+
+      <figure class="story-figure">
+        <img src="../images/making-of-2/ocr-detective.webp" width="1200" height="676" alt="Cartoon van oude tijdschriftpagina's onder een scanner, terwijl een nul en hoofdletter O ruziemaken onder een vergrootglas." />
+        <figcaption>Het was gevaarlijk om alleen te gaan; neem dit vergrootglas.</figcaption>
+      </figure>
+
+      <section class="story-band">
+        <h2>De Papieren Draak</h2>
+        <p>Het spel uit 1988 kwam niet terug van een diskette. Het kwam terug van papier. Een gedrukte listing is tegelijk een wonder en een val: de code staat er, maar zit gevangen in inkt, ouder papier, scanonscherpte en het optimistische geloof dat OCR een BASIC-listing kan lezen alsof het een gewone zin is.</p>
+        <p>One does not simply OCR a BASIC listing. Een mens ziet <code>0</code> en <code>O</code> en denkt: ja, waarschijnlijk verschillend. De scanner ziet twee kleine ovalen en kiest chaos. Was dat <code>ZORE</code> of <code>Z0RE</code>? Was de lusvariabele een <code>O</code>, een nul, of een klein portaal naar debuggen?</p>
+        <p>Ieder verkeerd teken deed ertoe. Een tijdschriftartikel overleeft een tikfout. Een BASIC-programma niet. Verander een cijfer in een regelnummer en de slang loopt in een andere dimensie tegen de muur. Lees een dubbele punt verkeerd en ineens heeft het programma meningen. De OCR deed zijn best, maar de 0/O-ruzie was de eindbaas.</p>
+        <p>Dus werd de restauratie speurwerk. Vergelijk de scan. Lees de regel. Draai de port. Kijk hoe hij faalt. Kijk opnieuw. Fluister tegen de pagina. Overweeg koffie. Overweeg zwaardere archeologie. Uiteindelijk werd de oude listing weer tekst, en tekst werd code die kon bewegen.</p>
+      </section>
+
+      <section class="story-band">
+        <h2>Misschien Was Dit De Echte Truc</h2>
+        <p>Sneekie overleefde omdat het simpel genoeg was om te drukken, maar vreemd genoeg om te onthouden. Het was geen bestand in een cloud, geen repository, geen release artifact met changelog. Het was een slang in een tijdschrift, wachtend op iemand met genoeg geduld om haar terug de toekomst in te typen.</p>
+        <p>Het mooie absurde is dat de oorspronkelijke lezers in 1988 al de eerste restauratie deden. Ze kochten het tijdschrift, sloegen de listing open en typten pagina na pagina met de hand. Ieder huis werd een compilerfarm met een operator, een toetsenbord en geen undo-stack. De meme bestond nog niet, maar de geest wel: this is fine.</p>
+      </section>
+
+      <figure class="story-figure">
+        <img src="../images/making-of-2/web-resurrection.webp" width="1200" height="676" alt="Cartoon waarin een oud CRT BASIC-spel verandert in een moderne browsergame met twee gloeiende AI-helper silhouetten." />
+        <figcaption>In 2026 ontdekte de slang de browser en deed alsof ze dat altijd al verwacht had.</figcaption>
+      </figure>
+
+      <section class="story-band finale">
+        <h2>Toen Werd 2026 Dramatisch</h2>
+        <p>De moderne versie had eenvoudig moeten zijn: neem een oud GW-BASIC-programma en laat het draaien op het web. Natuurlijk was het niet eenvoudig. Het oorspronkelijke spel had geen modern game-model. Het had videogeheugen. Het scherm was de toestand. De muren, hartjes, pijlen, stenen, scorebalk en slang zaten allemaal waar de oude PC ze verwachtte.</p>
+        <p>Toen verscheen Claude Fable, slechts een paar dagen lang, als een komeet in de gereedschapshemel. In deze legende deed Fable de eerste onmogelijke vertaling: de oorspronkelijke BASIC werd een browserspel, niet door het beleefd opnieuw te ontwerpen, maar door de oude ziel intact te houden. De port denkt nog steeds in bytes, cellen, regelnummers en <code>POKE</code>s. Het werd geen nieuw spel met een oude hoed op. Het werd weer Sneekie.</p>
+        <p>Daarna bouwde Claude Opus het huis eromheen: de handleiding, broncodepagina's, magazinescans, visualizers, uitleg, livebot, en het soort website waar een type-in spel uit 1988 absoluut niet om vroeg en absoluut recht op had.</p>
+        <p>Zo bestaat het spel nu in drie tijden tegelijk: 1988, waarin het werd geschreven; het gedrukte tijdschrift, waarin het sliep; en 2026, waarin een browser, wat AI en een verdachte hoeveelheid nostalgie het wakker kregen.</p>
+      </section>
+
+      <section class="story-ending">
+        <h2>De Moraal, Als Een Slangenspel Er Een Nodig Heeft</h2>
+        <p>Misschien is het echte verhaal kwijt. Misschien was het nooit erg filmisch. Misschien was het gewoon een jonge programmeur, een toetsenbord, en genoeg nieuwsgierigheid om tekstmodusgeheugen in een doolhof te veranderen. Dat is genoeg.</p>
+        <p>De rest mag legende zijn. Na 38 jaar beweegt Sneekie nog. Ze eet nog steeds hartjes. Ze straft nog steeds haast. En ergens tussen de tijdschriftinkt en de browsercanvas keek de kleine slang naar al onze moderne machines en zei zachtjes: all your base address are belong to me.</p>
+        <p class="story-links"><a href="game.html">&#9654; Speel de herrezen game</a><a href="magazine.html">Bekijk de magazinescans</a><a href="source.html">Lees de herstelde broncode</a></p>
+      </section>
+    </template>
+
+    <script src="../js/site.js"></script>
+  </body>
+</html>
