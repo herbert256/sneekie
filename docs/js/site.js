@@ -335,15 +335,15 @@ function renderTopHeader(){
   const embedded = isEmbedded();
   const links = [
     ['game', 'navGame'],
+    ['history', 'navHistory'],
+    ['source', 'navSource'],
     ['manual', 'navManual'],
     ['live', 'navLive'],
     ['bot', 'navBot'],
     ['magazine', 'navMagazine'],
-    ['source', 'navSource'],
     ['explained', 'navExplained'],
     ['migration', 'navMigration'],
     ['vram', 'navVram'],
-    ['history', 'navHistory'],
   ];
   const header = document.createElement('header');
   header.className = 'top';

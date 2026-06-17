@@ -68,7 +68,7 @@
           <line x1="0" y1="238" x2="480" y2="238" stroke="var(--border)" />
           <rect x="288" y="118" width="168" height="120" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
           <rect x="300" y="130" width="144" height="86" rx="6" fill="#03130a" stroke="var(--border)" />
-          <text x="312" y="150" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">10 SCREEN 0</text>
+          <text x="312" y="150" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">10 POKE 3556,10</text>
           <text x="312" y="168" font-family="ui-monospace,monospace" font-size="11" fill="var(--accent)">RUN</text>
           <text x="312" y="190" font-family="ui-monospace,monospace" font-size="11" fill="var(--heading)">Ok</text>
           <rect x="330" y="181" width="8" height="11" fill="var(--accent)" />
@@ -97,11 +97,6 @@
         <p>My first decision was the boldest one, and it was correct: there would be no sprites, no objects, no engine sitting between me and the machine. The screen <em>itself</em> would be the world. I reached straight into video memory and wrote characters where I wanted them &mdash; two bytes at a time, a glyph and a colour, exactly as the hardware intended.</p>
         <p>Other people asked the computer politely for help. I did not ask. I <code>POKE</code>d the bytes directly into the screen and the machine obeyed. That single idea &mdash; the playfield <em>is</em> the memory &mdash; is why Sneekie still runs, unchanged in spirit, almost four decades later.</p>
       </section>
-
-      <figure class="story-figure square">
-        <img loading="lazy" width="1024" height="1024" src="../images/making_of_3/memory_loss.png" alt="A programmer at an old MS-DOS machine late at night, deep in concentration." />
-        <figcaption>Night after night at the MS-DOS machine, building the thing from nothing.</figcaption>
-      </figure>
 
       <section class="story-band">
         <h2>The Birth of the Snake</h2>
@@ -345,39 +340,6 @@
         <figcaption>On yellowed paper, <b>0</b> and <b>O</b> are the same picture.</figcaption>
       </figure>
 
-      <figure class="panel-fig">
-        <svg viewBox="0 0 480 300" aria-hidden="true">
-          <g transform="rotate(-3 116 156)">
-            <rect x="44" y="62" width="146" height="190" rx="4" fill="#c2cace" stroke="var(--border)" />
-            <rect x="58" y="80" width="118" height="7" rx="2" fill="#2f343a" />
-            <rect x="58" y="98" width="118" height="4" rx="2" fill="#4a5158" />
-            <rect x="58" y="108" width="100" height="4" rx="2" fill="#4a5158" />
-            <rect x="58" y="118" width="118" height="4" rx="2" fill="#4a5158" />
-            <rect x="58" y="206" width="118" height="4" rx="2" fill="#4a5158" />
-            <rect x="58" y="216" width="92" height="4" rx="2" fill="#4a5158" />
-            <rect x="58" y="226" width="118" height="4" rx="2" fill="#4a5158" />
-          </g>
-          <rect x="40" y="150" width="150" height="10" rx="2" fill="var(--accent)" opacity="0.45" />
-          <line x1="40" y1="150" x2="190" y2="150" stroke="var(--accent)" stroke-width="2" />
-          <rect x="300" y="86" width="96" height="80" rx="14" fill="var(--bezel1)" stroke="var(--border)" />
-          <line x1="348" y1="86" x2="348" y2="68" stroke="var(--border)" stroke-width="2" />
-          <circle cx="348" cy="64" r="5" fill="var(--smiley)" />
-          <circle cx="324" cy="124" r="12" fill="#05140a" />
-          <circle cx="324" cy="124" r="6" fill="var(--accent)" />
-          <circle cx="372" cy="124" r="12" fill="#05140a" />
-          <circle cx="372" cy="124" r="6" fill="var(--accent)" />
-          <rect x="326" y="148" width="44" height="6" rx="3" fill="var(--muted)" />
-          <path d="M404 116 q8 12 0 18 q-8 -6 0 -18 Z" fill="var(--blue)" />
-          <path d="M300 150 L228 196" stroke="var(--bezel1)" stroke-width="12" stroke-linecap="round" />
-          <line x1="210" y1="186" x2="186" y2="160" stroke="#8b949e" stroke-width="9" stroke-linecap="round" />
-          <circle cx="160" cy="138" r="40" fill="#0a1f12" fill-opacity="0.9" stroke="var(--accent)" stroke-width="5" />
-          <text x="160" y="134" text-anchor="middle" font-family="ui-monospace,monospace" font-size="22" font-weight="700" fill="var(--heading)">0 O</text>
-          <text x="160" y="156" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--accent)">1 l I  5 S</text>
-          <text x="356" y="208" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" fill="var(--muted)">0 = O ?</text>
-        </svg>
-        <figcaption>The final boss: is it a zero, or an oh? <b>One does not simply OCR a 1988 listing.</b></figcaption>
-      </figure>
-
       <section class="story-band finale">
         <h2>2026: The Resurrection</h2>
         <p>Then 2026 turned cinematic. For only a few days, <strong>Claude Fable</strong> blazed across the tooling sky like a comet &mdash; and in that brief window it performed the first impossible translation, carrying my 1988 BASIC into the browser without losing its soul. The port still thinks in bytes, cells, line numbers and <code>POKE</code>s. It did not become a new game. It became Sneekie again.</p>
@@ -392,48 +354,6 @@
       <figure class="story-figure square">
         <img loading="lazy" width="1024" height="1024" src="../images/making_of_3/claude_robots.png" alt="Two friendly robots, Claude Fable and Claude Opus, building the game together." />
         <figcaption>Fable and Opus &mdash; the resurrection crew.</figcaption>
-      </figure>
-
-      <figure class="panel-fig wide">
-        <svg viewBox="0 0 480 300" aria-hidden="true">
-          <g opacity="0.6">
-            <rect x="300" y="40" width="150" height="72" rx="6" fill="#0a0f0d" stroke="var(--accent)" stroke-dasharray="7 6" />
-            <line x1="300" y1="58" x2="450" y2="58" stroke="var(--accent)" stroke-dasharray="7 6" />
-            <circle cx="312" cy="49" r="3" fill="var(--red)" /><circle cx="322" cy="49" r="3" fill="var(--smiley)" /><circle cx="332" cy="49" r="3" fill="var(--club)" />
-          </g>
-          <rect x="60" y="118" width="70" height="58" rx="12" fill="var(--panel2)" stroke="var(--border)" />
-          <line x1="95" y1="118" x2="95" y2="100" stroke="var(--border)" stroke-width="2" />
-          <path d="M95 100 l5 -9 l5 9 l-5 4 Z" fill="var(--smiley)" />
-          <circle cx="84" cy="144" r="8" fill="#05140a" /><circle cx="84" cy="144" r="4" fill="var(--accent)" />
-          <circle cx="112" cy="144" r="8" fill="#05140a" /><circle cx="112" cy="144" r="4" fill="var(--accent)" />
-          <path d="M84 162 q11 7 22 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
-          <rect x="70" y="178" width="50" height="44" rx="10" fill="var(--bezel1)" stroke="var(--border)" />
-          <path d="M118 196 L168 162" stroke="var(--bezel1)" stroke-width="9" stroke-linecap="round" />
-          <g>
-            <rect x="40" y="186" width="20" height="34" rx="3" fill="none" stroke="var(--stone)" stroke-width="2" />
-            <path d="M42 190 L58 190 L50 203 Z" fill="var(--smiley)" />
-            <path d="M42 216 L58 216 L50 203 Z" fill="var(--smiley)" opacity="0.5" />
-          </g>
-          <g transform="rotate(-12 200 150)">
-            <rect x="168" y="134" width="64" height="36" rx="4" fill="var(--text)" stroke="var(--border)" />
-            <ellipse cx="168" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
-            <ellipse cx="232" cy="152" rx="6" ry="18" fill="#aeb6ba" stroke="var(--border)" />
-            <line x1="180" y1="144" x2="220" y2="144" stroke="#4a5158" stroke-width="2" />
-            <line x1="180" y1="152" x2="216" y2="152" stroke="#4a5158" stroke-width="2" />
-            <line x1="180" y1="160" x2="220" y2="160" stroke="#4a5158" stroke-width="2" />
-          </g>
-          <path d="M148 198 Q240 230 300 200" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="6 5" />
-          <path d="M300 200 l-12 -5 l3 7 Z" fill="var(--accent)" />
-          <rect x="300" y="120" width="92" height="72" rx="14" fill="var(--panel2)" stroke="var(--border)" />
-          <path d="M298 128 a48 30 0 0 1 96 0 Z" fill="var(--smiley)" />
-          <rect x="290" y="124" width="112" height="7" rx="3" fill="var(--smiley)" />
-          <circle cx="326" cy="156" r="11" fill="#05140a" /><circle cx="326" cy="156" r="5.5" fill="var(--accent)" />
-          <circle cx="366" cy="156" r="11" fill="#05140a" /><circle cx="366" cy="156" r="5.5" fill="var(--accent)" />
-          <path d="M326 176 q20 9 40 0" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" />
-          <rect x="306" y="196" width="80" height="58" rx="12" fill="var(--bezel1)" stroke="var(--border)" />
-          <path d="M306 214 L236 168" stroke="var(--bezel1)" stroke-width="11" stroke-linecap="round" />
-        </svg>
-        <figcaption>Fable ported the BASIC line for line; Opus built the site around it. <b>The torch, passed.</b></figcaption>
       </figure>
 
       <section class="story-ending">
