@@ -1,4 +1,4 @@
-/* i18n.js — runtime language registry and shared UI strings. */
+/* i18n.js — runtime language registry and dynamic UI strings. */
 'use strict';
 
 (function(){
@@ -43,23 +43,6 @@
   ];
   const strings = {
     "en": {
-      "brand": "Sneekie home",
-      "primary": "Primary",
-      "skip": "Skip to content",
-      "navGame": "▶ Play",
-      "navManual": "Manual",
-      "navBot": "Bot",
-      "navMagazine": "Magazine",
-      "navHistory": "History",
-      "navSource": "Source",
-      "navExplained": "Explained",
-      "navMigration": "Migration",
-      "navVram": "Visualizer",
-      "language": "Language",
-      "langEn": "English",
-      "langNl": "Nederlands",
-      "langUk": "Українська",
-      "footer": "Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.",
       "soundOn": "Sound: on",
       "soundOff": "Sound: off",
       "sourceLoadError": "Could not load SNEEKIE.BAS &mdash; ",
@@ -98,23 +81,6 @@
       "vramMove": "move "
     },
     "nl": {
-      "brand": "Sneekie start",
-      "primary": "Hoofdnavigatie",
-      "skip": "Spring naar inhoud",
-      "navGame": "▶ Spelen",
-      "navManual": "Handleiding",
-      "navBot": "Bot",
-      "navMagazine": "Magazine",
-      "navHistory": "Geschiedenis",
-      "navSource": "Broncode",
-      "navExplained": "Uitleg",
-      "navMigration": "Migratie",
-      "navVram": "Visualizer",
-      "language": "Taal",
-      "langEn": "English",
-      "langNl": "Nederlands",
-      "langUk": "Українська",
-      "footer": "Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.",
       "soundOn": "Geluid: aan",
       "soundOff": "Geluid: uit",
       "sourceLoadError": "Kan SNEEKIE.BAS niet laden &mdash; ",
@@ -153,23 +119,6 @@
       "vramMove": "zet "
     },
     "uk": {
-      "brand": "Домівка Sneekie",
-      "primary": "Основна навігація",
-      "skip": "Перейти до вмісту",
-      "navGame": "▶ Грати",
-      "navManual": "Посібник",
-      "navBot": "Бот",
-      "navMagazine": "Журнал",
-      "navHistory": "Історія",
-      "navSource": "Код",
-      "navExplained": "Пояснення",
-      "navMigration": "Міграція",
-      "navVram": "Візуалізатор",
-      "language": "Мова",
-      "langEn": "English",
-      "langNl": "Nederlands",
-      "langUk": "Українська",
-      "footer": "Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.",
       "soundOn": "Звук: увімкнено",
       "soundOff": "Звук: вимкнено",
       "sourceLoadError": "Не вдалося завантажити SNEEKIE.BAS &mdash; ",

@@ -1,4 +1,4 @@
-/* site.js — shared page chrome/helpers plus the GW-BASIC syntax tokenizer used by
+/* site.js — shared page helpers plus the GW-BASIC syntax tokenizer used by
    source.html and explained.html. The tokenizer returns [class, text] tokens
    per physical line; classes: ws ln com str num kw fn op id pn. explained.js
    carries its own small JavaScript tokenizer too (for the right-hand port column). */
@@ -53,10 +53,6 @@ function siteText(key){
   return table[key] || fallback[key] || key;
 }
 
-function languageTextKey(lang){
-  return 'lang' + lang.charAt(0).toUpperCase() + lang.slice(1);
-}
-
 function applySiteTranslations(){
   document.documentElement.lang = siteLang;
   if(document.body) document.body.dataset.lang = siteLang;
@@ -74,18 +70,6 @@ function applySiteTranslations(){
   });
   document.querySelectorAll('[data-i18n-alt]').forEach(el => {
     el.setAttribute('alt', siteText(el.dataset.i18nAlt));
-  });
-  document.querySelectorAll('.lang-switch').forEach(el => {
-    el.setAttribute('aria-label', siteText('language'));
-  });
-  document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
-    const lang = normalizeSiteLang(btn.dataset.lang);
-    const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
-    const key = meta.key || languageTextKey(lang);
-    btn.setAttribute('aria-label', siteText(key));
-    btn.setAttribute('title', siteText(key));
-    if(lang === siteLang) btn.setAttribute('aria-current', 'true');
-    else btn.removeAttribute('aria-current');
   });
 }
 
@@ -154,100 +138,10 @@ function redirectLegacyLanguageQuery(){
   location.replace(new URL(sitePageHref(currentPage(), query), location.href).href);
 }
 
-function renderTopHeader(){
-  if(document.querySelector('header.top')) return;
-  const root = pageRoot();
-  const current = currentPage();
-  const embedded = isEmbedded();
-  const links = [
-    ['game', 'navGame'],
-    ['history', 'navHistory'],
-    ['source', 'navSource'],
-    ['manual', 'navManual'],
-    ['bot', 'navBot'],
-    ['magazine', 'navMagazine'],
-    ['explained', 'navExplained'],
-    ['migration', 'navMigration'],
-    ['vram', 'navVram'],
-  ];
-  const header = document.createElement('header');
-  header.className = 'top';
-
-  const brand = document.createElement('a');
-  brand.className = 'brand';
-  brand.href = sitePageHref('game');
-  if(embedded) brand.target = '_top';
-  brand.dataset.i18nAria = 'brand';
-  brand.setAttribute('aria-label', siteText('brand'));
-  const logo = document.createElement('img');
-  logo.src = root + 'images/logo.png';
-  logo.alt = 'Sneekie';
-  brand.appendChild(logo);
-  header.appendChild(brand);
-
-  const nav = document.createElement('nav');
-  nav.dataset.i18nAria = 'primary';
-  nav.setAttribute('aria-label', siteText('primary'));
-  for(const [slug, key] of links){
-    const a = document.createElement('a');
-    a.href = sitePageHref(slug);
-    a.dataset.i18n = key;
-    a.innerHTML = siteText(key);
-    if(embedded) a.target = '_top';
-    if(slug === current) a.setAttribute('aria-current', 'page');
-    nav.appendChild(a);
-  }
-
-  header.appendChild(nav);
-
-  const langSwitch = document.createElement('div');
-  langSwitch.className = 'lang-switch';
-  langSwitch.setAttribute('aria-label', siteText('language'));
-  for(const lang of SITE_LANGS){
-    const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
-    const a = document.createElement('a');
-    a.href = sitePageHref(current, lang);
-    a.dataset.lang = lang;
-    if(embedded) a.target = '_top';
-    a.innerHTML = '<span class="lang-icon" aria-hidden="true">' + (meta.flag || lang.toUpperCase()) + '</span>';
-    a.addEventListener('click', () => lsSet('sneekie.lang', lang));
-    langSwitch.appendChild(a);
-  }
-  header.appendChild(langSwitch);
-
-  document.body.insertBefore(header, document.body.firstChild);
-  requestAnimationFrame(() => {
-    const active = nav.querySelector('[aria-current="page"]');
-    if(active && nav.scrollWidth > nav.clientWidth) active.scrollIntoView({inline:'center', block:'nearest'});
-  });
-
-  // skip-to-content link, inserted as the first focusable element on the page
-  const skip = document.createElement('a');
-  skip.className = 'skip';
-  skip.href = '#main';
-  skip.dataset.i18n = 'skip';
-  skip.innerHTML = siteText('skip');
-  document.body.insertBefore(skip, document.body.firstChild);
-
-  // ensure the skip target exists and is focusable on every page
-  const main = document.querySelector('main');
-  if(main){
-    if(!main.id) main.id = 'main';
-    if(!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
-  }
-}
-
-function renderPageFooter(){
-  if(document.querySelector('footer')) return;
-  const footer = document.createElement('footer');
-  footer.dataset.i18n = 'footer';
-  footer.innerHTML = siteText('footer');
-  document.body.appendChild(footer);   // end of <body>; robust regardless of where site.js is loaded
-}
-
 function normalizeCleanLinks(){
   if(!useCleanUrls()) return;
   document.querySelectorAll('a[href]').forEach(a => {
+    if(a.closest('header.top, footer')) return;
     const raw = a.getAttribute('href');
     if(!raw || !/\.html([?#]|$)/.test(raw)) return;
     const url = new URL(raw, location.href);
@@ -266,8 +160,6 @@ function registerOfflineCache(){
 }
 
 redirectLegacyLanguageQuery();
-renderTopHeader();
-renderPageFooter();
 setSiteLanguage(siteLang, { silent: true });
 normalizeCleanLinks();
 registerOfflineCache();

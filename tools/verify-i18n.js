@@ -10,6 +10,31 @@ const docs = path.join(repo, 'docs');
 const sourceDir = path.join(repo, 'tools', 'i18n-source', 'html');
 const i18n = loadI18n();
 const languageCodes = i18n.languages.map(lang => lang.code);
+const chromeNavSlugs = ['game', 'history', 'source', 'manual', 'bot', 'magazine', 'explained', 'migration', 'vram'];
+const runtimeChromeKeys = [
+  'brand',
+  'primary',
+  'skip',
+  'navGame',
+  'navManual',
+  'navBot',
+  'navMagazine',
+  'navHistory',
+  'navSource',
+  'navExplained',
+  'navMigration',
+  'navVram',
+  'language',
+  'langEn',
+  'langNl',
+  'langUk',
+  'footer'
+];
+const chromeFooters = {
+  en: "Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.",
+  nl: "Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.",
+  uk: "Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026."
+};
 const errors = [];
 
 function loadI18n(){
@@ -53,8 +78,18 @@ function languagePathPrefix(lang){
   return i18n.languages.find(item => item.code === lang)?.pathPrefix || lang;
 }
 
+function countMatches(value, pattern){
+  return (value.match(pattern) || []).length;
+}
+
 function assertSitePathParts(){
   const siteJs = read(path.join(docs, 'js', 'site.js'));
+  assert(!siteJs.includes('renderTopHeader'), 'site.js must not inject header.top.');
+  assert(!siteJs.includes('renderPageFooter'), 'site.js must not inject footer.');
+  assert(!siteJs.includes("createElement('header')") && !siteJs.includes('createElement("header")'),
+    'site.js must not create header elements.');
+  assert(!siteJs.includes("createElement('footer')") && !siteJs.includes('createElement("footer")'),
+    'site.js must not create footer elements.');
   const helperSource = extractFunction(siteJs, 'sitePathPartsFromPathname');
   assert(helperSource, 'site.js does not define sitePathPartsFromPathname.');
   if(!helperSource) return;
@@ -99,6 +134,8 @@ for(const lang of languageCodes){
   const extra = keys.filter(key => !(key in defaultStrings));
   assert(missing.length === 0, lang + ' is missing shared string keys: ' + missing.join(', '));
   assert(extra.length === 0, lang + ' has unknown shared string keys: ' + extra.join(', '));
+  const chromeKeys = runtimeChromeKeys.filter(key => key in table);
+  assert(chromeKeys.length === 0, lang + ' still has static chrome strings in runtime i18n: ' + chromeKeys.join(', '));
 }
 
 const rootIndex = read(path.join(docs, 'index.html'));
@@ -129,6 +166,26 @@ for(const slug of i18n.pageSlugs){
     assert(!html.includes('main-template-'), file + ' still contains locale templates.');
     assert(!html.includes('data-lang-template'), file + ' still contains data-lang-template.');
     assert(!/\sdata-i18n(?:-[a-z]+)?=/.test(html), file + ' still contains runtime translation attributes.');
+    assert(countMatches(html, /<a class="skip" href="#main">/g) === 1, file + ' must contain one static skip link.');
+    assert(countMatches(html, /<header class="top">/g) === 1, file + ' must contain one static top header.');
+    assert(countMatches(html, /<footer>/g) === 1, file + ' must contain one static footer.');
+    assert(/<main[^>]*id="main"[^>]*tabindex="-1"|<main[^>]*tabindex="-1"[^>]*id="main"/.test(html),
+      file + ' main element must be a static skip target.');
+    assert(html.includes(chromeFooters[lang]), file + ' footer is not localized.');
+    for(const navSlug of chromeNavSlugs){
+      assert(html.includes('href="../' + languagePathPrefix(lang) + '/' + navSlug + '.html" target="_top"'),
+        file + ' header misses nav link for ' + navSlug + '.');
+    }
+    const navMatch = html.match(/<nav[\s\S]*?<\/nav>/);
+    const navCurrent = navMatch ? countMatches(navMatch[0], /aria-current="page"/g) : 0;
+    assert(navCurrent === (slug === 'bot-thinking' ? 0 : 1), file + ' has wrong current nav marker count.');
+    const langSwitchMatch = html.match(/<div class="lang-switch"[\s\S]*?<\/div>/);
+    const langSwitch = langSwitchMatch ? langSwitchMatch[0] : '';
+    assert(countMatches(langSwitch, /aria-current="true"/g) === 1, file + ' has wrong current language marker count.');
+    for(const targetLang of languageCodes){
+      assert(langSwitch.includes('href="../' + languagePathPrefix(targetLang) + '/' + slug + '.html" target="_top"'),
+        file + ' language switch misses ' + targetLang + ' link.');
+    }
     assert(html.includes('href="' + pageUrl(lang, slug) + '"'), file + ' lacks self canonical URL.');
     for(const alt of languageCodes){
       assert(html.includes('hreflang="' + alt + '" href="' + pageUrl(alt, slug) + '"'), file + ' lacks hreflang for ' + alt + '.');

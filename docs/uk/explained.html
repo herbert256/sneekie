@@ -37,7 +37,27 @@
     <link rel="stylesheet" href="../css/explained.css" />
   </head>
   <body class="page-doc page-explained">
-    <main>
+    <a class="skip" href="#main">Перейти до вмісту</a>
+    <header class="top">
+      <a class="brand" href="../uk/game.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>
+      <nav aria-label="Основна навігація">
+        <a href="../uk/game.html" target="_top">&#9654; Грати</a>
+        <a href="../uk/history.html" target="_top">Історія</a>
+        <a href="../uk/source.html" target="_top">Код</a>
+        <a href="../uk/manual.html" target="_top">Посібник</a>
+        <a href="../uk/bot.html" target="_top">Бот</a>
+        <a href="../uk/magazine.html" target="_top">Журнал</a>
+        <a href="../uk/explained.html" target="_top" aria-current="page">Пояснення</a>
+        <a href="../uk/migration.html" target="_top">Міграція</a>
+        <a href="../uk/vram.html" target="_top">Візуалізатор</a>
+      </nav>
+      <div class="lang-switch" aria-label="Мова">
+        <a href="../en/explained.html" target="_top" aria-label="English" title="English"><span class="lang-icon" aria-hidden="true">&#127468;&#127463;</span></a>
+        <a href="../nl/explained.html" target="_top" aria-label="Nederlands" title="Nederlands"><span class="lang-icon" aria-hidden="true">&#127475;&#127473;</span></a>
+        <a href="../uk/explained.html" target="_top" aria-label="Українська" title="Українська" aria-current="true"><span class="lang-icon" aria-hidden="true">&#127482;&#127462;</span></a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
       <div class="hero">
         <h1 class="page-title">Sneekie, рядок за рядком</h1>
         <p class="sub">Українська екскурсія вихідним кодом GW-BASIC 1988 року &mdash; з поясненнями через 38 років.</p>
@@ -110,6 +130,9 @@
       </nav>
       <div id="listing"></div>
     </main>
+    <footer>
+      Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.
+    </footer>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
     <script src="../js/explained.js"></script>

@@ -37,7 +37,27 @@
     <link rel="stylesheet" href="../css/manual.css" />
   </head>
   <body class="page-doc page-manual">
-    <main>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top">
+      <a class="brand" href="../en/game.html" aria-label="Sneekie home" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>
+      <nav aria-label="Primary">
+        <a href="../en/game.html" target="_top">&#9654; Play</a>
+        <a href="../en/history.html" target="_top">History</a>
+        <a href="../en/source.html" target="_top">Source</a>
+        <a href="../en/manual.html" target="_top" aria-current="page">Manual</a>
+        <a href="../en/bot.html" target="_top">Bot</a>
+        <a href="../en/magazine.html" target="_top">Magazine</a>
+        <a href="../en/explained.html" target="_top">Explained</a>
+        <a href="../en/migration.html" target="_top">Migration</a>
+        <a href="../en/vram.html" target="_top">Visualizer</a>
+      </nav>
+      <div class="lang-switch" aria-label="Language">
+        <a href="../en/manual.html" target="_top" aria-label="English" title="English" aria-current="true"><span class="lang-icon" aria-hidden="true">&#127468;&#127463;</span></a>
+        <a href="../nl/manual.html" target="_top" aria-label="Nederlands" title="Nederlands"><span class="lang-icon" aria-hidden="true">&#127475;&#127473;</span></a>
+        <a href="../uk/manual.html" target="_top" aria-label="Українська" title="Українська"><span class="lang-icon" aria-hidden="true">&#127482;&#127462;</span></a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
       <h1 class="page-title">Player's Manual</h1>
       <p class="lead"><strong>Sneekie</strong> is a snake-in-a-maze game from July 1988. You steer a growing snake around a walled arena, hoovering up <span class="ico h">&hearts;</span> hearts. Clear every heart and you advance &mdash; through <em>32 levels</em> built from <em>8 maze layouts</em>. Mind the walls, the deadly arrows, and the smileys that <em>cost</em> you points. This page explains everything: the controls, the scoring, each of the 8 layouts, and how the 32 levels are put together.</p>
       <div class="note"><strong>New here?</strong> Just hit <a href="game.html">&#9654; Play</a> and start collecting hearts &mdash; the first few levels are turn-based and forgiving. Come back when you want to know what the smileys do or why the arrows keep killing you.</div>
@@ -290,6 +310,9 @@
     <div id="lb" role="dialog" aria-modal="true" aria-label="Layout preview" aria-hidden="true" tabindex="-1">
       <button id="lb-close" class="fs-close" type="button" aria-label="Close">&times;</button>
     </div>
+    <footer>
+      Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
+    </footer>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
     <script src="../js/manual.js"></script>

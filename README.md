@@ -26,21 +26,20 @@ test suite. The published site lives in `docs/` and is served by GitHub Pages.
 ## On the site
 
 - **[Play](https://sneekie.xyz/)** - the game, including the 1988-style boot/GW-BASIC intro.
-- **[Manual](https://sneekie.xyz/html/manual.html)** - controls, scoring, maze layouts, and all 32 levels.
-- **[Live](https://sneekie.xyz/html/live.html)** - the real game played by a smart bot in your browser.
-- **[Bot](https://sneekie.xyz/html/bot.html)** - how the live bot reads VRAM and plans moves.
-- **[Magazine](https://sneekie.xyz/html/magazine.html)** - scans from the original 1988 publication.
-- **[Source](https://sneekie.xyz/html/source.html)** - the recovered GW-BASIC listing.
-- **[Explained](https://sneekie.xyz/html/explained.html)** - an annotated walkthrough of the source.
-- **[Migration](https://sneekie.xyz/html/migration.html)** - BASIC and JavaScript shown side by side.
-- **[Visualizer](https://sneekie.xyz/html/vram.html)** - an interactive look at the text-VRAM trick.
+- **[Manual](https://sneekie.xyz/en/manual)** - controls, scoring, maze layouts, and all 32 levels.
+- **[Bot](https://sneekie.xyz/en/bot)** - the real game played by a smart bot in your browser.
+- **[Magazine](https://sneekie.xyz/en/magazine)** - scans from the original 1988 publication.
+- **[Source](https://sneekie.xyz/en/source)** - the recovered GW-BASIC listing.
+- **[Explained](https://sneekie.xyz/en/explained)** - an annotated walkthrough of the source.
+- **[Migration](https://sneekie.xyz/en/migration)** - BASIC and JavaScript shown side by side.
+- **[Visualizer](https://sneekie.xyz/en/vram)** - an interactive look at the text-VRAM trick.
 
 ## Layout
 
 ```
 docs/
-  index.html          # root iframe shell that loads html/game.html
-  html/               # game page plus the eight secondary pages
+  index.html          # root iframe shell that loads the localized game page
+  en/, nl/, uk/       # localized content pages
   css/                # shared site.css plus one page CSS file per page
   js/                 # shared site.js plus one page JS file per page
   images/             # logo, social images, manual GIFs, magazine scans
@@ -54,8 +53,8 @@ AGENTS.md             # guidance for Codex
 CLAUDE.md             # guidance for Claude Code
 ```
 
-The faithful game logic lives in `docs/js/game.js`. `docs/html/game.html`
+The faithful game logic lives in `docs/js/game.js`. `docs/<lang>/game.html`
 provides the game page markup, `docs/index.html` embeds it at the site root
 using `docs/css/index.css` and `docs/js/index.js`, `docs/css/game.css` styles
-the monitor shell, and `docs/css/site.css` plus `docs/js/site.js` provide
-shared site chrome used by the content pages.
+the monitor shell, and `docs/css/site.css` styles the static shared chrome used
+by the content pages.

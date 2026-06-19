@@ -22,23 +22,25 @@ publishable website lives in `docs/`, which is the GitHub Pages source. It is se
 https://sneekie.xyz/.
 
 - `docs/index.html` - the root Play entry shell. It is intentionally only an iframe wrapper
-  around `html/game.html`. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
+  around the localized game page. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
   structured-data script inline for search crawlers.
-- `docs/html/game.html` - the game page shell. It loads `../css/site.css`,
+- `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
-- `docs/html/*.html` - the game page plus the secondary content pages: `manual`, `bot`,
-  `bot-thinking`, `magazine`, `source`, `explained`, `migration`, `vram`, and `history`. Each
-  content page loads `../css/site.css`, page-specific CSS when present (`game` uses
-  `../css/game.css`), `../js/site.js`, and its own page JS. `bot-thinking` has no page JS (only
-  `site.js`); `bot-thinking` is reachable only via a link on `bot.html`, not from the header nav.
-- `docs/css/site.css` - shared variables, layout primitives, doc-page styling, injected
+- `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
+  `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
+  `migration`, and `vram`. Each content page loads `../css/site.css`, page-specific CSS when
+  present (`game` uses `../css/game.css`), `../js/site.js`, and its own page JS.
+  `bot-thinking` has no page JS (only `site.js`); `bot-thinking` is reachable only via a link on
+  `bot.html`, not from the header nav.
+- `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
-- `docs/js/site.js` - shared site behavior: injects the standard `header.top` and footer,
-  marks the current nav link, registers the service worker, and exposes the shared BASIC
-  tokenizer used by the listing pages. (Download + Print live on the Source page, not the header.)
+- `docs/js/site.js` - shared site behavior: language helpers, clean-link normalization outside
+  the static chrome, service-worker registration, and the shared BASIC tokenizer used by the
+  listing pages. It must not create `header.top` or `<footer>`. (Download + Print live on the
+  Source page, not the header.)
 - `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
   are used by more than one page.
 - `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
@@ -50,34 +52,34 @@ https://sneekie.xyz/.
   `docs/js/game.js`.
 
 Only the iframe wrapper `docs/index.html` remains at the site root. Content pages live under
-`docs/html/`, so root-level links should use `html/<page>.html`; links between content pages
-can use `<page>.html`.
+`docs/en/`, `docs/nl/`, and `docs/uk/`, so root-level links should include the language prefix;
+links between content pages can use same-language relative `.html` paths.
 
 To ship a change: edit under `docs/`, commit, and push to `master`. GitHub Pages is configured
 to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
 
 ## Pages
 
-- `docs/html/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
+- `docs/<lang>/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
   listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64 (so it renders from `file://` too),
   drops the first 10 banner lines for display, and shows only the BASIC line numbers. This page
   also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the
   top; `source.js` wires Print to `window.print()`).
-- `docs/html/explained.html` + `docs/js/explained.js` - single-column annotated walkthrough of
+- `docs/<lang>/explained.html` + `docs/js/explained.js` - single-column annotated walkthrough of
   the same source, rendered into `#listing`/`#toc-list`. Prose lives in the `SECTIONS` array
   (`{at, t, h}`, keyed by GW-BASIC line) and the `NOTES` map; the BASIC is tokenized with the
   shared `tokenizeBasicLine` (`site.js`) and `SNEEKIE.BAS` is embedded as base64 (renders from
   `file://`).
-- `docs/html/migration.html` + `docs/js/migration.js` - the 1988 BASIC and the 2026 JavaScript
+- `docs/<lang>/migration.html` + `docs/js/migration.js` - the 1988 BASIC and the 2026 JavaScript
   side by side, rendered into `#pairs`/`#toc-list`. `migration.js` embeds BOTH `docs/SNEEKIE.BAS`
   and `docs/js/game.js` as base64 and slices them by the line ranges in its `SECTIONS`. The
   embeds are a frozen snapshot co-calibrated with those ranges (see Source Embeds); it carries
   its own BASIC + JavaScript tokenizers.
-- `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
+- `docs/<lang>/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
-- `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
+- `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
-- `docs/html/bot.html` + `docs/js/bot.js` - the **Live bot** demo. It hosts the real game in the
+- `docs/<lang>/bot.html` + `docs/js/bot.js` - the **Live bot** demo. It hosts the real game in the
   SAME page (no iframe, so it works from `file://`): it loads `../css/game.css` + `../js/game.js`
   (which render the game into `#screen`), sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot
   animation, then `bot.js` reads `game.js`'s globals directly and steers via `pushKey()`. Level
@@ -85,21 +87,22 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
   `page-index page-bot` (the game styling comes from `.page-index`; `bot.css` only adds the
   lead/speed/tabs/note). The page links to `bot-thinking.html`. Keep the planner in `bot.js` in
   sync with `bot-thinking.html`.
-- `docs/html/bot-thinking.html` - the prose explanation of how that bot plans (loads only
+- `docs/<lang>/bot-thinking.html` - the prose explanation of how that bot plans (loads only
   `site.js`; no page JS). It is linked only from `bot.html`, not from the nav. Keep it in sync
   with the planner in `docs/js/bot.js` when planner behavior changes. (CSS class is
   `.page-bot-thinking`.)
-- `docs/html/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
+- `docs/<lang>/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.
-- `docs/html/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
+- `docs/<lang>/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
   comments and the original variable names when changing game behavior.
 - `docs/index.html` - the root iframe wrapper for the playable port.
 
 ## Shared Chrome
 
-All content pages share one standard top nav and footer injected by `docs/js/site.js`;
-do not copy-paste `header.top` or `<footer>` markup back into the HTML files. The top-left
-brand is `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
+All localized content pages carry one standard static top nav and footer in the HTML source.
+Do not rely on `docs/js/site.js` to inject `header.top` or `<footer>`. When changing shared
+chrome, update every localized HTML page together. The top-left brand is `docs/images/logo.png`,
+and the current page is marked with `aria-current="page"`.
 The header nav is `game, history, source, manual, bot, magazine, explained, migration, vram`
 (9 links, no buttons). `bot` is the Live bot demo; `bot-thinking` is not in the nav.
 
@@ -147,7 +150,7 @@ node --check docs/js/*.js docs/sw.js
 ```
 
 For frontend changes, verify the relevant pages in a browser at desktop and mobile widths.
-`docs/html/game.html` surfaces runtime JS errors through an on-page error banner.
+`docs/<lang>/game.html` surfaces runtime JS errors through an on-page error banner.
 
 ## Architecture
 
@@ -183,7 +186,7 @@ model rather than building a modern game-object model.** Everything follows from
 These intentionally go beyond the 1988 source: localStorage persistence (`sneekie.theme`,
 `sneekie.muted`, `sneekie.highscore`), theme switching and CGA colorization, fullscreen,
 touch controls, responsive scaling, the on-page error banner, the CRT monitor shell, the
-short 1988-style BIOS/DOS/GW-BASIC boot animation, shared injected nav/footer, page dialogs,
+short 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs,
 the service worker cache, and English UI strings.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern

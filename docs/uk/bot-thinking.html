@@ -37,7 +37,27 @@
     <link rel="stylesheet" href="../css/bot-thinking.css" />
   </head>
   <body class="page-doc page-bot-thinking">
-    <main>
+    <a class="skip" href="#main">Перейти до вмісту</a>
+    <header class="top">
+      <a class="brand" href="../uk/game.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>
+      <nav aria-label="Основна навігація">
+        <a href="../uk/game.html" target="_top">&#9654; Грати</a>
+        <a href="../uk/history.html" target="_top">Історія</a>
+        <a href="../uk/source.html" target="_top">Код</a>
+        <a href="../uk/manual.html" target="_top">Посібник</a>
+        <a href="../uk/bot.html" target="_top">Бот</a>
+        <a href="../uk/magazine.html" target="_top">Журнал</a>
+        <a href="../uk/explained.html" target="_top">Пояснення</a>
+        <a href="../uk/migration.html" target="_top">Міграція</a>
+        <a href="../uk/vram.html" target="_top">Візуалізатор</a>
+      </nav>
+      <div class="lang-switch" aria-label="Мова">
+        <a href="../en/bot-thinking.html" target="_top" aria-label="English" title="English"><span class="lang-icon" aria-hidden="true">&#127468;&#127463;</span></a>
+        <a href="../nl/bot-thinking.html" target="_top" aria-label="Nederlands" title="Nederlands"><span class="lang-icon" aria-hidden="true">&#127475;&#127473;</span></a>
+        <a href="../uk/bot-thinking.html" target="_top" aria-label="Українська" title="Українська" aria-current="true"><span class="lang-icon" aria-hidden="true">&#127482;&#127462;</span></a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
       <h1 class="page-title">Як думає бот</h1>
       <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, читає її живі змінні і натискає ті самі DOS-style scancodes стрілок, які натискав би гравець. Бот — невеликий planner: на кожному ході він відновлює стан змії, шукає безпечну їжу, відкидає маршрути-пастки, стежить за петлями біля хвоста і переходить у режим виживання, коли безпечного шляху до їжі немає.</p>
       <div class="note"><strong>Важлива межа.</strong> Сама гра на сторінці <a href="game.html">Грати</a> лишається вірною BASIC-джерелу. Бот — сучасне доповнення: він читає port variables і натискає клавіші. Окрім переходу на вибраний <code>LEVEL</code> і обнулення залишкового <code>BONUS</code> перед clear, він не змінює правила гри.</div>
@@ -112,6 +132,9 @@
         <p>Коротко: бот грає як обережний snake player. Він хоче їжу поруч, але тільки якщо після неї лишається повітря. Коли стає тісно, хвіст, відкритий простір і майбутні виходи важливіші за найближчі очки.</p>
       </section>
     </main>
+    <footer>
+      Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.
+    </footer>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
   </body>

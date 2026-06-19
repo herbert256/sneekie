@@ -13,6 +13,82 @@ const defaultLang = i18n.defaultLang;
 const languages = i18n.languages;
 const strings = i18n.strings;
 const pages = i18n.pageSlugs;
+const chromeNav = [
+  ['game', 'navGame'],
+  ['history', 'navHistory'],
+  ['source', 'navSource'],
+  ['manual', 'navManual'],
+  ['bot', 'navBot'],
+  ['magazine', 'navMagazine'],
+  ['explained', 'navExplained'],
+  ['migration', 'navMigration'],
+  ['vram', 'navVram']
+];
+const chromeLangFlags = {
+  en: '&#127468;&#127463;',
+  nl: '&#127475;&#127473;',
+  uk: '&#127482;&#127462;'
+};
+const chromeLangKeys = { en: 'langEn', nl: 'langNl', uk: 'langUk' };
+const chromeStrings = {
+  en: {
+    brand: 'Sneekie home',
+    primary: 'Primary',
+    skip: 'Skip to content',
+    navGame: '▶ Play',
+    navManual: 'Manual',
+    navBot: 'Bot',
+    navMagazine: 'Magazine',
+    navHistory: 'History',
+    navSource: 'Source',
+    navExplained: 'Explained',
+    navMigration: 'Migration',
+    navVram: 'Visualizer',
+    language: 'Language',
+    langEn: 'English',
+    langNl: 'Nederlands',
+    langUk: 'Українська',
+    footer: "Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026."
+  },
+  nl: {
+    brand: 'Sneekie start',
+    primary: 'Hoofdnavigatie',
+    skip: 'Spring naar inhoud',
+    navGame: '▶ Spelen',
+    navManual: 'Handleiding',
+    navBot: 'Bot',
+    navMagazine: 'Magazine',
+    navHistory: 'Geschiedenis',
+    navSource: 'Broncode',
+    navExplained: 'Uitleg',
+    navMigration: 'Migratie',
+    navVram: 'Visualizer',
+    language: 'Taal',
+    langEn: 'English',
+    langNl: 'Nederlands',
+    langUk: 'Українська',
+    footer: "Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026."
+  },
+  uk: {
+    brand: 'Домівка Sneekie',
+    primary: 'Основна навігація',
+    skip: 'Перейти до вмісту',
+    navGame: '▶ Грати',
+    navManual: 'Посібник',
+    navBot: 'Бот',
+    navMagazine: 'Журнал',
+    navHistory: 'Історія',
+    navSource: 'Код',
+    navExplained: 'Пояснення',
+    navMigration: 'Міграція',
+    navVram: 'Візуалізатор',
+    language: 'Мова',
+    langEn: 'English',
+    langNl: 'Nederlands',
+    langUk: 'Українська',
+    footer: "Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026."
+  }
+};
 const staticStrings = {
   en: {
     close: 'Close',
@@ -84,6 +160,61 @@ function replaceMain(html, lang){
 
 function stripTrailingWhitespace(html){
   return html.replace(/[ \t]+$/gm, '');
+}
+
+function chromeText(lang, key){
+  return chromeStrings[lang]?.[key] || chromeStrings[defaultLang]?.[key] || key;
+}
+
+function navText(value){
+  return value.replace(/^▶ /, '&#9654; ');
+}
+
+function ensureMainAttrs(html){
+  return html.replace(/<main([^>]*)>/, (match, rawAttrs) => {
+    let attrs = rawAttrs;
+    if(!/\sid=/.test(attrs)) attrs += ' id="main"';
+    if(!/\stabindex=/.test(attrs)) attrs += ' tabindex="-1"';
+    return '<main' + attrs + '>';
+  });
+}
+
+function staticHeader(lang, slug){
+  const prefix = languagePathPrefix(lang);
+  const lines = [];
+  lines.push('    <a class="skip" href="#main">' + chromeText(lang, 'skip') + '</a>');
+  lines.push('    <header class="top">');
+  lines.push('      <a class="brand" href="../' + prefix + '/game.html" aria-label="' +
+    escapeAttr(chromeText(lang, 'brand')) + '" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>');
+  lines.push('      <nav aria-label="' + escapeAttr(chromeText(lang, 'primary')) + '">');
+  for(const [page, key] of chromeNav){
+    const current = page === slug ? ' aria-current="page"' : '';
+    lines.push('        <a href="../' + prefix + '/' + page + '.html" target="_top"' + current + '>' +
+      navText(chromeText(lang, key)) + '</a>');
+  }
+  lines.push('      </nav>');
+  lines.push('      <div class="lang-switch" aria-label="' + escapeAttr(chromeText(lang, 'language')) + '">');
+  for(const targetLang of languages){
+    const targetPrefix = languagePathPrefix(targetLang.code);
+    const label = chromeText(lang, chromeLangKeys[targetLang.code]);
+    const current = targetLang.code === lang ? ' aria-current="true"' : '';
+    lines.push('        <a href="../' + targetPrefix + '/' + slug + '.html" target="_top" aria-label="' +
+      escapeAttr(label) + '" title="' + escapeAttr(label) + '"' + current +
+      '><span class="lang-icon" aria-hidden="true">' + (chromeLangFlags[targetLang.code] || targetLang.code.toUpperCase()) + '</span></a>');
+  }
+  lines.push('      </div>');
+  lines.push('    </header>');
+  return lines.join('\n') + '\n';
+}
+
+function staticFooter(lang){
+  return '    <footer>\n      ' + chromeText(lang, 'footer') + '\n    </footer>\n';
+}
+
+function addStaticChrome(html, lang, slug){
+  html = ensureMainAttrs(html);
+  html = html.replace(/(<body[^>]*>\n)/, '$1' + staticHeader(lang, slug));
+  return html.replace(/(\n)(\s*<script(?:\s|>))/, '$1' + staticFooter(lang) + '$2');
 }
 
 function translationFor(lang, key){
@@ -224,6 +355,7 @@ function renderPage(lang, slug){
   html = stripTemplates(html);
   html = applyInlineTranslations(html, lang);
   html = updateHead(html, lang, slug);
+  html = addStaticChrome(html, lang, slug);
   return stripTrailingWhitespace(html);
 }
 

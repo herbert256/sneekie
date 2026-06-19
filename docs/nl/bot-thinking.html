@@ -37,7 +37,27 @@
     <link rel="stylesheet" href="../css/bot-thinking.css" />
   </head>
   <body class="page-doc page-bot-thinking">
-    <main>
+    <a class="skip" href="#main">Spring naar inhoud</a>
+    <header class="top">
+      <a class="brand" href="../nl/game.html" aria-label="Sneekie start" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>
+      <nav aria-label="Hoofdnavigatie">
+        <a href="../nl/game.html" target="_top">&#9654; Spelen</a>
+        <a href="../nl/history.html" target="_top">Geschiedenis</a>
+        <a href="../nl/source.html" target="_top">Broncode</a>
+        <a href="../nl/manual.html" target="_top">Handleiding</a>
+        <a href="../nl/bot.html" target="_top">Bot</a>
+        <a href="../nl/magazine.html" target="_top">Magazine</a>
+        <a href="../nl/explained.html" target="_top">Uitleg</a>
+        <a href="../nl/migration.html" target="_top">Migratie</a>
+        <a href="../nl/vram.html" target="_top">Visualizer</a>
+      </nav>
+      <div class="lang-switch" aria-label="Taal">
+        <a href="../en/bot-thinking.html" target="_top" aria-label="English" title="English"><span class="lang-icon" aria-hidden="true">&#127468;&#127463;</span></a>
+        <a href="../nl/bot-thinking.html" target="_top" aria-label="Nederlands" title="Nederlands" aria-current="true"><span class="lang-icon" aria-hidden="true">&#127475;&#127473;</span></a>
+        <a href="../uk/bot-thinking.html" target="_top" aria-label="Українська" title="Українська"><span class="lang-icon" aria-hidden="true">&#127482;&#127462;</span></a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
       <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij laadt het echte spel in een <code>&lt;iframe&gt;</code>, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
       <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve twee administratieve ingrepen &mdash; springen naar het gekozen <code>LEVEL</code> en de resterende <code>BONUS</code> vlak voor een clear op nul zetten &mdash; laat hij de regels en engine ongemoeid.</div>
@@ -230,6 +250,9 @@
         <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn staart, open ruimte en toekomstige uitgangen belangrijker dan de dichtstbijzijnde onveilige punten.</p>
       </section>
     </main>
+    <footer>
+      Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.
+    </footer>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
   </body>
