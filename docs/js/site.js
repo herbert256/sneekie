@@ -1,6 +1,6 @@
 /* site.js — shared page chrome/helpers plus the GW-BASIC syntax tokenizer used by
    source.html and explained.html. The tokenizer returns [class, text] tokens
-   per physical line; classes: ws ln com str num kw fn op id pn. migration.html
+   per physical line; classes: ws ln com str num kw fn op id pn. migration.js
    keeps its own reduced tokenizer because it also tokenizes JavaScript. */
 'use strict';
 
@@ -15,13 +15,10 @@ const SITE_I18N = {
     skip: 'Skip to content',
     navGame: '\u25b6 Play',
     navManual: 'Manual',
-    navLive: 'Live',
-    navBot: 'Bot',
     navMagazine: 'Magazine',
     navHistory: 'History',
     navSource: 'Source',
     navExplained: 'Explained',
-    navMigration: 'Migration',
     navVram: 'Visualizer',
     download: 'Download',
     print: 'Print',
@@ -47,16 +44,15 @@ const SITE_I18N = {
     soundOn: 'Sound: on',
     soundOff: 'Sound: off',
     fullscreen: 'Fullscreen',
+    autoOff: 'Auto: off',
+    autoOn: 'Auto: on',
+    autoNote: 'Auto mode hands the real 1988 game to a JavaScript bot &mdash; it plays live, not from a recording. It paths to the nearest target, pushes stones, dodges arrows, and keeps a route home to its tail.',
+    autoBotLink: 'How the bot thinks &rarr;',
     gameHintKeys: 'Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues',
     gameHintTouch: 'Swipe to steer &middot; tap = any key',
     yesKey: 'Y',
     noKey: 'N',
-    liveTitle: 'One live bot &mdash; levels 26-32',
-    liveLead:
-      'One copy of the <em>real</em> 1988 game runs at a time. Pick a level tab to watch levels <strong>26-32</strong> &mdash; the self-moving late-game mazes where the snake grows roughly <strong>twice as long</strong> and every <span class="ico h">&hearts;</span> heart scatters a <span class="ico g">&clubs;</span> club into cleared ground. The bot paths to the nearest target, <strong>pushes <span class="ico t">&#9689;</span> stones</strong>, <strong>dodges <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, keeps a route home to its tail, and will <strong>eat a <span class="ico s">&#9786;</span> smiley</strong> to avoid boxing itself in. Clear a level and its screen <strong><span class="ico green">flashes green</span></strong> and advances; get stuck and it <strong><span class="ico r">flashes red</span></strong> and restarts.',
     botSpeed: 'Bot speed',
-    liveTabsLabel: 'Live bot level',
-    liveNote: "It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.",
     close: 'Close',
     layoutPreview: 'Layout preview',
     magazinePreview: 'Magazine page preview',
@@ -107,13 +103,10 @@ const SITE_I18N = {
     skip: 'Spring naar inhoud',
     navGame: '\u25b6 Spelen',
     navManual: 'Handleiding',
-    navLive: 'Live',
-    navBot: 'Bot',
     navMagazine: 'Magazine',
     navHistory: 'Geschiedenis',
     navSource: 'Broncode',
     navExplained: 'Uitleg',
-    navMigration: 'Migratie',
     navVram: 'Visualizer',
     download: 'Download',
     print: 'Print',
@@ -139,16 +132,15 @@ const SITE_I18N = {
     soundOn: 'Geluid: aan',
     soundOff: 'Geluid: uit',
     fullscreen: 'Volledig scherm',
+    autoOff: 'Auto: uit',
+    autoOn: 'Auto: aan',
+    autoNote: 'In de auto-modus speelt een JavaScript-bot het echte spel uit 1988 &mdash; live, geen opname. Hij loopt naar het dichtstbijzijnde doel, duwt stenen, ontwijkt pijlen en houdt een route terug naar zijn staart vrij.',
+    autoBotLink: 'Hoe de bot denkt &rarr;',
     gameHintKeys: 'Pijltjestoetsen sturen de slang &middot; &lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven &middot; F10 = level overslaan &middot; elke toets gaat verder',
     gameHintTouch: 'Veeg om te sturen &middot; tik = willekeurige toets',
     yesKey: 'J',
     noKey: 'N',
-    liveTitle: 'Een livebot &mdash; levels 26-32',
-    liveLead:
-      'Er draait telkens een exemplaar van het <em>echte</em> spel uit 1988. Kies een leveltab om levels <strong>26-32</strong> te bekijken &mdash; de zelfbewegende eindlevels waar de slang ongeveer <strong>twee keer zo lang</strong> wordt en ieder <span class="ico h">&hearts;</span> hart een <span class="ico g">&clubs;</span> klaver in leeg terrein strooit. De bot loopt naar het dichtstbijzijnde doel, <strong>duwt <span class="ico t">&#9689;</span> stenen</strong>, <strong>ontwijkt <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, houdt een route terug naar zijn staart vrij, en <strong>eet een <span class="ico s">&#9786;</span> smiley</strong> om zichzelf niet op te sluiten. Haalt hij een level, dan <strong><span class="ico green">flitst het scherm groen</span></strong> en gaat hij door; loopt hij vast, dan <strong><span class="ico r">flitst het scherm rood</span></strong> en start hij opnieuw.',
     botSpeed: 'Botsnelheid',
-    liveTabsLabel: 'Livebot level',
-    liveNote: 'Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.',
     close: 'Sluiten',
     layoutPreview: 'Layoutvoorbeeld',
     magazinePreview: 'Tijdschriftpagina voorbeeld',
@@ -338,11 +330,8 @@ function renderTopHeader(){
     ['history', 'navHistory'],
     ['source', 'navSource'],
     ['manual', 'navManual'],
-    ['live', 'navLive'],
-    ['bot', 'navBot'],
     ['magazine', 'navMagazine'],
     ['explained', 'navExplained'],
-    ['migration', 'navMigration'],
     ['vram', 'navVram'],
   ];
   const header = document.createElement('header');
@@ -372,20 +361,6 @@ function renderTopHeader(){
     if(slug === current) a.setAttribute('aria-current', 'page');
     nav.appendChild(a);
   }
-
-  const download = document.createElement('a');
-  download.href = root + 'SNEEKIE.BAS';
-  download.download = 'SNEEKIE.BAS';
-  download.dataset.i18n = 'download';
-  download.innerHTML = siteText('download');
-  nav.appendChild(download);
-
-  const print = document.createElement('button');
-  print.type = 'button';
-  print.id = 'print';
-  print.dataset.i18n = 'print';
-  print.innerHTML = siteText('print');
-  nav.appendChild(print);
 
   header.appendChild(nav);
 
@@ -432,17 +407,6 @@ function renderPageFooter(){
   document.body.appendChild(footer);   // end of <body>; robust regardless of where site.js is loaded
 }
 
-function setupPrintButton(){
-  const btn = document.getElementById('print');
-  if(!btn) return;
-  const isSource = currentPage() === 'source';
-  btn.addEventListener('click', () => {
-    if(isSource) window.print();
-    else siteNavigate(sitePageHref('source') + '?print');
-  });
-  if(isSource && location.search.indexOf('print') > -1) setTimeout(() => window.print(), 120);
-}
-
 function normalizeCleanLinks(){
   if(!useCleanUrls()) return;
   document.querySelectorAll('a[href]').forEach(a => {
@@ -466,7 +430,6 @@ function registerOfflineCache(){
 renderTopHeader();
 renderPageFooter();
 setSiteLanguage(siteLang, { silent: true });
-setupPrintButton();
 normalizeCleanLinks();
 registerOfflineCache();
 

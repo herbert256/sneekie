@@ -30,6 +30,9 @@ fetch('../SNEEKIE.BAS')
   .then(renderListing)
   .catch(err => { listing.innerHTML = sourceText('sourceLoadError') + err.message; });
 
+/* Print + Download live on this page now (the header no longer carries them). */
+document.getElementById('print')?.addEventListener('click', () => window.print());
+
 
 /* ---------- themes (shared with the game via localStorage) ---------- */
 const THEMES = {

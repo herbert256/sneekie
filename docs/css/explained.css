@@ -1,2 +1,11 @@
-/* Page-specific styles for explained.html. */
+/* Page-specific styles for explained.html (also hosts the side-by-side migration view). */
 .page-explained main{ max-width:940px; }
+/* The migration half needs the wider column for the BASIC<->JS pairs. */
+.page-explained.page-migration main{ max-width:1180px; }
+.page-explained hr.sep{
+  border:0;
+  border-top:1px solid var(--border);
+  width:100%;
+  max-width:1180px;
+  margin:48px 0 4px;
+}

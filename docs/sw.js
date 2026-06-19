@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v51';
+const CACHE_NAME = 'sneekie-offline-v52';
 
 /* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
    source, the manifest, and the small icons. The heavy magazine scans and manual
@@ -15,8 +15,6 @@ const PRECACHE_ASSETS = [
   'html/game',
   'html/manual.html',
   'html/manual',
-  'html/live.html',
-  'html/live',
   'html/bot.html',
   'html/bot',
   'html/magazine.html',
@@ -25,8 +23,6 @@ const PRECACHE_ASSETS = [
   'html/source',
   'html/explained.html',
   'html/explained',
-  'html/migration.html',
-  'html/migration',
   'html/vram.html',
   'html/vram',
   'html/history.html',
@@ -37,7 +33,6 @@ const PRECACHE_ASSETS = [
   'css/site.css',
   'css/game.css',
   'css/manual.css',
-  'css/live.css',
   'css/bot.css',
   'css/magazine.css',
   'css/source.css',
@@ -48,8 +43,8 @@ const PRECACHE_ASSETS = [
   'js/index.js',
   'js/site.js',
   'js/game.js',
+  'js/auto.js',
   'js/manual.js',
-  'js/live.js',
   'js/magazine.js',
   'js/source.js',
   'js/explained.js',

@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A detailed explanation of the smart bot that plays Sneekie live: state model, pathfinding, trap avoidance, hazards, scoring, and restart logic." />
-    <title>Sneekie — how the live bot thinks</title>
+    <meta name="description" content="A detailed explanation of the smart bot behind Sneekie's Auto mode: state model, pathfinding, trap avoidance, hazards, scoring, and stuck handling." />
+    <title>Sneekie — how the bot thinks</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
     <link rel="manifest" href="../site.webmanifest" />
@@ -17,16 +17,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
-    <meta property="og:title" content="Sneekie — how the live bot thinks" />
-    <meta property="og:description" content="The live Sneekie bot explained in detail: how it reads the game, plans routes, avoids traps, dodges arrows, and restarts levels." />
+    <meta property="og:title" content="Sneekie — how the bot thinks" />
+    <meta property="og:description" content="The Sneekie Auto-mode bot explained in detail: how it reads the game, plans routes, avoids traps, dodges arrows, and hands control back." />
     <meta property="og:url" content="https://sneekie.xyz/html/bot" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Sneekie — how the live bot thinks" />
-    <meta name="twitter:description" content="A detailed look at the live bot's route finding, survival checks, and trap avoidance." />
+    <meta name="twitter:title" content="Sneekie — how the bot thinks" />
+    <meta name="twitter:description" content="A detailed look at the Auto-mode bot's route finding, survival checks, and trap avoidance." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -34,9 +34,9 @@
   </head>
   <body class="page-doc page-bot">
     <main data-lang-template>
-      <h1 class="page-title">How the live bot thinks</h1>
-      <p class="lead">The <a href="live.html">Live</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
-      <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>live.html</code>; it reads the port's live variables and presses keys like a player would. Beyond two bookkeeping writes &mdash; jumping to the selected <code>LEVEL</code> and zeroing the leftover <code>BONUS</code> near a clear (both described below) &mdash; it leaves the game's rules and engine untouched.</div>
+      <h1 class="page-title">How the bot thinks</h1>
+      <p class="lead">Auto mode does not play a recording. On the <a href="game.html">Play</a> page, the <strong>Auto</strong> button hands the real running game to a JavaScript bot that presses the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
+      <div class="note"><strong>Important distinction.</strong> The 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>auto.js</code>; it reads the port's live variables and presses keys like a player would, leaving the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">
         <h2>On this page</h2>
         <ol>
@@ -71,7 +71,7 @@
             <a href="#speed"><span class="n">10.</span>Speed limits</a>
           </li>
           <li>
-            <a href="#restart"><span class="n">11.</span>Win, stuck, restart</a>
+            <a href="#restart"><span class="n">11.</span>Play, stuck, hand back</a>
           </li>
           <li>
             <a href="#limits"><span class="n">12.</span>Limits and tradeoffs</a>
@@ -80,25 +80,20 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The live page has one iframe whose source is <code>game.html</code>. On every iframe load, <code>live.html</code> appends CSS that hides the surrounding game chrome, then runs the bot string with <code>eval()</code> inside the iframe:</p>
-        <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
-        <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to code evaluated in the same script realm, but they are not ordinary <code>window</code> properties. Injecting the bot into the iframe lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
+        <p>The Play page loads two scripts: the faithful game engine <code>game.js</code>, then <code>auto.js</code>. When you press <strong>Auto</strong>, the bot in <code>auto.js</code> starts steering the very game on the page &mdash; no iframe, no <code>eval()</code>, no recording. It drives the snake by calling <code>pushKey()</code> with the same DOS scancode strings the keyboard handler produces.</p>
+        <p>That works because the game's <code>const</code> and <code>let</code> globals &mdash; <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, <code>peek()</code>, and <code>pushKey()</code> &mdash; live in the shared script realm. They are not ordinary <code>window</code> properties, but a second classic script loaded after <code>game.js</code> sees the same bindings. <code>auto.js</code> wraps everything in an IIFE so it can read <code>T[BTEL]</code> and press keys without ever redeclaring those names.</p>
         <div class="cards">
           <div class="card">
-            <h3>Level jump</h3>
-            <p>It dismisses level 1, sets <code>LEVEL = TARGET - 1</code>, presses F10 once, and lets the game's own loop enter the selected level.</p>
-          </div>
-          <div class="card">
-            <h3>Bonus reset</h3>
-            <p>Once two or fewer items remain it sets <code>BONUS = 0</code>, draining the leftover-bonus countdown before the final pickup so the level clears at once. Without it, at high speeds the &ldquo;stuck&rdquo; watchdog could trip and flash red on a genuine win.</p>
+            <h3>Same window</h3>
+            <p>The bot runs as a sibling script in the same page as the game &mdash; not inside an iframe and not through <code>eval()</code>.</p>
           </div>
           <div class="card">
             <h3>Real input</h3>
             <p>It sends DOS-style extended-key strings: up <code>' H'</code>, down <code>' P'</code>, left <code>' K'</code>, right <code>' M'</code>.</p>
           </div>
           <div class="card">
-            <h3>Live status</h3>
-            <p>It reports score and remaining items to the parent page with <code>parent.botStatus(...)</code>, and reports success or failure with <code>parent.botEnd(...)</code>.</p>
+            <h3>Hands back</h3>
+            <p>Any arrow key, <code>Esc</code>, or a tap on the screen turns Auto off, so you take over the running game instantly.</p>
           </div>
         </div>
       </section>
@@ -401,14 +396,15 @@
           <li><code>pressureFood()</code> uses a separate cap: 720 states normally, 1050 when urgent.</li>
           <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
-          <li>The page speed slider changes the delay between key presses, not the search itself.</li>
+          <li>The Auto-mode speed slider changes the delay between key presses, not the search itself.</li>
         </ul>
-        <p>The slider snaps to the page's speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move.</p>
+        <p>The slider snaps to a fixed set of speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
-        <h2>11. Win, stuck, restart</h2>
-        <p>The live page has seven selectable tabs: levels 26-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 26. The flash pulses five times, one second apart, before the next level loads &mdash; or, if you ask for reduced motion, it shows a single steady tint for about a second and a half instead.</p>
+        <h2>11. Play, stuck, hand back</h2>
+        <p>There are no tabs and no win/lose flashes: the bot simply plays the game in front of you. The game's own loop walks through the 32 levels and replays a level after a death, so the bot only has to keep choosing moves &mdash; its first move after each <em>Level n &mdash; press any key</em> popup also dismisses it.</p>
+        <p>The one thing the bot watches for is being stuck. Each move it compares the head index <code>BTEL</code> and the score <code>ZCORE</code> to the previous move; while either keeps changing, play is healthy &mdash; even a death still moves the score as the snake unwinds. If <em>neither</em> changes for about 25 ticks, the game is sitting at the <em>Play again (y/n)</em> game-over prompt (or genuinely wedged), so Auto switches itself off and hands control back to you.</p>
         <table>
           <thead>
             <tr>
@@ -418,28 +414,24 @@
           </thead>
           <tbody>
             <tr>
-              <td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td>
-              <td>Clean clear. Flash green and advance to the next listed level.</td>
+              <td><code>BTEL</code> or <code>ZCORE</code> changed</td>
+              <td>A move landed or the score moved. Keep steering.</td>
             </tr>
             <tr>
-              <td><code>LEVEL !== TARGET</code></td>
-              <td>The game jumped away or ended. Treat as failure and flash red.</td>
-            </tr>
-            <tr>
-              <td><code>BTEL</code> stops advancing</td>
-              <td>The snake is boxed, dying, or not moving. Flash red after the stall threshold.</td>
+              <td>Neither changed for ~25 ticks</td>
+              <td>Game over or wedged. Turn Auto off and hand control back.</td>
             </tr>
             <tr>
               <td>No safe move</td>
-              <td>All planners failed. Flash red.</td>
+              <td>All planners failed. Press nothing; the snake runs out its current direction and the game replays the level.</td>
             </tr>
             <tr>
-              <td>No score gain past the dynamic idle limit</td>
-              <td>Progress stalled. Flash red. The limit is 160 moves normally, then 210, 280, 400, or 520 moves as the remaining item count drops to 8, 4, 2, or 1.</td>
+              <td>Idle or tail-loop detected</td>
+              <td>Raises the planner's urgency (see Food search); it does not stop the bot.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle timer instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the dynamic timeout gives it more room before declaring the bot stuck.</p>
+        <p>The idle counter keys off the score instead of the item count because late hearts spawn clubs: the last club can need a long safe path without changing the score, so urgency rises gradually rather than misfiring on a busy snake.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>
@@ -455,9 +447,9 @@
       </section>
     </main>
     <template id="main-template-nl">
-      <h1 class="page-title">Hoe de livebot denkt</h1>
-      <p class="lead">De pagina <a href="live.html">Live</a> speelt geen opname af. Hij laadt het echte spel in een <code>&lt;iframe&gt;</code>, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
-      <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>live.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve twee administratieve ingrepen &mdash; springen naar het gekozen <code>LEVEL</code> en de resterende <code>BONUS</code> vlak voor een clear op nul zetten &mdash; laat hij de regels en engine ongemoeid.</div>
+      <h1 class="page-title">Hoe de bot denkt</h1>
+      <p class="lead">De auto-modus speelt geen opname af. Op de pagina <a href="game.html">Spelen</a> geeft de knop <strong>Auto</strong> het echte, lopende spel aan een JavaScript-bot die dezelfde pijltjesscancodes indrukt als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
+      <div class="note"><strong>Belangrijk verschil.</strong> Het spel uit 1988 op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>auto.js</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen, en laat de regels en engine ongemoeid.</div>
       <nav class="toc" aria-label="Op deze pagina">
         <h2>Op deze pagina</h2>
         <ol>
@@ -471,20 +463,18 @@
           <li><a href="#fallbacks"><span class="n">8.</span>Noodzetten</a></li>
           <li><a href="#score"><span class="n">9.</span>Routes scoren</a></li>
           <li><a href="#speed"><span class="n">10.</span>Snelheidslimieten</a></li>
-          <li><a href="#restart"><span class="n">11.</span>Win, vast, herstart</a></li>
+          <li><a href="#restart"><span class="n">11.</span>Spelen, vast, teruggeven</a></li>
           <li><a href="#limits"><span class="n">12.</span>Grenzen en afwegingen</a></li>
         </ol>
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De livepagina heeft een iframe met <code>game.html</code> als bron. Bij elke iframe-load voegt <code>live.html</code> CSS toe die de gewone spelchrome verbergt, en voert daarna de botstring met <code>eval()</code> uit binnen dat iframe:</p>
-        <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
-        <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Code die in dezelfde scriptomgeving wordt ge-evalueerd kan die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
+        <p>De Spelen-pagina laadt twee scripts: de getrouwe game-engine <code>game.js</code> en daarna <code>auto.js</code>. Druk je op <strong>Auto</strong>, dan begint de bot in <code>auto.js</code> het spel op de pagina zelf te sturen &mdash; geen iframe, geen <code>eval()</code>, geen opname. Hij stuurt de slang met <code>pushKey()</code> en dezelfde DOS-scancodestrings die de toetsenbordafhandeling maakt.</p>
+        <p>Dat kan omdat de <code>const</code>- en <code>let</code>-globals van de game &mdash; <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, <code>peek()</code> en <code>pushKey()</code> &mdash; in dezelfde scriptomgeving leven. Het zijn geen gewone <code>window</code>-eigenschappen, maar een tweede klassiek script dat na <code>game.js</code> wordt geladen ziet dezelfde bindingen. <code>auto.js</code> verpakt alles in een IIFE, zodat het <code>T[BTEL]</code> kan lezen en toetsen kan indrukken zonder die namen ooit opnieuw te declareren.</p>
         <div class="cards">
-          <div class="card"><h3>Levelsprong</h3><p>Hij sluit level 1, zet <code>LEVEL = TARGET - 1</code>, drukt een keer F10, en laat de eigen gameloop het gekozen level openen.</p></div>
-          <div class="card"><h3>Bonusreset</h3><p>Wanneer er nog twee of minder items zijn zet hij <code>BONUS = 0</code>. Daardoor hoeft de livepagina niet lang te wachten terwijl de resterende bonus aftelt.</p></div>
+          <div class="card"><h3>Zelfde venster</h3><p>De bot draait als zustertscript in dezelfde pagina als het spel &mdash; niet in een iframe en niet via <code>eval()</code>.</p></div>
           <div class="card"><h3>Echte invoer</h3><p>Hij stuurt DOS-achtige uitgebreide toetsstrings: omhoog <code>' H'</code>, omlaag <code>' P'</code>, links <code>' K'</code>, rechts <code>' M'</code>.</p></div>
-          <div class="card"><h3>Live status</h3><p>Hij meldt score en resterende items aan de ouderpagina met <code>parent.botStatus(...)</code>, en succes of falen met <code>parent.botEnd(...)</code>.</p></div>
+          <div class="card"><h3>Geeft terug</h3><p>Elke pijltjestoets, <code>Esc</code> of een tik op het scherm zet Auto uit, zodat jij het lopende spel meteen overneemt.</p></div>
         </div>
       </section>
       <section id="data">
@@ -614,25 +604,25 @@
           <li><code>routeFood()</code> stopt bij 950 zoektoestanden.</li>
           <li><code>pressureFood()</code> gebruikt 720 toestanden normaal en 1050 wanneer urgent.</li>
           <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
-          <li>De schuifregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
+          <li>De Auto-snelheidsregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
         </ul>
         <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
-        <h2>11. Win, vast, herstart</h2>
-        <p>De livepagina heeft zeven tabs: levels 26-32. Winst flitst groen, falen flitst rood, en beide gaan daarna door naar de volgende tab. Na level 32 gaat hij terug naar level 26.</p>
+        <h2>11. Spelen, vast, teruggeven</h2>
+        <p>Er zijn geen tabs en geen win/verlies-flitsen: de bot speelt gewoon het spel dat voor je staat. De eigen gameloop loopt door de 32 levels en herstart een level na een dood, dus de bot hoeft alleen maar zetten te blijven kiezen &mdash; zijn eerste zet na elke <em>Level n &mdash; druk op een toets</em>-popup sluit die meteen.</p>
+        <p>Het enige waar de bot op let, is vastlopen. Elke zet vergelijkt hij kopindex <code>BTEL</code> en score <code>ZCORE</code> met de vorige zet; zolang een van beide blijft veranderen, gaat het goed &mdash; zelfs een dood verandert nog de score terwijl de slang afwikkelt. Verandert er ongeveer 25 ticks lang <em>niets</em>, dan staat het spel bij de <em>Nog eens (j/n)</em>-prompt na game-over (of zit het echt vast), en zet Auto zichzelf uit en geeft de besturing aan jou terug.</p>
         <table>
           <thead><tr><th>Voorwaarde</th><th>Resultaat</th></tr></thead>
           <tbody>
-            <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Schoon gehaald. Groen flitsen en door naar het volgende gekozen level.</td></tr>
-            <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
-            <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang zit vast, sterft of beweegt niet. Rood na de stall-drempel.</td></tr>
-            <tr><td>Geen veilige zet</td><td>Alle planners faalden. Rood.</td></tr>
-            <tr><td>Geen scorewinst voorbij de dynamische idle-limiet</td><td>Voortgang stokt. Rood. De limiet groeit wanneer er weinig items over zijn.</td></tr>
+            <tr><td><code>BTEL</code> of <code>ZCORE</code> veranderde</td><td>Een zet landde of de score bewoog. Blijf sturen.</td></tr>
+            <tr><td>~25 ticks niets veranderd</td><td>Game-over of vast. Auto uit en besturing teruggeven.</td></tr>
+            <tr><td>Geen veilige zet</td><td>Alle planners faalden. Druk niets; de slang loopt in zijn huidige richting door en het level herstart.</td></tr>
+            <tr><td>Idle of staartlus gedetecteerd</td><td>Verhoogt de urgentie van de planner (zie Voedsel zoeken); stopt de bot niet.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor de idle-timer in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert.</p>
+        <p>De idle-teller kijkt naar de score in plaats van het itemaantal, omdat late harten klavers spawnen: de laatste klaver kan een lange veilige route vragen zonder dat de score verandert, dus de urgentie loopt geleidelijk op in plaats van mis te slaan op een drukke slang.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>

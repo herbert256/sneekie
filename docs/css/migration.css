@@ -1,4 +1,4 @@
-/* Page-specific styles for migration.html. */
+/* Styles for the side-by-side BASIC<->JS migration view (loaded by explained.html). */
 .page-migration main{ max-width:1180px; }
 .page-migration .hero .sub{
   display:block;

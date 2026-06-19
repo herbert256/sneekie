@@ -31,6 +31,12 @@
   font-size:12.5px;
   text-align:center;
 }
+.page-source .toolbar{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-bottom:12px;
+}
 .page-source .themebar{
   display:flex;
   justify-content:center;
@@ -149,8 +155,11 @@
     color:#222;
     padding:0;
   }
+  .page-source .toolbar,
   .page-source .themebar,
   .page-source .hero .sub,
+  .page-source header.top,
+  .page-source footer,
   .page-source .screen::after{ display:none !important; }
   .page-source #bezel,
   .page-source .screen{
