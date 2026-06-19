@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Een MS-DOS tekstspel uit 1988 - herboren als browserspel" />
+    <title>Sneekie - Het spel uit 1988</title>
+    <link rel="canonical" href="https://sneekie.xyz/nl/game" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/game" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/game" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/game" />
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Het spel uit 1988" />
+    <meta property="og:description" content="Een MS-DOS tekstspel uit 1988 - herboren als browserspel" />
+    <meta property="og:url" content="https://sneekie.xyz/nl/game" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Het spel uit 1988" />
+    <meta name="twitter:description" content="Een MS-DOS tekstspel uit 1988 - herboren als browserspel" />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/game.css" />
+  </head>
+  <body class="page-index">
+    <main id="main" tabindex="-1">
+      <header class="hero">
+        <h1 class="page-title">Het spel uit 1988</h1>
+        <p class="sub">Een MS-DOS tekstspel uit 1988 &mdash; herboren als browserspel</p>
+      </header>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie spelscherm"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+        <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
+       (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
+       Shown only in fullscreen on a coarse pointer; see CSS. -->
+        <div id="fstouch">
+          <button type="button" data-key="esc">ESC</button>
+          <button type="button" data-key="left" aria-label="Links">&#8592;</button>
+          <button type="button" data-key="up" aria-label="Omhoog">&#8593;</button>
+          <button type="button" data-key="down" aria-label="Omlaag">&#8595;</button>
+          <button type="button" data-key="right" aria-label="Rechts">&#8594;</button>
+          <button type="button" data-key="y">J</button>
+          <button type="button" data-key="n">N</button>
+          <button type="button" data-key="f9">F9</button>
+          <button type="button" data-key="f10">F10</button>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Groen</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute">Geluid: aan</button>
+          <button type="button" id="fs">Volledig scherm</button>
+        </div>
+      </div>
+      <div id="touchbar">
+        <button type="button" data-key="esc">ESC</button>
+        <button type="button" data-key="y">J</button>
+        <button type="button" data-key="n">N</button>
+      </div>
+      <p id="hint">
+        <span class="kb">Pijltjestoetsen sturen de slang &middot; &lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven &middot; F10 = level overslaan &middot; elke toets gaat verder</span>
+        <span class="tc">Veeg om te sturen &middot; tik = willekeurige toets</span>
+      </p>
+    </main>
+
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/game.js"></script>
+  </body>
+</html>

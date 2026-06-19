@@ -1,8 +1,8 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v58';
+const CACHE_NAME = 'sneekie-offline-v61';
 
-/* Precache only the lightweight app shell (~0.4 MB): HTML, CSS, JS, the BASIC
+/* Precache only the lightweight app shell: HTML, CSS, JS, the BASIC
    source, the manifest, and the small icons. The heavy magazine scans and manual
    clips are NOT precached — the fetch handler's cacheFirstAsset() caches them on
    demand the first time a visitor actually opens those pages, so offline still
@@ -11,26 +11,66 @@ const CACHE_NAME = 'sneekie-offline-v58';
 const PRECACHE_ASSETS = [
   './',
   'index.html',
-  'html/game.html',
-  'html/game',
-  'html/manual.html',
-  'html/manual',
-  'html/bot.html',
-  'html/bot',
-  'html/bot-thinking.html',
-  'html/bot-thinking',
-  'html/magazine.html',
-  'html/magazine',
-  'html/source.html',
-  'html/source',
-  'html/explained.html',
-  'html/explained',
-  'html/migration.html',
-  'html/migration',
-  'html/vram.html',
-  'html/vram',
-  'html/history.html',
-  'html/history',
+  'en/game.html',
+  'en/game',
+  'en/history.html',
+  'en/history',
+  'en/source.html',
+  'en/source',
+  'en/manual.html',
+  'en/manual',
+  'en/bot.html',
+  'en/bot',
+  'en/bot-thinking.html',
+  'en/bot-thinking',
+  'en/magazine.html',
+  'en/magazine',
+  'en/explained.html',
+  'en/explained',
+  'en/migration.html',
+  'en/migration',
+  'en/vram.html',
+  'en/vram',
+  'nl/game.html',
+  'nl/game',
+  'nl/history.html',
+  'nl/history',
+  'nl/source.html',
+  'nl/source',
+  'nl/manual.html',
+  'nl/manual',
+  'nl/bot.html',
+  'nl/bot',
+  'nl/bot-thinking.html',
+  'nl/bot-thinking',
+  'nl/magazine.html',
+  'nl/magazine',
+  'nl/explained.html',
+  'nl/explained',
+  'nl/migration.html',
+  'nl/migration',
+  'nl/vram.html',
+  'nl/vram',
+  'uk/game.html',
+  'uk/game',
+  'uk/history.html',
+  'uk/history',
+  'uk/source.html',
+  'uk/source',
+  'uk/manual.html',
+  'uk/manual',
+  'uk/bot.html',
+  'uk/bot',
+  'uk/bot-thinking.html',
+  'uk/bot-thinking',
+  'uk/magazine.html',
+  'uk/magazine',
+  'uk/explained.html',
+  'uk/explained',
+  'uk/migration.html',
+  'uk/migration',
+  'uk/vram.html',
+  'uk/vram',
   'SNEEKIE.BAS',
   'site.webmanifest',
   'css/index.css',
@@ -46,6 +86,7 @@ const PRECACHE_ASSETS = [
   'css/vram.css',
   'css/history.css',
   'js/index.js',
+  'js/i18n.js',
   'js/site.js',
   'js/game.js',
   'js/bot.js',
@@ -74,7 +115,7 @@ self.addEventListener('install', event => {
     // install, skipWaiting() would never run, and users would stay pinned to the
     // old worker and a stale cache — silently. allSettled lets the install
     // succeed with whatever fetched; the rest is filled in on demand later.
-    // The clean URL entries (html/manual, etc.) are production-only conveniences:
+    // The clean URL entries (en/manual, etc.) are production-only conveniences:
     // GitHub Pages/Cloudflare serve them, while a plain local http.server 404s.
     await Promise.allSettled(urls.map(req => cache.add(req)));
     await self.skipWaiting();

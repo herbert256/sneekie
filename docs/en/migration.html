@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="The web version isn't a rewrite - it's a faithful port . The game logic is translated statement-for-statement from SNEEKIE.BAS , keeping the original variable names and even..." />
+    <title>Sneekie - From GW-BASIC to JavaScript, side by side</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/en/migration" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/migration" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/migration" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/migration" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/migration" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - From GW-BASIC to JavaScript, side by side" />
+    <meta property="og:description" content="The web version isn't a rewrite - it's a faithful port . The game logic is translated statement-for-statement from SNEEKIE.BAS , keeping the original variable names and even..." />
+    <meta property="og:url" content="https://sneekie.xyz/en/migration" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - From GW-BASIC to JavaScript, side by side" />
+    <meta name="twitter:description" content="The web version isn't a rewrite - it's a faithful port . The game logic is translated statement-for-statement from SNEEKIE.BAS , keeping the original variable names and even..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/migration.css" />
+  </head>
+  <body class="page-doc page-migration">
+    <main>
+      <div class="hero">
+        <h1 class="page-title">From GW-BASIC to JavaScript, side by side</h1>
+        <p class="sub">The 1988 source on the left, the 2026 port on the right &mdash; and how the new one is put together.</p>
+      </div>
+      <p class="lead">The web version isn't a rewrite &mdash; it's a <em>faithful port</em>. The game logic is translated statement-for-statement from <code>SNEEKIE.BAS</code>, keeping the original variable names and even the BASIC line numbers (as comments). What actually changed is the thin layer underneath: the handful of things GW-BASIC gave you for free &mdash; screen memory, keyboard, sound, <code>GOTO</code> &mdash; had to be rebuilt for the browser. This page pairs representative sections and explains that layer; for every BASIC line, use <a href="explained.html">Explained</a>.</p>
+      <div class="callout">
+        <h2>The bridge: the screen is the data structure</h2>
+        <p>GW-BASIC <code>POKE</code>d characters straight into the PC's 80&times;25 text-screen memory and <code>PEEK</code>ed it back to find out what was where. There was no separate "snake" or "wall" object &mdash; the picture <em>was</em> the state. The port keeps that model exactly, as a 4000-byte <code>Uint8Array</code> (<code>vram</code>): two bytes per cell, character then attribute, addressed by</p>
+        <p><span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span></p>
+        <p>Because the model is identical, the game code barely changes &mdash; only the words <code>POKE</code> and <code>PEEK</code> become the functions <code>poke()</code> and <code>peek()</code>. Everything else on this page follows from rebuilding the rest of GW-BASIC's runtime around that one shared array.</p>
+      </div>
+      <h2 style="color: var(--heading); max-width: 900px">What had to be rebuilt</h2>
+      <table class="map">
+        <tr>
+          <th>The 1988 mechanism</th>
+          <th>The 2026 replacement</th>
+        </tr>
+        <tr>
+          <td><code>POKE</code> / <code>PEEK</code> into video memory at <code>&amp;HB000</code>/<code>&amp;HB800</code></td>
+          <td>
+            <b><code>poke()</code> / <code>peek()</code></b> on a 4000-byte <code>Uint8Array</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>LOCATE r,c : PRINT CHR$(n)</code></td>
+          <td>
+            <b><code>locate(r,c); pc(n)</code></b> &mdash; same cursor, same character codes
+          </td>
+        </tr>
+        <tr>
+          <td>the screen refreshes itself (it <em>is</em> video memory)</td>
+          <td>
+            a <b>dirty-cell set + <code>requestAnimationFrame</code></b> redraw, glyphs blitted from an embedded IBM CP437 font
+          </td>
+        </tr>
+        <tr>
+          <td><code>INKEY$</code> / <code>INPUT$</code> block until a key</td>
+          <td>
+            <b><code>async</code> + a Promise keyboard buffer</b> (<code>keyOrTimeout</code>/<code>waitKey</code>)
+          </td>
+        </tr>
+        <tr>
+          <td><code>SOUND freq, ticks</code></td>
+          <td>a <b>Web Audio</b> square-wave oscillator on the same 1/18.2&nbsp;s clock</td>
+        </tr>
+        <tr>
+          <td><code>ON LEVEL GOSUB &hellip;</code></td>
+          <td>
+            the <b><code>CFG[]</code> and <code>ENEMY[]</code></b> dispatch arrays
+          </td>
+        </tr>
+        <tr>
+          <td><code>GOTO 510</code> / <code>RETURN 510</code> (die)</td>
+          <td>
+            <b><code>throw DEATH</code></b>, caught around the move loop
+          </td>
+        </tr>
+        <tr>
+          <td>variables (<code>DEFINT A-Y</code>, Dutch names)</td>
+          <td>the <b>same names kept verbatim</b> (<code>T</code>, <code>BTEL</code>, <code>HART</code>, <code>KLAVER</code>&hellip;)</td>
+        </tr>
+      </table>
+      <div class="callout">
+        <h2>The one deep change: blocking becomes <code>async</code></h2>
+        <p>GW-BASIC ran top-to-bottom and simply <em>stopped</em> at <code>INKEY$</code>/<code>INPUT$</code> until you pressed a key. A browser tab can never block like that &mdash; so the waiting points became <code>await</code>s, which forced <code>playLevels()</code> and <code>program()</code> to be <code>async</code>. A small Promise-based keyboard buffer stands in for the BIOS key buffer, and because <code>GOTO</code> doesn't exist, the "jump out and die" lines turn into a thrown <code>DEATH</code> sentinel caught around the loop. Those two tricks &mdash; <em>await for input, throw to die</em> &mdash; are what let the rest of the code stay a literal translation.</p>
+      </div>
+      <nav class="toc" aria-label="On this page">
+        <h2>The pairings</h2>
+        <ol id="toc-list"></ol>
+      </nav>
+      <div id="pairs"></div>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/migration.js"></script>
+  </body>
+</html>

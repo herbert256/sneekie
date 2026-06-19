@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Це оригінальний SNEEKIE.BAS з повернутим контекстом. Код показаний саме так, як був написаний; бурштинові нотатки під рядками і картки між секціями — це нові пояснення. Якщо..." />
+    <title>Sneekie - Sneekie, рядок за рядком</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/uk/explained" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/explained" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/explained" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/explained" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/explained" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Sneekie, рядок за рядком" />
+    <meta property="og:description" content="Це оригінальний SNEEKIE.BAS з повернутим контекстом. Код показаний саме так, як був написаний; бурштинові нотатки під рядками і картки між секціями — це нові пояснення. Якщо..." />
+    <meta property="og:url" content="https://sneekie.xyz/uk/explained" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Sneekie, рядок за рядком" />
+    <meta name="twitter:description" content="Це оригінальний SNEEKIE.BAS з повернутим контекстом. Код показаний саме так, як був написаний; бурштинові нотатки під рядками і картки між секціями — це нові пояснення. Якщо..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/explained.css" />
+  </head>
+  <body class="page-doc page-explained">
+    <main>
+      <div class="hero">
+        <h1 class="page-title">Sneekie, рядок за рядком</h1>
+        <p class="sub">Українська екскурсія вихідним кодом GW-BASIC 1988 року &mdash; з поясненнями через 38 років.</p>
+      </div>
+      <p class="lead">Це оригінальний <code>SNEEKIE.BAS</code> з повернутим контекстом. Код показаний саме так, як був написаний; <span style="color: var(--annot)">бурштинові нотатки</span> під рядками і картки між секціями — це нові пояснення. Якщо routine незрозуміла, шукайте її номер рядка нижче &mdash; усе згруповано так, як це нумерував GW-BASIC.</p>
+      <div class="callout">
+        <h2>Одна ідея, що пояснює все: екран <em>і є</em> гра</h2>
+        <p>Тут немає sprites, game objects чи окремої структури даних "змія". Змія, стіни, серця і стріли — це просто <em>символи у текстовій памʼяті екрана PC</em>, а програма читає і записує цю памʼять напряму через <code>PEEK</code> і <code>POKE</code>.</p>
+        <p>Текстовий екран має 80&times;25 клітинок. Кожна клітинка має <b>два байти</b>: код символу, потім його колірний атрибут. Отже адреса клітинки така:</p>
+        <p><span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span> &nbsp;&mdash; 160, бо рядок має 80 клітинок &times; 2 байти.</p>
+        <p>Парний байт містить glyph; непарний байт містить атрибут (<code>7</code> = звичайний, <code>15</code> = яскравий). Щоб дізнатися, що перед змією, код просто робить <code>PEEK</code> байта символу в цільовій клітинці і перемикається за знайденим числом. Цей один трюк &mdash; <em>картинка і стан є тими самими байтами</em> &mdash; пояснює, чому так багато програми рахує screen offsets.</p>
+        <p style="margin-bottom: 0"><a href="vram.html">&#9654; Подивитися наживо</a> &mdash; керуйте змією і дивіться, як змінюються справжні байти.</p>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <h3>Змінні (багато назв нідерландські)</h3>
+          <table class="gloss">
+            <tr><td class="g">T()</td><td>змія &mdash; список screen offsets від хвоста <code>T(ETEL)</code> до голови <code>T(BTEL)</code></td></tr>
+            <tr><td class="g">BTEL / ETEL</td><td>індекс <b>голови</b> / <b>хвоста</b> у <code>T()</code> (<i lang="nl">teller</i> = лічильник)</td></tr>
+            <tr><td class="g">E / F</td><td>поточний / попередній напрям (scancodes 72 80 75 77)</td></tr>
+            <tr><td class="g">HART</td><td>серця &#9829;, які ще треба зібрати (<i lang="nl">hart</i> = серце)</td></tr>
+            <tr><td class="g">KLAVER</td><td>трефи &#9827;, які ще треба зібрати (<i lang="nl">klaver</i> = трефа)</td></tr>
+            <tr><td class="g">BONUS / BMIN</td><td>часовий bonus і те, наскільки він падає за хід</td></tr>
+            <tr><td class="g">AANTAL</td><td>скільки предметів кожного типу розсипати (<i lang="nl">aantal</i> = кількість)</td></tr>
+            <tr><td class="g">Z</td><td>секунди на хід; <code>999</code> = покроково, мале число = real-time</td></tr>
+            <tr><td class="g">LIVE / LEVEL</td><td>залишок життів / поточний рівень</td></tr>
+            <tr><td class="g">ZCORE / ZORE</td><td>score / high score (спеціально лишені floating-point &mdash; див. рядок 80)</td></tr>
+            <tr><td class="g">OP</td><td>очки, які додаються цього разу (передаються routine рахунку, 1190)</td></tr>
+            <tr><td class="g">S() B() D()</td><td>backup popup / рядки брам / стан рухомих стріл</td></tr>
+            <tr><td class="g">VIDEO</td><td>сегмент памʼяті екрана (<code>&amp;HB000</code> mono / <code>&amp;HB800</code> color)</td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Що означають символи (CP437)</h3>
+          <table class="chars">
+            <tr><td class="g">32</td><td>&nbsp;</td><td>порожня клітинка</td></tr>
+            <tr><td class="g">219</td><td>&#9608;</td><td>голова змії</td></tr>
+            <tr><td class="g">186 205 187 188 201 200</td><td>&#9553;&#9552;&#9559;&#9565;&#9556;&#9562;</td><td>тіло змії: прямі лінії і кути</td></tr>
+            <tr><td class="g">179 196 197 &hellip;</td><td>&#9474;&#9472;&#9532;</td><td>стіни лабіринту і рамки</td></tr>
+            <tr><td class="g">1</td><td>&#9786;</td><td>смайлик &mdash; <b>поганий</b> (&minus;50)</td></tr>
+            <tr><td class="g">3</td><td>&#9829;</td><td>серце (+10)</td></tr>
+            <tr><td class="g">5</td><td>&#9827;</td><td>трефа (+25)</td></tr>
+            <tr><td class="g">10</td><td>&#9689;</td><td>камінь &mdash; можна штовхати</td></tr>
+            <tr><td class="g">24 26 27</td><td>&#8593;&#8594;&#8592;</td><td>рухомі стріли &mdash; <b>смертельні</b></td></tr>
+            <tr><td class="g">attr 7 / 15</td><td>&nbsp;</td><td>звичайний / яскравий</td></tr>
+          </table>
+          <h3>Клавіші (scancodes у E)</h3>
+          <table class="chars">
+            <tr><td class="g">72 80 75 77</td><td>&#8593;&#8595;&#8592;&#8594;</td><td>керувати змією</td></tr>
+            <tr><td class="g">27</td><td>ESC</td><td>здатися, якщо застрягли (коштує життя)</td></tr>
+            <tr><td class="g">67 / 68</td><td>F9 / F10</td><td>cheat: +життя і пропуск / пропустити рівень</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="callout">
+        <h2>Як проходить один хід (рядки 420&ndash;1010)</h2>
+        <ol style="margin: 6px 0; padding-left: 22px">
+          <li>Чекати до <code>Z</code> секунд на стрілку або дозволити змії зберегти напрям.</li>
+          <li>Зняти <code>BMIN</code> з bonus.</li>
+          <li>Перетворити напрям на крок екрана і визначити клітинку, у яку входить голова.</li>
+          <li>Зробити <code>PEEK</code> цієї клітинки і відреагувати: порожнє місце, серце/трефа, камінь, смертельна стріла або блок стіною.</li>
+          <li>Перетворити стару голову на правильний символ <span class="mono">&#9552;&#9553;&#9559;&#9565;&#9556;&#9562;</span> і намалювати нову голову <span class="mono">&#9608;</span>.</li>
+          <li>Підсвітити тіло і просунути стріли/брами рівня на один крок.</li>
+          <li>Повторювати, доки всі серця і трефи не зібрані.</li>
+        </ol>
+      </div>
+      <nav class="toc" id="toc" aria-label="На цій сторінці">
+        <h2>Підпрограми</h2>
+        <ol id="toc-list"></ol>
+      </nav>
+      <div id="listing"></div>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/explained.js"></script>
+  </body>
+</html>

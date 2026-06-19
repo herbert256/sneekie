@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="A smart bot playing the real 1988 Sneekie live in your browser — pick from the late-game mazes, levels 26-32." />
+    <title>Sneekie — Live bot</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/en/bot" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie — Live bot" />
+    <meta property="og:description" content="A smart bot playing the real 1988 Sneekie live — the late-game mazes, levels 26-32." />
+    <meta property="og:url" content="https://sneekie.xyz/en/bot" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie — Live bot" />
+    <meta name="twitter:description" content="A smart bot playing the real 1988 Sneekie live — the late-game mazes, levels 26-32." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/bot.css" />
+  </head>
+  <body class="page-doc page-bot">
+    <main id="main" tabindex="-1" data-lang-template>
+      <div class="hero">
+        <h1 class="page-title" data-i18n="liveTitle">The bot descends into the deep &mdash; levels 26-32</h1>
+      </div>
+      <p class="lead" data-i18n="liveLead">
+        This is no recording. The <em>real</em> 1988 game runs live before you while a lone bot descends into its <strong>deepest seven mazes &mdash; levels 26-32</strong>, where the walls themselves come alive, the serpent swells to <strong>twice its length</strong>, and every <span class="ico h">&hearts;</span> heart it devours flings a fresh <span class="ico g">&clubs;</span> club into the dark. Watch it reason in real time: it carves the shortest line to its quarry, <strong>heaves <span class="ico t">&#9689;</span> boulders</strong> from its path, <strong>threads the storm of flying <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and never loses the road home to its own tail &mdash; and when the maze moves to seal it in, it will <strong>swallow a cursed <span class="ico s">&#9786;</span> smiley</strong> to tear an opening free. Clear the board and the screen <strong><span class="ico green">blazes green</span></strong> as the bot marches onward; corner it, and it <strong><span class="ico r">flares red</span></strong> and rises to try again. It does not tire, and it does not stop.
+      </p>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen" data-i18n-aria="gameCanvas"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules" data-i18n="themeGreen">Green</button>
+          <button type="button" data-theme="amber" data-i18n="themeAmber">Amber</button>
+          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute" data-i18n="soundOn">Sound: on</button>
+          <button type="button" id="fs" data-i18n="fullscreen">Fullscreen</button>
+        </div>
+      </div>
+      <div class="speedbar">
+        <label for="speed" data-i18n="botSpeed">Bot speed</label>
+        <input id="speed" type="range" min="0" max="10" step="1" value="5" aria-valuetext="50" />
+        <output id="speedout" for="speed">50</output>
+      </div>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Bot level" data-i18n-aria="liveTabsLabel"></div>
+      <p class="live-note" data-i18n="liveNote">It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
+      <p class="bot-think-link"><a href="bot-thinking.html" data-i18n="botThinkLink">How the bot thinks &rarr;</a></p>
+    </main>
+    <template id="main-template-nl">
+      <div class="hero">
+        <h1 class="page-title" data-i18n="liveTitle">De bot daalt af in de diepte &mdash; levels 26-32</h1>
+      </div>
+      <p class="lead" data-i18n="liveLead">Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live voor je ogen terwijl een eenzame bot afdaalt in zijn <strong>diepste zeven doolhoven &mdash; levels 26-32</strong>, waar de muren zelf tot leven komen, de slang <strong>twee keer zo lang</strong> wordt en elk <span class="ico h">&hearts;</span> hart dat hij verslindt een nieuwe <span class="ico g">&clubs;</span> klaver het duister in slingert. Zie hem denken in real time: hij trekt de kortste lijn naar zijn prooi, <strong>wentelt <span class="ico t">&#9689;</span> rotsblokken</strong> opzij, <strong>glipt door de storm van vliegende <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, en verliest nooit de weg terug naar zijn eigen staart &mdash; en dreigt het doolhof hem in te sluiten, dan <strong>verzwelgt hij een vervloekte <span class="ico s">&#9786;</span> smiley</strong> om zich een uitweg te scheuren. Haalt hij het level, dan <strong><span class="ico green">vlamt het scherm groen</span></strong> en marcheert de bot verder; klem je hem vast, dan <strong><span class="ico r">laait het rood op</span></strong> en herrijst hij voor een nieuwe poging. Hij wordt niet moe, en hij stopt niet.</p>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie spelscherm" data-i18n-aria="gameCanvas"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules" data-i18n="themeGreen">Groen</button>
+          <button type="button" data-theme="amber" data-i18n="themeAmber">Amber</button>
+          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute" data-i18n="soundOn">Geluid: aan</button>
+          <button type="button" id="fs" data-i18n="fullscreen">Volledig scherm</button>
+        </div>
+      </div>
+      <div class="speedbar">
+        <label for="speed" data-i18n="botSpeed">Botsnelheid</label>
+        <input id="speed" type="range" min="0" max="10" step="1" value="5" aria-valuetext="50" />
+        <output id="speedout" for="speed">50</output>
+      </div>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Livebot level" data-i18n-aria="liveTabsLabel"></div>
+      <p class="live-note" data-i18n="liveNote">Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.</p>
+      <p class="bot-think-link"><a href="bot-thinking.html" data-i18n="botThinkLink">Hoe de bot denkt &rarr;</a></p>
+
+    
+    </template>
+    <template id="main-template-uk">
+      <div class="hero">
+        <h1 class="page-title" data-i18n="liveTitle">Бот спускається в глибину &mdash; рівні 26-32</h1>
+      </div>
+      <p class="lead" data-i18n="liveLead">Це не запис. <em>Справжня</em> гра 1988 року працює наживо перед вами, поки самотній бот спускається у <strong>сім найглибших лабіринтів &mdash; рівні 26-32</strong>, де самі стіни оживають, змія стає <strong>удвічі довшою</strong>, а кожне зʼїдене <span class="ico h">&hearts;</span> серце кидає в темряву нову <span class="ico g">&clubs;</span> трефу. Дивіться, як він міркує в реальному часі: прокладає найкоротший шлях до здобичі, <strong>відсуває <span class="ico t">&#9689;</span> валуни</strong>, <strong>прослизає крізь бурю летючих <span class="ico a">&uarr;&larr;&rarr;</span> стріл</strong> і не втрачає дорогу назад до власного хвоста. Коли лабіринт намагається замкнути його, бот <strong>ковтає проклятий <span class="ico s">&#9786;</span> смайлик</strong>, щоб вирвати собі вихід. Коли поле очищено, екран <strong><span class="ico green">спалахує зеленим</span></strong> і бот іде далі; якщо загнати його в кут, він <strong><span class="ico r">спалахує червоним</span></strong> і підіймається для нової спроби. Він не втомлюється і не зупиняється.</p>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран Sneekie" data-i18n-aria="gameCanvas"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules" data-i18n="themeGreen">Зелений</button>
+          <button type="button" data-theme="amber" data-i18n="themeAmber">Бурштин</button>
+          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute" data-i18n="soundOn">Звук: увімкнено</button>
+          <button type="button" id="fs" data-i18n="fullscreen">На весь екран</button>
+        </div>
+      </div>
+      <div class="speedbar">
+        <label for="speed" data-i18n="botSpeed">Швидкість бота</label>
+        <input id="speed" type="range" min="0" max="10" step="1" value="5" aria-valuetext="50" />
+        <output id="speedout" for="speed">50</output>
+      </div>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Рівень live-бота" data-i18n-aria="liveTabsLabel"></div>
+      <p class="live-note" data-i18n="liveNote">Це live, не запис. Тримайте цю вкладку попереду &mdash; браузери сповільнюють фонові вкладки, і гра зупиняється.</p>
+      <p class="bot-think-link"><a href="bot-thinking.html" data-i18n="botThinkLink">Як думає бот &rarr;</a></p>
+
+    
+    </template>
+
+    <script>window.SNEEKIE_SKIPBOOT = true;</script>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/game.js"></script>
+    <script src="../js/bot.js"></script>
+  </body>
+</html>

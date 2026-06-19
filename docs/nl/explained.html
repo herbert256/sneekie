@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Dit is de originele SNEEKIE.BAS met het verhaal erbij. De code staat precies zoals hij geschreven is; de amberkleurige notities onder regels en de kaarten tussen secties zijn..." />
+    <title>Sneekie - Sneekie, regel voor regel</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/nl/explained" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/explained" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/explained" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/explained" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/explained" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Sneekie, regel voor regel" />
+    <meta property="og:description" content="Dit is de originele SNEEKIE.BAS met het verhaal erbij. De code staat precies zoals hij geschreven is; de amberkleurige notities onder regels en de kaarten tussen secties zijn..." />
+    <meta property="og:url" content="https://sneekie.xyz/nl/explained" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Sneekie, regel voor regel" />
+    <meta name="twitter:description" content="Dit is de originele SNEEKIE.BAS met het verhaal erbij. De code staat precies zoals hij geschreven is; de amberkleurige notities onder regels en de kaarten tussen secties zijn..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/explained.css" />
+  </head>
+  <body class="page-doc page-explained">
+    <main>
+      <div class="hero">
+        <h1 class="page-title">Sneekie, regel voor regel</h1>
+        <p class="sub">Een Nederlandstalige rondleiding door de GW-BASIC-bron uit 1988 &mdash; 38 jaar later geannoteerd.</p>
+      </div>
+      <p class="lead">Dit is de originele <code>SNEEKIE.BAS</code> met het verhaal erbij. De code staat precies zoals hij geschreven is; de <span style="color: var(--annot)">amberkleurige notities</span> onder regels en de kaarten tussen secties zijn de nieuwe uitleg. Is een routine onduidelijk, zoek dan het regelnummer hieronder &mdash; alles is gegroepeerd zoals GW-BASIC het nummerde.</p>
+      <div class="callout">
+        <h2>Het ene idee dat alles verklaart: het scherm <em>is</em> het spel</h2>
+        <p>Er zijn geen sprites, geen game-objecten en eigenlijk geen aparte "slang"-datastructuur. De slang, muren, harten en pijlen zijn gewoon <em>tekens in het tekstschermgeheugen van de PC</em>, en het programma leest en schrijft dat geheugen rechtstreeks met <code>PEEK</code> en <code>POKE</code>.</p>
+        <p>Het tekstscherm is 80&times;25 cellen. Elke cel heeft <b>twee bytes</b>: eerst de tekencode, daarna de kleur ("attribute"). Het adres van een cel is dus</p>
+        <p><span class="formula">offset = (rij &minus; 1) &times; 160 + (kolom &minus; 1) &times; 2</span> &nbsp;&mdash; 160 omdat een rij 80 cellen &times; 2 bytes is.</p>
+        <p>De even byte bevat het teken; de oneven byte bevat het attribuut (<code>7</code> = normaal, <code>15</code> = helder). Om te weten wat er voor de slang ligt, <code>PEEK</code>t de code alleen de tekenbyte van het doelvak en schakelt op dat getal. Die ene truc &mdash; <em>beeld en toestand zijn dezelfde bytes</em> &mdash; verklaart waarom zoveel programmawerk offset-rekenen is.</p>
+        <p style="margin-bottom: 0"><a href="vram.html">&#9654; Bekijk het live</a> &mdash; stuur een slang en zie de echte bytes veranderen.</p>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <h3>De variabelen</h3>
+          <table class="gloss">
+            <tr><td class="g">T()</td><td>de slang &mdash; een lijst met schermoffsets, van staart <code>T(ETEL)</code> tot kop <code>T(BTEL)</code></td></tr>
+            <tr><td class="g">BTEL / ETEL</td><td>index van <b>kop</b> / <b>staart</b> in <code>T()</code> (<i>teller</i>)</td></tr>
+            <tr><td class="g">E / F</td><td>huidige / vorige richting (scancodes 72 80 75 77)</td></tr>
+            <tr><td class="g">HART</td><td>harten &#9829; die nog verzameld moeten worden</td></tr>
+            <tr><td class="g">KLAVER</td><td>klavers &#9827; die nog verzameld moeten worden</td></tr>
+            <tr><td class="g">BONUS / BMIN</td><td>tijdbonus, en hoeveel hij per zet daalt</td></tr>
+            <tr><td class="g">AANTAL</td><td>hoeveel items er van elk type worden gestrooid</td></tr>
+            <tr><td class="g">Z</td><td>seconden toegestaan per zet; <code>999</code> = beurt voor beurt, klein = realtime</td></tr>
+            <tr><td class="g">LIVE / LEVEL</td><td>resterende levens / huidig level</td></tr>
+            <tr><td class="g">ZCORE / ZORE</td><td>score / highscore</td></tr>
+            <tr><td class="g">OP</td><td>punten die deze keer worden toegevoegd</td></tr>
+            <tr><td class="g">S() B() D()</td><td>popup-backup / poortposities / bewegende-pijltoestand</td></tr>
+            <tr><td class="g">VIDEO</td><td>het schermgeheugensegment (<code>&amp;HB000</code> mono / <code>&amp;HB800</code> kleur)</td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Wat de tekens betekenen (CP437)</h3>
+          <table class="chars">
+            <tr><td class="g">32</td><td>&nbsp;</td><td>leeg vak</td></tr>
+            <tr><td class="g">219</td><td>&#9608;</td><td>slangenkop</td></tr>
+            <tr><td class="g">186 205 187 188 201 200</td><td>&#9553;&#9552;&#9559;&#9565;&#9556;&#9562;</td><td>slangenlijf: recht en hoeken</td></tr>
+            <tr><td class="g">179 196 197 &hellip;</td><td>&#9474;&#9472;&#9532;</td><td>doolhof- en kadermuren</td></tr>
+            <tr><td class="g">1</td><td>&#9786;</td><td>smiley &mdash; <b>slecht</b> (&minus;50)</td></tr>
+            <tr><td class="g">3</td><td>&#9829;</td><td>hart (+10)</td></tr>
+            <tr><td class="g">5</td><td>&#9827;</td><td>klaver (+25)</td></tr>
+            <tr><td class="g">10</td><td>&#9689;</td><td>steen &mdash; duwbaar</td></tr>
+            <tr><td class="g">24 26 27</td><td>&#8593;&#8594;&#8592;</td><td>bewegende pijlen &mdash; <b>dodelijk</b></td></tr>
+            <tr><td class="g">attr 7 / 15</td><td>&nbsp;</td><td>normaal / helder</td></tr>
+          </table>
+          <h3>Toetsen (de scancodes in E)</h3>
+          <table class="chars">
+            <tr><td class="g">72 80 75 77</td><td>&#8593;&#8595;&#8592;&#8594;</td><td>stuur de slang</td></tr>
+            <tr><td class="g">27</td><td>ESC</td><td>opgeven als je vastzit (kost een leven)</td></tr>
+            <tr><td class="g">67 / 68</td><td>F9 / F10</td><td>cheat: +leven &amp; overslaan / level overslaan</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="callout">
+        <h2>Hoe een zet verloopt (regels 420&ndash;1010)</h2>
+        <ol style="margin: 6px 0; padding-left: 22px">
+          <li>Wacht tot <code>Z</code> seconden op een pijltjestoets, of laat de slang zijn richting houden.</li>
+          <li>Trek <code>BMIN</code> van de bonus af.</li>
+          <li>Zet de richting om in een schermstap en bepaal het vak dat de kop wil binnenkomen.</li>
+          <li><code>PEEK</code> dat vak en reageer: leeg vak, hart/klaver eten, steen duwen, sterven door een pijl, of geblokkeerd worden door een muur.</li>
+          <li>Maak van het oude kopvak het juiste <span class="mono">&#9552;&#9553;&#9559;&#9565;&#9556;&#9562;</span>-stuk en teken een nieuwe <span class="mono">&#9608;</span> kop.</li>
+          <li>Laat het lijf glimmen en beweeg de pijlen/poorten van dit level een stap.</li>
+          <li>Herhaal tot elk hart en elke klaver weg is.</li>
+        </ol>
+      </div>
+      <nav class="toc" id="toc" aria-label="Op deze pagina">
+        <h2>De routines</h2>
+        <ol id="toc-list"></ol>
+      </nav>
+      <div id="listing"></div>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/explained.js"></script>
+  </body>
+</html>

@@ -8,11 +8,14 @@ function pageHref(path){
   return useCleanUrls() ? path.replace(/\.html$/, '') : path;
 }
 
-const LANGS = ['nl', 'en', 'uk'];
+const I18N = window.SNEEKIE_I18N || {};
+const LANGS = I18N.languageCodes || ['en'];
+const DEFAULT_LANG = I18N.defaultLang || 'en';
+const LANG_META = Object.fromEntries((I18N.languages || []).map(lang => [lang.code, lang]));
 
 function normalizeLang(value){
   const lang = String(value || '').toLowerCase().split('-')[0];
-  return LANGS.includes(lang) ? lang : 'en';
+  return LANGS.includes(lang) ? lang : DEFAULT_LANG;
 }
 
 function queryLang(){
@@ -30,7 +33,7 @@ function storedLang(){
 }
 
 function currentLang(){
-  return queryLang() || normalizeLang(storedLang() || navigator.language || 'en');
+  return queryLang() || normalizeLang(storedLang() || navigator.language || DEFAULT_LANG);
 }
 
 function setStoredLang(lang){
@@ -39,8 +42,9 @@ function setStoredLang(lang){
 }
 
 function gameSrc(){
-  const src = pageHref('html/game.html');
-  return src + (src.includes('?') ? '&' : '?') + 'lang=' + currentLang();
+  const lang = currentLang();
+  const prefix = LANG_META[lang]?.pathPrefix || lang;
+  return pageHref(prefix + '/game.html');
 }
 
 const game = document.getElementById('game');

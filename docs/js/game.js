@@ -1114,12 +1114,6 @@ muteBtn.addEventListener('click', () => {
   paintMute();
 });
 paintMute();
-addEventListener('sneekie:languagechange', () => {
-  paintMute();
-  const url = new URL(location.href);
-  url.searchParams.set('lang', gameLang());
-  location.href = url.href;
-});
 
 function fit(){
   if(document.fullscreenElement){

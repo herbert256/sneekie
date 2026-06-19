@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sneekie heeft geen &quot;slangobject&quot;. De slang, muren, harten en pijlen zijn gewoon tekens in het schermgeheugen , en de game leest en schrijft dat geheugen direct. Stuur hieronder..." />
+    <title>Sneekie - Zie de bytes bewegen</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/nl/vram" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/vram" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/vram" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/vram" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/vram" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Zie de bytes bewegen" />
+    <meta property="og:description" content="Sneekie heeft geen &quot;slangobject&quot;. De slang, muren, harten en pijlen zijn gewoon tekens in het schermgeheugen , en de game leest en schrijft dat geheugen direct. Stuur hieronder..." />
+    <meta property="og:url" content="https://sneekie.xyz/nl/vram" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Zie de bytes bewegen" />
+    <meta name="twitter:description" content="Sneekie heeft geen &quot;slangobject&quot;. De slang, muren, harten en pijlen zijn gewoon tekens in het schermgeheugen , en de game leest en schrijft dat geheugen direct. Stuur hieronder..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/vram.css" />
+  </head>
+  <body class="page-doc page-vram">
+    <main>
+      <h1 class="page-title">Zie de bytes bewegen</h1>
+      <p class="lead">Sneekie heeft geen "slangobject". De slang, muren, harten en <em>pijlen</em> zijn gewoon <em>tekens in het schermgeheugen</em>, en de game leest en schrijft dat geheugen direct. Stuur hieronder en zie het gebeuren: het <strong>scherm</strong> bovenaan en het <strong>ruwe geheugen</strong> eronder zijn <em>dezelfde bytes</em>. Elke zet is een paar <code>peek</code>s en <code>poke</code>s &mdash; live rechts getoond. Eet een hart en ergens verschijnt een klaver; de vier pijlen patrouilleren zelfstandig.</p>
+      <p class="lead" style="color: var(--muted); font-size: 13.5px">
+        Elke cel is twee bytes (teken, daarna helderheid/kleur-attribuut), geadresseerd met
+        <span class="formula">offset = (rij &minus; 1) &times; 160 + (kolom &minus; 1) &times; 2</span>. Dit is een hoek van 22&times;15 uit het echte 80&times;25-scherm &mdash; dezelfde formule, dezelfde 160-byte rijstap.
+      </p>
+      <div class="demo" id="demo">
+        <div class="stage">
+          <div class="panel">
+            <div class="ptitle">Het scherm &mdash; wat je ziet</div>
+            <canvas id="screen" width="352" height="480" role="img" aria-label="Tekstmodus-videogeheugen weergegeven als scherm"></canvas>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sxo">
+            <div class="panel">
+              <div class="ptitle">Sturen</div>
+              <div class="pad">
+                <button type="button" class="up" data-d="U" aria-label="Omhoog">&#9650;</button>
+                <button type="button" class="left" data-d="L" aria-label="Links">&#9664;</button>
+                <button type="button" class="down" data-d="D" aria-label="Omlaag">&#9660;</button>
+                <button type="button" class="right" data-d="R" aria-label="Rechts">&#9654;</button>
+              </div>
+              <div class="btns" style="margin-top: 10px">
+                <button type="button" id="reset">Reset</button>
+              </div>
+              <div class="cap" style="margin-top: 10px">Pijltjestoetsen of veeg over het scherm om te sturen.</div>
+            </div>
+            <div class="panel">
+              <div class="ptitle">Operaties (deze zet)</div>
+              <div class="log" id="log"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ptitle">Het geheugen &mdash; de byte in elke cel</div>
+            <div class="mem" id="mem"></div>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
+        Dat is de hele truc achter de code uit 1988. Bekijk hem in de bron op de
+        <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port op de&nbsp;<a href="migration.html">migratie</a>-pagina.
+      </p>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/vram.js"></script>
+  </body>
+</html>

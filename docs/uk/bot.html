@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Це не запис. Справжня гра 1988 року працює наживо перед вами, поки самотній бот спускається у сім найглибших лабіринтів - рівні 26-32 , де самі стіни оживають, змія стає удвічі..." />
+    <title>Sneekie - Бот спускається в глибину - рівні 26-32</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/uk/bot" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/bot" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/bot" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/bot" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/bot" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Бот спускається в глибину - рівні 26-32" />
+    <meta property="og:description" content="Це не запис. Справжня гра 1988 року працює наживо перед вами, поки самотній бот спускається у сім найглибших лабіринтів - рівні 26-32 , де самі стіни оживають, змія стає удвічі..." />
+    <meta property="og:url" content="https://sneekie.xyz/uk/bot" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Бот спускається в глибину - рівні 26-32" />
+    <meta name="twitter:description" content="Це не запис. Справжня гра 1988 року працює наживо перед вами, поки самотній бот спускається у сім найглибших лабіринтів - рівні 26-32 , де самі стіни оживають, змія стає удвічі..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/bot.css" />
+  </head>
+  <body class="page-doc page-bot">
+    <main id="main" tabindex="-1">
+      <div class="hero">
+        <h1 class="page-title">Бот спускається в глибину &mdash; рівні 26-32</h1>
+      </div>
+      <p class="lead">Це не запис. <em>Справжня</em> гра 1988 року працює наживо перед вами, поки самотній бот спускається у <strong>сім найглибших лабіринтів &mdash; рівні 26-32</strong>, де самі стіни оживають, змія стає <strong>удвічі довшою</strong>, а кожне зʼїдене <span class="ico h">&hearts;</span> серце кидає в темряву нову <span class="ico g">&clubs;</span> трефу. Дивіться, як він міркує в реальному часі: прокладає найкоротший шлях до здобичі, <strong>відсуває <span class="ico t">&#9689;</span> валуни</strong>, <strong>прослизає крізь бурю летючих <span class="ico a">&uarr;&larr;&rarr;</span> стріл</strong> і не втрачає дорогу назад до власного хвоста. Коли лабіринт намагається замкнути його, бот <strong>ковтає проклятий <span class="ico s">&#9786;</span> смайлик</strong>, щоб вирвати собі вихід. Коли поле очищено, екран <strong><span class="ico green">спалахує зеленим</span></strong> і бот іде далі; якщо загнати його в кут, він <strong><span class="ico r">спалахує червоним</span></strong> і підіймається для нової спроби. Він не втомлюється і не зупиняється.</p>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран Sneekie"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
+        </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Зелений</button>
+          <button type="button" data-theme="amber">Бурштин</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute">Звук: увімкнено</button>
+          <button type="button" id="fs">На весь екран</button>
+        </div>
+      </div>
+      <div class="speedbar">
+        <label for="speed">Швидкість бота</label>
+        <input id="speed" type="range" min="0" max="10" step="1" value="5" aria-valuetext="50" />
+        <output id="speedout" for="speed">50</output>
+      </div>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Рівень live-бота"></div>
+      <p class="live-note">Це live, не запис. Тримайте цю вкладку попереду &mdash; браузери сповільнюють фонові вкладки, і гра зупиняється.</p>
+      <p class="bot-think-link"><a href="bot-thinking.html">Як думає бот &rarr;</a></p>
+    </main>
+
+    <script>window.SNEEKIE_SKIPBOOT = true;</script>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/game.js"></script>
+    <script src="../js/bot.js"></script>
+  </body>
+</html>

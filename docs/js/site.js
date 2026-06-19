@@ -8,325 +8,58 @@
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
 
-const SITE_LANGS = ['nl', 'en', 'uk'];
-const SITE_LANG_META = {
-  nl: { key: 'langNl', flag: '🇳🇱' },
-  en: { key: 'langEn', flag: '🇬🇧' },
-  uk: { key: 'langUk', flag: '🇺🇦' }
-};
-
-const SITE_I18N = {
-  en: {
-    brand: 'Sneekie home',
-    primary: 'Primary',
-    skip: 'Skip to content',
-    navGame: '\u25b6 Play',
-    navManual: 'Manual',
-    navBot: 'Bot',
-    navMagazine: 'Magazine',
-    navHistory: 'History',
-    navSource: 'Source',
-    navExplained: 'Explained',
-    navMigration: 'Migration',
-    navVram: 'Visualizer',
-    download: 'Download',
-    print: 'Print',
-    language: 'Language',
-    langEn: 'English',
-    langNl: 'Nederlands',
-    langUk: 'Українська',
-    footer:
-      "Sneekie &copy; July '88 by HerbySoft<br>" +
-      'Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>' +
-      'Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>' +
-      'Browser version: June 2026.',
-    gameTitle: 'The 1988 Game',
-    gameSub: 'A MS-DOS text game from 1988 &mdash; reborn as a browser game',
-    gameCanvas: 'Sneekie game screen',
-    dirLeft: 'Left',
-    dirUp: 'Up',
-    dirDown: 'Down',
-    dirRight: 'Right',
-    themeGreen: 'Green',
-    themeAmber: 'Amber',
-    themeWhite: 'White',
-    themeCga: 'CGA',
-    soundOn: 'Sound: on',
-    soundOff: 'Sound: off',
-    fullscreen: 'Fullscreen',
-    gameHintKeys: 'Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues',
-    gameHintTouch: 'Swipe to steer &middot; tap = any key',
-    yesKey: 'Y',
-    noKey: 'N',
-    liveTitle: 'The bot descends into the deep &mdash; levels 26-32',
-    liveLead:
-      'This is no recording. The <em>real</em> 1988 game runs live before you while a lone bot descends into its <strong>deepest seven mazes &mdash; levels 26-32</strong>, where the walls themselves come alive, the serpent swells to <strong>twice its length</strong>, and every <span class="ico h">&hearts;</span> heart it devours flings a fresh <span class="ico g">&clubs;</span> club into the dark. Watch it reason in real time: it carves the shortest line to its quarry, <strong>heaves <span class="ico t">&#9689;</span> boulders</strong> from its path, <strong>threads the storm of flying <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and never loses the road home to its own tail &mdash; and when the maze moves to seal it in, it will <strong>swallow a cursed <span class="ico s">&#9786;</span> smiley</strong> to tear an opening free. Clear the board and the screen <strong><span class="ico green">blazes green</span></strong> as the bot marches onward; corner it, and it <strong><span class="ico r">flares red</span></strong> and rises to try again. It does not tire, and it does not stop.',
-    botSpeed: 'Bot speed',
-    liveTabsLabel: 'Live bot level',
-    liveNote: "It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.",
-    botThinkLink: 'How the bot thinks &rarr;',
-    close: 'Close',
-    layoutPreview: 'Layout preview',
-    magazinePreview: 'Magazine page preview',
-    openLarger: 'Open larger view: ',
-    layoutPreviewFallback: 'layout preview',
-    magazinePreviewFallback: 'Magazine page preview',
-    sourceLoadError: 'Could not load SNEEKIE.BAS &mdash; ',
-    vramHover: 'Hover a cell to read its bytes.',
-    vramEmpty: 'empty',
-    vramHeart: '&#9829; heart (+10)',
-    vramClub: '&#9827; club (+25)',
-    vramSmiley: '&#9786; smiley (-50)',
-    vramStone: '&#9689; stone (push it)',
-    vramArrowUp: '&#8593; arrow (enemy)',
-    vramArrowDown: '&#8595; arrow (enemy)',
-    vramArrowRight: '&#8594; arrow (enemy)',
-    vramArrowLeft: '&#8592; arrow (enemy)',
-    vramSnakeHead: 'snake head',
-    vramSnakeBody: 'snake body',
-    vramWall: 'wall',
-    vramSpace: 'space',
-    vramSteerLog: "Steer the snake &mdash; each move's peeks and pokes show up here.",
-    vramEraseTail: 'erase tail',
-    vramEatHeart: 'score += 10 &mdash; eat the heart',
-    vramClubPops: 'a &#9827; club pops up where the heart sent it',
-    vramEatClub: 'score += 25 &mdash; eat the club',
-    vramEatSmiley: 'score -= 50 &mdash; ouch, a smiley!',
-    vramBehindStone: ' (behind the stone)',
-    vramShoveStone: 'shove the stone &#9689; along',
-    vramStoneBlocked: '&#8594; blocked: stone has nowhere to go, stay put',
-    vramBlocked: '&#8594; blocked: ',
-    vramStayPut: ', stay put',
-    vramOldHeadBody: 'old head &#8594; body',
-    vramDrawHead: 'draw new head &#9608;',
-    vramGrow: '  (grow)',
-    vramAllHearts: '&#9733; all hearts collected!',
-    vramDead: '&#10007; a moving arrow caught the snake &mdash; game over. Press Reset.',
-    vramMove: 'move ',
-    vramCell: 'cell (col ',
-    vramRow: ', row ',
-    vramChar: 'char = ',
-    vramAttr: 'attr = ',
-    vramTourStop: '&#9632; Stop',
-    vramTourStart: '&#9654; Tour'
-  },
-  nl: {
-    brand: 'Sneekie start',
-    primary: 'Hoofdnavigatie',
-    skip: 'Spring naar inhoud',
-    navGame: '\u25b6 Spelen',
-    navManual: 'Handleiding',
-    navBot: 'Bot',
-    navMagazine: 'Magazine',
-    navHistory: 'Geschiedenis',
-    navSource: 'Broncode',
-    navExplained: 'Uitleg',
-    navMigration: 'Migratie',
-    navVram: 'Visualizer',
-    download: 'Download',
-    print: 'Print',
-    language: 'Taal',
-    langEn: 'English',
-    langNl: 'Nederlands',
-    langUk: 'Українська',
-    footer:
-      "Sneekie &copy; juli '88 door HerbySoft<br>" +
-      'Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>' +
-      'Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>' +
-      'Browserversie: juni 2026.',
-    gameTitle: 'Het spel uit 1988',
-    gameSub: 'Een MS-DOS tekstspel uit 1988 &mdash; herboren als browserspel',
-    gameCanvas: 'Sneekie spelscherm',
-    dirLeft: 'Links',
-    dirUp: 'Omhoog',
-    dirDown: 'Omlaag',
-    dirRight: 'Rechts',
-    themeGreen: 'Groen',
-    themeAmber: 'Amber',
-    themeWhite: 'Wit',
-    themeCga: 'CGA',
-    soundOn: 'Geluid: aan',
-    soundOff: 'Geluid: uit',
-    fullscreen: 'Volledig scherm',
-    gameHintKeys: 'Pijltjestoetsen sturen de slang &middot; &lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven &middot; F10 = level overslaan &middot; elke toets gaat verder',
-    gameHintTouch: 'Veeg om te sturen &middot; tik = willekeurige toets',
-    yesKey: 'J',
-    noKey: 'N',
-    liveTitle: 'De bot daalt af in de diepte &mdash; levels 26-32',
-    liveLead:
-      'Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live voor je ogen terwijl een eenzame bot afdaalt in zijn <strong>diepste zeven doolhoven &mdash; levels 26-32</strong>, waar de muren zelf tot leven komen, de slang <strong>twee keer zo lang</strong> wordt en elk <span class="ico h">&hearts;</span> hart dat hij verslindt een nieuwe <span class="ico g">&clubs;</span> klaver het duister in slingert. Zie hem denken in real time: hij trekt de kortste lijn naar zijn prooi, <strong>wentelt <span class="ico t">&#9689;</span> rotsblokken</strong> opzij, <strong>glipt door de storm van vliegende <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, en verliest nooit de weg terug naar zijn eigen staart &mdash; en dreigt het doolhof hem in te sluiten, dan <strong>verzwelgt hij een vervloekte <span class="ico s">&#9786;</span> smiley</strong> om zich een uitweg te scheuren. Haalt hij het level, dan <strong><span class="ico green">vlamt het scherm groen</span></strong> en marcheert de bot verder; klem je hem vast, dan <strong><span class="ico r">laait het rood op</span></strong> en herrijst hij voor een nieuwe poging. Hij wordt niet moe, en hij stopt niet.',
-    botSpeed: 'Botsnelheid',
-    liveTabsLabel: 'Livebot level',
-    liveNote: 'Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.',
-    botThinkLink: 'Hoe de bot denkt &rarr;',
-    close: 'Sluiten',
-    layoutPreview: 'Layoutvoorbeeld',
-    magazinePreview: 'Tijdschriftpagina voorbeeld',
-    openLarger: 'Open grotere weergave: ',
-    layoutPreviewFallback: 'layoutvoorbeeld',
-    magazinePreviewFallback: 'Tijdschriftpagina voorbeeld',
-    sourceLoadError: 'Kan SNEEKIE.BAS niet laden &mdash; ',
-    vramHover: 'Beweeg over een cel om de bytes te lezen.',
-    vramEmpty: 'leeg',
-    vramHeart: '&#9829; hart (+10)',
-    vramClub: '&#9827; klaver (+25)',
-    vramSmiley: '&#9786; smiley (-50)',
-    vramStone: '&#9689; steen (duwbaar)',
-    vramArrowUp: '&#8593; pijl (vijand)',
-    vramArrowDown: '&#8595; pijl (vijand)',
-    vramArrowRight: '&#8594; pijl (vijand)',
-    vramArrowLeft: '&#8592; pijl (vijand)',
-    vramSnakeHead: 'slangenkop',
-    vramSnakeBody: 'slangenlijf',
-    vramWall: 'muur',
-    vramSpace: 'ruimte',
-    vramSteerLog: 'Stuur de slang &mdash; de peeks en pokes van elke zet verschijnen hier.',
-    vramEraseTail: 'staart wissen',
-    vramEatHeart: 'score += 10 &mdash; eet het hart',
-    vramClubPops: 'er verschijnt een &#9827; klaver waar het hart hem neerzet',
-    vramEatClub: 'score += 25 &mdash; eet de klaver',
-    vramEatSmiley: 'score -= 50 &mdash; au, een smiley!',
-    vramBehindStone: ' (achter de steen)',
-    vramShoveStone: 'duw de steen &#9689; door',
-    vramStoneBlocked: '&#8594; geblokkeerd: de steen kan nergens heen, blijf staan',
-    vramBlocked: '&#8594; geblokkeerd: ',
-    vramStayPut: ', blijf staan',
-    vramOldHeadBody: 'oude kop &#8594; lijf',
-    vramDrawHead: 'teken nieuwe kop &#9608;',
-    vramGrow: '  (groei)',
-    vramAllHearts: '&#9733; alle harten verzameld!',
-    vramDead: '&#10007; een bewegende pijl ving de slang &mdash; game over. Druk op Reset.',
-    vramMove: 'zet ',
-    vramCell: 'cel (kolom ',
-    vramRow: ', rij ',
-    vramChar: 'teken = ',
-    vramAttr: 'attribuut = ',
-    vramTourStop: '&#9632; Stop',
-    vramTourStart: '&#9654; Tour'
-  },
-  uk: {
-    brand: 'Домівка Sneekie',
-    primary: 'Основна навігація',
-    skip: 'Перейти до вмісту',
-    navGame: '\u25b6 Грати',
-    navManual: 'Посібник',
-    navBot: 'Бот',
-    navMagazine: 'Журнал',
-    navHistory: 'Історія',
-    navSource: 'Код',
-    navExplained: 'Пояснення',
-    navMigration: 'Міграція',
-    navVram: 'Візуалізатор',
-    download: 'Завантажити',
-    print: 'Друк',
-    language: 'Мова',
-    langEn: 'English',
-    langNl: 'Nederlands',
-    langUk: 'Українська',
-    footer:
-      "Sneekie &copy; липень '88, HerbySoft<br>" +
-      'Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>' +
-      'Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>' +
-      'Браузерна версія: червень 2026.',
-    gameTitle: 'Гра 1988 року',
-    gameSub: 'Текстова гра MS-DOS з 1988 року &mdash; відроджена у браузері',
-    gameCanvas: 'Ігровий екран Sneekie',
-    dirLeft: 'Ліворуч',
-    dirUp: 'Вгору',
-    dirDown: 'Вниз',
-    dirRight: 'Праворуч',
-    themeGreen: 'Зелений',
-    themeAmber: 'Бурштин',
-    themeWhite: 'Білий',
-    themeCga: 'CGA',
-    soundOn: 'Звук: увімкнено',
-    soundOff: 'Звук: вимкнено',
-    fullscreen: 'На весь екран',
-    gameHintKeys: 'Керуйте змійкою стрілками &middot; &lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя &middot; F10 = пропустити рівень &middot; будь-яка клавіша продовжує',
-    gameHintTouch: 'Проведіть, щоб керувати &middot; торкання = будь-яка клавіша',
-    yesKey: 'Y',
-    noKey: 'N',
-    liveTitle: 'Бот спускається в глибину &mdash; рівні 26-32',
-    liveLead:
-      'Це не запис. <em>Справжня</em> гра 1988 року працює наживо перед вами, поки самотній бот спускається у <strong>сім найглибших лабіринтів &mdash; рівні 26-32</strong>, де самі стіни оживають, змія стає <strong>удвічі довшою</strong>, а кожне зʼїдене <span class="ico h">&hearts;</span> серце кидає в темряву нову <span class="ico g">&clubs;</span> трефу. Дивіться, як він міркує в реальному часі: прокладає найкоротший шлях до здобичі, <strong>відсуває <span class="ico t">&#9689;</span> валуни</strong>, <strong>прослизає крізь бурю летючих <span class="ico a">&uarr;&larr;&rarr;</span> стріл</strong> і не втрачає дорогу назад до власного хвоста. Коли лабіринт намагається замкнути його, бот <strong>ковтає проклятий <span class="ico s">&#9786;</span> смайлик</strong>, щоб вирвати собі вихід. Коли поле очищено, екран <strong><span class="ico green">спалахує зеленим</span></strong> і бот іде далі; якщо загнати його в кут, він <strong><span class="ico r">спалахує червоним</span></strong> і підіймається для нової спроби. Він не втомлюється і не зупиняється.',
-    botSpeed: 'Швидкість бота',
-    liveTabsLabel: 'Рівень live-бота',
-    liveNote: 'Це live, не запис. Тримайте цю вкладку попереду &mdash; браузери сповільнюють фонові вкладки, і гра зупиняється.',
-    botThinkLink: 'Як думає бот &rarr;',
-    close: 'Закрити',
-    layoutPreview: 'Перегляд схеми',
-    magazinePreview: 'Перегляд сторінки журналу',
-    openLarger: 'Відкрити більший перегляд: ',
-    layoutPreviewFallback: 'перегляд схеми',
-    magazinePreviewFallback: 'Перегляд сторінки журналу',
-    sourceLoadError: 'Не вдалося завантажити SNEEKIE.BAS &mdash; ',
-    vramHover: 'Наведіть на клітинку, щоб прочитати її байти.',
-    vramEmpty: 'порожньо',
-    vramHeart: '&#9829; серце (+10)',
-    vramClub: '&#9827; трефа (+25)',
-    vramSmiley: '&#9786; смайлик (-50)',
-    vramStone: '&#9689; камінь (його можна штовхати)',
-    vramArrowUp: '&#8593; стріла (ворог)',
-    vramArrowDown: '&#8595; стріла (ворог)',
-    vramArrowRight: '&#8594; стріла (ворог)',
-    vramArrowLeft: '&#8592; стріла (ворог)',
-    vramSnakeHead: 'голова змії',
-    vramSnakeBody: 'тіло змії',
-    vramWall: 'стіна',
-    vramSpace: 'простір',
-    vramSteerLog: 'Керуйте змією &mdash; peeks і pokes кожного ходу зʼявляться тут.',
-    vramEraseTail: 'стерти хвіст',
-    vramEatHeart: 'score += 10 &mdash; зʼїсти серце',
-    vramClubPops: 'там, куди вказало серце, зʼявляється &#9827; трефа',
-    vramEatClub: 'score += 25 &mdash; зʼїсти трефу',
-    vramEatSmiley: 'score -= 50 &mdash; ой, смайлик!',
-    vramBehindStone: ' (за каменем)',
-    vramShoveStone: 'посунути камінь &#9689;',
-    vramStoneBlocked: '&#8594; заблоковано: каменю нікуди рухатися, стоїмо',
-    vramBlocked: '&#8594; заблоковано: ',
-    vramStayPut: ', стоїмо',
-    vramOldHeadBody: 'стара голова &#8594; тіло',
-    vramDrawHead: 'намалювати нову голову &#9608;',
-    vramGrow: '  (ріст)',
-    vramAllHearts: '&#9733; усі серця зібрано!',
-    vramDead: '&#10007; рухома стріла спіймала змію &mdash; гру завершено. Натисніть Reset.',
-    vramMove: 'хід ',
-    vramCell: 'клітинка (стовпець ',
-    vramRow: ', рядок ',
-    vramChar: 'символ = ',
-    vramAttr: 'атрибут = ',
-    vramTourStop: '&#9632; Стоп',
-    vramTourStart: '&#9654; Тур'
-  }
-};
+const SITE_I18N_CONFIG = window.SNEEKIE_I18N || {};
+const SITE_LANGS = SITE_I18N_CONFIG.languageCodes || ['en'];
+const SITE_LANG_META = Object.fromEntries((SITE_I18N_CONFIG.languages || []).map(lang => [lang.code, lang]));
+const SITE_I18N = SITE_I18N_CONFIG.strings || {};
+const DEFAULT_LANG = SITE_I18N_CONFIG.defaultLang || 'en';
 
 function normalizeSiteLang(value){
   const lang = String(value || '').toLowerCase().split('-')[0];
-  return SITE_LANGS.includes(lang) ? lang : 'en';
+  return SITE_LANGS.includes(lang) ? lang : DEFAULT_LANG;
 }
 
 function querySiteLang(){
   try {
-    const value = new URLSearchParams(location.search).get('lang');
+    const value = String(new URLSearchParams(location.search).get('lang') || '').toLowerCase().split('-')[0];
     return SITE_LANGS.includes(value) ? value : null;
   } catch(_) {
     return null;
   }
 }
 
-let siteLang = querySiteLang() || normalizeSiteLang(lsGet('sneekie.lang') || navigator.language || 'en');
+function sitePathPartsFromPathname(pathname){
+  const parts = String(pathname || '').split('/').filter(Boolean);
+  const docsIndex = parts.lastIndexOf('docs');
+  return docsIndex >= 0 ? parts.slice(docsIndex + 1) : parts;
+}
+
+function pathParts(){
+  return sitePathPartsFromPathname(location.pathname);
+}
+
+function currentPathLanguage(){
+  const first = pathParts()[0];
+  return SITE_LANGS.includes(first) ? first : null;
+}
+
+let siteLang = currentPathLanguage() || querySiteLang() || DEFAULT_LANG;
 
 function siteLanguage(){ return siteLang; }
 
 function siteText(key){
-  const table = SITE_I18N[siteLang] || SITE_I18N.en;
-  return table[key] || SITE_I18N.en[key] || key;
+  const fallback = SITE_I18N[DEFAULT_LANG] || {};
+  const table = SITE_I18N[siteLang] || fallback;
+  return table[key] || fallback[key] || key;
+}
+
+function languageTextKey(lang){
+  return 'lang' + lang.charAt(0).toUpperCase() + lang.slice(1);
 }
 
 function applySiteTranslations(){
   document.documentElement.lang = siteLang;
   if(document.body) document.body.dataset.lang = siteLang;
-  applyPageTemplate();
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.innerHTML = siteText(el.dataset.i18n);
   });
@@ -348,28 +81,12 @@ function applySiteTranslations(){
   document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
     const lang = normalizeSiteLang(btn.dataset.lang);
     const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
-    btn.setAttribute('aria-label', siteText(meta.key));
-    btn.setAttribute('title', siteText(meta.key));
-    btn.setAttribute('aria-pressed', String(lang === siteLang));
+    const key = meta.key || languageTextKey(lang);
+    btn.setAttribute('aria-label', siteText(key));
+    btn.setAttribute('title', siteText(key));
+    if(lang === siteLang) btn.setAttribute('aria-current', 'true');
+    else btn.removeAttribute('aria-current');
   });
-}
-
-function applyPageTemplate(){
-  const main = document.querySelector('main[data-lang-template]');
-  if(!main) return;
-  if(siteLang === 'en') return;
-  const tpl = document.getElementById('main-template-' + siteLang);
-  if(!tpl || main.dataset.appliedLang === siteLang) return;
-  main.innerHTML = tpl.innerHTML;
-  main.dataset.appliedLang = siteLang;
-  if(!main.id) main.id = 'main';
-  if(!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
-}
-
-function reloadWithLanguage(lang){
-  const url = new URL(location.href);
-  url.searchParams.set('lang', lang);
-  location.href = url.href;
 }
 
 function setSiteLanguage(lang, options){
@@ -377,8 +94,8 @@ function setSiteLanguage(lang, options){
   const next = normalizeSiteLang(lang);
   siteLang = next;
   if(opts.persist !== false) lsSet('sneekie.lang', next);
-  if(opts.silent !== true && document.querySelector('main[data-lang-template]')){
-    reloadWithLanguage(next);
+  if(opts.silent !== true && opts.navigate !== false){
+    siteNavigate(sitePageHref(currentPage(), next));
     return;
   }
   applySiteTranslations();
@@ -394,21 +111,14 @@ window.sneekieLang = siteLanguage;
 window.sneekieText = siteText;
 window.sneekieSetLanguage = setSiteLanguage;
 
-addEventListener('storage', event => {
-  if(event.key === 'sneekie.lang' && event.newValue) setSiteLanguage(event.newValue, { silent: true, persist: false });
-});
-
-addEventListener('message', event => {
-  const data = event.data || {};
-  if(data.type === 'sneekie:language' && data.lang) setSiteLanguage(data.lang, { silent: true });
-});
-
-function inHtmlDir(){
-  return location.pathname.split('/').includes('html');
+function languagePathPrefix(lang){
+  const code = normalizeSiteLang(lang);
+  return SITE_LANG_META[code]?.pathPrefix || code;
 }
 
 function pageRoot(){
-  return inHtmlDir() ? '../' : '';
+  const parts = pathParts();
+  return SITE_LANGS.includes(parts[0]) && parts.length > 1 ? '../' : '';
 }
 
 function isEmbedded(){
@@ -425,13 +135,23 @@ function useCleanUrls(){
   return location.hostname === 'sneekie.xyz' || location.hostname === 'www.sneekie.xyz';
 }
 
-function sitePageHref(slug){
-  return useCleanUrls() ? slug : slug + '.html';
+function sitePageHref(slug, lang){
+  const code = normalizeSiteLang(lang || siteLang);
+  const prefix = languagePathPrefix(code) + '/';
+  const suffix = useCleanUrls() ? slug : slug + '.html';
+  return pageRoot() + prefix + suffix;
 }
 
 function currentPage(){
   const file = location.pathname.split('/').pop() || 'index.html';
   return file.replace(/\.html$/, '') || 'index';
+}
+
+function redirectLegacyLanguageQuery(){
+  const query = querySiteLang();
+  if(!query) return;
+  if(query === (currentPathLanguage() || DEFAULT_LANG)) return;
+  location.replace(new URL(sitePageHref(currentPage(), query), location.href).href);
 }
 
 function renderTopHeader(){
@@ -485,12 +205,13 @@ function renderTopHeader(){
   langSwitch.setAttribute('aria-label', siteText('language'));
   for(const lang of SITE_LANGS){
     const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.lang = lang;
-    button.innerHTML = '<span class="lang-icon" aria-hidden="true">' + meta.flag + '</span>';
-    button.addEventListener('click', () => setSiteLanguage(lang));
-    langSwitch.appendChild(button);
+    const a = document.createElement('a');
+    a.href = sitePageHref(current, lang);
+    a.dataset.lang = lang;
+    if(embedded) a.target = '_top';
+    a.innerHTML = '<span class="lang-icon" aria-hidden="true">' + (meta.flag || lang.toUpperCase()) + '</span>';
+    a.addEventListener('click', () => lsSet('sneekie.lang', lang));
+    langSwitch.appendChild(a);
   }
   header.appendChild(langSwitch);
 
@@ -544,6 +265,7 @@ function registerOfflineCache(){
   }
 }
 
+redirectLegacyLanguageQuery();
 renderTopHeader();
 renderPageFooter();
 setSiteLanguage(siteLang, { silent: true });

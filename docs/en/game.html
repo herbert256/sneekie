@@ -3,9 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Sneekie (1988) by HerbySoft — the original GW-BASIC game from MS(X)DOS Computer Magazine, reborn as a faithful, dependency-free browser game." />
-    <title>Sneekie — a 1988 MS-DOS snake/maze game by HerbySoft</title>
-    <link rel="canonical" href="https://sneekie.xyz/" />
+    <meta name="description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
+    <title>Sneekie - The 1988 Game</title>
+    <link rel="canonical" href="https://sneekie.xyz/en/game" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/game" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/game" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/game" />
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
     <link rel="manifest" href="../site.webmanifest" />
@@ -17,16 +21,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
-    <meta property="og:title" content="Sneekie (1988)" />
-    <meta property="og:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
-    <meta property="og:url" content="https://sneekie.xyz/" />
+    <meta property="og:title" content="Sneekie - The 1988 Game" />
+    <meta property="og:description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
+    <meta property="og:url" content="https://sneekie.xyz/en/game" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Sneekie (1988)" />
-    <meta name="twitter:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
+    <meta name="twitter:title" content="Sneekie - The 1988 Game" />
+    <meta name="twitter:description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -35,12 +39,12 @@
   <body class="page-index">
     <main id="main" tabindex="-1">
       <header class="hero">
-        <h1 class="page-title" data-i18n="gameTitle">The 1988 Game</h1>
-        <p class="sub" data-i18n="gameSub">A MS-DOS text game from 1988 &mdash; reborn as a browser game</p>
+        <h1 class="page-title">The 1988 Game</h1>
+        <p class="sub">A MS-DOS text game from 1988 &mdash; reborn as a browser game</p>
       </header>
       <div id="bezel">
         <div id="tube">
-          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen" data-i18n-aria="gameCanvas"></canvas>
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
           <div id="glass" aria-hidden="true"></div>
           <div id="power" aria-hidden="true"></div>
         </div>
@@ -54,37 +58,39 @@
        Shown only in fullscreen on a coarse pointer; see CSS. -->
         <div id="fstouch">
           <button type="button" data-key="esc">ESC</button>
-          <button type="button" data-key="left" aria-label="Left" data-i18n-aria="dirLeft">&#8592;</button>
-          <button type="button" data-key="up" aria-label="Up" data-i18n-aria="dirUp">&#8593;</button>
-          <button type="button" data-key="down" aria-label="Down" data-i18n-aria="dirDown">&#8595;</button>
-          <button type="button" data-key="right" aria-label="Right" data-i18n-aria="dirRight">&#8594;</button>
-          <button type="button" data-key="y" data-i18n-text="yesKey">Y</button>
-          <button type="button" data-key="n" data-i18n-text="noKey">N</button>
+          <button type="button" data-key="left" aria-label="Left">&#8592;</button>
+          <button type="button" data-key="up" aria-label="Up">&#8593;</button>
+          <button type="button" data-key="down" aria-label="Down">&#8595;</button>
+          <button type="button" data-key="right" aria-label="Right">&#8594;</button>
+          <button type="button" data-key="y">Y</button>
+          <button type="button" data-key="n">N</button>
           <button type="button" data-key="f9">F9</button>
           <button type="button" data-key="f10">F10</button>
         </div>
       </div>
       <div id="controls">
         <div class="grp" id="themes">
-          <button type="button" data-theme="hercules" data-i18n="themeGreen">Green</button>
-          <button type="button" data-theme="amber" data-i18n="themeAmber">Amber</button>
-          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
+          <button type="button" data-theme="hercules">Green</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="cga">CGA</button>
         </div>
         <div class="grp">
-          <button type="button" id="mute" data-i18n="soundOn">Sound: on</button>
-          <button type="button" id="fs" data-i18n="fullscreen">Fullscreen</button>
+          <button type="button" id="mute">Sound: on</button>
+          <button type="button" id="fs">Fullscreen</button>
         </div>
       </div>
       <div id="touchbar">
         <button type="button" data-key="esc">ESC</button>
-        <button type="button" data-key="y" data-i18n-text="yesKey">Y</button>
-        <button type="button" data-key="n" data-i18n-text="noKey">N</button>
+        <button type="button" data-key="y">Y</button>
+        <button type="button" data-key="n">N</button>
       </div>
       <p id="hint">
-        <span class="kb" data-i18n="gameHintKeys">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
-        <span class="tc" data-i18n="gameHintTouch">Swipe to steer &middot; tap = any key</span>
+        <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
+        <span class="tc">Swipe to steer &middot; tap = any key</span>
       </p>
     </main>
+
+    <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
     <script src="../js/game.js"></script>
   </body>

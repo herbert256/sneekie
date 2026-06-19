@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt; , injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes..." />
+    <title>Sneekie - Hoe de bot denkt</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/nl/bot-thinking" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/bot-thinking" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/bot-thinking" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/bot-thinking" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/bot-thinking" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Hoe de bot denkt" />
+    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt; , injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes..." />
+    <meta property="og:url" content="https://sneekie.xyz/nl/bot-thinking" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Hoe de bot denkt" />
+    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt; , injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/bot-thinking.css" />
+  </head>
+  <body class="page-doc page-bot-thinking">
+    <main>
+      <h1 class="page-title">Hoe de bot denkt</h1>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij laadt het echte spel in een <code>&lt;iframe&gt;</code>, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
+      <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve twee administratieve ingrepen &mdash; springen naar het gekozen <code>LEVEL</code> en de resterende <code>BONUS</code> vlak voor een clear op nul zetten &mdash; laat hij de regels en engine ongemoeid.</div>
+      <nav class="toc" aria-label="Op deze pagina">
+        <h2>Op deze pagina</h2>
+        <ol>
+          <li><a href="#where"><span class="n">1.</span>Waar de bot draait</a></li>
+          <li><a href="#data"><span class="n">2.</span>Welke data hij ziet</a></li>
+          <li><a href="#turn"><span class="n">3.</span>Een besliscyclus</a></li>
+          <li><a href="#danger"><span class="n">4.</span>Pijlengevaar</a></li>
+          <li><a href="#simulation"><span class="n">5.</span>Zetten simuleren</a></li>
+          <li><a href="#routes"><span class="n">6.</span>Voedsel zoeken</a></li>
+          <li><a href="#safety"><span class="n">7.</span>Valcontroles</a></li>
+          <li><a href="#fallbacks"><span class="n">8.</span>Noodzetten</a></li>
+          <li><a href="#score"><span class="n">9.</span>Routes scoren</a></li>
+          <li><a href="#speed"><span class="n">10.</span>Snelheidslimieten</a></li>
+          <li><a href="#restart"><span class="n">11.</span>Win, vast, herstart</a></li>
+          <li><a href="#limits"><span class="n">12.</span>Grenzen en afwegingen</a></li>
+        </ol>
+      </nav>
+      <section id="where">
+        <h2>1. Waar de bot draait</h2>
+        <p>De botpagina heeft een iframe met <code>game.html</code> als bron. Bij elke iframe-load voegt <code>bot.html</code> CSS toe die de gewone spelchrome verbergt, en voert daarna de botstring met <code>eval()</code> uit binnen dat iframe:</p>
+        <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
+        <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Code die in dezelfde scriptomgeving wordt ge-evalueerd kan die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
+        <div class="cards">
+          <div class="card"><h3>Levelsprong</h3><p>Hij sluit level 1, zet <code>LEVEL = TARGET - 1</code>, drukt een keer F10, en laat de eigen gameloop het gekozen level openen.</p></div>
+          <div class="card"><h3>Bonusreset</h3><p>Wanneer er nog twee of minder items zijn zet hij <code>BONUS = 0</code>. Daardoor hoeft de botpagina niet lang te wachten terwijl de resterende bonus aftelt.</p></div>
+          <div class="card"><h3>Echte invoer</h3><p>Hij stuurt DOS-achtige uitgebreide toetsstrings: omhoog <code>' H'</code>, omlaag <code>' P'</code>, links <code>' K'</code>, rechts <code>' M'</code>.</p></div>
+          <div class="card"><h3>Live status</h3><p>Hij meldt score en resterende items aan de ouderpagina met <code>parent.botStatus(...)</code>, en succes of falen met <code>parent.botEnd(...)</code>.</p></div>
+        </div>
+      </section>
+      <section id="data">
+        <h2>2. Welke data hij ziet</h2>
+        <p>De bot gebruikt hetzelfde schermgeheugenmodel als het spel. Er is geen nette lijst met objecten; hij leest tekens uit VRAM met <code>peek(offset)</code>. Het slangenlijf wordt opgebouwd uit de game-array <code>T</code>, van staartindex <code>ETEL</code> tot kopindex <code>BTEL</code>.</p>
+        <table>
+          <thead><tr><th>Gamewaarde</th><th>Betekenis voor de bot</th><th>Effect op planning</th></tr></thead>
+          <tbody>
+            <tr><td><code>32</code></td><td>Leeg vak</td><td>Vrij betreedbaar.</td></tr>
+            <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Hart</td><td>Voedsel van 10 punten; laat de slang groeien.</td></tr>
+            <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Klaver</td><td>Voedsel van 25 punten; laat de slang groeien.</td></tr>
+            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Normaal vermijden; alleen toegestaan in ontsnappingsmodus.</td></tr>
+            <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Steen</td><td>Duwbaar als het vak erachter leeg is.</td></tr>
+            <tr><td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Bewegende pijlen</td><td>Altijd fataal, inclusief vakken waar ze zo naartoe gaan.</td></tr>
+            <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
+          </tbody>
+        </table>
+        <p>Voor denkbeeldige routes bewaart de bot alleen verschillen in een overlay-map <code>cells</code>. Daarin staan bijvoorbeeld een geduwde steen of een leeg geworden staartvak. Staat een vak niet in de overlay, dan leest hij het echte scherm met <code>peek()</code>. Zo hoeft niet voor elke tak de volledige 4000-byte VRAM-array te worden gekopieerd.</p>
+      </section>
+      <section id="turn">
+        <h2>3. Een besliscyclus</h2>
+        <p>Elke zet volgt dezelfde ladder. De eerste strategie die een richting oplevert wint; de bot drukt die toets, wacht volgens de snelheidsschuif, en rekent daarna opnieuw vanuit de nieuwe live toestand.</p>
+        <div class="ladder">
+          <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
+          <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
+          <div class="step"><b>3. Bredere schone route</b><p>Als dichtbij niets veilig is, zoekt de voorzichtige planner verder.</p></div>
+          <div class="step"><b>4. Smileys als ontsnapping</b><p>Pas als schone routes falen, worden dezelfde zoekacties met smileys toegestaan.</p></div>
+          <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen.</p></div>
+          <div class="step"><b>6. Staart volgen</b><p>Alleen zonder lusdruk probeert hij de bewegende staart te bereiken om ruimte te kopen.</p></div>
+          <div class="step"><b>7. Lokaal overleven</b><p>Als alle planners falen, kiest hij de beste directe veilige zet.</p></div>
+        </div>
+        <pre><code>const decide = (idle, looping) =&gt; {
+  resetDanger();
+  const urgent = idle &gt;= 45 || looping;
+  return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
+    (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
+    (!urgent ? tailFirst() : null) ??
+    pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
+    survivalMove();
+};</code></pre>
+      </section>
+      <section id="danger">
+        <h2>4. Pijlengevaar</h2>
+        <p>Een leeg vak kan in het volgende tick fataal zijn. <code>danger(offset)</code> markeert een doel onveilig als er al een pijl staat, als een pijl er straks in stapt, of als een pijl via de rand terugkomt.</p>
+        <div class="flow">
+          <div><b>Huidig vak</b><span><code>peek(o)</code> is <code>24</code>, <code>26</code> of <code>27</code>.</span></div>
+          <div><b>Omhoogpijlen</b><span>Een <span class="ico a">&uarr;</span> onder het vak stapt erin.</span></div>
+          <div><b>Rechtspijlen</b><span>Een <span class="ico a">&rarr;</span> links van het vak stapt erin.</span></div>
+          <div><b>Linkspijlen</b><span>Een <span class="ico a">&larr;</span> rechts van het vak stapt erin.</span></div>
+          <div><b>Randen</b><span>Extra controles dekken pijlen die vanaf de rand terug naar het begin springen.</span></div>
+        </div>
+        <p>Dit model kijkt een tick vooruit, niet naar de hele vijandentoekomst. Dat is genoeg: na elke echte game-update rekent de bot opnieuw met het verse scherm.</p>
+      </section>
+      <section id="simulation">
+        <h2>5. Zetten simuleren</h2>
+        <p>De kern is <code>move(state, scancode, allowSmile)</code>. Die geeft een nieuwe denkbeeldige toestand terug als de zet legaal is, of <code>null</code> als hij botst, omkeert, sterft of een onmogelijke steen wil duwen.</p>
+        <table>
+          <thead><tr><th>Regel</th><th>Hoe de bot hem toepast</th></tr></thead>
+          <tbody>
+            <tr><td>Niet direct omkeren</td><td>De tegenovergestelde richting van de huidige richting wordt geweigerd.</td></tr>
+            <tr><td>Geen gevaar</td><td>Als <code>danger(next)</code> waar is, valt de zet af.</td></tr>
+            <tr><td>Geen zelfbotsing</td><td>Een vak in <code>bodySet</code> is verboden.</td></tr>
+            <tr><td>Smileys optioneel</td><td>Tijdens normale zoekactie verboden; tijdens ontsnappen toegestaan.</td></tr>
+            <tr><td>Stenen duwen</td><td>Een steen kan alleen een vak vooruit als dat vak leeg is.</td></tr>
+            <tr><td>Groei</td><td>Harten, klavers en smileys laten het lijf groeien; lege zetten verwijderen eerst de staart.</td></tr>
+            <tr><td>Eerste zet bewaren</td><td>Elke tak onthoudt alleen de eerste echte toets die straks gedrukt moet worden.</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section id="routes">
+        <h2>6. Voedsel zoeken</h2>
+        <p>Voedsel zoeken is verdeeld over drie planners. Ze starten allemaal bij de kop, simuleren lijf en geduwde stenen, en bewaren alleen de eerste toets van een winnende route.</p>
+        <table>
+          <thead><tr><th>Planner</th><th>Wanneer</th><th>Limieten</th><th>Voorkeur</th></tr></thead>
+          <tbody>
+            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie.</td><td>Diepte 9, of 12 met weinig items; maximaal 260 toestanden.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
+            <tr><td><code>routeFood()</code></td><td>De normale voorzichtige routezoeker.</td><td>Diepte 78, of 115 in de eindfase; maximaal 950 toestanden.</td><td>Overleving eerst: staartbereik, uitgangen en ruimte.</td></tr>
+            <tr><td><code>pressureFood()</code></td><td>Bij stilstand, lussen of mislukte staartvolging.</td><td>Diepte 70-125; 720-1050 toestanden.</td><td>Meer druk richting voedsel, maar nog steeds zonder duidelijke vallen.</td></tr>
+          </tbody>
+        </table>
+        <p>In de eindfase zoekt de bot dieper, omdat de laatste harten en klavers vaak precies in lastige hoeken liggen. Smileys blijven tweede keus: ze worden alleen toegestaan als schone routes mislukken.</p>
+      </section>
+      <section id="safety">
+        <h2>7. Valcontroles</h2>
+        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen.</p>
+        <div class="cards">
+          <div class="card"><h3>Uitgangen</h3><p><code>legalCount()</code> telt hoeveel zetten direct na het eten nog mogelijk zijn. Nul wordt geweigerd; een uitgang krijgt een zware straf.</p></div>
+          <div class="card"><h3>Bereikbare ruimte</h3><p><code>spaceInfo()</code> vult vanaf de gesimuleerde kop en respecteert richting, muren, lijf, stenen, voedsel en gevaar.</p></div>
+          <div class="card"><h3>Staartbereik</h3><p>Dezelfde flood fill noteert of de kop de staart kan bereiken. Dat betekent meestal een bewegende ontsnappingsroute.</p></div>
+          <div class="card"><h3>Overlevingsdiepte</h3><p><code>survivalDepth()</code> kijkt met een kleine beam search hoeveel toekomstige zetten mogelijk blijven.</p></div>
+        </div>
+      </section>
+      <section id="fallbacks">
+        <h2>8. Noodzetten</h2>
+        <p>Na de normale veilige voedselplanners heeft de bot drie noodgedragingen. Ze voorkomen bevriezen, maar staan in een vaste volgorde zodat staartvolgen geen eindeloze cirkel wordt.</p>
+        <table>
+          <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
+          <tbody>
+            <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 45</code> of herhaalde kopposities.</td></tr>
+            <tr><td><code>tailFirst()</code></td><td>Tijd kopen</td><td>Zoekt naar de huidige staart zolang er geen lusdruk is.</td></tr>
+            <tr><td><code>survivalMove()</code></td><td>Laatste redmiddel</td><td>Scoret directe zetten op ruimte, staartbereik, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section id="score">
+        <h2>9. Routes scoren</h2>
+        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
+        <div class="formula">
+          score = tailReach ? +100000 : 0<br />
+          score += survivalDepth * 5600<br />
+          score += exits * 2400<br />
+          score += reachableSpace * 16<br />
+          score += itemPoints * 150<br />
+          score -= routeDistance * 260<br />
+          score -= smileysEaten * 1200<br />
+          score -= stonesPushed * 55<br />
+          score -= oneExitAfterEating ? 18000 : 0
+        </div>
+        <p>De grote gewichten voor staartbereik en overlevingsdiepte zijn het anti-valgedrag. Een iets langere route met toegang tot de staart wint van een korte route een krappe hoek in.</p>
+      </section>
+      <section id="speed">
+        <h2>10. Snelheidslimieten</h2>
+        <p>De bot moet tussen zichtbare zetten kunnen denken. Daarom zijn er harde caps:</p>
+        <ul>
+          <li><code>danger()</code> gebruikt een generatiecache.</li>
+          <li><code>nearFood()</code> is ondiep: 260 toestanden en 9-12 stappen.</li>
+          <li><code>routeFood()</code> stopt bij 950 zoektoestanden.</li>
+          <li><code>pressureFood()</code> gebruikt 720 toestanden normaal en 1050 wanneer urgent.</li>
+          <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
+          <li>De schuifregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
+        </ul>
+        <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet.</p>
+        <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
+      </section>
+      <section id="restart">
+        <h2>11. Win, vast, herstart</h2>
+        <p>De botpagina heeft zeven tabs: levels 26-32. Winst flitst groen, falen flitst rood, en beide gaan daarna door naar de volgende tab. Na level 32 gaat hij terug naar level 26.</p>
+        <table>
+          <thead><tr><th>Voorwaarde</th><th>Resultaat</th></tr></thead>
+          <tbody>
+            <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Schoon gehaald. Groen flitsen en door naar het volgende gekozen level.</td></tr>
+            <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
+            <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang zit vast, sterft of beweegt niet. Rood na de stall-drempel.</td></tr>
+            <tr><td>Geen veilige zet</td><td>Alle planners faalden. Rood.</td></tr>
+            <tr><td>Geen scorewinst voorbij de dynamische idle-limiet</td><td>Voortgang stokt. Rood. De limiet groeit wanneer er weinig items over zijn.</td></tr>
+          </tbody>
+        </table>
+        <p>Score wordt gebruikt voor de idle-timer in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert.</p>
+      </section>
+      <section id="limits">
+        <h2>12. Grenzen en afwegingen</h2>
+        <p>De bot is bewust praktisch, niet perfect. Hij lost niet het hele level als een enorm plan op, want het bord verandert na elke pickup, geduwde steen, gespawnde klaver en vijandentick. In plaats daarvan plant hij voortdurend opnieuw vanuit de live toestand.</p>
+        <ul>
+          <li>Hij simuleert het lijf en geduwde stenen, maar niet een volledige meer-tick-toekomst van alle vijanden.</li>
+          <li>Hij behandelt huidig en volgend pijlengevaar voorzichtig en rekent na de echte game-update opnieuw.</li>
+          <li>Zijn state-hash is compact en bedoeld om te snoeien, niet om elk borddetail te bewaren.</li>
+          <li>Hij kiest alleen een smiley wanneer schone voedselroutes falen.</li>
+          <li>De survival-beam bevoordeelt veel uitgangen en kan smalle maar technisch veilige routes missen.</li>
+        </ul>
+        <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn staart, open ruimte en toekomstige uitgangen belangrijker dan de dichtstbijzijnde onveilige punten.</p>
+      </section>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+  </body>
+</html>

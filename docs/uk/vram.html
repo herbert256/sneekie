@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="У Sneekie немає окремого &quot;обʼєкта змії&quot;. Змія, стіни, серця і стріли — це просто символи в памʼяті екрана , а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться,..." />
+    <title>Sneekie - Дивіться, як рухаються байти</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="manifest" href="../site.webmanifest" />
+    <link rel="canonical" href="https://sneekie.xyz/uk/vram" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/vram" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/vram" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/vram" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/vram" />
+    <meta name="theme-color" content="#0a0c0d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sneekie" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Дивіться, як рухаються байти" />
+    <meta property="og:description" content="У Sneekie немає окремого &quot;обʼєкта змії&quot;. Змія, стіни, серця і стріли — це просто символи в памʼяті екрана , а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться,..." />
+    <meta property="og:url" content="https://sneekie.xyz/uk/vram" />
+    <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
+    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sneekie - Дивіться, як рухаються байти" />
+    <meta name="twitter:description" content="У Sneekie немає окремого &quot;обʼєкта змії&quot;. Змія, стіни, серця і стріли — це просто символи в памʼяті екрана , а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться,..." />
+    <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
+    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/vram.css" />
+  </head>
+  <body class="page-doc page-vram">
+    <main>
+      <h1 class="page-title">Дивіться, як рухаються байти</h1>
+      <p class="lead">У Sneekie немає окремого "обʼєкта змії". Змія, стіни, серця і <em>стріли</em> — це просто <em>символи в памʼяті екрана</em>, а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться, що відбувається: <strong>екран</strong> зверху і <strong>сирі байти памʼяті</strong> під ним — це <em>ті самі байти</em>. Кожен хід складається з кількох <code>peek</code> і <code>poke</code>, які показані праворуч наживо. Зʼїжте серце — і десь зʼявиться трефа; чотири стріли патрулюють самостійно.</p>
+      <p class="lead" style="color: var(--muted); font-size: 13.5px">
+        Кожна клітинка має два байти (символ, потім атрибут яскравості/кольору), адресовані як
+        <span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span>. Це кут 22&times;15 справжнього екрана 80&times;25 &mdash; та сама формула і той самий крок рядка у 160 байтів.
+      </p>
+      <div class="demo" id="demo">
+        <div class="stage">
+          <div class="panel">
+            <div class="ptitle">Екран &mdash; те, що ви бачите</div>
+            <canvas id="screen" width="352" height="480" role="img" aria-label="Памʼять відео в текстовому режимі, показана як екран"></canvas>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sxo">
+            <div class="panel">
+              <div class="ptitle">Керування</div>
+              <div class="pad">
+                <button type="button" class="up" data-d="U" aria-label="Вгору">&#9650;</button>
+                <button type="button" class="left" data-d="L" aria-label="Ліворуч">&#9664;</button>
+                <button type="button" class="down" data-d="D" aria-label="Вниз">&#9660;</button>
+                <button type="button" class="right" data-d="R" aria-label="Праворуч">&#9654;</button>
+              </div>
+              <div class="btns" style="margin-top: 10px">
+                <button type="button" id="reset">Reset</button>
+              </div>
+              <div class="cap" style="margin-top: 10px">Керуйте стрілками на клавіатурі або свайпом по екрану.</div>
+            </div>
+            <div class="panel">
+              <div class="ptitle">Операції (цей хід)</div>
+              <div class="log" id="log"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ptitle">Памʼять &mdash; байт у кожній клітинці</div>
+            <div class="mem" id="mem"></div>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
+        Ось увесь трюк коду 1988 року. Подивіться його у вихідному коді на сторінці
+        <a href="explained.html">пояснення</a> або поруч із JavaScript-портом на сторінці&nbsp;<a href="migration.html">міграції</a>.
+      </p>
+    </main>
+    <script src="../js/i18n.js"></script>
+    <script src="../js/site.js"></script>
+    <script src="../js/vram.js"></script>
+  </body>
+</html>

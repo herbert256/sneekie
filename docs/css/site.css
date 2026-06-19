@@ -157,7 +157,7 @@ header.top .lang-switch{
 }
 header.top nav a,
 header.top nav button,
-header.top .lang-switch button{
+header.top .lang-switch a{
   font:inherit;
   font-size:11px;
   letter-spacing:.1em;
@@ -172,7 +172,7 @@ header.top .lang-switch button{
   white-space:nowrap;
   transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
-header.top .lang-switch button{
+header.top .lang-switch a{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -190,13 +190,13 @@ header.top .lang-icon{
 header.top nav a:hover,
 header.top nav button:hover,
 header.top nav a[aria-current="page"],
-header.top .lang-switch button:hover,
-header.top .lang-switch button[aria-pressed="true"]{
+header.top .lang-switch a:hover,
+header.top .lang-switch a[aria-current="true"]{
   color:var(--accent);
   border-color:var(--accent);
 }
 header.top nav a[aria-current="page"],
-header.top .lang-switch button[aria-pressed="true"]{
+header.top .lang-switch a[aria-current="true"]{
   box-shadow:0 0 12px -5px var(--accent);
 }
 header.top nav a[aria-current="page"]{
@@ -584,7 +584,7 @@ section.card .prose,
     padding:6px 9px;
     min-height:32px;
   }
-  header.top .lang-switch button{
+  header.top .lang-switch a{
     width:32px;
     height:32px;
   }
