@@ -39,6 +39,9 @@
         <p class="sub">The 1988 source on the left, the 2026 port on the right &mdash; and how the new one is put together.</p>
       </div>
       <p class="lead">The web version isn't a rewrite &mdash; it's a <em>faithful port</em>. The game logic is translated statement-for-statement from <code>SNEEKIE.BAS</code>, keeping the original variable names and even the BASIC line numbers (as comments). What actually changed is the thin layer underneath: the handful of things GW-BASIC gave you for free &mdash; screen memory, keyboard, sound, <code>GOTO</code> &mdash; had to be rebuilt for the browser. This page pairs representative sections and explains that layer; for every BASIC line, use <a href="explained.html">Explained</a>.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-hero.webp" alt="An old green-screen Sneekie game connected by pixels to a modern browser version." />
+      </figure>
       <div class="callout">
         <h2>The bridge: the screen is the data structure</h2>
         <p>GW-BASIC <code>POKE</code>d characters straight into the PC's 80&times;25 text-screen memory and <code>PEEK</code>ed it back to find out what was where. There was no separate "snake" or "wall" object &mdash; the picture <em>was</em> the state. The port keeps that model exactly, as a 4000-byte <code>Uint8Array</code> (<code>vram</code>): two bytes per cell, character then attribute, addressed by</p>
@@ -105,6 +108,9 @@
         <ol id="toc-list"></ol>
       </nav>
       <div id="pairs"></div>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-closing.webp" alt="A blocky Sneekie snake leaping through a pixel portal from an old CRT into a modern browser." />
+      </figure>
     </main>
     <template id="main-template-nl">
       <div class="hero">
@@ -112,6 +118,9 @@
         <p class="sub">De bron uit 1988 links, de port uit 2026 rechts &mdash; en hoe de nieuwe laag in elkaar zit.</p>
       </div>
       <p class="lead">De webversie is geen herschrijving &mdash; het is een <em>trouwe port</em>. De spellogica is statement voor statement vertaald uit <code>SNEEKIE.BAS</code>, met de originele variabelenamen en zelfs BASIC-regelnummers als commentaar. Wat echt veranderde is de dunne laag eronder: wat GW-BASIC gratis gaf &mdash; schermgeheugen, toetsenbord, geluid, <code>GOTO</code> &mdash; moest voor de browser opnieuw worden gebouwd. Deze pagina koppelt representatieve stukken en legt die laag uit; gebruik <a href="explained.html">Uitleg</a> voor elke BASIC-regel.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-hero.webp" alt="Een oud groen Sneekie-scherm dat via pixels verbonden is met een moderne browserversie." />
+      </figure>
       <div class="callout">
         <h2>De brug: het scherm is de datastructuur</h2>
         <p>GW-BASIC <code>POKE</code>te tekens rechtstreeks in het 80&times;25 tekstschermgeheugen van de PC en <code>PEEK</code>te ze terug om te zien wat waar stond. Er was geen apart "slang"- of "muur"-object &mdash; het beeld <em>was</em> de toestand. De port houdt dat model exact aan, als een 4000-byte <code>Uint8Array</code> (<code>vram</code>): twee bytes per cel, teken en attribuut, geadresseerd met</p>
@@ -163,6 +172,9 @@
         <ol id="toc-list"></ol>
       </nav>
       <div id="pairs"></div>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-closing.webp" alt="Een blokkerige Sneekie-slang springt door een pixelpoort van een oude CRT naar een moderne browser." />
+      </figure>
     </template>
     <template id="main-template-uk">
       <div class="hero">
@@ -170,6 +182,9 @@
         <p class="sub">Код 1988 року ліворуч, порт 2026 року праворуч &mdash; і як зібраний новий шар під ним.</p>
       </div>
       <p class="lead">Вебверсія не є переписуванням &mdash; це <em>вірний порт</em>. Ігрова логіка перекладена з <code>SNEEKIE.BAS</code> оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC у коментарях. Насправді змінився тонкий шар під грою: те, що GW-BASIC давав безкоштовно &mdash; памʼять екрана, клавіатуру, звук, <code>GOTO</code> &mdash; довелося відбудувати для браузера. Ця сторінка ставить поруч показові фрагменти і пояснює цей шар; для кожного рядка BASIC є сторінка <a href="explained.html">Пояснення</a>.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-hero.webp" alt="Старий зелений екран Sneekie зʼєднаний пікселями із сучасною браузерною версією." />
+      </figure>
       <div class="callout">
         <h2>Міст: екран і є структура даних</h2>
         <p>GW-BASIC записував символи прямо у текстову памʼять екрана PC 80&times;25 через <code>POKE</code> і читав їх назад через <code>PEEK</code>, щоб дізнатися, що де стоїть. Окремого обʼєкта "змія" чи "стіна" не було &mdash; зображення <em>було</em> станом. Порт зберігає цю модель точно: 4000-байтовий <code>Uint8Array</code> (<code>vram</code>), два байти на клітинку, символ і атрибут, адресуються так:</p>
@@ -221,6 +236,9 @@
         <ol id="toc-list"></ol>
       </nav>
       <div id="pairs"></div>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-closing.webp" alt="Блокова змія Sneekie стрибає крізь піксельний портал зі старого CRT у сучасний браузер." />
+      </figure>
     </template>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>

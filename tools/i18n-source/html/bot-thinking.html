@@ -36,6 +36,9 @@
     <main data-lang-template>
       <h1 class="page-title">How the bot thinks</h1>
       <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
+      </figure>
       <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>bot.html</code>; it reads the port's live variables and presses keys like a player would. Beyond two bookkeeping writes &mdash; jumping to the selected <code>LEVEL</code> and zeroing the leftover <code>BONUS</code> near a clear (both described below) &mdash; it leaves the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">
         <h2>On this page</h2>
@@ -453,10 +456,16 @@
         </ul>
         <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values its tail, open space, and future exits more than the nearest unsafe points.</p>
       </section>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="A Sneekie maze exploding into glowing route choices, hazard zones, and bot decision paths." />
+      </figure>
     </main>
     <template id="main-template-nl">
       <h1 class="page-title">Hoe de bot denkt</h1>
       <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij laadt het echte spel in een <code>&lt;iframe&gt;</code>, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
+      </figure>
       <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve twee administratieve ingrepen &mdash; springen naar het gekozen <code>LEVEL</code> en de resterende <code>BONUS</code> vlak voor een clear op nul zetten &mdash; laat hij de regels en engine ongemoeid.</div>
       <nav class="toc" aria-label="Op deze pagina">
         <h2>Op deze pagina</h2>
@@ -646,10 +655,16 @@
         </ul>
         <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn staart, open ruimte en toekomstige uitgangen belangrijker dan de dichtstbijzijnde onveilige punten.</p>
       </section>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="Een Sneekie-doolhof barst open in gloeiende routekeuzes, gevarenzones en beslispaden van de bot." />
+      </figure>
     </template>
     <template id="main-template-uk">
       <h1 class="page-title">Як думає бот</h1>
       <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, читає її живі змінні і натискає ті самі DOS-style scancodes стрілок, які натискав би гравець. Бот — невеликий planner: на кожному ході він відновлює стан змії, шукає безпечну їжу, відкидає маршрути-пастки, стежить за петлями біля хвоста і переходить у режим виживання, коли безпечного шляху до їжі немає.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Лабіринт Sneekie зі світними маршрутами, небезпеками і шляхами рішень бота." />
+      </figure>
       <div class="note"><strong>Важлива межа.</strong> Сама гра на сторінці <a href="game.html">Грати</a> лишається вірною BASIC-джерелу. Бот — сучасне доповнення: він читає port variables і натискає клавіші. Окрім переходу на вибраний <code>LEVEL</code> і обнулення залишкового <code>BONUS</code> перед clear, він не змінює правила гри.</div>
       <nav class="toc" aria-label="На цій сторінці">
         <h2>На цій сторінці</h2>
@@ -721,6 +736,9 @@
         </ul>
         <p>Коротко: бот грає як обережний snake player. Він хоче їжу поруч, але тільки якщо після неї лишається повітря. Коли стає тісно, хвіст, відкритий простір і майбутні виходи важливіші за найближчі очки.</p>
       </section>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="Лабіринт Sneekie вибухає світними виборами маршрутів, зонами небезпеки і шляхами рішень бота." />
+      </figure>
     </template>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>

@@ -63,6 +63,9 @@
         <p class="sub">De bron uit 1988 links, de port uit 2026 rechts &mdash; en hoe de nieuwe laag in elkaar zit.</p>
       </div>
       <p class="lead">De webversie is geen herschrijving &mdash; het is een <em>trouwe port</em>. De spellogica is statement voor statement vertaald uit <code>SNEEKIE.BAS</code>, met de originele variabelenamen en zelfs BASIC-regelnummers als commentaar. Wat echt veranderde is de dunne laag eronder: wat GW-BASIC gratis gaf &mdash; schermgeheugen, toetsenbord, geluid, <code>GOTO</code> &mdash; moest voor de browser opnieuw worden gebouwd. Deze pagina koppelt representatieve stukken en legt die laag uit; gebruik <a href="explained.html">Uitleg</a> voor elke BASIC-regel.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-hero.webp" alt="Een oud groen Sneekie-scherm dat via pixels verbonden is met een moderne browserversie." />
+      </figure>
       <div class="callout">
         <h2>De brug: het scherm is de datastructuur</h2>
         <p>GW-BASIC <code>POKE</code>te tekens rechtstreeks in het 80&times;25 tekstschermgeheugen van de PC en <code>PEEK</code>te ze terug om te zien wat waar stond. Er was geen apart "slang"- of "muur"-object &mdash; het beeld <em>was</em> de toestand. De port houdt dat model exact aan, als een 4000-byte <code>Uint8Array</code> (<code>vram</code>): twee bytes per cel, teken en attribuut, geadresseerd met</p>
@@ -114,6 +117,9 @@
         <ol id="toc-list"></ol>
       </nav>
       <div id="pairs"></div>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-closing.webp" alt="Een blokkerige Sneekie-slang springt door een pixelpoort van een oude CRT naar een moderne browser." />
+      </figure>
     </main>
     <footer>
       Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.

@@ -36,6 +36,9 @@
     <main data-lang-template>
       <h1 class="page-title">Watch the bytes move</h1>
       <p class="lead">Sneekie has no "snake object". The snake, the walls, the hearts and the <em>arrows</em> are just <em>characters living in the screen's memory</em>, and the game reads and writes that memory directly. Steer below and watch it happen: the <strong>screen</strong> on top and the <strong>raw memory</strong> beneath it are the <em>same bytes</em>. Every move is a few <code>peek</code>s and <code>poke</code>s &mdash; shown live on the right. Eat a heart and a club <em>pops up</em> somewhere; the four arrows patrol on their own.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="A Sneekie playfield connected to a glowing text video memory grid." />
+      </figure>
       <p class="lead" style="color: var(--muted); font-size: 13.5px">
         Each cell is two bytes (character, then a brightness/color attribute), addressed by
         <span class="formula">offset = (row &minus; 1) &times; 160 + (col &minus; 1) &times; 2</span>. This is a 22&times;15 corner of the real 80&times;25 screen &mdash; same formula, same 160-byte row stride.
@@ -77,10 +80,16 @@
         That's the whole trick behind the 1988 code. See it in the source on the
         <a href="explained.html">explained</a> page, or next to the JavaScript port on the&nbsp;<a href="migration.html">migration</a> page.
       </p>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="PEEK and POKE beams pulling 3D hearts, clubs, arrows, stones, and snake segments from video memory." />
+      </figure>
     </main>
     <template id="main-template-nl">
       <h1 class="page-title">Zie de bytes bewegen</h1>
       <p class="lead">Sneekie heeft geen "slangobject". De slang, muren, harten en <em>pijlen</em> zijn gewoon <em>tekens in het schermgeheugen</em>, en de game leest en schrijft dat geheugen direct. Stuur hieronder en zie het gebeuren: het <strong>scherm</strong> bovenaan en het <strong>ruwe geheugen</strong> eronder zijn <em>dezelfde bytes</em>. Elke zet is een paar <code>peek</code>s en <code>poke</code>s &mdash; live rechts getoond. Eet een hart en ergens verschijnt een klaver; de vier pijlen patrouilleren zelfstandig.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="Een Sneekie-speelveld verbonden met een gloeiend raster van tekst-videogeheugen." />
+      </figure>
       <p class="lead" style="color: var(--muted); font-size: 13.5px">
         Elke cel is twee bytes (teken, daarna helderheid/kleur-attribuut), geadresseerd met
         <span class="formula">offset = (rij &minus; 1) &times; 160 + (kolom &minus; 1) &times; 2</span>. Dit is een hoek van 22&times;15 uit het echte 80&times;25-scherm &mdash; dezelfde formule, dezelfde 160-byte rijstap.
@@ -122,10 +131,16 @@
         Dat is de hele truc achter de code uit 1988. Bekijk hem in de bron op de
         <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port op de&nbsp;<a href="migration.html">migratie</a>-pagina.
       </p>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="PEEK- en POKE-stralen halen 3D-harten, klavers, pijlen, stenen en slangdelen uit videogeheugen." />
+      </figure>
     </template>
     <template id="main-template-uk">
       <h1 class="page-title">Дивіться, як рухаються байти</h1>
       <p class="lead">У Sneekie немає окремого "обʼєкта змії". Змія, стіни, серця і <em>стріли</em> — це просто <em>символи в памʼяті екрана</em>, а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться, що відбувається: <strong>екран</strong> зверху і <strong>сирі байти памʼяті</strong> під ним — це <em>ті самі байти</em>. Кожен хід складається з кількох <code>peek</code> і <code>poke</code>, які показані праворуч наживо. Зʼїжте серце — і десь зʼявиться трефа; чотири стріли патрулюють самостійно.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="Поле Sneekie зʼєднане зі світною сіткою текстової відеопамʼяті." />
+      </figure>
       <p class="lead" style="color: var(--muted); font-size: 13.5px">
         Кожна клітинка має два байти (символ, потім атрибут яскравості/кольору), адресовані як
         <span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span>. Це кут 22&times;15 справжнього екрана 80&times;25 &mdash; та сама формула і той самий крок рядка у 160 байтів.
@@ -167,6 +182,9 @@
         Ось увесь трюк коду 1988 року. Подивіться його у вихідному коді на сторінці
         <a href="explained.html">пояснення</a> або поруч із JavaScript-портом на сторінці&nbsp;<a href="migration.html">міграції</a>.
       </p>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="Промені PEEK і POKE витягують із відеопамʼяті 3D-серця, трефи, стріли, камені й частини змії." />
+      </figure>
     </template>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>

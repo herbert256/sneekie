@@ -60,6 +60,9 @@
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
       <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
+      </figure>
       <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>bot.html</code>; it reads the port's live variables and presses keys like a player would. Beyond two bookkeeping writes &mdash; jumping to the selected <code>LEVEL</code> and zeroing the leftover <code>BONUS</code> near a clear (both described below) &mdash; it leaves the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">
         <h2>On this page</h2>
@@ -477,6 +480,9 @@
         </ul>
         <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values its tail, open space, and future exits more than the nearest unsafe points.</p>
       </section>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="A Sneekie maze exploding into glowing route choices, hazard zones, and bot decision paths." />
+      </figure>
     </main>
     <footer>
       Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.

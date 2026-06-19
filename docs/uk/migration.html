@@ -63,6 +63,9 @@
         <p class="sub">Код 1988 року ліворуч, порт 2026 року праворуч &mdash; і як зібраний новий шар під ним.</p>
       </div>
       <p class="lead">Вебверсія не є переписуванням &mdash; це <em>вірний порт</em>. Ігрова логіка перекладена з <code>SNEEKIE.BAS</code> оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC у коментарях. Насправді змінився тонкий шар під грою: те, що GW-BASIC давав безкоштовно &mdash; памʼять екрана, клавіатуру, звук, <code>GOTO</code> &mdash; довелося відбудувати для браузера. Ця сторінка ставить поруч показові фрагменти і пояснює цей шар; для кожного рядка BASIC є сторінка <a href="explained.html">Пояснення</a>.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-hero.webp" alt="Старий зелений екран Sneekie зʼєднаний пікселями із сучасною браузерною версією." />
+      </figure>
       <div class="callout">
         <h2>Міст: екран і є структура даних</h2>
         <p>GW-BASIC записував символи прямо у текстову памʼять екрана PC 80&times;25 через <code>POKE</code> і читав їх назад через <code>PEEK</code>, щоб дізнатися, що де стоїть. Окремого обʼєкта "змія" чи "стіна" не було &mdash; зображення <em>було</em> станом. Порт зберігає цю модель точно: 4000-байтовий <code>Uint8Array</code> (<code>vram</code>), два байти на клітинку, символ і атрибут, адресуються так:</p>
@@ -114,6 +117,9 @@
         <ol id="toc-list"></ol>
       </nav>
       <div id="pairs"></div>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/migration-closing.webp" alt="Блокова змія Sneekie стрибає крізь піксельний портал зі старого CRT у сучасний браузер." />
+      </figure>
     </main>
     <footer>
       Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.

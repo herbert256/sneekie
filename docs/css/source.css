@@ -155,6 +155,8 @@
   }
   .page-source .themebar,
   .page-source .hero .sub,
+  .page-source .intro-figure,
+  .page-source .closing-figure,
   .page-source header.top,
   .page-source footer,
   .page-source .screen::after{ display:none !important; }

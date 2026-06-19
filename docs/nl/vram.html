@@ -60,6 +60,9 @@
     <main id="main" tabindex="-1">
       <h1 class="page-title">Zie de bytes bewegen</h1>
       <p class="lead">Sneekie heeft geen "slangobject". De slang, muren, harten en <em>pijlen</em> zijn gewoon <em>tekens in het schermgeheugen</em>, en de game leest en schrijft dat geheugen direct. Stuur hieronder en zie het gebeuren: het <strong>scherm</strong> bovenaan en het <strong>ruwe geheugen</strong> eronder zijn <em>dezelfde bytes</em>. Elke zet is een paar <code>peek</code>s en <code>poke</code>s &mdash; live rechts getoond. Eet een hart en ergens verschijnt een klaver; de vier pijlen patrouilleren zelfstandig.</p>
+      <figure class="intro-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="Een Sneekie-speelveld verbonden met een gloeiend raster van tekst-videogeheugen." />
+      </figure>
       <p class="lead" style="color: var(--muted); font-size: 13.5px">
         Elke cel is twee bytes (teken, daarna helderheid/kleur-attribuut), geadresseerd met
         <span class="formula">offset = (rij &minus; 1) &times; 160 + (kolom &minus; 1) &times; 2</span>. Dit is een hoek van 22&times;15 uit het echte 80&times;25-scherm &mdash; dezelfde formule, dezelfde 160-byte rijstap.
@@ -101,6 +104,9 @@
         Dat is de hele truc achter de code uit 1988. Bekijk hem in de bron op de
         <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port op de&nbsp;<a href="migration.html">migratie</a>-pagina.
       </p>
+      <figure class="closing-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="PEEK- en POKE-stralen halen 3D-harten, klavers, pijlen, stenen en slangdelen uit videogeheugen." />
+      </figure>
     </main>
     <footer>
       Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.
