@@ -8,14 +8,17 @@ function pageHref(path){
   return useCleanUrls() ? path.replace(/\.html$/, '') : path;
 }
 
+const LANGS = ['nl', 'en', 'uk'];
+
 function normalizeLang(value){
-  return String(value || '').toLowerCase().split('-')[0] === 'nl' ? 'nl' : 'en';
+  const lang = String(value || '').toLowerCase().split('-')[0];
+  return LANGS.includes(lang) ? lang : 'en';
 }
 
 function queryLang(){
   try {
     const value = new URLSearchParams(location.search).get('lang');
-    return value === 'nl' || value === 'en' ? value : null;
+    return LANGS.includes(value) ? value : null;
   } catch(_) {
     return null;
   }
@@ -44,7 +47,7 @@ const game = document.getElementById('game');
 function syncGameSrc(){
   const lang = currentLang();
   document.documentElement.lang = lang;
-  game.title = lang === 'nl' ? 'Sneekie spel' : 'Sneekie game';
+  game.title = lang === 'nl' ? 'Sneekie spel' : lang === 'uk' ? 'Гра Sneekie' : 'Sneekie game';
   const src = gameSrc();
   if(new URL(game.getAttribute('src') || '', location.href).href !== new URL(src, location.href).href){
     game.src = src;

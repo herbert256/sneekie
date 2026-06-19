@@ -695,6 +695,75 @@
       </section>
     </template>
 
+    <template id="main-template-uk">
+      <p class="kicker">Хроніка Sneekie</p>
+      <h1 class="page-title">Історія</h1>
+      <p class="lead">Це історія Sneekie: змії, що народилася влітку 1988 року, була надрукована в національному компʼютерному журналі, спала ціле покоління на папері і прокинулася у 2026 році, щоб працювати в браузері.</p>
+
+      <figure class="story-figure hero-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/making-of-2/legend-1988.webp" alt="Молодий програміст 1988 року за CRT-компʼютером із нотатками, дискетами і лабіринтом зі змією на екрані." />
+        <figcaption>Літо 1988 року. Один програміст, один CRT і змія, яка от-от народиться.</figcaption>
+      </figure>
+
+      <blockquote class="story-pull">Змія не була випадковістю. Її написали рядок за рядком, і вона ожила.</blockquote>
+
+      <section class="story-band">
+        <h2>Літо 1988 року</h2>
+        <p>У 1988 році Sneekie була написана на GW-BASIC для MS-DOS. Не було framework, engine чи готових ігрових обʼєктів: тільки текстовий екран 80&times;25, курсор BASIC і прямий доступ до відеопамʼяті.</p>
+        <p>Підпис <strong>HerbySoft</strong> став маленькою makerʼs mark на грі, яка була настільки близькою до машини, наскільки це дозволяв домашній BASIC.</p>
+      </section>
+
+      <section class="story-band">
+        <h2>Екран став світом</h2>
+        <p>Головна ідея Sneekie проста і сильна: екран <em>сам</em> є станом гри. Стіни, серця, камені, стріли і тіло змії — це символи CP437, записані прямо у відеопамʼять через <code>POKE</code> і прочитані назад через <code>PEEK</code>.</p>
+        <p>Саме тому порт 2026 року міг лишитися таким вірним: у браузері зʼявився масив <code>vram</code>, але модель не змінилася. Картинка і дані — ті самі байти.</p>
+      </section>
+
+      <section class="story-band">
+        <h2>Народження змії</h2>
+        <p>Гравець веде змію крізь 32 рівні, збирає <span class="ico h">&hearts;</span> серця і <span class="ico c">&clubs;</span> трефи, штовхає <span class="ico t">&#9689;</span> камені і тікає від рухомих <span class="ico a">&uarr;&larr;&rarr;</span> стріл. Кожна здобич подовжує тіло, і простір стає дедалі небезпечнішим.</p>
+        <p>Напруга Sneekie живе саме там: жадібність дає очки, але довга змія швидко робить лабіринт тісною пасткою.</p>
+      </section>
+
+      <figure class="story-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/making-of-2/ocr-detective.webp" alt="Старі журнальні сторінки під сканером, а нуль і літера O сперечаються під лупою." />
+        <figcaption>Повернення гри з паперу почалося з OCR і уважної перевірки кожного символу.</figcaption>
+      </figure>
+
+      <section class="story-band">
+        <h2>Надруковано для читачів</h2>
+        <p>У жовтні 1988 року Sneekie вийшла в <em>MS(X)DOS Computer Magazine</em> №&nbsp;25 як type-in program. Читачі отримали повний GW-BASIC listing і могли набрати гру вручну у власних машинах.</p>
+        <p>Для того часу це було справжнім релізом: не download, не app store, а сторінки коду, журнал на столі і уважні пальці на клавіатурі.</p>
+      </section>
+
+      <section class="story-band">
+        <h2>Довгий сон</h2>
+        <p>Дискети старіли, компʼютери змінювалися, але listing лишився в журналі. Десятиліттями папір був найнадійнішою копією Sneekie: друкований код чекав, поки його знову прочитають.</p>
+      </section>
+
+      <figure class="story-figure square">
+        <img loading="lazy" width="1024" height="1024" src="../images/making_of_3/ocr_struggle.png" alt="Лупа над журнальним лістингом показує, що 0 і O майже однакові." />
+        <figcaption>На старому друці <b>0</b> і <b>O</b> легко сплутати. Для BASIC це має значення.</figcaption>
+      </figure>
+
+      <section class="story-band finale">
+        <h2>2026: воскресіння у браузері</h2>
+        <p>У 2026 році друкований listing був відновлений OCR-ом, вичитаний і перенесений у статичну браузерну версію. Порт лишив оригінальні line numbers у коментарях, зберіг назви змінних і відтворив пряме screen-memory мислення.</p>
+        <p>Навколо гри зʼявилися сторінки з manual, source listing, magazine scans, visualizer і live bot. Старий type-in став сайтом, але всередині він досі думає байтами, клітинками і <code>POKE</code>.</p>
+      </section>
+
+      <figure class="story-figure">
+        <img loading="lazy" width="1200" height="676" src="../images/making-of-2/web-resurrection.webp" alt="Стара CRT BASIC-гра переходить у сучасну браузерну гру." />
+        <figcaption>2026: гра з CRT переходить у браузер.</figcaption>
+      </figure>
+
+      <section class="story-ending">
+        <h2>Вічна змія</h2>
+        <p>Sneekie тепер живе у трьох часах: у 1988 році, де її написали; на друкованій сторінці, де вона спала; і у 2026 році, де вона знову рухається, їсть серця і карає нетерплячих.</p>
+        <p class="story-links"><a href="game.html">&#9654; Грати</a><a href="magazine.html">Скани журналу</a><a href="source.html">Відновлений код</a></p>
+      </section>
+    </template>
+
     <script src="../js/site.js"></script>
   </body>
 </html>

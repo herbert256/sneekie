@@ -1103,7 +1103,10 @@ document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => { ensureAudio(); applyTheme(b.dataset.theme); }));
 
 const muteBtn = document.getElementById('mute');
-function paintMute(){ muteBtn.textContent = muted ? gt('soundOff') : gt('soundOn'); }
+function gameUiText(key){
+  return typeof window.sneekieText === 'function' ? window.sneekieText(key) : gt(key);
+}
+function paintMute(){ muteBtn.textContent = muted ? gameUiText('soundOff') : gameUiText('soundOn'); }
 muteBtn.addEventListener('click', () => {
   ensureAudio();
   muted = !muted;

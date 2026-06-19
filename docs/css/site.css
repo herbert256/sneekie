@@ -182,9 +182,10 @@ header.top .lang-switch button{
 }
 header.top .lang-icon{
   display:block;
-  font-size:10px;
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+  font-size:18px;
   line-height:1;
-  letter-spacing:.08em;
+  letter-spacing:0;
 }
 header.top nav a:hover,
 header.top nav button:hover,

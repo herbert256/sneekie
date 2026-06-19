@@ -123,6 +123,51 @@
         <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port op de&nbsp;<a href="migration.html">migratie</a>-pagina.
       </p>
     </template>
+    <template id="main-template-uk">
+      <h1 class="page-title">Дивіться, як рухаються байти</h1>
+      <p class="lead">У Sneekie немає окремого "обʼєкта змії". Змія, стіни, серця і <em>стріли</em> — це просто <em>символи в памʼяті екрана</em>, а гра читає і записує цю памʼять напряму. Керуйте нижче і дивіться, що відбувається: <strong>екран</strong> зверху і <strong>сирі байти памʼяті</strong> під ним — це <em>ті самі байти</em>. Кожен хід складається з кількох <code>peek</code> і <code>poke</code>, які показані праворуч наживо. Зʼїжте серце — і десь зʼявиться трефа; чотири стріли патрулюють самостійно.</p>
+      <p class="lead" style="color: var(--muted); font-size: 13.5px">
+        Кожна клітинка має два байти (символ, потім атрибут яскравості/кольору), адресовані як
+        <span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span>. Це кут 22&times;15 справжнього екрана 80&times;25 &mdash; та сама формула і той самий крок рядка у 160 байтів.
+      </p>
+      <div class="demo" id="demo">
+        <div class="stage">
+          <div class="panel">
+            <div class="ptitle">Екран &mdash; те, що ви бачите</div>
+            <canvas id="screen" width="352" height="480" role="img" aria-label="Памʼять відео в текстовому режимі, показана як екран"></canvas>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sxo">
+            <div class="panel">
+              <div class="ptitle">Керування</div>
+              <div class="pad">
+                <button type="button" class="up" data-d="U" aria-label="Вгору">&#9650;</button>
+                <button type="button" class="left" data-d="L" aria-label="Ліворуч">&#9664;</button>
+                <button type="button" class="down" data-d="D" aria-label="Вниз">&#9660;</button>
+                <button type="button" class="right" data-d="R" aria-label="Праворуч">&#9654;</button>
+              </div>
+              <div class="btns" style="margin-top: 10px">
+                <button type="button" id="reset">Reset</button>
+              </div>
+              <div class="cap" style="margin-top: 10px">Керуйте стрілками на клавіатурі або свайпом по екрану.</div>
+            </div>
+            <div class="panel">
+              <div class="ptitle">Операції (цей хід)</div>
+              <div class="log" id="log"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ptitle">Памʼять &mdash; байт у кожній клітинці</div>
+            <div class="mem" id="mem"></div>
+          </div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
+        Ось увесь трюк коду 1988 року. Подивіться його у вихідному коді на сторінці
+        <a href="explained.html">пояснення</a> або поруч із JavaScript-портом на сторінці&nbsp;<a href="migration.html">міграції</a>.
+      </p>
+    </template>
     <script src="../js/site.js"></script>
     <script src="../js/vram.js"></script>
   </body>

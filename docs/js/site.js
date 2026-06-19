@@ -8,6 +8,13 @@
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
 
+const SITE_LANGS = ['nl', 'en', 'uk'];
+const SITE_LANG_META = {
+  nl: { key: 'langNl', flag: '🇳🇱' },
+  en: { key: 'langEn', flag: '🇬🇧' },
+  uk: { key: 'langUk', flag: '🇺🇦' }
+};
+
 const SITE_I18N = {
   en: {
     brand: 'Sneekie home',
@@ -27,6 +34,7 @@ const SITE_I18N = {
     language: 'Language',
     langEn: 'English',
     langNl: 'Nederlands',
+    langUk: 'Українська',
     footer:
       "Sneekie &copy; July '88 by HerbySoft<br>" +
       'Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>' +
@@ -120,6 +128,7 @@ const SITE_I18N = {
     language: 'Taal',
     langEn: 'English',
     langNl: 'Nederlands',
+    langUk: 'Українська',
     footer:
       "Sneekie &copy; juli '88 door HerbySoft<br>" +
       'Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>' +
@@ -194,17 +203,112 @@ const SITE_I18N = {
     vramAttr: 'attribuut = ',
     vramTourStop: '&#9632; Stop',
     vramTourStart: '&#9654; Tour'
+  },
+  uk: {
+    brand: 'Домівка Sneekie',
+    primary: 'Основна навігація',
+    skip: 'Перейти до вмісту',
+    navGame: '\u25b6 Грати',
+    navManual: 'Посібник',
+    navBot: 'Бот',
+    navMagazine: 'Журнал',
+    navHistory: 'Історія',
+    navSource: 'Код',
+    navExplained: 'Пояснення',
+    navMigration: 'Міграція',
+    navVram: 'Візуалізатор',
+    download: 'Завантажити',
+    print: 'Друк',
+    language: 'Мова',
+    langEn: 'English',
+    langNl: 'Nederlands',
+    langUk: 'Українська',
+    footer:
+      "Sneekie &copy; липень '88, HerbySoft<br>" +
+      'Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>' +
+      'Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>' +
+      'Браузерна версія: червень 2026.',
+    gameTitle: 'Гра 1988 року',
+    gameSub: 'Текстова гра MS-DOS з 1988 року &mdash; відроджена у браузері',
+    gameCanvas: 'Ігровий екран Sneekie',
+    dirLeft: 'Ліворуч',
+    dirUp: 'Вгору',
+    dirDown: 'Вниз',
+    dirRight: 'Праворуч',
+    themeGreen: 'Зелений',
+    themeAmber: 'Бурштин',
+    themeWhite: 'Білий',
+    themeCga: 'CGA',
+    soundOn: 'Звук: увімкнено',
+    soundOff: 'Звук: вимкнено',
+    fullscreen: 'На весь екран',
+    gameHintKeys: 'Керуйте змійкою стрілками &middot; &lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя &middot; F10 = пропустити рівень &middot; будь-яка клавіша продовжує',
+    gameHintTouch: 'Проведіть, щоб керувати &middot; торкання = будь-яка клавіша',
+    yesKey: 'Y',
+    noKey: 'N',
+    liveTitle: 'Бот спускається в глибину &mdash; рівні 26-32',
+    liveLead:
+      'Це не запис. <em>Справжня</em> гра 1988 року працює наживо перед вами, поки самотній бот спускається у <strong>сім найглибших лабіринтів &mdash; рівні 26-32</strong>, де самі стіни оживають, змія стає <strong>удвічі довшою</strong>, а кожне зʼїдене <span class="ico h">&hearts;</span> серце кидає в темряву нову <span class="ico g">&clubs;</span> трефу. Дивіться, як він міркує в реальному часі: прокладає найкоротший шлях до здобичі, <strong>відсуває <span class="ico t">&#9689;</span> валуни</strong>, <strong>прослизає крізь бурю летючих <span class="ico a">&uarr;&larr;&rarr;</span> стріл</strong> і не втрачає дорогу назад до власного хвоста. Коли лабіринт намагається замкнути його, бот <strong>ковтає проклятий <span class="ico s">&#9786;</span> смайлик</strong>, щоб вирвати собі вихід. Коли поле очищено, екран <strong><span class="ico green">спалахує зеленим</span></strong> і бот іде далі; якщо загнати його в кут, він <strong><span class="ico r">спалахує червоним</span></strong> і підіймається для нової спроби. Він не втомлюється і не зупиняється.',
+    botSpeed: 'Швидкість бота',
+    liveTabsLabel: 'Рівень live-бота',
+    liveNote: 'Це live, не запис. Тримайте цю вкладку попереду &mdash; браузери сповільнюють фонові вкладки, і гра зупиняється.',
+    botThinkLink: 'Як думає бот &rarr;',
+    close: 'Закрити',
+    layoutPreview: 'Перегляд схеми',
+    magazinePreview: 'Перегляд сторінки журналу',
+    openLarger: 'Відкрити більший перегляд: ',
+    layoutPreviewFallback: 'перегляд схеми',
+    magazinePreviewFallback: 'Перегляд сторінки журналу',
+    sourceLoadError: 'Не вдалося завантажити SNEEKIE.BAS &mdash; ',
+    vramHover: 'Наведіть на клітинку, щоб прочитати її байти.',
+    vramEmpty: 'порожньо',
+    vramHeart: '&#9829; серце (+10)',
+    vramClub: '&#9827; трефа (+25)',
+    vramSmiley: '&#9786; смайлик (-50)',
+    vramStone: '&#9689; камінь (його можна штовхати)',
+    vramArrowUp: '&#8593; стріла (ворог)',
+    vramArrowDown: '&#8595; стріла (ворог)',
+    vramArrowRight: '&#8594; стріла (ворог)',
+    vramArrowLeft: '&#8592; стріла (ворог)',
+    vramSnakeHead: 'голова змії',
+    vramSnakeBody: 'тіло змії',
+    vramWall: 'стіна',
+    vramSpace: 'простір',
+    vramSteerLog: 'Керуйте змією &mdash; peeks і pokes кожного ходу зʼявляться тут.',
+    vramEraseTail: 'стерти хвіст',
+    vramEatHeart: 'score += 10 &mdash; зʼїсти серце',
+    vramClubPops: 'там, куди вказало серце, зʼявляється &#9827; трефа',
+    vramEatClub: 'score += 25 &mdash; зʼїсти трефу',
+    vramEatSmiley: 'score -= 50 &mdash; ой, смайлик!',
+    vramBehindStone: ' (за каменем)',
+    vramShoveStone: 'посунути камінь &#9689;',
+    vramStoneBlocked: '&#8594; заблоковано: каменю нікуди рухатися, стоїмо',
+    vramBlocked: '&#8594; заблоковано: ',
+    vramStayPut: ', стоїмо',
+    vramOldHeadBody: 'стара голова &#8594; тіло',
+    vramDrawHead: 'намалювати нову голову &#9608;',
+    vramGrow: '  (ріст)',
+    vramAllHearts: '&#9733; усі серця зібрано!',
+    vramDead: '&#10007; рухома стріла спіймала змію &mdash; гру завершено. Натисніть Reset.',
+    vramMove: 'хід ',
+    vramCell: 'клітинка (стовпець ',
+    vramRow: ', рядок ',
+    vramChar: 'символ = ',
+    vramAttr: 'атрибут = ',
+    vramTourStop: '&#9632; Стоп',
+    vramTourStart: '&#9654; Тур'
   }
 };
 
 function normalizeSiteLang(value){
-  return String(value || '').toLowerCase().split('-')[0] === 'nl' ? 'nl' : 'en';
+  const lang = String(value || '').toLowerCase().split('-')[0];
+  return SITE_LANGS.includes(lang) ? lang : 'en';
 }
 
 function querySiteLang(){
   try {
     const value = new URLSearchParams(location.search).get('lang');
-    return value === 'nl' || value === 'en' ? value : null;
+    return SITE_LANGS.includes(value) ? value : null;
   } catch(_) {
     return null;
   }
@@ -242,10 +346,10 @@ function applySiteTranslations(){
     el.setAttribute('aria-label', siteText('language'));
   });
   document.querySelectorAll('.lang-switch [data-lang]').forEach(btn => {
-    const lang = btn.dataset.lang === 'nl' ? 'nl' : 'en';
-    const key = lang === 'nl' ? 'langNl' : 'langEn';
-    btn.setAttribute('aria-label', siteText(key));
-    btn.setAttribute('title', siteText(key));
+    const lang = normalizeSiteLang(btn.dataset.lang);
+    const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
+    btn.setAttribute('aria-label', siteText(meta.key));
+    btn.setAttribute('title', siteText(meta.key));
     btn.setAttribute('aria-pressed', String(lang === siteLang));
   });
 }
@@ -379,11 +483,12 @@ function renderTopHeader(){
   const langSwitch = document.createElement('div');
   langSwitch.className = 'lang-switch';
   langSwitch.setAttribute('aria-label', siteText('language'));
-  for(const lang of ['nl', 'en']){
+  for(const lang of SITE_LANGS){
+    const meta = SITE_LANG_META[lang] || SITE_LANG_META.en;
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.lang = lang;
-    button.innerHTML = '<span class="lang-icon">' + lang.toUpperCase() + '</span>';
+    button.innerHTML = '<span class="lang-icon" aria-hidden="true">' + meta.flag + '</span>';
     button.addEventListener('click', () => setSiteLanguage(lang));
     langSwitch.appendChild(button);
   }

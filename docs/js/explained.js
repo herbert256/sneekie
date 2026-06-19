@@ -140,9 +140,13 @@ const NOTES = {
 
 const EXPLAINED_UI = {
   en: { line: 'line ', lines: 'lines ', loadError: 'Could not load SNEEKIE.BAS — ' },
-  nl: { line: 'regel ', lines: 'regels ', loadError: 'Kan SNEEKIE.BAS niet laden — ' }
+  nl: { line: 'regel ', lines: 'regels ', loadError: 'Kan SNEEKIE.BAS niet laden — ' },
+  uk: { line: 'рядок ', lines: 'рядки ', loadError: 'Не вдалося завантажити SNEEKIE.BAS — ' }
 };
-const explainedLang = () => (typeof window.sneekieLang === 'function' && window.sneekieLang() === 'nl') ? 'nl' : 'en';
+const explainedLang = () => {
+  const lang = typeof window.sneekieLang === 'function' ? window.sneekieLang() : 'en';
+  return lang === 'nl' || lang === 'uk' ? lang : 'en';
+};
 const exText = key => EXPLAINED_UI[explainedLang()][key] || EXPLAINED_UI.en[key] || key;
 
 const EXPLAINED_NL_SECTIONS = [
@@ -173,6 +177,36 @@ const EXPLAINED_NL_SECTIONS = [
   ['Het pickup-jingletje', `<code>PLAY "mb"</code> betekent achtergrondmuziek, gevolgd door drie stijgende bliepjes.`],
   ['De popupbox', `Tekent de dubbele kaderbox achter "Level n" en "Einde".`],
   ['De 32 levelrecepten', `Elke regel zet <code>Z</code>, <code>AANTAL</code> en <code>BMIN</code> en kiest een layout. De tabellen hergebruiken de eerste 16 recepten voor levels 17&ndash;32.`],
+];
+
+const EXPLAINED_UK_SECTIONS = [
+  ['Завантаження і пошук екрана', `Три завдання у двох рядках. <code>DEFINT A-Y</code> робить змінні A&hellip;Y цілими, але залишає <code>Z*</code> floating-point; тому timer і score названі <code>Z</code>, <code>ZCORE</code>, <code>ZORE</code>. <code>SCREEN 0:WIDTH 80</code> вибирає текст 80&times;25, а <code>PEEK(&amp;H449)</code> питає BIOS, чи це mono або color екран.`],
+  ['Малювання рамки і панелі рахунку', `Звичайний <code>LOCATE&hellip;PRINT</code> малює сталі елементи: зовнішню рамку, заголовок і легенду внизу. Останній рядок робить <code>POKE</code> чотирьох іконок прямо у фіксовані screen offsets.`],
+  ['Початок нової гри', `Обнулити score, дати три життя і пройти рівні 1&rarr;32.`],
+  ['Цикл рівнів', `Кожен рівень очищає 17 внутрішніх рядків, ставить двоклітинкову змію в центрі і через <code>ON LEVEL GOSUB</code> переходить до рецепта цього рівня.`],
+  ['Status line і розсипання предметів', `Показати bonus, lives і level, а потім розсипати <code>AANTAL</code> сердець і <code>AANTAL</code> смайликів на випадкові порожні клітинки.`],
+  ['Popup &ldquo;Level n&rdquo;', `Скопіювати частину екрана під popup у <code>S()</code>, намалювати box, дочекатися клавіші і вставити екран назад, щоб не лишити дірки.`],
+  ['Цикл руху &mdash; читання клавіші', `Серце гри. На кожному tick код чекає до <code>Z</code> секунд на клавішу. Ранні рівні чекають безкінечно; пізніші рухаються самі.`],
+  ['Витрата bonus і сортування клавіші', `Кожен tick віднімає <code>BMIN</code> від bonus. Потім код визначає, чи клавіша є стрілкою, ESC або марним вводом.`],
+  ['Cheats і поворот голови', `F10 пропускає рівень, F9 додає життя і пропускає. Інакше напрям перекладається в крок екрана: &plusmn;160 для рядка, &plusmn;2 для стовпця.`],
+  ['Що в наступній клітинці?', `Головне рішення: порожньо, трефа, серце, камінь, смайлик або стріла. Їжа збільшує змію; стріли вбивають; камені можна штовхати.`],
+  ['Заблоковано &mdash; стіни і власний хвіст', `Стіна або власне тіло не вбивають. Змія стоїть, зберігає старий напрям, втрачає трохи bonus і дзижчить.`],
+  ['Малювання тіла, ріст голови, анімація', `Стара клітинка голови стає правильним box-drawing символом, нова голова додається, тіло блимає, а enemy routine цього рівня робить крок.`],
+  ['Рівень пройдено &mdash; забрати bonus', `Залишковий bonus переходить у score по пʼять очок за раз, після чого ви отримуєте додаткове життя.`],
+  ['Кінець / грати знову', `Після всіх 32 рівнів або коли життя закінчилися, код показує <i>Einde</i>, питає про повтор і або стартує знову, або завершується.`],
+  ['Поставити предмет у випадкову клітинку', `Вибрати випадковий парний offset у полі. Парний означає byte символу, не byte кольору. Заповнюється лише порожня клітинка.`],
+  ['Score і highscore', `Додати <code>OP</code> до score і оновити high score, якщо його побито.`],
+  ['Layout: лабіринт', `Вкладені цикли малюють мережу одинарних ліній і перехресть: найщільніший лабіринт.`],
+  ['Layout: розкидані камені', `Кладе камені &#9689; зигзагом. Helper на рядку 1480 ставить символ у column X, row Y.`],
+  ['Layout: кімнати з дверима', `Будує сітку кімнат, а потім читає DATA-координати, щоб пробити проходи у стінах.`],
+  ['Layout: вертикальні брами', `Колонки з отвором у три клітинки; <code>B(I)</code> памʼятає рядок отвору кожної брами.`],
+  ['Layout: брами + камені', `Layout брам плюс розсипані камені.`],
+  ['Небезпека: стріли вгору', `Кожна парна колонка отримує стрілу вгору, яка на кожному tick піднімається на рядок і wrap-иться зверху. Стріла на голові смертельна.`],
+  ['Небезпека: горизонтальні стріли', `У кожному рядку рухаються дві стріли: одна праворуч, одна ліворуч. На краю вони wrap-яться назад.`],
+  ['Небезпека: рухомі брами', `Девʼять отворів у брамах зсуваються. Тести <code>=96</code> перевіряють, що три клітинки порожні перед переміщенням отвору.`],
+  ['Jingle предмета', `<code>PLAY "mb"</code> означає background music, потім ідуть три висхідні blips.`],
+  ['Popup box', `Малює подвійну рамку за "Level n" і "Einde".`],
+  ['32 рецепти рівнів', `Кожен рядок задає <code>Z</code>, <code>AANTAL</code> і <code>BMIN</code>, а також вибирає layout. Таблиці повторно використовують перші 16 рецептів для рівнів 17&ndash;32.`],
 ];
 
 const EXPLAINED_NL_NOTES = {
@@ -262,9 +296,11 @@ const EXPLAINED_NL_NOTES = {
   2410:'Vanaf level 9 beweegt de slang vanzelf; 2410-2480 spiegelen 2320-2390 maar realtime.',
 };
 
-if(explainedLang() === 'nl'){
-  EXPLAINED_NL_SECTIONS.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
-  Object.assign(NOTES, EXPLAINED_NL_NOTES);
+const localizedExplained = explainedLang();
+if(localizedExplained === 'nl' || localizedExplained === 'uk'){
+  const sections = localizedExplained === 'uk' ? EXPLAINED_UK_SECTIONS : EXPLAINED_NL_SECTIONS;
+  sections.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
+  if(localizedExplained === 'nl') Object.assign(NOTES, EXPLAINED_NL_NOTES);
 }
 
 /* ---------- render ---------- */

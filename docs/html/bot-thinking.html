@@ -647,6 +647,81 @@
         <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn staart, open ruimte en toekomstige uitgangen belangrijker dan de dichtstbijzijnde onveilige punten.</p>
       </section>
     </template>
+    <template id="main-template-uk">
+      <h1 class="page-title">Як думає бот</h1>
+      <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, читає її живі змінні і натискає ті самі DOS-style scancodes стрілок, які натискав би гравець. Бот — невеликий planner: на кожному ході він відновлює стан змії, шукає безпечну їжу, відкидає маршрути-пастки, стежить за петлями біля хвоста і переходить у режим виживання, коли безпечного шляху до їжі немає.</p>
+      <div class="note"><strong>Важлива межа.</strong> Сама гра на сторінці <a href="game.html">Грати</a> лишається вірною BASIC-джерелу. Бот — сучасне доповнення: він читає port variables і натискає клавіші. Окрім переходу на вибраний <code>LEVEL</code> і обнулення залишкового <code>BONUS</code> перед clear, він не змінює правила гри.</div>
+      <nav class="toc" aria-label="На цій сторінці">
+        <h2>На цій сторінці</h2>
+        <ol>
+          <li><a href="#where"><span class="n">1.</span>Де працює бот</a></li>
+          <li><a href="#data"><span class="n">2.</span>Дані, які він бачить</a></li>
+          <li><a href="#turn"><span class="n">3.</span>Один цикл рішення</a></li>
+          <li><a href="#safety"><span class="n">4.</span>Перевірки безпеки</a></li>
+          <li><a href="#limits"><span class="n">5.</span>Межі і компроміси</a></li>
+        </ol>
+      </nav>
+      <section id="where">
+        <h2>1. Де працює бот</h2>
+        <p>Бот запускається в тому самому JavaScript realm, що й гра. Це важливо, бо <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> і <code>pushKey()</code> є live bindings у port code, а не звичайним зовнішнім API.</p>
+        <div class="cards">
+          <div class="card"><h3>Перехід рівня</h3><p>Він виставляє цільовий рівень і дає грі самій увійти в нього через існуючий loop.</p></div>
+          <div class="card"><h3>Reset bonus</h3><p>Коли лишається дуже мало предметів, <code>BONUS = 0</code> прибирає довге очікування підрахунку bonus перед clear.</p></div>
+          <div class="card"><h3>Справжній input</h3><p>Бот надсилає розширені key strings: up <code>' H'</code>, down <code>' P'</code>, left <code>' K'</code>, right <code>' M'</code>.</p></div>
+          <div class="card"><h3>Live status</h3><p>Score, items, stuck/win/fail status передаються батьківській сторінці для індикаторів.</p></div>
+        </div>
+      </section>
+      <section id="data">
+        <h2>2. Дані, які він бачить</h2>
+        <p>Бот мислить так само, як гра: через screen memory. Він читає символи з VRAM через <code>peek(offset)</code>, а тіло змії відновлює з масиву <code>T</code> від <code>ETEL</code> до <code>BTEL</code>.</p>
+        <table>
+          <thead><tr><th>Значення</th><th>Що це</th><th>Ефект для плану</th></tr></thead>
+          <tbody>
+            <tr><td><code>32</code></td><td>Порожня клітинка</td><td>Можна входити.</td></tr>
+            <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Серце</td><td>Їжа +10, змія росте.</td></tr>
+            <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Трефа</td><td>Їжа +25, змія росте.</td></tr>
+            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Смайлик</td><td>Зазвичай заборонений; дозволяється лише для втечі.</td></tr>
+            <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Камінь</td><td>Можна штовхнути, якщо клітинка позаду порожня.</td></tr>
+            <tr><td><code>24/26/27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Стріла</td><td>Смертельна; маршрут відкидається.</td></tr>
+            <tr><td><code>219</code></td><td>Голова змії</td><td>Поточну голову бот бере з <code>T[BTEL]</code>.</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section id="turn">
+        <h2>3. Один цикл рішення</h2>
+        <div class="steps">
+          <div class="step"><b>1. Знімок стану</b><p>Зібрати head, body, direction, score і поточні клітинки VRAM.</p></div>
+          <div class="step"><b>2. Небезпека</b><p>Позначити клітинки, куди стріли можуть ударити зараз або одразу після bounce/wrap.</p></div>
+          <div class="step"><b>3. Пошук їжі</b><p>Спробувати короткий пошук до найближчої безпечної їжі, а потім глибший route search.</p></div>
+          <div class="step"><b>4. Симуляція</b><p>Кожен кандидат рухає уявну змію, стирає хвіст, ростить тіло і штовхає камені.</p></div>
+          <div class="step"><b>5. Перевірка пастки</b><p>Після їжі маршрут має залишати простір, виходи і бажано шлях до хвоста.</p></div>
+          <div class="step"><b>6. Натиснути клавішу</b><p>Переможний перший крок перетворюється на DOS scancode і відправляється в гру.</p></div>
+        </div>
+      </section>
+      <section id="safety">
+        <h2>4. Перевірки безпеки</h2>
+        <p>Досягти серця недостатньо. Поганий snake bot бере найкоротший шлях і надто пізно розуміє, що їжа лежала в глухому куті. Sneekie bot оцінює:</p>
+        <ul>
+          <li><strong>tailReach</strong> — чи можна після маршруту дістатися хвоста;</li>
+          <li><strong>space</strong> — скільки клітинок лишається доступними;</li>
+          <li><strong>exits</strong> — скільки легальних ходів є одразу після їжі;</li>
+          <li><strong>survivalDepth</strong> — чи можна прожити кілька майбутніх ходів;</li>
+          <li><strong>loop pressure</strong> — чи не повторюється голова без зміни score.</li>
+        </ul>
+        <p>Якщо їжа небезпечна, бот може піти до хвоста, вибрати найпросторіший legal move або в крайньому випадку дозволити смайлик як escape route.</p>
+      </section>
+      <section id="limits">
+        <h2>5. Межі і компроміси</h2>
+        <ul>
+          <li>Бот симулює тіло і камені, але не повний багато-tick майбутній світ усіх ворогів.</li>
+          <li>Поточну і наступну небезпеку стріл він трактує консервативно, а потім рахує заново після реального ходу гри.</li>
+          <li>State hash компактний і призначений для pruning, не для збереження кожної деталі поля.</li>
+          <li>Смайлик вибирається лише тоді, коли чисті маршрути до їжі провалюються.</li>
+          <li>Survival beam любить маршрути з багатьма виходами і може відкинути вузький, але технічно безпечний шлях.</li>
+        </ul>
+        <p>Коротко: бот грає як обережний snake player. Він хоче їжу поруч, але тільки якщо після неї лишається повітря. Коли стає тісно, хвіст, відкритий простір і майбутні виходи важливіші за найближчі очки.</p>
+      </section>
+    </template>
     <script src="../js/site.js"></script>
   </body>
 </html>

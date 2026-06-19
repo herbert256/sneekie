@@ -164,6 +164,64 @@
       </nav>
       <div id="pairs"></div>
     </template>
+    <template id="main-template-uk">
+      <div class="hero">
+        <h1 class="page-title">Від GW-BASIC до JavaScript, поруч</h1>
+        <p class="sub">Код 1988 року ліворуч, порт 2026 року праворуч &mdash; і як зібраний новий шар під ним.</p>
+      </div>
+      <p class="lead">Вебверсія не є переписуванням &mdash; це <em>вірний порт</em>. Ігрова логіка перекладена з <code>SNEEKIE.BAS</code> оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC у коментарях. Насправді змінився тонкий шар під грою: те, що GW-BASIC давав безкоштовно &mdash; памʼять екрана, клавіатуру, звук, <code>GOTO</code> &mdash; довелося відбудувати для браузера. Ця сторінка ставить поруч показові фрагменти і пояснює цей шар; для кожного рядка BASIC є сторінка <a href="explained.html">Пояснення</a>.</p>
+      <div class="callout">
+        <h2>Міст: екран і є структура даних</h2>
+        <p>GW-BASIC записував символи прямо у текстову памʼять екрана PC 80&times;25 через <code>POKE</code> і читав їх назад через <code>PEEK</code>, щоб дізнатися, що де стоїть. Окремого обʼєкта "змія" чи "стіна" не було &mdash; зображення <em>було</em> станом. Порт зберігає цю модель точно: 4000-байтовий <code>Uint8Array</code> (<code>vram</code>), два байти на клітинку, символ і атрибут, адресуються так:</p>
+        <p><span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span></p>
+        <p>Оскільки модель однакова, ігровий код майже не змінюється &mdash; слова <code>POKE</code> і <code>PEEK</code> лише стають функціями <code>poke()</code> і <code>peek()</code>. Усе інше на цій сторінці випливає з відбудови решти runtime GW-BASIC навколо одного спільного масиву.</p>
+      </div>
+      <h2 style="color: var(--heading); max-width: 900px">Що довелося відбудувати</h2>
+      <table class="map">
+        <tr><th>Механізм 1988 року</th><th>Заміна 2026 року</th></tr>
+        <tr>
+          <td><code>POKE</code> / <code>PEEK</code> у відеопамʼять на <code>&amp;HB000</code>/<code>&amp;HB800</code></td>
+          <td><b><code>poke()</code> / <code>peek()</code></b> у 4000-байтовому <code>Uint8Array</code></td>
+        </tr>
+        <tr>
+          <td><code>LOCATE r,c : PRINT CHR$(n)</code></td>
+          <td><b><code>locate(r,c); pc(n)</code></b> &mdash; той самий курсор, ті самі коди символів</td>
+        </tr>
+        <tr>
+          <td>екран оновлює себе сам (це <em>і є</em> відеопамʼять)</td>
+          <td><b>набір брудних клітинок + <code>requestAnimationFrame</code></b>, glyphs з вбудованого шрифту IBM CP437</td>
+        </tr>
+        <tr>
+          <td><code>INKEY$</code> / <code>INPUT$</code> блокують до клавіші</td>
+          <td><b><code>async</code> + Promise-буфер клавіатури</b> (<code>keyOrTimeout</code>/<code>waitKey</code>)</td>
+        </tr>
+        <tr>
+          <td><code>SOUND freq, ticks</code></td>
+          <td><b>Web Audio</b> square-wave oscillator на тому самому годиннику 1/18.2&nbsp;с</td>
+        </tr>
+        <tr>
+          <td><code>ON LEVEL GOSUB &hellip;</code></td>
+          <td>dispatch-масиви <b><code>CFG[]</code> і <code>ENEMY[]</code></b></td>
+        </tr>
+        <tr>
+          <td><code>GOTO 510</code> / <code>RETURN 510</code> (смерть)</td>
+          <td><b><code>throw DEATH</code></b>, перехоплений навколо циклу руху</td>
+        </tr>
+        <tr>
+          <td>змінні (<code>DEFINT A-Y</code>, нідерландські назви)</td>
+          <td><b>ті самі назви збережені буквально</b> (<code>T</code>, <code>BTEL</code>, <code>HART</code>, <code>KLAVER</code>&hellip;)</td>
+        </tr>
+      </table>
+      <div class="callout">
+        <h2>Одна глибока зміна: блокування стає <code>async</code></h2>
+        <p>GW-BASIC ішов згори вниз і просто <em>зупинявся</em> на <code>INKEY$</code>/<code>INPUT$</code>, доки ви не натиснете клавішу. Вкладка браузера не може так блокуватися &mdash; тому точки очікування стали <code>await</code>, а <code>playLevels()</code> і <code>program()</code> стали <code>async</code>. Малий Promise-буфер клавіатури замінює BIOS key buffer, а оскільки <code>GOTO</code> у JavaScript немає, рядки "вистрибнути і померти" стають кинутим сигналом <code>DEATH</code>, перехопленим навколо циклу. Ці два прийоми &mdash; <em>await для вводу, throw для смерті</em> &mdash; дозволяють решті коду лишатися буквальним перекладом.</p>
+      </div>
+      <nav class="toc" aria-label="На цій сторінці">
+        <h2>Пари фрагментів</h2>
+        <ol id="toc-list"></ol>
+      </nav>
+      <div id="pairs"></div>
+    </template>
     <script src="../js/site.js"></script>
     <script src="../js/migration.js"></script>
   </body>
