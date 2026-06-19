@@ -1,7 +1,7 @@
 /* site.js — shared page chrome/helpers plus the GW-BASIC syntax tokenizer used by
    source.html and explained.html. The tokenizer returns [class, text] tokens
-   per physical line; classes: ws ln com str num kw fn op id pn. migration.js
-   keeps its own reduced tokenizer because it also tokenizes JavaScript. */
+   per physical line; classes: ws ln com str num kw fn op id pn. explained.js
+   carries its own small JavaScript tokenizer too (for the right-hand port column). */
 'use strict';
 
 /* ---------- shared page helpers ---------- */
@@ -15,10 +15,12 @@ const SITE_I18N = {
     skip: 'Skip to content',
     navGame: '\u25b6 Play',
     navManual: 'Manual',
+    navBot: 'Bot',
     navMagazine: 'Magazine',
     navHistory: 'History',
     navSource: 'Source',
     navExplained: 'Explained',
+    navMigration: 'Migration',
     navVram: 'Visualizer',
     download: 'Download',
     print: 'Print',
@@ -44,15 +46,17 @@ const SITE_I18N = {
     soundOn: 'Sound: on',
     soundOff: 'Sound: off',
     fullscreen: 'Fullscreen',
-    autoOff: 'Auto: off',
-    autoOn: 'Auto: on',
-    autoNote: 'Auto mode hands the real 1988 game to a JavaScript bot &mdash; it plays live, not from a recording. It paths to the nearest target, pushes stones, dodges arrows, and keeps a route home to its tail.',
-    autoBotLink: 'How the bot thinks &rarr;',
     gameHintKeys: 'Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues',
     gameHintTouch: 'Swipe to steer &middot; tap = any key',
     yesKey: 'Y',
     noKey: 'N',
+    liveTitle: 'The bot descends into the deep &mdash; levels 26-32',
+    liveLead:
+      'This is no recording. The <em>real</em> 1988 game runs live before you while a lone bot descends into its <strong>deepest seven mazes &mdash; levels 26-32</strong>, where the walls themselves come alive, the serpent swells to <strong>twice its length</strong>, and every <span class="ico h">&hearts;</span> heart it devours flings a fresh <span class="ico g">&clubs;</span> club into the dark. Watch it reason in real time: it carves the shortest line to its quarry, <strong>heaves <span class="ico t">&#9689;</span> boulders</strong> from its path, <strong>threads the storm of flying <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and never loses the road home to its own tail &mdash; and when the maze moves to seal it in, it will <strong>swallow a cursed <span class="ico s">&#9786;</span> smiley</strong> to tear an opening free. Clear the board and the screen <strong><span class="ico green">blazes green</span></strong> as the bot marches onward; corner it, and it <strong><span class="ico r">flares red</span></strong> and rises to try again. It does not tire, and it does not stop.',
     botSpeed: 'Bot speed',
+    liveTabsLabel: 'Live bot level',
+    liveNote: "It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.",
+    botThinkLink: 'How the bot thinks &rarr;',
     close: 'Close',
     layoutPreview: 'Layout preview',
     magazinePreview: 'Magazine page preview',
@@ -89,6 +93,7 @@ const SITE_I18N = {
     vramDrawHead: 'draw new head &#9608;',
     vramGrow: '  (grow)',
     vramAllHearts: '&#9733; all hearts collected!',
+    vramDead: '&#10007; a moving arrow caught the snake &mdash; game over. Press Reset.',
     vramMove: 'move ',
     vramCell: 'cell (col ',
     vramRow: ', row ',
@@ -103,10 +108,12 @@ const SITE_I18N = {
     skip: 'Spring naar inhoud',
     navGame: '\u25b6 Spelen',
     navManual: 'Handleiding',
+    navBot: 'Bot',
     navMagazine: 'Magazine',
     navHistory: 'Geschiedenis',
     navSource: 'Broncode',
     navExplained: 'Uitleg',
+    navMigration: 'Migratie',
     navVram: 'Visualizer',
     download: 'Download',
     print: 'Print',
@@ -132,15 +139,17 @@ const SITE_I18N = {
     soundOn: 'Geluid: aan',
     soundOff: 'Geluid: uit',
     fullscreen: 'Volledig scherm',
-    autoOff: 'Auto: uit',
-    autoOn: 'Auto: aan',
-    autoNote: 'In de auto-modus speelt een JavaScript-bot het echte spel uit 1988 &mdash; live, geen opname. Hij loopt naar het dichtstbijzijnde doel, duwt stenen, ontwijkt pijlen en houdt een route terug naar zijn staart vrij.',
-    autoBotLink: 'Hoe de bot denkt &rarr;',
     gameHintKeys: 'Pijltjestoetsen sturen de slang &middot; &lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven &middot; F10 = level overslaan &middot; elke toets gaat verder',
     gameHintTouch: 'Veeg om te sturen &middot; tik = willekeurige toets',
     yesKey: 'J',
     noKey: 'N',
+    liveTitle: 'De bot daalt af in de diepte &mdash; levels 26-32',
+    liveLead:
+      'Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live voor je ogen terwijl een eenzame bot afdaalt in zijn <strong>diepste zeven doolhoven &mdash; levels 26-32</strong>, waar de muren zelf tot leven komen, de slang <strong>twee keer zo lang</strong> wordt en elk <span class="ico h">&hearts;</span> hart dat hij verslindt een nieuwe <span class="ico g">&clubs;</span> klaver het duister in slingert. Zie hem denken in real time: hij trekt de kortste lijn naar zijn prooi, <strong>wentelt <span class="ico t">&#9689;</span> rotsblokken</strong> opzij, <strong>glipt door de storm van vliegende <span class="ico a">&uarr;&larr;&rarr;</span> pijlen</strong>, en verliest nooit de weg terug naar zijn eigen staart &mdash; en dreigt het doolhof hem in te sluiten, dan <strong>verzwelgt hij een vervloekte <span class="ico s">&#9786;</span> smiley</strong> om zich een uitweg te scheuren. Haalt hij het level, dan <strong><span class="ico green">vlamt het scherm groen</span></strong> en marcheert de bot verder; klem je hem vast, dan <strong><span class="ico r">laait het rood op</span></strong> en herrijst hij voor een nieuwe poging. Hij wordt niet moe, en hij stopt niet.',
     botSpeed: 'Botsnelheid',
+    liveTabsLabel: 'Livebot level',
+    liveNote: 'Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.',
+    botThinkLink: 'Hoe de bot denkt &rarr;',
     close: 'Sluiten',
     layoutPreview: 'Layoutvoorbeeld',
     magazinePreview: 'Tijdschriftpagina voorbeeld',
@@ -177,6 +186,7 @@ const SITE_I18N = {
     vramDrawHead: 'teken nieuwe kop &#9608;',
     vramGrow: '  (groei)',
     vramAllHearts: '&#9733; alle harten verzameld!',
+    vramDead: '&#10007; een bewegende pijl ving de slang &mdash; game over. Druk op Reset.',
     vramMove: 'zet ',
     vramCell: 'cel (kolom ',
     vramRow: ', rij ',
@@ -330,8 +340,10 @@ function renderTopHeader(){
     ['history', 'navHistory'],
     ['source', 'navSource'],
     ['manual', 'navManual'],
+    ['bot', 'navBot'],
     ['magazine', 'navMagazine'],
     ['explained', 'navExplained'],
+    ['migration', 'navMigration'],
     ['vram', 'navVram'],
   ];
   const header = document.createElement('header');

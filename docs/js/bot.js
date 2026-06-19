@@ -1,21 +1,16 @@
 'use strict';
-/* auto.js — "Auto mode": a JavaScript bot that plays the real game live.
-   Loaded after game.js on html/game.html. It reads game.js's own globals
-   (peek, pushKey, T, BTEL, ETEL, LEVEL, HART, KLAVER, ZCORE) directly and steers
-   with pushKey — exactly the planner the deleted Live page injected into an
-   iframe, but here in the SAME window so it drives the page's playable game.
-   Everything is wrapped in an IIFE so it never redeclares game.js's globals. */
+/* bot.js — the Live bot, running in THIS page (no iframe, so it works from file://
+   too). game.js renders the real game into #screen; this script reads game.js's
+   globals (peek, T, BTEL, ETEL, LEVEL, HART, KLAVER, ZCORE) directly and steers via
+   pushKey(). Level tabs jump the bot into the late-game mazes 26-32; the speed slider
+   sets the pace. Wrapped in an IIFE so it never redeclares game.js's globals. */
 (function(){
-  const toggleBtn = document.getElementById('auto-toggle');
-  if(!toggleBtn) return;
-  const autobar = document.getElementById('autobar');
-  const screen = document.getElementById('screen');
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  /* ---- speed: a 0-10 slider mapped to a per-move delay (as on the old Live page) ---- */
+  /* ---- speed: a 0-10 slider mapped to a per-move delay ---- */
   const SPEED_CHOICES = [10,10,20,30,49,50,60,70,80,90,100];
-  const speed = document.getElementById('auto-speed');
-  const speedout = document.getElementById('auto-speedout');
+  const speed = document.getElementById('speed');
+  const speedout = document.getElementById('speedout');
   let botSpeed = 50;
   function speedToDelay(value){ return Math.round(45 + 375 * Math.pow((100 - value) / 100, 1.6)); }
   function speedIndex(){
@@ -32,16 +27,12 @@
     speed.setAttribute('aria-valuetext', String(botSpeed));
   }
   if(speed){
-    speed.min = '0';
-    speed.max = String(SPEED_CHOICES.length - 1);
-    speed.step = '1';
+    speed.min = '0'; speed.max = String(SPEED_CHOICES.length - 1); speed.step = '1';
     speed.addEventListener('input', updateSpeed);
     updateSpeed();
   }
   function botDelay(){ return speedToDelay(botSpeed); }
 
-  /* ---- the planner (verbatim from the old live.js BOT, minus the iframe driver).
-     Free variables peek/T/BTEL/ETEL/HART/KLAVER/LEVEL resolve to game.js's globals. ---- */
   const DIRS = [[72,-160],[80,160],[75,-2],[77,2]];
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const opp = {72:80, 80:72, 75:77, 77:75};
@@ -306,32 +297,48 @@
       survivalMove();
   };
 
-  /* ---- driver: steer the page's own game until toggled off or the game ends ----
-     The game advances levels and replays a death by itself; each tick the bot
-     presses a key, so it also dismisses the "Level n / press any key" popups. The
-     only thing it watches for is real game-over: after the final life the snake is
-     left fully unwound (ETEL > BTEL) at the "Play again (y/n)" prompt and stays that
-     way, whereas a death with lives left re-inits the snake within a tick. */
-  const GAMEOVER_TICKS = 4;
-  let autoOn = false, runToken = 0;
+  /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
+  const LEVELS = [26,27,28,29,30,31,32];
+  let target = 26, pendingJump = 26;
+  const tablist = document.getElementById('leveltabs');
+  const tabs = new Map();
+  function markTabs(){ tabs.forEach((b, n) => b.setAttribute('aria-selected', String(n === target))); }
+  function wake(){ if(typeof ensureAudio === 'function') ensureAudio(); }   // audio needs a user gesture
+  if(tablist){
+    for(const n of LEVELS){
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.level = String(n);
+      b.textContent = 'Level ' + n;
+      b.addEventListener('click', () => { wake(); target = n; pendingJump = n; markTabs(); });
+      tablist.appendChild(b); tabs.set(n, b);
+    }
+    markTabs();
+  }
+  addEventListener('pointerdown', wake);
+  addEventListener('keydown', wake);
 
-  function autoText(key, fallback){
-    return (typeof window.sneekieText === 'function' && window.sneekieText(key)) || fallback;
-  }
-  function setAuto(on){
-    autoOn = on;
-    runToken++;
-    toggleBtn.setAttribute('aria-pressed', String(on));
-    toggleBtn.textContent = on ? autoText('autoOn', 'Auto: on') : autoText('autoOff', 'Auto: off');
-    if(autobar) autobar.hidden = !on;
-    if(on) runBot(runToken);
-  }
-  async function runBot(token){
-    let idle = 0, prevScore = ZCORE, over = 0;
+  /* ---- driver: drive game.js continuously, jumping to the selected level ----
+     Each tick we press one key. The bot's own move keys dismiss the "Level n /
+     press any key" popups; a real game-over leaves the snake fully unwound
+     (ETEL > BTEL) at "Play again (y/n)", which we answer to keep it going. */
+  const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
+  (async () => {
+    let idle = 0, prevScore = 0, over = 0;
     const headTrail = [];
-    while(autoOn && token === runToken){
-      if(ETEL > BTEL){ if(++over >= GAMEOVER_TICKS){ setAuto(false); return; } }  // game over -> hand back
-      else over = 0;
+    while(true){
+      if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
+      // jump to the selected level once the snake is safely in the move loop
+      if(pendingJump !== null && BTEL > 2 && ETEL <= BTEL){
+        LEVEL = pendingJump - 1; pushKey(' D');          // F10 skips straight into the target level
+        pendingJump = null; idle = 0; headTrail.length = 0;
+        await sleep(botDelay()); continue;
+      }
+      // real game-over -> answer "play again" and re-target the chosen level
+      if(ETEL > BTEL){
+        if(++over >= 4){ pushKey('\r'); pushKey(yesKey()); pendingJump = target; over = 0; }
+        await sleep(botDelay()); continue;
+      }
+      over = 0;
       if(ZCORE > prevScore) idle = 0; else idle++;
       prevScore = ZCORE;
       headTrail.push(T[BTEL]);
@@ -340,26 +347,10 @@
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 24 && repeats >= 2;
       const sc = decide(idle, looping);
-      if(sc !== null) pushKey(keyOf[sc]);          // a safe move
-      else if(BTEL <= 2) pushKey('\r');            // under the level popup -> any key dismisses it
-      else pushKey('\x1b');                         // boxed mid-level -> give up like a player (ESC)
+      if(sc !== null) pushKey(keyOf[sc]);              // a safe move
+      else if(BTEL <= 2) pushKey('\r');               // under the level popup -> any key dismisses it
+      else pushKey('\x1b');                            // boxed mid-level -> give up like a player (ESC)
       await sleep(botDelay());
     }
-  }
-
-  toggleBtn.addEventListener('click', () => {
-    if(typeof ensureAudio === 'function') ensureAudio();
-    setAuto(!autoOn);
-  });
-
-  /* any manual input hands control back to the player */
-  function handBack(){ if(autoOn) setAuto(false); }
-  addEventListener('keydown', e => {
-    if(!autoOn) return;
-    if(e.key.startsWith('Arrow') || e.key === 'Escape' || e.key === 'F9' || e.key === 'F10' || e.key === 'Enter') handBack();
-  });
-  if(screen){
-    screen.addEventListener('pointerdown', handBack);
-    screen.addEventListener('touchstart', handBack, {passive:true});
-  }
+  })();
 })();

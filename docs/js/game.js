@@ -116,7 +116,7 @@ let atlasDim, atlasBright;
 const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
 let bootStartResolve = null;
-document.body.classList.add('booting');     // hides the fullscreen touch controls until boot finishes
+document.body.classList.add('booting');     // hides the touch controls (#touchbar + fullscreen #fstouch) until boot finishes
 
 /* boot-time blinking hardware text cursor (the original game has none) */
 let cursorVisible = false, cursorBlink = false, cursorPrevIdx = -1, cursorTimer = null;
@@ -370,6 +370,7 @@ function startBootFromGesture(){
 }
 function shouldSkipBoot(){
   return new URLSearchParams(location.search).has('noboot') ||
+    window.SNEEKIE_SKIPBOOT === true ||                          // the bot page hosts the game and skips straight to play
     (typeof matchMedia === 'function' &&
       matchMedia('(prefers-reduced-motion: reduce)').matches);  // honor reduced-motion: skip the JS-timed boot show
 }

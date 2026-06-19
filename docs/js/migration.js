@@ -55,7 +55,7 @@ function tokJs(lines){
 }
 
 /* ---------- the pairings: title, prose, and line ranges into each source ---------- */
-const MIG_SECTIONS = [
+const SECTIONS = [
   { t:'The screen is the data model', bas:[[16,18]], js:[[59,62],[119,125]],
     h:`The 1988 code points <code>PEEK</code>/<code>POKE</code> at video memory and even chooses mono (<code>&amp;HB000</code>) vs colour (<code>&amp;HB800</code>). The port needs only one in-memory grid, so that choice vanishes &mdash; <code>vram</code> is a 4000-byte array and <code>poke()</code>/<code>peek()</code> are four lines each.`},
   { t:'Drawing the fixed frame', bas:[[19,28]], js:[[968,982]],
@@ -109,12 +109,12 @@ const MIGRATION_NL_SECTIONS = [
   ['Invoer: INKEY$-scancodes worden keydown', `DOS gaf een pijltje uit <code>INKEY$</code> terug als twee bytes. De browser-handler maakt precies zulke strings (<code>'\\0H'</code> = omhoog), zodat de loop hetzelfde ziet als in 1988.`],
 ];
 if(typeof window.sneekieLang === 'function' && window.sneekieLang() === 'nl'){
-  MIGRATION_NL_SECTIONS.forEach(([t, h], i) => { if(MIG_SECTIONS[i]){ MIG_SECTIONS[i].t = t; MIG_SECTIONS[i].h = h; } });
+  MIGRATION_NL_SECTIONS.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
 }
 
 /* ---------- render ---------- */
 const pairs = document.getElementById('pairs');
-const migTocList = document.getElementById('mig-toc-list');
+const tocList = document.getElementById('toc-list');
 
 function lineDiv(toks){
   const d = document.createElement('div'); d.className = 'cl';
@@ -139,7 +139,7 @@ function fillJs(host, ranges){
 }
 function gap(){ const g = document.createElement('div'); g.className = 'gap'; g.textContent = '⋯'; return g; }
 
-MIG_SECTIONS.forEach((sec, idx) => {
+SECTIONS.forEach((sec, idx) => {
   const num = idx + 1;
   const s = document.createElement('section'); s.className = 'pairsec'; s.id = 'p-' + num;
   s.innerHTML =
@@ -155,5 +155,5 @@ MIG_SECTIONS.forEach((sec, idx) => {
 
   const li = document.createElement('li');
   li.innerHTML = '<span class="n">' + num + '</span><a href="#p-' + num + '">' + sec.t + '</a>';
-  migTocList.appendChild(li);
+  tocList.appendChild(li);
 });

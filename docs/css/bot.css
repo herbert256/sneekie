@@ -1,66 +1,145 @@
-/* Page-specific styles for bot.html. */
-.page-bot main{ max-width:1080px; padding-bottom:78px; }
-.page-bot .formula{
-  display:block;
+/* Page-specific styles for bot.html — a normal doc page (page-doc, like History)
+   with the live game embedded. The chrome (title, lead, fonts, colours) comes from
+   site.css's .page-doc; these rules only style the embedded game screen, the game
+   controls, the speed bar, the level tabs, the note and the link. */
+
+/* ---------- the embedded game screen (a compact CRT) ---------- */
+.page-bot #bezel{
+  width:fit-content;
   max-width:100%;
-  background:var(--codebg);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:11px 14px;
-  font:12.5px/1.65 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color:var(--greenhi);
-  overflow:auto;
-  overflow-wrap:anywhere;
+  margin:22px auto 6px;
+  padding:14px 16px 12px;
+  background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
+  border-radius:16px;
+  box-shadow:0 28px 64px -30px rgba(0,0,0,.95), inset 0 2px 0 rgba(255,255,255,.08), inset 0 -3px 9px rgba(0,0,0,.5);
 }
-.page-bot .formula .dim{ color:var(--muted); }
-.page-bot td:first-child{ white-space:nowrap; }
-.page-bot .cards,
-.page-bot .ladder,
-.page-bot .flow{
-  display:grid;
-  gap:12px;
-  max-width:960px;
-  margin:16px 0;
+.page-bot #tube{
+  width:600px;
+  max-width:100%;
+  margin:0 auto;
+  background:#060708;
+  padding:8px;
+  border-radius:11px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035), inset 0 0 16px 5px rgba(0,0,0,.9);
 }
-.page-bot .cards{ grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
-.page-bot .ladder{ grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }
-.page-bot .flow{ grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }
-.page-bot .step{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:8px;
-}
-.page-bot .card,
-.page-bot .step{ padding:13px 15px; }
-.page-bot .step b,
-.page-bot .flow b{
+.page-bot #screen{
   display:block;
-  font:700 12px/1 ui-monospace, monospace;
-  letter-spacing:.05em;
+  background:#000;
+  border-radius:6px;
+  image-rendering:pixelated;
+  box-shadow:0 0 0 2px #000, 0 0 40px -4px var(--glow);
+}
+/* size the canvas to the frame, overriding game.js's fit() inline sizing (except in
+   fullscreen, where fit() should size it to the screen) */
+.page-bot #bezel:not(:fullscreen) #screen{ width:100% !important; height:auto !important; }
+.page-bot #glass,
+.page-bot #power,
+.page-bot #panel{ display:none; }
+
+/* fullscreen: hand the whole display to the screen */
+.page-bot #bezel:fullscreen{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  background:#000;
+  max-width:none;
+  border-radius:0;
+  box-shadow:none;
+}
+.page-bot #bezel:fullscreen #tube{ width:auto; max-width:none; padding:0; background:#000; border-radius:0; box-shadow:none; }
+.page-bot #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
+
+/* ---------- the game controls (theme / sound / fullscreen) ---------- */
+.page-bot #controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  align-items:center;
+  margin-top:8px;
+}
+.page-bot #controls .grp{ display:flex; gap:6px; }
+.page-bot #controls button{
+  font:inherit;
+  font-size:11px;
+  letter-spacing:.1em;
   text-transform:uppercase;
-  margin-bottom:6px;
-}
-.page-bot .step b{ color:var(--accent); }
-.page-bot .step p,
-.page-bot .card p{ margin:7px 0 0; font-size:13.5px; }
-.page-bot .flow div{
-  min-height:64px;
-  background:var(--codebg);
+  color:var(--ink);
+  background:var(--button);
   border:1px solid var(--border);
-  border-radius:7px;
-  padding:10px 12px;
+  border-radius:3px;
+  padding:7px 13px;
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
-.page-bot .flow b{ color:var(--blue); }
-.page-bot .flow span{ font-size:13px; }
-@media (max-width:640px){
-  .page-bot table{
-    display:block;
-    width:100%;
-    overflow-x:auto;
-  }
-  .page-bot td:first-child{ white-space:normal; }
+.page-bot #controls button:hover{ color:var(--accent); border-color:var(--accent); }
+.page-bot #controls button[aria-pressed="true"]{
+  color:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 12px -5px var(--accent);
 }
-@media print{
-  .page-bot .step,
-  .page-bot .formula{ break-inside:avoid; }
+
+/* ---------- speed bar ---------- */
+.page-bot .speedbar{
+  display:grid;
+  grid-template-columns:auto minmax(120px, 220px) auto;
+  align-items:center;
+  gap:8px;
+  max-width:340px;
+  margin:14px auto 0;
+}
+.page-bot .speedbar label{ color:var(--muted); font-size:11px; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+.page-bot .speedbar output{ min-width:3ch; color:var(--accent); text-align:right; font-size:12px; font-family:ui-monospace, monospace; }
+.page-bot .speedbar input{ width:100%; accent-color:var(--accent); cursor:pointer; }
+
+/* ---------- level tabs (26-32) ---------- */
+.page-bot .leveltabs{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0, 1fr));
+  gap:7px;
+  width:100%;
+  max-width:632px;
+  margin:14px auto 0;
+}
+.page-bot .leveltabs button{
+  min-height:40px;
+  font:inherit;
+  font-size:12px;
+  letter-spacing:.03em;
+  text-transform:none;
+  color:#98a1a6;
+  background:var(--button);
+  border:1px solid var(--border);
+  border-radius:5px;
+  cursor:pointer;
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
+}
+.page-bot .leveltabs button:hover{ color:var(--accent); border-color:var(--accent); }
+.page-bot .leveltabs button[aria-selected="true"]{
+  color:var(--accent);
+  border-color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 18%, var(--button));
+  box-shadow:0 0 16px -8px var(--accent);
+  cursor:default;
+}
+
+/* ---------- note + link ---------- */
+.page-bot .live-note{
+  max-width:632px;
+  margin:16px auto 0;
+  color:var(--muted);
+  font-size:13px;
+  text-align:center;
+}
+.page-bot .bot-think-link{ margin:10px auto 0; text-align:center; }
+.page-bot .bot-think-link a{ color:var(--accent); text-decoration:none; }
+.page-bot .bot-think-link a:hover{ text-decoration:underline; }
+
+@media (max-width:900px){
+  .page-bot .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width:520px){
+  .page-bot .speedbar{ grid-template-columns:auto minmax(120px, 1fr) auto; gap:6px; max-width:300px; }
+  .page-bot .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }

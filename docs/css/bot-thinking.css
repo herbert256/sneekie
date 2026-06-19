@@ -1,0 +1,66 @@
+/* Page-specific styles for bot-thinking.html (how the bot thinks). */
+.page-bot-thinking main{ max-width:1080px; padding-bottom:78px; }
+.page-bot-thinking .formula{
+  display:block;
+  max-width:100%;
+  background:var(--codebg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:11px 14px;
+  font:12.5px/1.65 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color:var(--greenhi);
+  overflow:auto;
+  overflow-wrap:anywhere;
+}
+.page-bot-thinking .formula .dim{ color:var(--muted); }
+.page-bot-thinking td:first-child{ white-space:nowrap; }
+.page-bot-thinking .cards,
+.page-bot-thinking .ladder,
+.page-bot-thinking .flow{
+  display:grid;
+  gap:12px;
+  max-width:960px;
+  margin:16px 0;
+}
+.page-bot-thinking .cards{ grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); }
+.page-bot-thinking .ladder{ grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:10px; }
+.page-bot-thinking .flow{ grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:8px; }
+.page-bot-thinking .step{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+.page-bot-thinking .card,
+.page-bot-thinking .step{ padding:13px 15px; }
+.page-bot-thinking .step b,
+.page-bot-thinking .flow b{
+  display:block;
+  font:700 12px/1 ui-monospace, monospace;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.page-bot-thinking .step b{ color:var(--accent); }
+.page-bot-thinking .step p,
+.page-bot-thinking .card p{ margin:7px 0 0; font-size:13.5px; }
+.page-bot-thinking .flow div{
+  min-height:64px;
+  background:var(--codebg);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:10px 12px;
+}
+.page-bot-thinking .flow b{ color:var(--blue); }
+.page-bot-thinking .flow span{ font-size:13px; }
+@media (max-width:640px){
+  .page-bot-thinking table{
+    display:block;
+    width:100%;
+    overflow-x:auto;
+  }
+  .page-bot-thinking td:first-child{ white-space:normal; }
+}
+@media print{
+  .page-bot-thinking .step,
+  .page-bot-thinking .formula{ break-inside:avoid; }
+}

@@ -46,16 +46,8 @@
             <div class="ptitle">The screen &mdash; what you see</div>
             <canvas id="screen" width="352" height="480" role="img" aria-label="Text-mode video memory rendered as the screen"></canvas>
           </div>
-          <div class="panel">
-            <div class="ptitle">Inspector</div>
-            <div class="inspect" id="inspect"><span class="dim">Hover a cell to read its bytes.</span></div>
-          </div>
         </div>
         <div class="side">
-          <div class="panel">
-            <div class="ptitle">The memory &mdash; the byte in each cell</div>
-            <div class="mem" id="mem"></div>
-          </div>
           <div class="sxo">
             <div class="panel">
               <div class="ptitle">Steer</div>
@@ -66,21 +58,24 @@
                 <button type="button" class="right" data-d="R" aria-label="Right">&#9654;</button>
               </div>
               <div class="btns" style="margin-top: 10px">
-                <button type="button" id="tour">&#9654; Tour</button>
                 <button type="button" id="reset">Reset</button>
               </div>
-              <div class="cap" style="margin-top: 10px">Arrow keys steer too.</div>
+              <div class="cap" style="margin-top: 10px">Arrow keys or swipe the screen to steer.</div>
             </div>
             <div class="panel">
               <div class="ptitle">Operations (this move)</div>
               <div class="log" id="log"></div>
             </div>
           </div>
+          <div class="panel">
+            <div class="ptitle">The memory &mdash; the byte in each cell</div>
+            <div class="mem" id="mem"></div>
+          </div>
         </div>
       </div>
       <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
         That's the whole trick behind the 1988 code. See it in the source on the
-        <a href="explained.html">explained</a> page, or next to the JavaScript port in the&nbsp;<a href="explained.html#pairs">side-by-side</a> view.
+        <a href="explained.html">explained</a> page, or next to the JavaScript port on the&nbsp;<a href="migration.html">migration</a> page.
       </p>
     </main>
     <template id="main-template-nl">
@@ -96,16 +91,8 @@
             <div class="ptitle">Het scherm &mdash; wat je ziet</div>
             <canvas id="screen" width="352" height="480" role="img" aria-label="Tekstmodus-videogeheugen weergegeven als scherm"></canvas>
           </div>
-          <div class="panel">
-            <div class="ptitle">Inspector</div>
-            <div class="inspect" id="inspect"><span class="dim">Beweeg over een cel om de bytes te lezen.</span></div>
-          </div>
         </div>
         <div class="side">
-          <div class="panel">
-            <div class="ptitle">Het geheugen &mdash; de byte in elke cel</div>
-            <div class="mem" id="mem"></div>
-          </div>
           <div class="sxo">
             <div class="panel">
               <div class="ptitle">Sturen</div>
@@ -116,21 +103,24 @@
                 <button type="button" class="right" data-d="R" aria-label="Rechts">&#9654;</button>
               </div>
               <div class="btns" style="margin-top: 10px">
-                <button type="button" id="tour">&#9654; Tour</button>
                 <button type="button" id="reset">Reset</button>
               </div>
-              <div class="cap" style="margin-top: 10px">Pijltjestoetsen sturen ook.</div>
+              <div class="cap" style="margin-top: 10px">Pijltjestoetsen of veeg over het scherm om te sturen.</div>
             </div>
             <div class="panel">
               <div class="ptitle">Operaties (deze zet)</div>
               <div class="log" id="log"></div>
             </div>
           </div>
+          <div class="panel">
+            <div class="ptitle">Het geheugen &mdash; de byte in elke cel</div>
+            <div class="mem" id="mem"></div>
+          </div>
         </div>
       </div>
       <p class="lead" style="margin-top: 26px; color: var(--muted); font-size: 13.5px">
         Dat is de hele truc achter de code uit 1988. Bekijk hem in de bron op de
-        <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port in de&nbsp;<a href="explained.html#pairs">zij-aan-zij</a>-weergave.
+        <a href="explained.html">uitleg</a>-pagina, of naast de JavaScript-port op de&nbsp;<a href="migration.html">migratie</a>-pagina.
       </p>
     </template>
     <script src="../js/site.js"></script>

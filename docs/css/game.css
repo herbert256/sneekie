@@ -173,44 +173,6 @@
   margin-top:12px;
 }
 .page-index #controls .grp{ display:flex; gap:6px; }
-/* Auto mode: the bot-speed bar (shown when Auto is on) and the explainer note. */
-.page-index #autobar{
-  display:grid;
-  grid-template-columns:auto minmax(120px, 220px) auto;
-  align-items:center;
-  gap:8px;
-  max-width:340px;
-  margin:10px auto 0;
-}
-.page-index #autobar[hidden]{ display:none; }
-.page-index #autobar label{
-  color:var(--ink-dim);
-  font-size:11px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-.page-index #autobar output{
-  min-width:3ch;
-  color:var(--accent);
-  text-align:right;
-  font-size:12px;
-}
-.page-index #autobar input{
-  width:100%;
-  accent-color:var(--accent);
-  cursor:pointer;
-}
-.page-index #autonote{
-  margin:10px auto 0;
-  max-width:40rem;
-  color:var(--ink-dim);
-  font-size:12px;
-  line-height:1.5;
-  text-align:center;
-}
-.page-index #autonote a{ color:var(--accent); text-decoration:none; }
-.page-index #autonote a:hover{ text-decoration:underline; }
 .page-index #bezel:fullscreen{
   display:flex;
   align-items:center;
@@ -267,7 +229,7 @@
 }
 .page-index #hint .tc{ display:none; }
 @media (pointer:coarse){
-  .page-index #touchbar{ display:flex; }
+  .page-index:not(.booting) #touchbar{ display:flex; }
   .page-index:not(.booting) #bezel:fullscreen #fstouch{ display:flex; }
   .page-index #bezel:fullscreen{ padding-bottom:64px; }
   .page-index #hint .kb{ display:none; }
@@ -358,18 +320,11 @@
     font-size:11px;
     line-height:1.45;
   }
-  .page-index #autobar{
-    grid-template-columns:auto minmax(120px, 1fr) auto;
-    gap:6px;
-    max-width:300px;
-  }
 }
 @media (pointer:coarse) and (max-width:520px){
-  .page-index #touchbar{ display:grid; }
+  .page-index:not(.booting) #touchbar{ display:grid; }
 }
 @media print{
   .page-index #controls,
-  .page-index #autobar,
-  .page-index #autonote,
   .page-index #touchbar{ display:none !important; }
 }

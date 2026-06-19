@@ -25,11 +25,12 @@ https://sneekie.xyz/.
   around `html/game.html`. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
   structured-data script inline for search crawlers.
 - `docs/html/game.html` - the game page shell. It loads `../css/site.css`,
-  `../css/game.css`, `../js/site.js`, `../js/game.js`, and `../js/auto.js` (the "Auto mode" bot).
+  `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
 - `docs/html/*.html` - the game page plus the secondary content pages: `manual`, `bot`,
-  `magazine`, `source`, `explained`, `vram`, and `history`. Each content page loads
-  `../css/site.css`, page-specific CSS when present (`game` uses `../css/game.css`),
-  `../js/site.js`, and its own page JS. `bot` has no page JS (it loads only `site.js`).
+  `bot-thinking`, `magazine`, `source`, `explained`, `migration`, `vram`, and `history`. Each
+  content page loads `../css/site.css`, page-specific CSS when present (`game` uses
+  `../css/game.css`), `../js/site.js`, and its own page JS. `bot-thinking` has no page JS (only
+  `site.js`); `bot-thinking` is reachable only via a link on `bot.html`, not from the header nav.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, injected
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -58,26 +59,36 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
 ## Pages
 
 - `docs/html/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
-  listing. `source.js` `fetch`es `docs/SNEEKIE.BAS`, drops the first 10 banner lines for
-  display, and shows only the BASIC line numbers. This page also carries the **Download**
-  (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the top; `source.js` wires Print to
-  `window.print()`).
-- `docs/html/explained.html` + `docs/js/explained.js` + `docs/js/migration.js` - one page with
-  two stacked halves: the annotated single-column walkthrough (prose in the `SECTIONS` array
-  and `NOTES` map in `explained.js`, rendered into `#listing`/`#toc-list`), then the BASIC↔JS
-  side-by-side view (`migration.js`, rendered into `#pairs`/`#mig-toc-list`). `migration.js`
-  uses `MIG_SECTIONS`/`migTocList` so it does not collide with `explained.js`'s `SECTIONS`/
-  `tocList` when both load on the same page.
+  listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64 (so it renders from `file://` too),
+  drops the first 10 banner lines for display, and shows only the BASIC line numbers. This page
+  also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the
+  top; `source.js` wires Print to `window.print()`).
+- `docs/html/explained.html` + `docs/js/explained.js` - single-column annotated walkthrough of
+  the same source, rendered into `#listing`/`#toc-list`. Prose lives in the `SECTIONS` array
+  (`{at, t, h}`, keyed by GW-BASIC line) and the `NOTES` map; the BASIC is tokenized with the
+  shared `tokenizeBasicLine` (`site.js`) and `SNEEKIE.BAS` is embedded as base64 (renders from
+  `file://`).
+- `docs/html/migration.html` + `docs/js/migration.js` - the 1988 BASIC and the 2026 JavaScript
+  side by side, rendered into `#pairs`/`#toc-list`. `migration.js` embeds BOTH `docs/SNEEKIE.BAS`
+  and `docs/js/game.js` as base64 and slices them by the line ranges in its `SECTIONS`. The
+  embeds are a frozen snapshot co-calibrated with those ranges (see Source Embeds); it carries
+  its own BASIC + JavaScript tokenizers.
 - `docs/html/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/html/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
-- `docs/js/auto.js` - the "Auto mode" bot, loaded by `game.html` after `game.js`. The `Auto`
-  toggle in `#controls` runs the planner in the SAME window (no iframe/eval), reading
-  `game.js`'s globals and steering via `pushKey()`. Everything is wrapped in an IIFE so it
-  never redeclares those globals. (This replaced the old standalone Live page.)
-- `docs/html/bot.html` - explanation of the Auto-mode bot (loads only `site.js`; no page JS).
-  Keep this page in sync with the planner in `docs/js/auto.js` when planner behavior changes.
+- `docs/html/bot.html` + `docs/js/bot.js` - the **Live bot** demo. It hosts the real game in the
+  SAME page (no iframe, so it works from `file://`): it loads `../css/game.css` + `../js/game.js`
+  (which render the game into `#screen`), sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot
+  animation, then `bot.js` reads `game.js`'s globals directly and steers via `pushKey()`. Level
+  tabs (26-32) jump the bot into a maze; a speed slider sets the pace. Body class is
+  `page-index page-bot` (the game styling comes from `.page-index`; `bot.css` only adds the
+  lead/speed/tabs/note). The page links to `bot-thinking.html`. Keep the planner in `bot.js` in
+  sync with `bot-thinking.html`.
+- `docs/html/bot-thinking.html` - the prose explanation of how that bot plans (loads only
+  `site.js`; no page JS). It is linked only from `bot.html`, not from the nav. Keep it in sync
+  with the planner in `docs/js/bot.js` when planner behavior changes. (CSS class is
+  `.page-bot-thinking`.)
 - `docs/html/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.
 - `docs/html/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
@@ -89,8 +100,8 @@ to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can
 All content pages share one standard top nav and footer injected by `docs/js/site.js`;
 do not copy-paste `header.top` or `<footer>` markup back into the HTML files. The top-left
 brand is `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
-The header nav is `game, history, source, manual, magazine, explained, vram` (7 links, no
-buttons).
+The header nav is `game, history, source, manual, bot, magazine, explained, migration, vram`
+(9 links, no buttons). `bot` is the Live bot demo; `bot-thinking` is not in the nav.
 
 Download and Print live on the **Source** page (a `.toolbar`), not in the header. Print calls
 `window.print()` directly (`source.css` `@media print` hides the chrome so only the listing
@@ -103,18 +114,19 @@ There is no Light/Dark mode.
 ## Source Embeds
 
 `docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
-behavior. The source-listing pages render it at runtime:
+behavior. The listing pages embed it as base64 (so every page also renders straight from
+`file://`, not just over http):
 
-- `docs/js/source.js` and `docs/js/explained.js` `fetch('../SNEEKIE.BAS')` (the service worker
-  caches it, so offline still works) and key off it directly — no embedded copy. The display
-  code drops the 10-line header with `slice(10)`, so keep that header intact. (This means
-  those two pages need the file served over http(s), not opened via `file://`.)
-- `docs/js/migration.js` (the side-by-side view, now loaded by `explained.html`) still embeds
-  **both** `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64. This is deliberate: the view
-  pairs hard-coded BASIC and JS line ranges (`MIG_SECTIONS`), so the embeds are a frozen
-  snapshot co-calibrated with those ranges — fetching a live, changing `game.js` would silently
-  misalign them. To refresh it against a newer `game.js`, regenerate the embedded JS base64 and
-  re-check the `MIG_SECTIONS` ranges together.
+- `docs/js/source.js` and `docs/js/explained.js` each embed `docs/SNEEKIE.BAS` as base64 and
+  key off it directly. The display code drops the 10-line header with `slice(10)`, so keep that
+  header intact. `SNEEKIE.BAS` is permanently frozen, so these embeds never need refreshing.
+- `docs/js/migration.js` embeds **both** `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64,
+  then slices them by line ranges in its `SECTIONS`. This is deliberate: the side-by-side view
+  pairs hard-coded BASIC and JS line ranges, so the embeds are a frozen snapshot co-calibrated
+  with those ranges — a live, changing `game.js` would silently misalign them. To refresh the
+  migration page against a newer `game.js`, regenerate the embedded JS base64
+  (`python3 -c "import base64; print(base64.b64encode(open('docs/js/game.js','rb').read()).decode())"`)
+  AND re-check the `SECTIONS` ranges together.
 
 ## Running & Verification
 

@@ -14,7 +14,7 @@ function poke(o, v){ if(vram[o] !== v){ vram[o] = v; if(cellByOff[o]) flashSet.a
 function peek(o){ return vram[o]; }
 
 /* ---------- snake state (names as in the game) ---------- */
-const T = []; let BTEL, ETEL, DIR, FDIR, score, hearts, heartsBannerShown = false;
+const T = []; let BTEL, ETEL, DIR, FDIR, score, hearts, heartsBannerShown = false, dead = false;
 const HEAD = 219, BODY_H = 205, BODY_V = 186;
 const WALL_H = 196, WALL_V = 179, C_TL = 218, C_TR = 191, C_BL = 192, C_BR = 217;
 const SNAKE = new Set([219,205,186,187,188,201,200]);          // head + double-line body
@@ -84,16 +84,26 @@ function initArrows(){
 function moveArrow(a){
   const open = o => { const t = peek(o); return t===32 || t===3 || t===5 || t===1; }; // floor or a pickup; everything else bounces
   let dir = a.dir, target = a.o + ADIR[dir];
+  if(peek(target) === HEAD){ die(); return true; }                 // arrow steps onto the head -> death (BASIC 1860/2000)
   if(!open(target)){ dir = AREV[dir]; target = a.o + ADIR[dir]; }   // hit something — turn around
-  if(!open(target)) return;                                        // boxed in — sit still this tick
+  if(peek(target) === HEAD){ die(); return true; }                 // ...and into the head after bouncing
+  if(!open(target)) return false;                                  // boxed in — sit still this tick
   poke(a.o, a.under); poke(a.o+1, 7);                              // drop whatever was under us (item reappears)
   a.under = peek(target); a.o = target; a.dir = dir; a.ch = ACH[dir];
   poke(a.o, a.ch); poke(a.o+1, 15);                               // draw the arrow at its new cell
+  return false;
 }
 function stepArrows(){
-  for(const a of arrows) moveArrow(a);
+  for(const a of arrows){ if(moveArrow(a)) break; }
   flashSet.clear();                                              // the enemies glide silently; the flash is for "this move"
   render();
+  if(dead) log.insertAdjacentHTML('beforeend', '<div class="blk">' + vt('vramDead') + '</div>');
+}
+/* the snake hit (or was hit by) a moving arrow — game over until Reset */
+function die(){
+  if(dead) return;
+  dead = true;
+  if(arrowTimer){ clearInterval(arrowTimer); arrowTimer = null; }
 }
 
 function init(){
@@ -113,7 +123,7 @@ function init(){
   // scatter the goodies — no clubs up front: each heart you eat pops one up
   hearts = scatter(3, 14);   // hearts  (+10)
   scatter(1, 6);             // smileys (yellow, -50)
-  score = 0; heartsBannerShown = false; flashSet.clear();
+  score = 0; heartsBannerShown = false; dead = false; flashSet.clear();
   render(); logMove(null, []);
   arrowTimer = setInterval(stepArrows, 480);                    // the enemies move on their own
 }
@@ -126,10 +136,15 @@ const cdesc = d => d===32 ? vt('vramEmpty') : d===3 ? vt('vramHeart') :
   WALLSET.has(d) ? vt('vramWall') : vt('vramSpace');
 
 function move(dir){
+  if(dead) return;
   const E = dir, F = DIR, A = T[BTEL] + D[dir].d;
   const ops = [];
   const d = peek(A);
   ops.push(['peek', A, d, cdesc(d)]);
+  if(ARROWSET.has(d)){                                          // a moving arrow ahead = instant death, like the game
+    ops.push(['blk', vt('vramDead'), '', '']);
+    die(); render(); logMove({dir, grow:false}, ops); return;
+  }
   let grow = false, moved = true;
   if(d === 32){ poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, vt('vramEraseTail')]); ETEL++; }
   else if(d === 3){ score += 10; hearts--; grow = true; ops.push(['+', vt('vramEatHeart'), '', '']);
@@ -224,17 +239,10 @@ function logMove(info, ops){
   }
   log.innerHTML = h; log.scrollTop = log.scrollHeight;
 }
-const insp = document.getElementById('inspect');
 function setHover(c, r){
   const next = (c && r) ? {c, r} : null;
   if((!next && !hover) || (next && hover && next.c === hover.c && next.r === hover.r)) return;   // same cell — skip the full screen+grid re-render
   hover = next; render();
-  if(!hover){ insp.innerHTML = '<span class="dim">' + vt('vramHover') + '</span>'; return; }
-  const o = off(c, r), ch = vram[o], at = vram[o+1];
-  const g = ch === 32 ? '·' : String.fromCharCode(ch < 128 ? ch : 63);
-  insp.innerHTML = '<span class="dim">' + vt('vramCell') + c + vt('vramRow') + r + ')</span><br>' +
-    'offset = (' + r + '−1)×160 + (' + c + '−1)×2 = <b>' + o + '</b><br>' +
-    vt('vramChar') + ch + ' &nbsp;<span class="dim">' + cdesc(ch) + '</span> &nbsp; ' + vt('vramAttr') + at;
 }
 
 /* ---------- input ---------- */
@@ -253,41 +261,17 @@ cv.addEventListener('mousemove', e => {
 });
 mcs.forEach(d => d.addEventListener('mouseenter', () => setHover(+d.dataset.c, +d.dataset.r)));
 
+/* swipe the screen to steer (canvas has touch-action:none so the page doesn't scroll under it) */
+let swx = 0, swy = 0, swOn = false;
+cv.addEventListener('touchstart', e => { const t = e.changedTouches[0]; swx = t.clientX; swy = t.clientY; swOn = true; }, {passive:true});
+cv.addEventListener('touchend', e => {
+  if(!swOn) return; swOn = false;
+  const t = e.changedTouches[0], dx = t.clientX - swx, dy = t.clientY - swy;
+  if(Math.hypot(dx, dy) < 24) return;                             // a tap, not a swipe
+  move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U'));
+}, {passive:true});
+
 /* ---------- buttons ---------- */
-document.getElementById('reset').addEventListener('click', () => { stopTour(); init(); });
-let tourTimer = null;
-const tourBtn = document.getElementById('tour');
-function stopTour(){ if(tourTimer){ clearInterval(tourTimer); tourTimer = null; tourBtn.innerHTML = vt('vramTourStart'); } }
-const STEPS = [[-STRIDE,'U'],[STRIDE,'D'],[-2,'L'],[2,'R']];
-function tourPlan(){                                             // BFS from the head to the nearest heart/club, dodging walls, stones, arrows
-  const head = T[BTEL];
-  const open = o => { const ch = vram[o]; return ch===32 || ch===3 || ch===5; };  // avoid smileys, stones, arrows, walls, self
-  const prev = new Map([[head, null]]), q = [head];
-  for(let qi = 0; qi < q.length; qi++){
-    const o = q[qi];
-    for(const [d, dir] of STEPS){
-      const n = o + d;
-      if(!cellByOff[n] || prev.has(n) || !open(n)) continue;
-      prev.set(n, {from:o, dir});
-      if(vram[n]===3 || vram[n]===5){                            // reached a goal — walk back to the first step
-        let node = n; while(prev.get(node).from !== head) node = prev.get(node).from;
-        return prev.get(node).dir;
-      }
-      q.push(n);
-    }
-  }
-  for(const [d, dir] of STEPS) if(open(head + d)) return dir;    // nothing reachable yet — keep moving so the arrows can clear
-  return null;
-}
-tourBtn.addEventListener('click', () => {
-  if(tourTimer){ stopTour(); return; }
-  init();
-  tourBtn.innerHTML = vt('vramTourStop');
-  tourTimer = setInterval(() => {
-    if(hearts === 0){ stopTour(); return; }
-    const dir = tourPlan();
-    if(dir) move(dir);
-  }, 360);
-});
+document.getElementById('reset').addEventListener('click', () => init());
 
 init();

@@ -74,14 +74,6 @@
           <button type="button" id="mute" data-i18n="soundOn">Sound: on</button>
           <button type="button" id="fs" data-i18n="fullscreen">Fullscreen</button>
         </div>
-        <div class="grp">
-          <button type="button" id="auto-toggle" aria-pressed="false" data-i18n="autoOff">Auto: off</button>
-        </div>
-      </div>
-      <div id="autobar" hidden>
-        <label for="auto-speed" data-i18n="botSpeed">Bot speed</label>
-        <input id="auto-speed" type="range" min="0" max="10" step="1" value="5" />
-        <output id="auto-speedout" for="auto-speed">50</output>
       </div>
       <div id="touchbar">
         <button type="button" data-key="esc">ESC</button>
@@ -92,13 +84,8 @@
         <span class="kb" data-i18n="gameHintKeys">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
         <span class="tc" data-i18n="gameHintTouch">Swipe to steer &middot; tap = any key</span>
       </p>
-      <p id="autonote">
-        <span data-i18n="autoNote">Auto mode hands the real 1988 game to a JavaScript bot &mdash; it plays live, not from a recording.</span>
-        <a href="bot.html" data-i18n="autoBotLink">How the bot thinks &rarr;</a>
-      </p>
     </main>
     <script src="../js/site.js"></script>
     <script src="../js/game.js"></script>
-    <script src="../js/auto.js"></script>
   </body>
 </html>

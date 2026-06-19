@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A detailed explanation of the smart bot behind Sneekie's Auto mode: state model, pathfinding, trap avoidance, hazards, scoring, and stuck handling." />
-    <title>Sneekie — how the bot thinks</title>
+    <meta name="description" content="A smart bot playing the real 1988 Sneekie live in your browser — pick from the late-game mazes, levels 26-32." />
+    <title>Sneekie — Live bot</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
     <link rel="manifest" href="../site.webmanifest" />
@@ -17,626 +17,64 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
-    <meta property="og:title" content="Sneekie — how the bot thinks" />
-    <meta property="og:description" content="The Sneekie Auto-mode bot explained in detail: how it reads the game, plans routes, avoids traps, dodges arrows, and hands control back." />
+    <meta property="og:title" content="Sneekie — Live bot" />
+    <meta property="og:description" content="A smart bot playing the real 1988 Sneekie live — the late-game mazes, levels 26-32." />
     <meta property="og:url" content="https://sneekie.xyz/html/bot" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Sneekie — how the bot thinks" />
-    <meta name="twitter:description" content="A detailed look at the Auto-mode bot's route finding, survival checks, and trap avoidance." />
+    <meta name="twitter:title" content="Sneekie — Live bot" />
+    <meta name="twitter:description" content="A smart bot playing the real 1988 Sneekie live — the late-game mazes, levels 26-32." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/bot.css" />
   </head>
   <body class="page-doc page-bot">
-    <main data-lang-template>
-      <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">Auto mode does not play a recording. On the <a href="game.html">Play</a> page, the <strong>Auto</strong> button hands the real running game to a JavaScript bot that presses the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
-      <div class="note"><strong>Important distinction.</strong> The 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>auto.js</code>; it reads the port's live variables and presses keys like a player would, leaving the game's rules and engine untouched.</div>
-      <nav class="toc" aria-label="On this page">
-        <h2>On this page</h2>
-        <ol>
-          <li>
-            <a href="#where"><span class="n">1.</span>Where the bot runs</a>
-          </li>
-          <li>
-            <a href="#data"><span class="n">2.</span>The data it sees</a>
-          </li>
-          <li>
-            <a href="#turn"><span class="n">3.</span>One decision cycle</a>
-          </li>
-          <li>
-            <a href="#danger"><span class="n">4.</span>Arrow danger model</a>
-          </li>
-          <li>
-            <a href="#simulation"><span class="n">5.</span>Move simulation</a>
-          </li>
-          <li>
-            <a href="#routes"><span class="n">6.</span>Food search</a>
-          </li>
-          <li>
-            <a href="#safety"><span class="n">7.</span>Trap checks</a>
-          </li>
-          <li>
-            <a href="#fallbacks"><span class="n">8.</span>Fallback moves</a>
-          </li>
-          <li>
-            <a href="#score"><span class="n">9.</span>Route scoring</a>
-          </li>
-          <li>
-            <a href="#speed"><span class="n">10.</span>Speed limits</a>
-          </li>
-          <li>
-            <a href="#restart"><span class="n">11.</span>Play, stuck, hand back</a>
-          </li>
-          <li>
-            <a href="#limits"><span class="n">12.</span>Limits and tradeoffs</a>
-          </li>
-        </ol>
-      </nav>
-      <section id="where">
-        <h2>1. Where the bot runs</h2>
-        <p>The Play page loads two scripts: the faithful game engine <code>game.js</code>, then <code>auto.js</code>. When you press <strong>Auto</strong>, the bot in <code>auto.js</code> starts steering the very game on the page &mdash; no iframe, no <code>eval()</code>, no recording. It drives the snake by calling <code>pushKey()</code> with the same DOS scancode strings the keyboard handler produces.</p>
-        <p>That works because the game's <code>const</code> and <code>let</code> globals &mdash; <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, <code>peek()</code>, and <code>pushKey()</code> &mdash; live in the shared script realm. They are not ordinary <code>window</code> properties, but a second classic script loaded after <code>game.js</code> sees the same bindings. <code>auto.js</code> wraps everything in an IIFE so it can read <code>T[BTEL]</code> and press keys without ever redeclaring those names.</p>
-        <div class="cards">
-          <div class="card">
-            <h3>Same window</h3>
-            <p>The bot runs as a sibling script in the same page as the game &mdash; not inside an iframe and not through <code>eval()</code>.</p>
-          </div>
-          <div class="card">
-            <h3>Real input</h3>
-            <p>It sends DOS-style extended-key strings: up <code>' H'</code>, down <code>' P'</code>, left <code>' K'</code>, right <code>' M'</code>.</p>
-          </div>
-          <div class="card">
-            <h3>Hands back</h3>
-            <p>Any arrow key, <code>Esc</code>, or a tap on the screen turns Auto off, so you take over the running game instantly.</p>
-          </div>
+    <main id="main" tabindex="-1">
+      <div class="hero">
+        <h1 class="page-title" data-i18n="liveTitle">The bot descends into the deep &mdash; levels 26-32</h1>
+      </div>
+      <p class="lead" data-i18n="liveLead">
+        This is no recording. The <em>real</em> 1988 game runs live before you while a lone bot descends into its <strong>deepest seven mazes &mdash; levels 26-32</strong>, where the walls themselves come alive, the serpent swells to <strong>twice its length</strong>, and every <span class="ico h">&hearts;</span> heart it devours flings a fresh <span class="ico g">&clubs;</span> club into the dark. Watch it reason in real time: it carves the shortest line to its quarry, <strong>heaves <span class="ico t">&#9689;</span> boulders</strong> from its path, <strong>threads the storm of flying <span class="ico a">&uarr;&larr;&rarr;</span> arrows</strong>, and never loses the road home to its own tail &mdash; and when the maze moves to seal it in, it will <strong>swallow a cursed <span class="ico s">&#9786;</span> smiley</strong> to tear an opening free. Clear the board and the screen <strong><span class="ico green">blazes green</span></strong> as the bot marches onward; corner it, and it <strong><span class="ico r">flares red</span></strong> and rises to try again. It does not tire, and it does not stop.
+      </p>
+      <div id="bezel">
+        <div id="tube">
+          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen" data-i18n-aria="gameCanvas"></canvas>
+          <div id="glass" aria-hidden="true"></div>
+          <div id="power" aria-hidden="true"></div>
         </div>
-      </section>
-      <section id="data">
-        <h2>2. The data it sees</h2>
-        <p>The bot uses the same screen-memory model as the game. It does not have a neat list of "objects"; it reads characters from VRAM with <code>peek(offset)</code>. The snake body is reconstructed from the game's <code>T</code> array, from tail index <code>ETEL</code> through head index <code>BTEL</code>.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Game value</th>
-              <th>Meaning to the bot</th>
-              <th>Planning effect</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>32</code></td>
-              <td>Empty cell</td>
-              <td>Freely enterable.</td>
-            </tr>
-            <tr>
-              <td><code>3</code> <span class="ico h">&hearts;</span></td>
-              <td>Heart</td>
-              <td>Food worth 10 points; grows the snake.</td>
-            </tr>
-            <tr>
-              <td><code>5</code> <span class="ico c">&clubs;</span></td>
-              <td>Club</td>
-              <td>Food worth 25 points; grows the snake.</td>
-            </tr>
-            <tr>
-              <td><code>1</code> <span class="ico s">&#9786;</span></td>
-              <td>Smiley</td>
-              <td>Normally avoided; allowed only in escape mode.</td>
-            </tr>
-            <tr>
-              <td><code>10</code> <span class="ico t">&#9689;</span></td>
-              <td>Stone</td>
-              <td>Pushable if the cell behind it is empty.</td>
-            </tr>
-            <tr>
-              <td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td>
-              <td>Moving arrows</td>
-              <td>Treated as fatal, including cells they are about to enter.</td>
-            </tr>
-            <tr>
-              <td><code>219</code></td>
-              <td>Snake head</td>
-              <td>Used by the game for collision; the bot also tracks the head through <code>T[BTEL]</code>.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>For simulated routes, the bot keeps an overlay map called <code>cells</code>. This overlay records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell. If a cell is not in the overlay, the bot reads the real game screen with <code>peek()</code>. That keeps route simulation cheap without cloning the whole 4000-byte VRAM array for every branch.</p>
-      </section>
-      <section id="turn">
-        <h2>3. One decision cycle</h2>
-        <p>Every bot move follows the same ladder. The first strategy that returns a direction wins; the bot presses that key, waits according to the speed slider, then recalculates from the new live game state.</p>
-        <div class="ladder">
-          <div class="step">
-            <b>1. Reset danger cache</b>
-            <p>Arrow danger is recalculated for this tick, with memoization so repeated checks are cheap.</p>
-          </div>
-          <div class="step">
-            <b>2. Nearby clean food</b>
-            <p>First try a shallow search for close hearts or clubs, without eating smileys.</p>
-          </div>
-          <div class="step">
-            <b>3. Wider clean route</b>
-            <p>If no nearby pickup is safe, run the deeper food planner without smileys.</p>
-          </div>
-          <div class="step">
-            <b>4. Smiley escape routes</b>
-            <p>If clean routes fail, repeat nearby and wider food searches with smileys allowed.</p>
-          </div>
-          <div class="step">
-            <b>5. Loop pressure</b>
-            <p>If the head is repeating positions or the score has been idle, push toward food instead of circling the tail.</p>
-          </div>
-          <div class="step">
-            <b>6. Follow tail</b>
-            <p>Only when not under loop pressure, try to reach the moving tail and buy space.</p>
-          </div>
-          <div class="step">
-            <b>7. Survive locally</b>
-            <p>If all planners fail, pick the best legal one-step survival move.</p>
-          </div>
+        <div id="panel" aria-hidden="true">
+          <span class="logo">Acme Corporation</span>
+          <span class="led"></span>
+          <span class="knobs"><i></i><i></i></span>
         </div>
-        <pre><code>const decide = (idle, looping) =&gt; {
-  resetDanger();
-  const urgent = idle &gt;= 45 || looping;
-  return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-    (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-    (!urgent ? tailFirst() : null) ??
-    pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-    survivalMove();
-};</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure before the red stuck timer has to fire.</p>
-      </section>
-      <section id="danger">
-        <h2>4. Arrow danger model</h2>
-        <p>
-          The bot treats arrow levels differently because a square can be empty now and fatal one tick later. The
-          <code>danger(offset)</code> function marks a destination unsafe if an arrow is already there, if an arrow will step into it on the next enemy update, or if a wrapping arrow will reappear there.
-        </p>
-        <div class="flow">
-          <div>
-            <b>Current cell</b><span><code>peek(o)</code> is <code>24</code>, <code>26</code>, or <code>27</code>.</span>
-          </div>
-          <div>
-            <b>Up arrows</b><span>An <span class="ico a">&uarr;</span> below the square will move upward into it.</span>
-          </div>
-          <div>
-            <b>Right arrows</b><span>A <span class="ico a">&rarr;</span> to the left will move right into it.</span>
-          </div>
-          <div>
-            <b>Left arrows</b><span>A <span class="ico a">&larr;</span> to the right will move left into it.</span>
-          </div>
-          <div><b>Wrap edges</b><span>Special checks cover arrows that jump from the far edge back to the start.</span></div>
+      </div>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules" data-i18n="themeGreen">Green</button>
+          <button type="button" data-theme="amber" data-i18n="themeAmber">Amber</button>
+          <button type="button" data-theme="cga" data-i18n="themeCga">CGA</button>
         </div>
-        <p>This is a one-tick hazard model, not a full future enemy simulation. That is intentional: the bot moves, the real game advances, and the next decision recalculates danger from the fresh screen. That gives good arrow avoidance without making every search branch simulate all enemy routines.</p>
-      </section>
-      <section id="simulation">
-        <h2>5. Move simulation</h2>
-        <p>The core planner primitive is <code>move(state, scancode, allowSmile)</code>. It returns a new imaginary state if the move is legal, or <code>null</code> if it would collide, reverse, die, or push an impossible stone.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Rule</th>
-              <th>How the bot applies it</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>No instant reverse</td>
-              <td>If the requested scancode is opposite to the current direction, reject it.</td>
-            </tr>
-            <tr>
-              <td>No danger</td>
-              <td>If <code>danger(next)</code> is true, reject the move.</td>
-            </tr>
-            <tr>
-              <td>No self-hit</td>
-              <td>If the next square is in the simulated <code>bodySet</code>, reject it.</td>
-            </tr>
-            <tr>
-              <td>Smileys optional</td>
-              <td>Reject smileys during normal search; allow them during escape search.</td>
-            </tr>
-            <tr>
-              <td>Stones push</td>
-              <td>A stone can move one cell forward only if that cell is empty and not occupied by the simulated body.</td>
-            </tr>
-            <tr>
-              <td>Growth</td>
-              <td>Hearts, clubs, and smileys grow the body. Empty moves remove the tail first.</td>
-            </tr>
-            <tr>
-              <td>First move preserved</td>
-              <td>Every simulated branch remembers only the first real key to press once that branch wins.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>This is why the bot can reason about pushing stones and about its own tail moving away. It is not only finding a geometric path through the current picture; it is simulating what the snake's body will look like after each step on that path.</p>
-      </section>
-      <section id="routes">
-        <h2>6. Food search</h2>
-        <p>Food search is split into three planners. They all run breadth-first from the current head position, simulate the snake body and pushed stones, and preserve only the first key press from a winning route. The split exists because the bot needs different behavior in different moments: grab safe nearby food quickly, make cautious long routes when there is time, and force progress when it starts looping.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Planner</th>
-              <th>When it runs</th>
-              <th>Limits</th>
-              <th>Main bias</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>nearFood()</code></td>
-              <td>Before every wider search, first without smileys and then with smileys if needed.</td>
-              <td>Depth 9 normally, 12 when 6 or fewer items remain; at most 260 states.</td>
-              <td>Very strong distance penalty, so safe nearby food wins.</td>
-            </tr>
-            <tr>
-              <td><code>routeFood()</code></td>
-              <td>The normal cautious route finder.</td>
-              <td>Depth 78 normally, 115 when 6 or fewer items remain; at most 950 states; can stop after 28 food candidates once a good route exists.</td>
-              <td>Survival first: tail reach, future exits, and open space beat shortness.</td>
-            </tr>
-            <tr>
-              <td><code>pressureFood()</code></td>
-              <td>When the bot is idle, looping, or when tail-following did not help.</td>
-              <td>Depth 70-125 depending on endgame and urgency; 720-1050 states; 22-38 checked food candidates.</td>
-              <td>Looser survival gates and a smaller distance penalty, to break circles without grabbing obvious traps.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot only allows them after clean heart/club searches fail.</p>
-      </section>
-      <section id="safety">
-        <h2>7. Trap checks</h2>
-        <p>Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with three different survival signals.</p>
-        <div class="cards">
-          <div class="card">
-            <h3>Exit count</h3>
-            <p><code>legalCount()</code> asks how many moves will still be available immediately after eating. Zero exits reject the route; one-exit corridors are heavily penalized.</p>
-          </div>
-          <div class="card">
-            <h3>Reachable space</h3>
-            <p><code>spaceInfo()</code> flood-fills from the simulated head, respecting current direction, walls, body, stones, food, and danger.</p>
-          </div>
-          <div class="card">
-            <h3>Tail reach</h3>
-            <p>The same flood fill records whether the simulated head can reach the tail. If the tail is reachable, the snake probably has a moving escape route.</p>
-          </div>
-          <div class="card">
-            <h3>Survival depth</h3>
-            <p><code>survivalDepth()</code> runs a small beam search to see how many future moves remain possible after the candidate is eaten.</p>
-          </div>
+        <div class="grp">
+          <button type="button" id="mute" data-i18n="soundOn">Sound: on</button>
+          <button type="button" id="fs" data-i18n="fullscreen">Fullscreen</button>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. In the final items, the bot demands more space and a deeper survival horizon.</p>
-      </section>
-      <section id="fallbacks">
-        <h2>8. Fallback moves</h2>
-        <p>The bot has three fallback behaviors after the normal safe food planners. They keep it from freezing, but they are ordered carefully so it does not spend too long following its own tail while food is available.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Fallback</th>
-              <th>Purpose</th>
-              <th>Behavior</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>pressureFood()</code></td>
-              <td>Break loops</td>
-              <td>Runs when <code>idle &gt;= 45</code> or the recent head trail shows repeated positions. It searches for food with lighter survival gates, first without smileys, then with smileys.</td>
-            </tr>
-            <tr>
-              <td><code>tailFirst()</code></td>
-              <td>Buy time</td>
-              <td>Runs a BFS toward the current tail only while the bot is not under loop pressure. Following the tail is safe as a short bridge, but it is skipped once it starts looking like a circle.</td>
-            </tr>
-            <tr>
-              <td><code>survivalMove()</code></td>
-              <td>Last resort</td>
-              <td>Scores each immediately legal move by reachable space, tail reach, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>This gives the bot a survival instinct without letting that instinct become endless circling. If the map says "do not eat yet", it can follow the tail briefly or move into a larger open region, but repeated head positions make the next decisions prefer food pressure instead.</p>
-      </section>
-      <section id="score">
-        <h2>9. Route scoring</h2>
-        <p>Once a food candidate passes the safety gates, it gets a score. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
-        <div class="formula">
-          score = tailReach ? +100000 : 0<br />
-          score += survivalDepth * 5600<br />
-          score += exits * 2400<br />
-          score += reachableSpace * 16<br />
-          score += itemPoints * 150<br />
-          score -= routeDistance * 260<br />
-          score -= smileysEaten * 1200<br />
-          score -= stonesPushed * 55<br />
-          score -= oneExitAfterEating ? 18000 : 0
-        </div>
-        <p>The large tail-reach and survival-depth weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests.</p>
-        <p>The two newer food planners deliberately use different weights:</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Planner</th>
-              <th>Important scoring difference</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>nearFood()</code></td>
-              <td>Applies a very large <code>-distance * 6200</code> term. This is what stops the bot from ignoring safe food that is only a few moves away.</td>
-            </tr>
-            <tr>
-              <td><code>pressureFood()</code></td>
-              <td>Uses smaller trap and smiley penalties when urgent, plus a smaller distance penalty. This lets it escape tail loops by making real progress.</td>
-            </tr>
-            <tr>
-              <td><code>survivalMove()</code></td>
-              <td>Does not search for a full food route. It scores immediate legal moves by open space, tail reach, exits, direct food, smiley cost, stone cost, and straight-ahead preference.</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section id="speed">
-        <h2>10. Speed limits</h2>
-        <p>The bot has to think between visible game moves. Several caps keep that work bounded:</p>
-        <ul>
-          <li><code>danger()</code> uses a generation-stamped cache so repeated hazard checks in one decision are cheap.</li>
-          <li><code>nearFood()</code> is deliberately shallow: 260 states and only 9-12 moves deep.</li>
-          <li><code>routeFood()</code> stops at 950 dequeued search states and keeps only useful food candidates.</li>
-          <li><code>pressureFood()</code> uses a separate cap: 720 states normally, 1050 when urgent.</li>
-          <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
-          <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
-          <li>The Auto-mode speed slider changes the delay between key presses, not the search itself.</li>
-        </ul>
-        <p>The slider snaps to a fixed set of speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move.</p>
-        <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
-      </section>
-      <section id="restart">
-        <h2>11. Play, stuck, hand back</h2>
-        <p>There are no tabs and no win/lose flashes: the bot simply plays the game in front of you. The game's own loop walks through the 32 levels and replays a level after a death, so the bot only has to keep choosing moves &mdash; its first move after each <em>Level n &mdash; press any key</em> popup also dismisses it.</p>
-        <p>The one thing the bot watches for is being stuck. Each move it compares the head index <code>BTEL</code> and the score <code>ZCORE</code> to the previous move; while either keeps changing, play is healthy &mdash; even a death still moves the score as the snake unwinds. If <em>neither</em> changes for about 25 ticks, the game is sitting at the <em>Play again (y/n)</em> game-over prompt (or genuinely wedged), so Auto switches itself off and hands control back to you.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Condition</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>BTEL</code> or <code>ZCORE</code> changed</td>
-              <td>A move landed or the score moved. Keep steering.</td>
-            </tr>
-            <tr>
-              <td>Neither changed for ~25 ticks</td>
-              <td>Game over or wedged. Turn Auto off and hand control back.</td>
-            </tr>
-            <tr>
-              <td>No safe move</td>
-              <td>All planners failed. Press nothing; the snake runs out its current direction and the game replays the level.</td>
-            </tr>
-            <tr>
-              <td>Idle or tail-loop detected</td>
-              <td>Raises the planner's urgency (see Food search); it does not stop the bot.</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>The idle counter keys off the score instead of the item count because late hearts spawn clubs: the last club can need a long safe path without changing the score, so urgency rises gradually rather than misfiring on a busy snake.</p>
-      </section>
-      <section id="limits">
-        <h2>12. Limits and tradeoffs</h2>
-        <p>The bot is deliberately practical rather than perfect. It does not solve the whole level as one enormous plan, because the board changes after every pickup, pushed stone, spawned club, and enemy tick. Instead it replans constantly from the live state. That makes it resilient and fast enough to watch.</p>
-        <ul>
-          <li>It simulates the snake body and pushed stones, but not a full multi-tick future of every enemy routine.</li>
-          <li>It treats current and next-tick arrow danger conservatively, then recalculates after the real game advances.</li>
-          <li>Its state hash is compact and meant for pruning, not for preserving every possible board detail.</li>
-          <li>It may choose a smiley only when clean food routes fail, because smileys cost points and grow the snake.</li>
-          <li>The survival beam favors positions with many exits, so it can miss rare narrow routes that are technically safe but expensive to prove.</li>
-        </ul>
-        <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values its tail, open space, and future exits more than the nearest unsafe points.</p>
-      </section>
+      </div>
+      <div class="speedbar">
+        <label for="speed" data-i18n="botSpeed">Bot speed</label>
+        <input id="speed" type="range" min="0" max="10" step="1" value="5" aria-valuetext="50" />
+        <output id="speedout" for="speed">50</output>
+      </div>
+      <div class="leveltabs" id="leveltabs" role="tablist" aria-label="Bot level" data-i18n-aria="liveTabsLabel"></div>
+      <p class="live-note" data-i18n="liveNote">It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>
+      <p class="bot-think-link"><a href="bot-thinking.html" data-i18n="botThinkLink">How the bot thinks &rarr;</a></p>
     </main>
-    <template id="main-template-nl">
-      <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De auto-modus speelt geen opname af. Op de pagina <a href="game.html">Spelen</a> geeft de knop <strong>Auto</strong> het echte, lopende spel aan een JavaScript-bot die dezelfde pijltjesscancodes indrukt als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op staartlussen, en valt hij terug op overleven wanneer geen veilige voedselroute bestaat.</p>
-      <div class="note"><strong>Belangrijk verschil.</strong> Het spel uit 1988 op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>auto.js</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen, en laat de regels en engine ongemoeid.</div>
-      <nav class="toc" aria-label="Op deze pagina">
-        <h2>Op deze pagina</h2>
-        <ol>
-          <li><a href="#where"><span class="n">1.</span>Waar de bot draait</a></li>
-          <li><a href="#data"><span class="n">2.</span>Welke data hij ziet</a></li>
-          <li><a href="#turn"><span class="n">3.</span>Een besliscyclus</a></li>
-          <li><a href="#danger"><span class="n">4.</span>Pijlengevaar</a></li>
-          <li><a href="#simulation"><span class="n">5.</span>Zetten simuleren</a></li>
-          <li><a href="#routes"><span class="n">6.</span>Voedsel zoeken</a></li>
-          <li><a href="#safety"><span class="n">7.</span>Valcontroles</a></li>
-          <li><a href="#fallbacks"><span class="n">8.</span>Noodzetten</a></li>
-          <li><a href="#score"><span class="n">9.</span>Routes scoren</a></li>
-          <li><a href="#speed"><span class="n">10.</span>Snelheidslimieten</a></li>
-          <li><a href="#restart"><span class="n">11.</span>Spelen, vast, teruggeven</a></li>
-          <li><a href="#limits"><span class="n">12.</span>Grenzen en afwegingen</a></li>
-        </ol>
-      </nav>
-      <section id="where">
-        <h2>1. Waar de bot draait</h2>
-        <p>De Spelen-pagina laadt twee scripts: de getrouwe game-engine <code>game.js</code> en daarna <code>auto.js</code>. Druk je op <strong>Auto</strong>, dan begint de bot in <code>auto.js</code> het spel op de pagina zelf te sturen &mdash; geen iframe, geen <code>eval()</code>, geen opname. Hij stuurt de slang met <code>pushKey()</code> en dezelfde DOS-scancodestrings die de toetsenbordafhandeling maakt.</p>
-        <p>Dat kan omdat de <code>const</code>- en <code>let</code>-globals van de game &mdash; <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, <code>peek()</code> en <code>pushKey()</code> &mdash; in dezelfde scriptomgeving leven. Het zijn geen gewone <code>window</code>-eigenschappen, maar een tweede klassiek script dat na <code>game.js</code> wordt geladen ziet dezelfde bindingen. <code>auto.js</code> verpakt alles in een IIFE, zodat het <code>T[BTEL]</code> kan lezen en toetsen kan indrukken zonder die namen ooit opnieuw te declareren.</p>
-        <div class="cards">
-          <div class="card"><h3>Zelfde venster</h3><p>De bot draait als zustertscript in dezelfde pagina als het spel &mdash; niet in een iframe en niet via <code>eval()</code>.</p></div>
-          <div class="card"><h3>Echte invoer</h3><p>Hij stuurt DOS-achtige uitgebreide toetsstrings: omhoog <code>' H'</code>, omlaag <code>' P'</code>, links <code>' K'</code>, rechts <code>' M'</code>.</p></div>
-          <div class="card"><h3>Geeft terug</h3><p>Elke pijltjestoets, <code>Esc</code> of een tik op het scherm zet Auto uit, zodat jij het lopende spel meteen overneemt.</p></div>
-        </div>
-      </section>
-      <section id="data">
-        <h2>2. Welke data hij ziet</h2>
-        <p>De bot gebruikt hetzelfde schermgeheugenmodel als het spel. Er is geen nette lijst met objecten; hij leest tekens uit VRAM met <code>peek(offset)</code>. Het slangenlijf wordt opgebouwd uit de game-array <code>T</code>, van staartindex <code>ETEL</code> tot kopindex <code>BTEL</code>.</p>
-        <table>
-          <thead><tr><th>Gamewaarde</th><th>Betekenis voor de bot</th><th>Effect op planning</th></tr></thead>
-          <tbody>
-            <tr><td><code>32</code></td><td>Leeg vak</td><td>Vrij betreedbaar.</td></tr>
-            <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Hart</td><td>Voedsel van 10 punten; laat de slang groeien.</td></tr>
-            <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Klaver</td><td>Voedsel van 25 punten; laat de slang groeien.</td></tr>
-            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Normaal vermijden; alleen toegestaan in ontsnappingsmodus.</td></tr>
-            <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Steen</td><td>Duwbaar als het vak erachter leeg is.</td></tr>
-            <tr><td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Bewegende pijlen</td><td>Altijd fataal, inclusief vakken waar ze zo naartoe gaan.</td></tr>
-            <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
-          </tbody>
-        </table>
-        <p>Voor denkbeeldige routes bewaart de bot alleen verschillen in een overlay-map <code>cells</code>. Daarin staan bijvoorbeeld een geduwde steen of een leeg geworden staartvak. Staat een vak niet in de overlay, dan leest hij het echte scherm met <code>peek()</code>. Zo hoeft niet voor elke tak de volledige 4000-byte VRAM-array te worden gekopieerd.</p>
-      </section>
-      <section id="turn">
-        <h2>3. Een besliscyclus</h2>
-        <p>Elke zet volgt dezelfde ladder. De eerste strategie die een richting oplevert wint; de bot drukt die toets, wacht volgens de snelheidsschuif, en rekent daarna opnieuw vanuit de nieuwe live toestand.</p>
-        <div class="ladder">
-          <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
-          <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
-          <div class="step"><b>3. Bredere schone route</b><p>Als dichtbij niets veilig is, zoekt de voorzichtige planner verder.</p></div>
-          <div class="step"><b>4. Smileys als ontsnapping</b><p>Pas als schone routes falen, worden dezelfde zoekacties met smileys toegestaan.</p></div>
-          <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen.</p></div>
-          <div class="step"><b>6. Staart volgen</b><p>Alleen zonder lusdruk probeert hij de bewegende staart te bereiken om ruimte te kopen.</p></div>
-          <div class="step"><b>7. Lokaal overleven</b><p>Als alle planners falen, kiest hij de beste directe veilige zet.</p></div>
-        </div>
-        <pre><code>const decide = (idle, looping) =&gt; {
-  resetDanger();
-  const urgent = idle &gt;= 45 || looping;
-  return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-    (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-    (!urgent ? tailFirst() : null) ??
-    pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-    survivalMove();
-};</code></pre>
-      </section>
-      <section id="danger">
-        <h2>4. Pijlengevaar</h2>
-        <p>Een leeg vak kan in het volgende tick fataal zijn. <code>danger(offset)</code> markeert een doel onveilig als er al een pijl staat, als een pijl er straks in stapt, of als een pijl via de rand terugkomt.</p>
-        <div class="flow">
-          <div><b>Huidig vak</b><span><code>peek(o)</code> is <code>24</code>, <code>26</code> of <code>27</code>.</span></div>
-          <div><b>Omhoogpijlen</b><span>Een <span class="ico a">&uarr;</span> onder het vak stapt erin.</span></div>
-          <div><b>Rechtspijlen</b><span>Een <span class="ico a">&rarr;</span> links van het vak stapt erin.</span></div>
-          <div><b>Linkspijlen</b><span>Een <span class="ico a">&larr;</span> rechts van het vak stapt erin.</span></div>
-          <div><b>Randen</b><span>Extra controles dekken pijlen die vanaf de rand terug naar het begin springen.</span></div>
-        </div>
-        <p>Dit model kijkt een tick vooruit, niet naar de hele vijandentoekomst. Dat is genoeg: na elke echte game-update rekent de bot opnieuw met het verse scherm.</p>
-      </section>
-      <section id="simulation">
-        <h2>5. Zetten simuleren</h2>
-        <p>De kern is <code>move(state, scancode, allowSmile)</code>. Die geeft een nieuwe denkbeeldige toestand terug als de zet legaal is, of <code>null</code> als hij botst, omkeert, sterft of een onmogelijke steen wil duwen.</p>
-        <table>
-          <thead><tr><th>Regel</th><th>Hoe de bot hem toepast</th></tr></thead>
-          <tbody>
-            <tr><td>Niet direct omkeren</td><td>De tegenovergestelde richting van de huidige richting wordt geweigerd.</td></tr>
-            <tr><td>Geen gevaar</td><td>Als <code>danger(next)</code> waar is, valt de zet af.</td></tr>
-            <tr><td>Geen zelfbotsing</td><td>Een vak in <code>bodySet</code> is verboden.</td></tr>
-            <tr><td>Smileys optioneel</td><td>Tijdens normale zoekactie verboden; tijdens ontsnappen toegestaan.</td></tr>
-            <tr><td>Stenen duwen</td><td>Een steen kan alleen een vak vooruit als dat vak leeg is.</td></tr>
-            <tr><td>Groei</td><td>Harten, klavers en smileys laten het lijf groeien; lege zetten verwijderen eerst de staart.</td></tr>
-            <tr><td>Eerste zet bewaren</td><td>Elke tak onthoudt alleen de eerste echte toets die straks gedrukt moet worden.</td></tr>
-          </tbody>
-        </table>
-      </section>
-      <section id="routes">
-        <h2>6. Voedsel zoeken</h2>
-        <p>Voedsel zoeken is verdeeld over drie planners. Ze starten allemaal bij de kop, simuleren lijf en geduwde stenen, en bewaren alleen de eerste toets van een winnende route.</p>
-        <table>
-          <thead><tr><th>Planner</th><th>Wanneer</th><th>Limieten</th><th>Voorkeur</th></tr></thead>
-          <tbody>
-            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie.</td><td>Diepte 9, of 12 met weinig items; maximaal 260 toestanden.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
-            <tr><td><code>routeFood()</code></td><td>De normale voorzichtige routezoeker.</td><td>Diepte 78, of 115 in de eindfase; maximaal 950 toestanden.</td><td>Overleving eerst: staartbereik, uitgangen en ruimte.</td></tr>
-            <tr><td><code>pressureFood()</code></td><td>Bij stilstand, lussen of mislukte staartvolging.</td><td>Diepte 70-125; 720-1050 toestanden.</td><td>Meer druk richting voedsel, maar nog steeds zonder duidelijke vallen.</td></tr>
-          </tbody>
-        </table>
-        <p>In de eindfase zoekt de bot dieper, omdat de laatste harten en klavers vaak precies in lastige hoeken liggen. Smileys blijven tweede keus: ze worden alleen toegestaan als schone routes mislukken.</p>
-      </section>
-      <section id="safety">
-        <h2>7. Valcontroles</h2>
-        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen.</p>
-        <div class="cards">
-          <div class="card"><h3>Uitgangen</h3><p><code>legalCount()</code> telt hoeveel zetten direct na het eten nog mogelijk zijn. Nul wordt geweigerd; een uitgang krijgt een zware straf.</p></div>
-          <div class="card"><h3>Bereikbare ruimte</h3><p><code>spaceInfo()</code> vult vanaf de gesimuleerde kop en respecteert richting, muren, lijf, stenen, voedsel en gevaar.</p></div>
-          <div class="card"><h3>Staartbereik</h3><p>Dezelfde flood fill noteert of de kop de staart kan bereiken. Dat betekent meestal een bewegende ontsnappingsroute.</p></div>
-          <div class="card"><h3>Overlevingsdiepte</h3><p><code>survivalDepth()</code> kijkt met een kleine beam search hoeveel toekomstige zetten mogelijk blijven.</p></div>
-        </div>
-      </section>
-      <section id="fallbacks">
-        <h2>8. Noodzetten</h2>
-        <p>Na de normale veilige voedselplanners heeft de bot drie noodgedragingen. Ze voorkomen bevriezen, maar staan in een vaste volgorde zodat staartvolgen geen eindeloze cirkel wordt.</p>
-        <table>
-          <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
-          <tbody>
-            <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 45</code> of herhaalde kopposities.</td></tr>
-            <tr><td><code>tailFirst()</code></td><td>Tijd kopen</td><td>Zoekt naar de huidige staart zolang er geen lusdruk is.</td></tr>
-            <tr><td><code>survivalMove()</code></td><td>Laatste redmiddel</td><td>Scoret directe zetten op ruimte, staartbereik, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
-          </tbody>
-        </table>
-      </section>
-      <section id="score">
-        <h2>9. Routes scoren</h2>
-        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
-        <div class="formula">
-          score = tailReach ? +100000 : 0<br />
-          score += survivalDepth * 5600<br />
-          score += exits * 2400<br />
-          score += reachableSpace * 16<br />
-          score += itemPoints * 150<br />
-          score -= routeDistance * 260<br />
-          score -= smileysEaten * 1200<br />
-          score -= stonesPushed * 55<br />
-          score -= oneExitAfterEating ? 18000 : 0
-        </div>
-        <p>De grote gewichten voor staartbereik en overlevingsdiepte zijn het anti-valgedrag. Een iets langere route met toegang tot de staart wint van een korte route een krappe hoek in.</p>
-      </section>
-      <section id="speed">
-        <h2>10. Snelheidslimieten</h2>
-        <p>De bot moet tussen zichtbare zetten kunnen denken. Daarom zijn er harde caps:</p>
-        <ul>
-          <li><code>danger()</code> gebruikt een generatiecache.</li>
-          <li><code>nearFood()</code> is ondiep: 260 toestanden en 9-12 stappen.</li>
-          <li><code>routeFood()</code> stopt bij 950 zoektoestanden.</li>
-          <li><code>pressureFood()</code> gebruikt 720 toestanden normaal en 1050 wanneer urgent.</li>
-          <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
-          <li>De Auto-snelheidsregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
-        </ul>
-        <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet.</p>
-        <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
-      </section>
-      <section id="restart">
-        <h2>11. Spelen, vast, teruggeven</h2>
-        <p>Er zijn geen tabs en geen win/verlies-flitsen: de bot speelt gewoon het spel dat voor je staat. De eigen gameloop loopt door de 32 levels en herstart een level na een dood, dus de bot hoeft alleen maar zetten te blijven kiezen &mdash; zijn eerste zet na elke <em>Level n &mdash; druk op een toets</em>-popup sluit die meteen.</p>
-        <p>Het enige waar de bot op let, is vastlopen. Elke zet vergelijkt hij kopindex <code>BTEL</code> en score <code>ZCORE</code> met de vorige zet; zolang een van beide blijft veranderen, gaat het goed &mdash; zelfs een dood verandert nog de score terwijl de slang afwikkelt. Verandert er ongeveer 25 ticks lang <em>niets</em>, dan staat het spel bij de <em>Nog eens (j/n)</em>-prompt na game-over (of zit het echt vast), en zet Auto zichzelf uit en geeft de besturing aan jou terug.</p>
-        <table>
-          <thead><tr><th>Voorwaarde</th><th>Resultaat</th></tr></thead>
-          <tbody>
-            <tr><td><code>BTEL</code> of <code>ZCORE</code> veranderde</td><td>Een zet landde of de score bewoog. Blijf sturen.</td></tr>
-            <tr><td>~25 ticks niets veranderd</td><td>Game-over of vast. Auto uit en besturing teruggeven.</td></tr>
-            <tr><td>Geen veilige zet</td><td>Alle planners faalden. Druk niets; de slang loopt in zijn huidige richting door en het level herstart.</td></tr>
-            <tr><td>Idle of staartlus gedetecteerd</td><td>Verhoogt de urgentie van de planner (zie Voedsel zoeken); stopt de bot niet.</td></tr>
-          </tbody>
-        </table>
-        <p>De idle-teller kijkt naar de score in plaats van het itemaantal, omdat late harten klavers spawnen: de laatste klaver kan een lange veilige route vragen zonder dat de score verandert, dus de urgentie loopt geleidelijk op in plaats van mis te slaan op een drukke slang.</p>
-      </section>
-      <section id="limits">
-        <h2>12. Grenzen en afwegingen</h2>
-        <p>De bot is bewust praktisch, niet perfect. Hij lost niet het hele level als een enorm plan op, want het bord verandert na elke pickup, geduwde steen, gespawnde klaver en vijandentick. In plaats daarvan plant hij voortdurend opnieuw vanuit de live toestand.</p>
-        <ul>
-          <li>Hij simuleert het lijf en geduwde stenen, maar niet een volledige meer-tick-toekomst van alle vijanden.</li>
-          <li>Hij behandelt huidig en volgend pijlengevaar voorzichtig en rekent na de echte game-update opnieuw.</li>
-          <li>Zijn state-hash is compact en bedoeld om te snoeien, niet om elk borddetail te bewaren.</li>
-          <li>Hij kiest alleen een smiley wanneer schone voedselroutes falen.</li>
-          <li>De survival-beam bevoordeelt veel uitgangen en kan smalle maar technisch veilige routes missen.</li>
-        </ul>
-        <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn staart, open ruimte en toekomstige uitgangen belangrijker dan de dichtstbijzijnde onveilige punten.</p>
-      </section>
-    </template>
+    <script>window.SNEEKIE_SKIPBOOT = true;</script>
     <script src="../js/site.js"></script>
+    <script src="../js/game.js"></script>
+    <script src="../js/bot.js"></script>
   </body>
 </html>
