@@ -19,14 +19,15 @@
   text-align:center;
 }
 
-/* full-width cinematic figures (1200x676 webp) */
+/* full-width cinematic figures, cropped shorter with per-image focal points */
 .page-history .story-figure{ margin:28px 0 32px; }
 .page-history .story-figure img{
   display:block;
   width:100%;
   height:auto;
-  aspect-ratio:1200 / 676;
+  aspect-ratio:1200 / 540;
   object-fit:cover;
+  object-position:center var(--history-image-y, 50%);
   border:1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
   border-radius:10px;
   background:#050607;
@@ -50,13 +51,26 @@
   display:block;
   width:100%;
   height:auto;
-  aspect-ratio:1200 / 676;
+  aspect-ratio:1200 / 540;
   object-fit:cover;
+  object-position:center var(--history-image-y, 50%);
   border:1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
   border-radius:8px;
   background:#050607;
   box-shadow:0 14px 38px -28px rgba(0,0,0,.95);
 }
+.page-history img[src*="history-01-summer-start"]{ --history-image-y:44%; }
+.page-history img[src*="history-02-sunrise-snake"]{ --history-image-y:32%; }
+.page-history img[src*="history-03-screen-world"]{ --history-image-y:46%; }
+.page-history img[src*="history-04-poke-bytes"]{ --history-image-y:46%; }
+.page-history img[src*="history-06-steady-nerve"]{ --history-image-y:57%; }
+.page-history img[src*="history-11-magazine-print"]{ --history-image-y:56%; }
+.page-history img[src*="history-12-paper-release"]{ --history-image-y:54%; }
+.page-history img[src*="history-15-long-vigil"]{ --history-image-y:58%; }
+.page-history img[src*="history-16-sleeping-dragon"]{ --history-image-y:60%; }
+.page-history img[src*="history-17-ocr-recovery"]{ --history-image-y:36%; }
+.page-history img[src*="history-18-zero-o-war"]{ --history-image-y:46%; }
+.page-history img[src*="history-22-snake-eternal"]{ --history-image-y:46%; }
 /* chapter band */
 .page-history .story-band{
   position:relative;

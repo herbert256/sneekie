@@ -324,12 +324,14 @@ function nextClickTargetKey(){
   return dirs.find(d => d.code === first[routeEnd]).key;
 }
 function aimAtEventCell(e){
-  setClickTarget(e);
-  if(clickStartsLevel) pushKey('\r');
-  else {
-    const key = nextClickTargetKey();
-    if(key) pushKey(key);
+  if(clickStartsLevel){
+    clearClickTarget();
+    pushKey('\r');
+    return;
   }
+  setClickTarget(e);
+  const key = nextClickTargetKey();
+  if(key) pushKey(key);
 }
 
 addEventListener('keydown', e => {

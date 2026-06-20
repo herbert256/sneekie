@@ -89,6 +89,15 @@
   padding-bottom:0;
 }
 
+.home-title-image{
+  display:block;
+  width:100%;
+  height:auto;
+  margin:0 auto 14px;
+  border-radius:8px;
+  image-rendering:auto;
+}
+
 .home-game p{
   max-width:760px;
   margin:0 0 18px;
@@ -287,6 +296,13 @@
   }
   .home-game h2{
     font-size:22px;
+  }
+  .home-title-image{
+    width:calc(100% + 8px);
+    max-width:none;
+    margin-left:-4px;
+    margin-right:-4px;
+    margin-bottom:10px;
   }
   .home-game p{
     margin-bottom:12px;
