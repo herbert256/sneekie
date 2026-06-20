@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Вебверсія не є переписуванням - це вірний порт . Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC..." />
+    <meta name="description" content="Вебверсія не є переписуванням - це вірний порт. Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC." />
     <title>Sneekie - Від GW-BASIC до JavaScript, поруч</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -22,17 +22,17 @@
     <meta property="og:locale" content="uk_UA" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - Від GW-BASIC до JavaScript, поруч" />
-    <meta property="og:description" content="Вебверсія не є переписуванням - це вірний порт . Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC..." />
+    <meta property="og:description" content="Вебверсія не є переписуванням - це вірний порт. Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC." />
     <meta property="og:url" content="https://sneekie.xyz/uk/migration" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
-    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:alt" content="Sneekie — гра про змію в лабіринті для MS-DOS 1988 року" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - Від GW-BASIC до JavaScript, поруч" />
-    <meta name="twitter:description" content="Вебверсія не є переписуванням - це вірний порт . Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC..." />
+    <meta name="twitter:description" content="Вебверсія не є переписуванням - це вірний порт. Ігрова логіка перекладена з SNEEKIE.BAS оператор за оператором, з оригінальними назвами змінних і навіть номерами рядків BASIC." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
-    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta name="twitter:image:alt" content="Sneekie — гра про змію в лабіринті для MS-DOS 1988 року" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/migration.css" />
   </head>
@@ -70,7 +70,7 @@
         <h2>Міст: екран і є структура даних</h2>
         <p>GW-BASIC записував символи прямо у текстову памʼять екрана PC 80&times;25 через <code>POKE</code> і читав їх назад через <code>PEEK</code>, щоб дізнатися, що де стоїть. Окремого обʼєкта "змія" чи "стіна" не було &mdash; зображення <em>було</em> станом. Порт зберігає цю модель точно: 4000-байтовий <code>Uint8Array</code> (<code>vram</code>), два байти на клітинку, символ і атрибут, адресуються так:</p>
         <p><span class="formula">offset = (рядок &minus; 1) &times; 160 + (стовпець &minus; 1) &times; 2</span></p>
-        <p>Оскільки модель однакова, ігровий код майже не змінюється &mdash; слова <code>POKE</code> і <code>PEEK</code> лише стають функціями <code>poke()</code> і <code>peek()</code>. Усе інше на цій сторінці випливає з відбудови решти runtime GW-BASIC навколо одного спільного масиву.</p>
+        <p>Оскільки модель однакова, ігровий код майже не змінюється &mdash; слова <code>POKE</code> і <code>PEEK</code> лише стають функціями <code>poke()</code> і <code>peek()</code>. Усе інше на цій сторінці випливає з відбудови решти середовища виконання GW-BASIC навколо одного спільного масиву.</p>
       </div>
       <h2 style="color: var(--heading); max-width: 900px">Що довелося відбудувати</h2>
       <table class="map">
@@ -85,7 +85,7 @@
         </tr>
         <tr>
           <td>екран оновлює себе сам (це <em>і є</em> відеопамʼять)</td>
-          <td><b>набір брудних клітинок + <code>requestAnimationFrame</code></b>, glyphs з вбудованого шрифту IBM CP437</td>
+          <td><b>набір брудних клітинок + <code>requestAnimationFrame</code></b>, гліфи з вбудованого шрифту IBM CP437</td>
         </tr>
         <tr>
           <td><code>INKEY$</code> / <code>INPUT$</code> блокують до клавіші</td>
@@ -93,11 +93,11 @@
         </tr>
         <tr>
           <td><code>SOUND freq, ticks</code></td>
-          <td><b>Web Audio</b> square-wave oscillator на тому самому годиннику 1/18.2&nbsp;с</td>
+          <td><b>Web Audio</b> генератор квадратної хвилі на тому самому годиннику 1/18.2&nbsp;с</td>
         </tr>
         <tr>
           <td><code>ON LEVEL GOSUB &hellip;</code></td>
-          <td>dispatch-масиви <b><code>CFG[]</code> і <code>ENEMY[]</code></b></td>
+          <td>диспетчерські масиви <b><code>CFG[]</code> і <code>ENEMY[]</code></b></td>
         </tr>
         <tr>
           <td><code>GOTO 510</code> / <code>RETURN 510</code> (смерть)</td>
@@ -110,7 +110,7 @@
       </table>
       <div class="callout">
         <h2>Одна глибока зміна: блокування стає <code>async</code></h2>
-        <p>GW-BASIC ішов згори вниз і просто <em>зупинявся</em> на <code>INKEY$</code>/<code>INPUT$</code>, доки ви не натиснете клавішу. Вкладка браузера не може так блокуватися &mdash; тому точки очікування стали <code>await</code>, а <code>playLevels()</code> і <code>program()</code> стали <code>async</code>. Малий Promise-буфер клавіатури замінює BIOS key buffer, а оскільки <code>GOTO</code> у JavaScript немає, рядки "вистрибнути і померти" стають кинутим сигналом <code>DEATH</code>, перехопленим навколо циклу. Ці два прийоми &mdash; <em>await для вводу, throw для смерті</em> &mdash; дозволяють решті коду лишатися буквальним перекладом.</p>
+        <p>GW-BASIC ішов згори вниз і просто <em>зупинявся</em> на <code>INKEY$</code>/<code>INPUT$</code>, доки ви не натиснете клавішу. Вкладка браузера не може так блокуватися &mdash; тому точки очікування стали <code>await</code>, а <code>playLevels()</code> і <code>program()</code> стали <code>async</code>. Малий Promise-буфер клавіатури замінює клавіатурний буфер BIOS, а оскільки <code>GOTO</code> у JavaScript немає, рядки "вистрибнути і померти" стають кинутим сигналом <code>DEATH</code>, перехопленим навколо циклу. Ці два прийоми &mdash; <em>await для вводу, throw для смерті</em> &mdash; дозволяють решті коду лишатися буквальним перекладом.</p>
       </div>
       <nav class="toc" aria-label="На цій сторінці">
         <h2>Пари фрагментів</h2>
