@@ -323,6 +323,14 @@ function nextClickTargetKey(){
   if(routeEnd === start || first[routeEnd] === 0){ clearClickTarget(); return null; }
   return dirs.find(d => d.code === first[routeEnd]).key;
 }
+function aimAtEventCell(e){
+  setClickTarget(e);
+  if(clickStartsLevel) pushKey('\r');
+  else {
+    const key = nextClickTargetKey();
+    if(key) pushKey(key);
+  }
+}
 
 addEventListener('keydown', e => {
   if(bootActive){
@@ -352,7 +360,7 @@ addEventListener('keydown', e => {
   }
 });
 
-/* touch: swipe = direction, tap/click = any key */
+/* touch: swipe = direction, tap/click = route target */
 let tStart = null;
 cv.addEventListener('touchstart', e => {
   if(bootActive){
@@ -369,7 +377,7 @@ cv.addEventListener('touchend', e => {
   if(!tStart) return;
   const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
   tStart = null;
-  if(Math.hypot(dx, dy) < 24){ pushKey('\r'); }
+  if(Math.hypot(dx, dy) < 24){ aimAtEventCell(t); }
   else {
     clearClickTarget();
     if(Math.abs(dx) > Math.abs(dy)) pushKey(dx > 0 ? '\0M' : '\0K');
@@ -384,12 +392,7 @@ cv.addEventListener('pointerdown', e => {
     if(bootWaiting) startBootFromGesture();
     else if(bootStarted) bootSkip = true;
   } else if(e.button === 0) {
-    setClickTarget(e);
-    if(clickStartsLevel) pushKey('\r');
-    else {
-      const key = nextClickTargetKey();
-      if(key) pushKey(key);
-    }
+    aimAtEventCell(e);
   }
   e.preventDefault();
 });
@@ -1237,10 +1240,9 @@ paintMute();
 function fit(){
   if(document.fullscreenElement){
     /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384).
-       On touch, leave a strip below the canvas for the on-screen key bar (see #bezel:fullscreen
-       padding-bottom) so the game screen and the buttons never overlap. */
-    const reserve = matchMedia('(pointer:coarse)').matches ? 64 : 0;
-    const s = Math.min(innerWidth/640, (innerHeight - reserve)/384);
+       On touch, leave space at the left and right for the fullscreen key columns. */
+    const sideReserve = matchMedia('(pointer:coarse)').matches ? 144 : 0;
+    const s = Math.min(Math.max(160, innerWidth - sideReserve)/640, innerHeight/384);
     cv.style.width = (640*s) + 'px';
     cv.style.height = (384*s) + 'px';
     return;

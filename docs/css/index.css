@@ -321,31 +321,47 @@
     font-size:21px;
   }
   .play-link{
-    max-width:min(100%, 430px);
-    margin:0 auto;
+    width:100vw;
+    max-width:none;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
   }
   .play-link .crt{
-    border-radius:15px;
-    padding:10px;
+    background:none;
+    border-radius:0;
+    padding:0;
+    box-shadow:none;
+  }
+  .play-link:hover .crt,
+  .play-link:focus-visible .crt{
+    box-shadow:none;
+    transform:none;
   }
   .play-link .crt-tube{
-    padding:6px;
-    border-radius:10px;
+    background:none;
+    padding:0;
+    border-radius:0;
+    box-shadow:none;
   }
   .play-image{
-    width:auto;
-    max-width:100%;
-    max-height:min(32vh, 170px);
+    width:100vw;
+    max-width:none;
+    height:auto;
+    max-height:none;
     margin:0 auto;
-    border-radius:5px;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .play-link:hover .play-image,
+  .play-link:focus-visible .play-image{
+    box-shadow:none;
   }
   .play-link .crt-glass{
-    inset:6px;
-    border-radius:5px;
+    display:none;
   }
   .play-link .crt-tube::after{
-    inset:6px;
-    border-radius:5px;
+    inset:0;
+    border-radius:0;
   }
   .play-link .crt-panel{
     display:none;
@@ -358,8 +374,5 @@
   }
   .topic-image{
     max-height:92px;
-  }
-  .play-image{
-    max-height:min(30vh, 155px);
   }
 }
