@@ -102,6 +102,7 @@
   margin-bottom:12px;
   color:var(--greenhi);
   font-weight:700;
+  text-align:center;
 }
 
 .topic-card p{

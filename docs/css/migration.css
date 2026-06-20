@@ -1,5 +1,15 @@
 /* Page-specific styles for migration.html. */
 .page-migration main{ max-width:1180px; }
+.page-migration main > .callout,
+.page-migration main > .toc,
+.page-migration main > table.map{
+  margin-left:auto;
+  margin-right:auto;
+}
+.page-migration main > h2{
+  margin-left:auto;
+  margin-right:auto;
+}
 .page-migration table.map{ max-width:900px; }
 .page-migration table.map td:first-child{
   width:46%;
