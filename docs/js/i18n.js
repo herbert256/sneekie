@@ -138,12 +138,12 @@
       "vramSnakeBody": "тіло змії",
       "vramWall": "стіна",
       "vramSpace": "простір",
-      "vramSteerLog": "Керуйте змією &mdash; peeks і pokes кожного ходу зʼявляться тут.",
+      "vramSteerLog": "Керуйте змією &mdash; операції peek/poke кожного ходу зʼявляться тут.",
       "vramEraseTail": "стерти хвіст",
-      "vramEatHeart": "score += 10 &mdash; зʼїсти серце",
+      "vramEatHeart": "рахунок += 10 &mdash; зʼїсти серце",
       "vramClubPops": "там, куди вказало серце, зʼявляється &#9827; трефа",
-      "vramEatClub": "score += 25 &mdash; зʼїсти трефу",
-      "vramEatSmiley": "score -= 50 &mdash; ой, смайлик!",
+      "vramEatClub": "рахунок += 25 &mdash; зʼїсти трефу",
+      "vramEatSmiley": "рахунок -= 50 &mdash; ой, смайлик!",
       "vramBehindStone": " (за каменем)",
       "vramShoveStone": "посунути камінь &#9689;",
       "vramStoneBlocked": "&#8594; заблоковано: каменю нікуди рухатися, стоїмо",
@@ -153,7 +153,7 @@
       "vramDrawHead": "намалювати нову голову &#9608;",
       "vramGrow": "  (ріст)",
       "vramAllHearts": "&#9733; усі серця зібрано!",
-      "vramDead": "&#10007; рухома стріла спіймала змію &mdash; гру завершено. Натисніть Reset.",
+      "vramDead": "&#10007; рухома стріла спіймала змію &mdash; гру завершено. Натисніть Скинути.",
       "vramMove": "хід "
     }
   };

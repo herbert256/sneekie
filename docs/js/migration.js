@@ -109,22 +109,22 @@ const MIGRATION_NL_SECTIONS = [
   ['Invoer: INKEY$-scancodes worden keydown', `DOS gaf een pijltje uit <code>INKEY$</code> terug als twee bytes. De browser-handler maakt precies zulke strings (<code>'\\0H'</code> = omhoog), zodat de loop hetzelfde ziet als in 1988.`],
 ];
 const MIGRATION_UK_SECTIONS = [
-  ['Екран — це модель даних', `Код 1988 року спрямовує <code>PEEK</code>/<code>POKE</code> у відеопамʼять і навіть вибирає mono (<code>&amp;HB000</code>) або color (<code>&amp;HB800</code>). Порту потрібна лише одна сітка в памʼяті: <code>vram</code> — це 4000-байтовий масив, а <code>poke()</code>/<code>peek()</code> — маленькі helper-функції.`],
-  ['Малювання сталого кадру', `<code>LOCATE r,c : PRINT CHR$(n)</code> стає <code>locate(r,c); pc(n)</code>; <code>STRING$(78,&hellip;)</code> стає <code>pcn(196,78)</code>; <code>SPC(78)</code> стає <code>sp(78)</code>. Текст перекладено, але всі box-drawing коди лишилися тими самими.`],
-  ['Цикл рівнів і стартова змія', `<code>FOR LEVEL=1 TO 32</code> стає циклом <code>for</code>; змія стартує з тих самих offset-ів (2000 хвіст, 1840 голова); <code>ON LEVEL GOSUB</code> стає індексованим викликом у таблиці <code>CFG</code>.`],
-  ['Читання клавіші: блокуючий INKEY$ стає async', `<em>Найбільша структурна зміна.</em> Цикл очікування <code>INKEY$</code> не може блокувати браузер, тому стає Promise: <code>keyOrTimeout(ms)</code> завершується при клавіші або timeout. Ігровий цикл робить <code>await</code>.`],
+  ['Екран — це модель даних', `Код 1988 року спрямовує <code>PEEK</code>/<code>POKE</code> у відеопамʼять і навіть вибирає монохромний (<code>&amp;HB000</code>) або кольоровий (<code>&amp;HB800</code>) екран. Порту потрібна лише одна сітка в памʼяті: <code>vram</code> — це 4000-байтовий масив, а <code>poke()</code>/<code>peek()</code> — маленькі допоміжні функції.`],
+  ['Малювання сталого кадру', `<code>LOCATE r,c : PRINT CHR$(n)</code> стає <code>locate(r,c); pc(n)</code>; <code>STRING$(78,&hellip;)</code> стає <code>pcn(196,78)</code>; <code>SPC(78)</code> стає <code>sp(78)</code>. Текст перекладено, але всі коди символів рамки лишилися тими самими.`],
+  ['Цикл рівнів і стартова змія', `<code>FOR LEVEL=1 TO 32</code> стає циклом <code>for</code>; змія стартує з тих самих зміщень (2000 хвіст, 1840 голова); <code>ON LEVEL GOSUB</code> стає індексованим викликом у таблиці <code>CFG</code>.`],
+  ['Читання клавіші: блокуючий INKEY$ стає асинхронним', `<em>Найбільша структурна зміна.</em> Цикл очікування <code>INKEY$</code> не може блокувати браузер, тому стає Promise: <code>keyOrTimeout(ms)</code> завершується при клавіші або таймауті. Ігровий цикл робить <code>await</code>.`],
   ['Сортування клавіші та ESC', `<code>LEN(A$)</code> відрізняє двосимвольну стрілку від одиночної клавіші; JavaScript перевіряє <code>A$.length</code>. ESC стає кинутим сигналом смерті замість <code>GOTO 510</code>.`],
-  ['Перетворення голови на крок екрана', `Та сама арифметика offset-ів: напрям стає &plusmn;160 для рядка або &plusmn;2 для стовпця. <code>A</code> — цільова клітинка; <code>peek(A)</code> каже, що там стоїть.`],
+  ['Перетворення голови на крок екрана', `Та сама арифметика зміщень: напрям стає &plusmn;160 для рядка або &plusmn;2 для стовпця. <code>A</code> — цільова клітинка; <code>peek(A)</code> каже, що там стоїть.`],
   ['Що в наступній клітинці?', `Драбина <code>IF D&lt;&gt;n THEN GOTO</code> стає ланцюжком <code>if / else if</code> на тих самих кодах символів: порожньо, трефа, серце, камінь, смайлик, стріла.`],
   ['Заблоковано стіною або хвостом', `Будь-що інше означає: туди не можна. BASIC переходить до рядка 910; JavaScript ставить <code>blocked = true</code>. Обидва зберігають старий напрям, знімають бонус і пропускають хід.`],
-  ['Малювання вигину тіла', `Шість випадків вибирають box-drawing символ для повороту з нового напряму <code>E</code> і старого <code>F</code>, а потім додають нову голову <span class="mono">&#9608;</span>.`],
-  ['Блиск і небезпека рівня', `Цикл яскравості "shimmer" і <code>ON LEVEL GOSUB</code>, що анімує стріли/брами, стають циклом <code>for</code> та індексованим викликом у <code>ENEMY</code>.`],
-  ['Смерть: GOTO/RETURN 510 стає throw', `BASIC помирає через <code>GOTO 510</code> або <code>RETURN 510</code> з GOSUB. JavaScript використовує <code>throw DEATH</code>, перехоплений навколо циклу: той самий стрибок назовні, але через exceptions.`],
-  ['Дві dispatch-таблиці (ON LEVEL GOSUB)', `<code>ON LEVEL GOSUB</code> — це jump table. Порт робить це буквально: <code>CFG[]</code> містить рецепти рівнів, а <code>ENEMY[]</code> містить анімацію кожного tick.`],
-  ['Випадково поставити предмет', `<code>RND</code> стає <code>Math.random()</code>. Трюк із парним offset-ом і перевірка "чи порожньо?" лишаються незмінними.`],
-  ['Рахунок', `Додати <code>OP</code> до score і оновити high score. <code>PRINT USING "######"</code> стає helper-ом <code>pu(6, &hellip;)</code>.`],
-  ['Звук: SOUND f,d стає Web Audio', `<code>SOUND freq, ticks</code> стає короткою square-wave нотою на годиннику Web Audio, з тими самими частотами і тими самими tick 1/18.2&nbsp;с.`],
-  ['Ввід: INKEY$ scancode стає keydown', `DOS повертав стрілку з <code>INKEY$</code> як два байти. Browser handler створює точно такі рядки (<code>'\\0H'</code> = вгору), тому цикл бачить те саме, що у 1988 році.`],
+  ['Малювання вигину тіла', `Шість випадків вибирають символ рамки для повороту з нового напряму <code>E</code> і старого <code>F</code>, а потім додають нову голову <span class="mono">&#9608;</span>.`],
+  ['Блиск і небезпека рівня', `Цикл яскравості і <code>ON LEVEL GOSUB</code>, що анімує стріли/брами, стають циклом <code>for</code> та індексованим викликом у <code>ENEMY</code>.`],
+  ['Смерть: GOTO/RETURN 510 стає кинутим сигналом', `BASIC помирає через <code>GOTO 510</code> або <code>RETURN 510</code> з GOSUB. JavaScript використовує <code>throw DEATH</code>, перехоплений навколо циклу: той самий стрибок назовні, але через винятки.`],
+  ['Дві диспетчерські таблиці (ON LEVEL GOSUB)', `<code>ON LEVEL GOSUB</code> — це таблиця переходів. Порт робить це буквально: <code>CFG[]</code> містить рецепти рівнів, а <code>ENEMY[]</code> містить анімацію кожного такту.`],
+  ['Випадково поставити предмет', `<code>RND</code> стає <code>Math.random()</code>. Трюк із парним зміщенням і перевірка "чи порожньо?" лишаються незмінними.`],
+  ['Рахунок', `Додати <code>OP</code> до рахунку і оновити рекорд. <code>PRINT USING "######"</code> стає допоміжною функцією <code>pu(6, &hellip;)</code>.`],
+  ['Звук: SOUND f,d стає Web Audio', `<code>SOUND freq, ticks</code> стає короткою нотою квадратної хвилі на годиннику Web Audio, з тими самими частотами і тими самими тактами 1/18.2&nbsp;с.`],
+  ['Ввід: сканкод INKEY$ стає подією клавіатури', `DOS повертав стрілку з <code>INKEY$</code> як два байти. Обробник браузера створює точно такі рядки (<code>'\\0H'</code> = вгору), тому цикл бачить те саме, що у 1988 році.`],
 ];
 const migrationLang = typeof window.sneekieLang === 'function' ? window.sneekieLang() : 'en';
 if(migrationLang === 'nl' || migrationLang === 'uk'){
@@ -134,7 +134,7 @@ if(migrationLang === 'nl' || migrationLang === 'uk'){
 const MID_IMAGE_ALT = {
   en: 'An older red-and-gray-bearded programmer watches an old CRT BASIC game transform into a modern browser game with glowing AI helpers.',
   nl: 'Een oudere programmeur met rode/grijze baard ziet een oud CRT BASIC-spel veranderen in een moderne browsergame met gloeiende AI-helpers.',
-  uk: 'Старший програміст із рудо-сивою бородою дивиться, як стара CRT BASIC-гра переходить у сучасну браузерну гру з AI-помічниками.'
+  uk: 'Старший програміст із рудо-сивою бородою дивиться, як стара CRT BASIC-гра переходить у сучасну браузерну гру з ШІ-помічниками.'
 };
 
 /* ---------- render ---------- */

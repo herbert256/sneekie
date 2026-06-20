@@ -301,6 +301,8 @@
   const LEVELS = [26,27,28,29,30,31,32];
   let target = 26, pendingJump = 26;
   const tablist = document.getElementById('leveltabs');
+  const pageLang = typeof window.sneekieLang === 'function' ? window.sneekieLang() : document.documentElement.lang;
+  const levelPrefix = pageLang === 'uk' ? 'Рівень ' : 'Level ';
   const tabs = new Map();
   function markTabs(){ tabs.forEach((b, n) => b.setAttribute('aria-pressed', String(n === target))); }
   function wake(){ if(typeof ensureAudio === 'function') ensureAudio(); }   // audio needs a user gesture
@@ -308,7 +310,7 @@
     for(const n of LEVELS){
       const b = document.createElement('button');
       b.type = 'button'; b.dataset.level = String(n);
-      b.textContent = 'Level ' + n;
+      b.textContent = levelPrefix + n;
       b.addEventListener('click', () => { wake(); target = n; pendingJump = n; markTabs(); });
       tablist.appendChild(b); tabs.set(n, b);
     }
