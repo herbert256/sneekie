@@ -5,7 +5,7 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
     <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/game" />
     <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/game" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/game" />
   </url>
   <url>
     <loc>https://sneekie.xyz/en/game</loc>
