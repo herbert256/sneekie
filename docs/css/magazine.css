@@ -35,6 +35,7 @@
 .page-magazine .thumb img{
   display:block;
   width:100%;
+  height:auto;            /* release the height="517" attr so the box follows aspect-ratio, not the literal pixel height */
   aspect-ratio:360 / 517;
   object-fit:cover;
   object-position:top center;
