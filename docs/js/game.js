@@ -1271,6 +1271,17 @@ addEventListener('resize', fit);
 const fsBtn = document.getElementById('fs');
 const bezel = document.getElementById('bezel');
 if(bezel.requestFullscreen){
+  function lockLandscapeFullscreen(){
+    if(!screen.orientation || !screen.orientation.lock) return;
+    screen.orientation.lock('landscape').then(fit).catch(() => {});
+  }
+  function unlockFullscreenOrientation(){
+    if(!screen.orientation || !screen.orientation.unlock) return;
+    try { screen.orientation.unlock(); } catch(_) {}
+  }
+  if(screen.orientation && screen.orientation.addEventListener){
+    screen.orientation.addEventListener('change', fit);
+  }
   fsBtn.addEventListener('click', () => {
     ensureAudio();
     if(document.fullscreenElement) document.exitFullscreen()?.catch(() => {});
@@ -1279,6 +1290,8 @@ if(bezel.requestFullscreen){
   document.addEventListener('fullscreenchange', () => {
     const fs = !!document.fullscreenElement;
     fsBtn.setAttribute('aria-pressed', String(fs));
+    if(fs) lockLandscapeFullscreen();
+    else unlockFullscreenOrientation();
     fit();
     /* In fullscreen the browser normally swallows <ESC> to leave fullscreen, so the
        game never sees it. The Keyboard Lock API (Chromium, secure context) routes

@@ -1,12 +1,5 @@
 /* Page-specific styles for migration.html. */
 .page-migration main{ max-width:1180px; }
-.page-migration .hero .sub{
-  display:block;
-  margin:0 0 18px;
-  color:var(--muted);
-  text-align:center;
-  font-size:15px;
-}
 .page-migration table.map{ max-width:900px; }
 .page-migration table.map td:first-child{
   width:46%;

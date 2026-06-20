@@ -258,6 +258,17 @@ footer a:hover{
   max-width:860px;
   color:var(--text);
 }
+.page-manual main > .lead:first-of-type,
+.page-magazine main > .lead:first-of-type,
+.page-migration main > .lead:first-of-type,
+.page-vram main > .lead:first-of-type{
+  max-width:820px;
+  margin:2px auto 8px;
+  color:#d6ded8;
+  font-size:18px;
+  line-height:1.65;
+  text-align:center;
+}
 .page-doc .intro-figure,
 .page-source .intro-figure,
 .page-doc .closing-figure,
@@ -584,6 +595,13 @@ section.card .prose,
 
 @media (max-width:720px){
   .page-doc .grid2{ grid-template-columns:1fr; }
+  .page-manual main > .lead:first-of-type,
+  .page-magazine main > .lead:first-of-type,
+  .page-migration main > .lead:first-of-type,
+  .page-vram main > .lead:first-of-type{
+    font-size:16px;
+    text-align:left;
+  }
 }
 @media (max-width:640px){
   .page-doc .toc ol{ columns:1; }
