@@ -45,8 +45,8 @@
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-hero.webp" alt="An open 1988 computer magazine feature with a printed Sneekie screenshot on a desk." />
       </figure>
-      <p class="hint">Click any page to view it full screen &middot; <kbd>Esc</kbd> exits.</p>
-      <div class="gallery" id="gallery">
+      <p class="hint">Click any page to view it full screen &middot; swipe or use arrow keys for pages &middot; pinch, wheel, or buttons to zoom &middot; <kbd>Esc</kbd> exits.</p>
+      <div class="gallery page-gallery" id="gallery">
         <button type="button" class="thumb cover" data-full="../images/magazine/cover.webp" data-cap="The cover — MS(X)DOS Computer Magazine no. 25">
           <img loading="lazy" src="../images/magazine/cover.thumb.webp" alt="Cover of MS(X)DOS Computer Magazine issue 25." />
           <span class="cap-wrap"><span class="lbl">Cover</span><span class="cap">MS(X)DOS Computer Magazine no.&nbsp;25</span></span>
@@ -77,19 +77,34 @@
         </button>
       </div>
       <hr class="sep" />
-      <section class="recap translated-scans">
-        <h2>Full translated scans</h2>
-        <p class="note">Copied scans of pages&nbsp;58 and&nbsp;59 with the article text translated in place. The BASIC listing on page&nbsp;59 stays as the original source.</p>
-        <div class="gallery">
-          <button type="button" class="thumb" data-full="../images/magazine/p58.en.webp" data-cap="Page 58 — full English translation on the copied scan">
-            <img loading="lazy" src="../images/magazine/p58.en.thumb.webp" alt="Translated copy of magazine page 58 in English." />
-            <span class="cap-wrap"><span class="lbl">Page 58</span><span class="cap">English scan translation</span></span>
-          </button>
-          <button type="button" class="thumb" data-full="../images/magazine/p59.en.webp" data-cap="Page 59 — full English translation on the copied scan">
-            <img loading="lazy" src="../images/magazine/p59.en.thumb.webp" alt="Translated copy of magazine page 59 in English." />
-            <span class="cap-wrap"><span class="lbl">Page 59</span><span class="cap">English scan translation</span></span>
-          </button>
-        </div>
+      <section class="recap article-text">
+        <h2>Article text</h2>
+        <p class="note">The article text from pages&nbsp;58 and&nbsp;59, translated from Dutch. The GW-BASIC listing is omitted here because the Source page carries the recovered program.</p>
+        <article class="magazine-article">
+          <h3>Sneekie, a snake in your PC</h3>
+          <p class="article-lead">Games for PCs in BASIC are fairly rare, at least the good games. A PC simply is not very suited to all kinds of tricks that, for example, are possible on MSX. Besides, the biggest problem is still the video card. On an EGA you can do the finest things. A Hercules card, however, is fine for monochrome graphics, but colour is another matter. And let us not even mention the still more primitive video cards that sometimes end up in PC-Priv&eacute; machines. That is why we rather like this game, which can run on every PC, no matter which video card it has. A snake game with a strategic slant!</p>
+          <blockquote>Hello, young man. Don&rsquo;t I know you from a few years ago?</blockquote>
+          <p>Recently we received a letter from a reader who complained bitterly. He had just exchanged his MSX for a PC &mdash; and, worse, MCM for another magazine &mdash; when we also began paying attention to MS-DOS. In short, we hope he took out a subscription again. His conclusion was: &ldquo;Looking at it this way, it seems as if the MSX is there for fun and the PC is there for work.&rdquo;</p>
+          <p>Since he apparently could not accept that, he wrote a game for the PC and sent it to us. After that we on the editorial staff spent many hours with it. First playing it, then polishing it a little. And now that game, Sneekie, is printed in the magazine as a listing.</p>
+          <p class="article-label">GW-BASIC game for MS-DOS</p>
+          <h4>Text screen</h4>
+          <p>Sneekie works entirely with a standard text screen. In other words, it can be played on every PC. Admittedly the colours are limited &mdash; in short, there are no colours &mdash; and the author kept the graphics simple, using only ordinary characters. Otherwise Sneekie would only have worked on certain video adapters. Because of those restrictions, Sneekie is compatible with every PC on which GW-BASIC works.</p>
+          <p>Incidentally, the sender, Mr Herbert Groot Jebbink, wondered in his accompanying letter whether MS-DOS machines offered any tricks with the character set. If he could define his own characters, Sneekie would look much nicer. Unfortunately that runs into the same objection as colour: on some video cards one can indeed build a custom character set, but then the program immediately stops being universal.</p>
+          <h4>A fine game</h4>
+          <p>In spite of that limitation, Sneekie is a fine game. The aim is simple: eat all the hearts and clovers with the snake. The clovers, by the way, appear only on the higher fields. The snake keeps getting longer, so you have to proceed thoughtfully. It is all too easy to trap yourself as the snake in a corner.</p>
+          <p>In addition, every one of the 32 fields contains smiley faces. Such a face is not deadly, but it costs points if you pass through it.</p>
+          <p>The 32 fields consist of eight screen designs, each with its own specific problems, which then appear again in four degrees of difficulty. The basic game is very simple: you move your snake with the cursor keys, and that is all. Your Sneekie does get longer, but that basic form is quite playable. Only from field number 9 &mdash; which is layout field 1 again &mdash; does it become harder. Then your snake turns out to have a life of its own: the creature keeps moving in the last direction you gave. Tricky, because thinking time now becomes crucial.</p>
+          <p>Another eight fields later the clovers mentioned above come into play: new hearts or clovers regularly appear when you have eaten one. And since you must remove every clover and heart before reaching a higher level...</p>
+          <p>The last series of eight levels is obvious: new bite-size pieces appear, and your snake moves continuously. Difficult!</p>
+          <h4>Fields</h4>
+          <p>So that misery awaits you on a total of eight different screens. Some are simple, others are not. Lines may appear, for example, and of course you cannot pass through them. Also nice are the screens where those lines start moving; the shape then changes continuously. Stones, which play a leading role on some screens, are a problem in themselves. Sneekie can push only one stone ahead of itself; two are too heavy. Also, if something else is hiding behind a stone, the weight is too much for our snake. So proceed with policy and thought. The most unpleasant are the highest screens, where arrows move across the image. Absolutely deadly, those things!</p>
+          <h4>Finally</h4>
+          <p>Sneekie is a nice game, and we heartily thank the sender, Mr Herbert Groot Jebbink. His name and address appear in the listing at his own request.</p>
+          <p>We changed only a few things in his program. For example, his version had 16 levels; we added four more by moving the appearance of new hearts and clovers to a new series of levels. That makes the basic game much more playable.</p>
+          <p>What was also missing from the GW-BASIC version &mdash; though it was present in the QuickBASIC version he also sent &mdash; was the ability to cheat. Although it is nowhere on the screen: F10 takes you one level further, and F9 gives an extra life.</p>
+          <p>Sneekie plays very well as GW-BASIC, but preferably on a somewhat faster machine. On a 4.77 MHz XT it is, honestly, rather slow.</p>
+          <p>However, the program compiles without problems with QuickBASIC, after which it also becomes a very playable game on slower XTs. Anyone who does not own a compiler can order the diskette on which Sneekie appears; we will certainly include the compiled version on it.</p>
+        </article>
       </section>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-closing.webp" alt="A 3D Sneekie snake tearing out of the printed magazine as hearts and clubs bounce from the page." />
@@ -107,8 +122,8 @@
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-hero.webp" alt="Een open computertijdschrift uit 1988 met een afgedrukte Sneekie-screenshot op een bureau." />
       </figure>
-      <p class="hint">Klik op een pagina voor volledig scherm &middot; <kbd>Esc</kbd> sluit.</p>
-      <div class="gallery" id="gallery">
+      <p class="hint">Klik op een pagina voor volledig scherm &middot; veeg of gebruik de pijltjestoetsen voor vorige/volgende pagina &middot; knijp, scroll of gebruik de knoppen om te zoomen &middot; <kbd>Esc</kbd> sluit.</p>
+      <div class="gallery page-gallery" id="gallery">
         <button type="button" class="thumb cover" data-full="../images/magazine/cover.webp" data-cap="De cover — MS(X)DOS Computer Magazine nr. 25">
           <img loading="lazy" src="../images/magazine/cover.thumb.webp" alt="Cover van MS(X)DOS Computer Magazine nummer 25." />
           <span class="cap-wrap"><span class="lbl">Cover</span><span class="cap">MS(X)DOS Computer Magazine nr.&nbsp;25</span></span>
@@ -139,19 +154,34 @@
         </button>
       </div>
       <hr class="sep" />
-      <section class="recap translated-scans">
-        <h2>Volledig vertaalde scans</h2>
-        <p class="note">Kopie&euml;n van pagina&nbsp;58 en&nbsp;59 met de artikeltekst in het Engels op de scan gezet. De BASIC-listing op pagina&nbsp;59 blijft de originele bron.</p>
-        <div class="gallery">
-          <button type="button" class="thumb" data-full="../images/magazine/p58.en.webp" data-cap="Pagina 58 — volledige Engelse vertaling op de gekopieerde scan">
-            <img loading="lazy" src="../images/magazine/p58.en.thumb.webp" alt="Vertaalde kopie van tijdschriftpagina 58 in het Engels." />
-            <span class="cap-wrap"><span class="lbl">Pagina 58</span><span class="cap">Engelse scanvertaling</span></span>
-          </button>
-          <button type="button" class="thumb" data-full="../images/magazine/p59.en.webp" data-cap="Pagina 59 — volledige Engelse vertaling op de gekopieerde scan">
-            <img loading="lazy" src="../images/magazine/p59.en.thumb.webp" alt="Vertaalde kopie van tijdschriftpagina 59 in het Engels." />
-            <span class="cap-wrap"><span class="lbl">Pagina 59</span><span class="cap">Engelse scanvertaling</span></span>
-          </button>
-        </div>
+      <section class="recap article-text">
+        <h2>Artikeltekst</h2>
+        <p class="note">De artikeltekst van pagina&nbsp;58 en&nbsp;59. De GW-BASIC-listing is hier weggelaten; de herstelde programmatekst staat op de Broncode-pagina.</p>
+        <article class="magazine-article">
+          <h3>Sneekie, een slang in uw PC</h3>
+          <p class="article-lead">Spellen voor PC's in Basic zijn nogal zeldzaam, althans de goede spellen. Een PC leent zich nu eenmaal niet zo best voor allerlei trucs die op bijvoorbeeld MSX wel mogelijk zijn. Bovendien, het grootste probleem is nog wel de video-kaart. Op een EGA kunnen de mooiste zaken. Echter, een Hercules-kaart is nu wel prima voor monochrome graphics, maar kleuren, ho maar. Om over de nog primitiever video-kaarten, die soms in de PC-priv&eacute; machines gestopt worden maar helemaal te zwijgen. Vandaar dat we dit spel, dat op alle PC's, ongeacht welke video-kaart, kan lopen heel aardig vinden. Een slangespel met een strategische inslag!</p>
+          <blockquote>Dag jongeman. Ken ik u niet van &rsquo;n paar jaar geleden?</blockquote>
+          <p>Onlangs ontvingen we een brief van een lezer, die zich bitter beklaagde. Had hij net zijn MSX tegen een PC ingewisseld &mdash; en, kwalijker, MCM tegen een ander blad &mdash; toen wij ook aandacht gingen besteden aan MS-DOS. Kortom, een abonnement genomen maar weer, hopen we. Zijn conclusie was: &ldquo;Als ik het zo bekijk lijkt het wel alsof de MSX er voor de lol is en de PC om mee te werken.&rdquo;</p>
+          <p>Aangezien hij zich hiermee blijkbaar niet kon verenigen heeft hij toen maar een spel voor de PC geschreven, en dat aan ons opgestuurd. Waarna wij, op de redactie, daar vele uren mee zoet zijn geweest. Eerst om te spelen, toen om het nog een beetje op te poetsen. En nu staat dat spel, Sneekie, dus als listing in het blad.</p>
+          <p class="article-label">GW-BASIC spel voor MS-DOS</p>
+          <h4>Tekstscherm</h4>
+          <p>Sneekie werkt volledig met een standaard-tekstscherm. Met andere woorden, het zal op iedere PC gespeeld kunnen worden. Weliswaar zijn de kleuren wat beperkt &mdash; kortom, geen kleuren &mdash; en heeft de maker de graphics simpel gehouden &mdash; alleen maar gewone tekens &mdash; maar anders had Sneekie slechts op bepaalde video-adapters kunnen werken. Door deze beperkingen is Sneekie wel compatibel met iedere PC waar GW-Basic op werkt.</p>
+          <p>Overigens, de inzender, de heer Herbert Groot Jebbink, vroeg zich in zijn begeleidende brief af of er op MS-DOS machines geen trucs met de tekenset uit te halen waren. Als hij immers in staat zou zijn om eigen tekens te defini&euml;ren zou Sneekie nog veel mooier zijn. Jammer genoeg stuit dat echter op hetzelfde bezwaar als het gebruik van kleur: op sommige video-kaarten kan men inderdaad een eigen tekenset samenstellen, maar dan is een programma gelijk niet meer universeel.</p>
+          <h4>Fraai</h4>
+          <p>Ondanks die beperking is Sneekie echter een fraai spel. De bedoeling is simpel; alle hartjes en klavertjes &mdash; overigens, die klavertjes verschijnen pas op de hogere velden &mdash; met de slang opeten. Die slang wordt echter wel steeds langer, zodat men met enig overleg te werk moet gaan. Het is maar al te gemakkelijk om jezelf als slang in een hoekje klem te zetten.</p>
+          <p>Daarnaast zijn er in ieder van de in totaal 32 velden gezichtjes te vinden. Zo&rsquo;n gezichtje is niet dodelijk, maar het kost wel punten, als men er doorheen loopt.</p>
+          <p>De 32 velden bestaan uit een achttal schermontwerpen, ieder met hun eigen specifieke problemen, die dan weer in vier moeilijkheidsgraden verschijnen. Zo is het basisspel heel simpel, u beweegt &mdash; met de cursor-toetsen &mdash; uw slang en verder niets. Weliswaar wordt uw sneekie steeds langer, maar die basisvorm is best speelbaar. Pas vanaf veld nummer 9 &mdash; hetgeen dus qua layout veld 1 is &mdash; wordt het lastiger. Dan blijkt uw slang namelijk een eigen leven te gaan leiden: het beest loopt verder in de laatst aangegeven richting. Lastig, want de bedenktijd wordt nu cruciaal.</p>
+          <p>Weer acht velden verder gaan de al aangestipte klavertjes een rol spelen: met regelmaat verschijnen er nieuwe hartjes of klavertjes, als u er &eacute;&eacute;ntje heeft opgegeten. En aangezien u alle klavers en harten moet weghalen voor u een hoger niveau bereikt...</p>
+          <p>De laatste serie van 8 levels ligt voor de hand: en er verschijnen nieuwe hapklare brokjes, en uw slang beweegt continu. Lastig!</p>
+          <h4>Velden</h4>
+          <p>Die ellende staat u dus op in totaal acht verschillende schermen te wachten. Sommige daarvan zijn simpel, andere niet. Zo kunnen er lijnen verschijnen, waar u natuurlijk niet doorheen kunt. Ook aardig zijn die schermen waarbij die lijnen gaan bewegen; de vorm verandert dan voortdurend. Stenen, die op sommige schermen een hoofdrol spelen, zijn een probleem op zich. Sneekie kan namelijk slechts &eacute;&eacute;n steen voor zich uit duwen, twee zijn te zwaar. Ook als er iets anders achter een steen schuilt is het gewicht teveel voor onze slang. Met beleid en overleg te werk gaan, dus. Helemaal onaangenaam zijn de hoogste schermen, waarbij er pijltjes over het beeld heen bewegen. Absoluut dodelijk, die dingen!</p>
+          <h4>Tot slot</h4>
+          <p>Sneekie is een leuk spel, waar we de inzender, de heer Herbert Groot Jebbink, hartelijk voor danken. Overigens staat deze met naam en adres in de listing, op zijn eigen verzoek.</p>
+          <p>Aan zijn programma hebben we slechts enkele zaken veranderd. Zo had zijn versie 16 niveau's, waar we er vier aan toegevoegd hebben door het verschijnen van nieuwe hartjes en klavertjes naar een nieuwe serie levels te verplaatsen. Dat maakt het basis-spel een stuk speelbaarder.</p>
+          <p>Wat ook in de GW-Basic versie ontbrak &mdash; maar weer wel in de ook opgezonden Quick-Basic versie te vinden was &mdash; is het valsspelen. Hoewel het nergens op het scherm te vinden is: met de F10 gaat u een level verder, de F9 zorgt bovendien voor een extra leven.</p>
+          <p>Sneekie is een spel dat zich als GW-Basic prima laat spelen, maar dan liefst wel op een wat snellere machine. Op een 4,77 Megahertz XT is het eerlijk gezegd wat traag.</p>
+          <p>Het programma laat zich echter probleemloos compileren met Quick-Basic, waarna er een ook op tragere XT&rsquo;s zeer speelbaar spel ontstaat. Wie geen compiler bezit kan desgewenst de diskette bestellen waar Sneekie op staat, daar zullen we die gecompileerde versie zeker op opnemen.</p>
+        </article>
       </section>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-closing.webp" alt="Een 3D-Sneekie-slang scheurt uit het gedrukte magazine terwijl harten en klavers van de pagina springen." />
@@ -169,8 +199,8 @@
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-hero.webp" alt="Відкритий компʼютерний журнал 1988 року з надрукованим скриншотом Sneekie на столі." />
       </figure>
-      <p class="hint">Натисніть будь-яку сторінку, щоб відкрити її на весь екран &middot; <kbd>Esc</kbd> закриває.</p>
-      <div class="gallery" id="gallery">
+      <p class="hint">Натисніть сторінку, щоб відкрити її на весь екран &middot; гортайте жестом або стрілками &middot; збільшуйте щипком, колесом або кнопками &middot; <kbd>Esc</kbd> закриває.</p>
+      <div class="gallery page-gallery" id="gallery">
         <button type="button" class="thumb cover" data-full="../images/magazine/cover.webp" data-cap="Обкладинка — MS(X)DOS Computer Magazine № 25">
           <img loading="lazy" src="../images/magazine/cover.thumb.webp" alt="Обкладинка MS(X)DOS Computer Magazine, випуск 25." />
           <span class="cap-wrap"><span class="lbl">Обкладинка</span><span class="cap">MS(X)DOS Computer Magazine №&nbsp;25</span></span>
@@ -201,25 +231,53 @@
         </button>
       </div>
       <hr class="sep" />
-      <section class="recap translated-scans">
-        <h2>Повністю перекладені скани</h2>
-        <p class="note">Копії сторінок&nbsp;58 і&nbsp;59 з англійським перекладом тексту прямо на скані. BASIC-лістинг на сторінці&nbsp;59 лишається оригінальним кодом.</p>
-        <div class="gallery">
-          <button type="button" class="thumb" data-full="../images/magazine/p58.en.webp" data-cap="Сторінка 58 — повний англійський переклад на копії скану">
-            <img loading="lazy" src="../images/magazine/p58.en.thumb.webp" alt="Перекладена копія сторінки 58 англійською." />
-            <span class="cap-wrap"><span class="lbl">Сторінка 58</span><span class="cap">Англійський переклад скану</span></span>
-          </button>
-          <button type="button" class="thumb" data-full="../images/magazine/p59.en.webp" data-cap="Сторінка 59 — повний англійський переклад на копії скану">
-            <img loading="lazy" src="../images/magazine/p59.en.thumb.webp" alt="Перекладена копія сторінки 59 англійською." />
-            <span class="cap-wrap"><span class="lbl">Сторінка 59</span><span class="cap">Англійський переклад скану</span></span>
-          </button>
-        </div>
+      <section class="recap article-text">
+        <h2>Текст статті</h2>
+        <p class="note">Текст статті зі сторінок&nbsp;58 і&nbsp;59 у перекладі з нідерландської. Лістинг GW-BASIC тут пропущено, бо відновлена програма є на сторінці коду.</p>
+        <article class="magazine-article">
+          <h3>Sneekie, змія у вашому PC</h3>
+          <p class="article-lead">Ігри для PC на BASIC трапляються доволі рідко, принаймні хороші ігри. PC просто не дуже підходить для всіляких трюків, які, наприклад, можливі на MSX. Крім того, найбільша проблема все ще відеокарта. На EGA можна робити дуже гарні речі. Hercules-карта чудово годиться для монохромної графіки, але з кольорами все погано. А про ще примітивніші відеокарти, які іноді ставлять у PC-Priv&eacute; машини, краще взагалі мовчати. Саме тому нам дуже сподобалася ця гра, яка працює на всіх PC незалежно від відеокарти. Гра про змію зі стратегічним ухилом!</p>
+          <blockquote>Добридень, юначе. Чи не знаю я вас із кількох років тому?</blockquote>
+          <p>Нещодавно ми отримали листа від читача, який гірко скаржився. Він щойно обміняв свій MSX на PC &mdash; і, що гірше, MCM на інший журнал &mdash; аж тут ми теж почали приділяти увагу MS-DOS. Одне слово, сподіваємося, він знову оформив передплату. Його висновок був такий: &ldquo;Якщо так подивитися, здається, що MSX існує для розваг, а PC &mdash; для роботи.&rdquo;</p>
+          <p>Оскільки він, очевидно, не міг із цим змиритися, то написав гру для PC і надіслав її нам. Після цього ми в редакції провели з нею багато годин: спершу грали, потім ще трохи полірували. І тепер ця гра, Sneekie, надрукована в журналі як лістинг.</p>
+          <p class="article-label">Гра GW-BASIC для MS-DOS</p>
+          <h4>Текстовий екран</h4>
+          <p>Sneekie повністю працює зі стандартним текстовим екраном. Іншими словами, у неї можна грати на кожному PC. Щоправда, кольори обмежені &mdash; коротко кажучи, кольорів немає &mdash; і автор зробив графіку простою, лише звичайними символами. Інакше Sneekie працювала б тільки на певних відеоадаптерах. Завдяки цим обмеженням Sneekie сумісна з кожним PC, на якому працює GW-BASIC.</p>
+          <p>До речі, автор, пан Herbert Groot Jebbink, у супровідному листі запитував, чи немає на MS-DOS машинах якихось трюків із набором символів. Якби він міг визначити власні символи, Sneekie виглядала б значно краще. На жаль, тут виникає те саме заперечення, що й із кольором: на деяких відеокартах справді можна створити власний набір символів, але тоді програма одразу перестає бути універсальною.</p>
+          <h4>Гарна гра</h4>
+          <p>Попри це обмеження, Sneekie є гарною грою. Мета проста: з'їсти змією всі сердечка і трефи. Трефи, до речі, з'являються тільки на вищих полях. Змія стає дедалі довшою, тож діяти треба обдумано. Дуже легко загнати себе, як змію, у кут.</p>
+          <p>Крім того, у кожному з 32 полів є смайлики. Такий смайлик не смертельний, але коштує очок, якщо пройти крізь нього.</p>
+          <p>32 поля складаються з восьми схем екрана, кожна зі своїми специфічними проблемами, які потім з'являються у чотирьох ступенях складності. Базова гра дуже проста: ви рухаєте змію клавішами курсора, і все. Ваша Sneekie справді стає довшою, але ця базова форма добре грається. Лише з поля номер 9 &mdash; тобто знову з першої схеми &mdash; стає важче. Тоді виявляється, що змія живе власним життям: вона продовжує рухатися в останньому заданому напрямку. Складно, бо час на роздуми стає вирішальним.</p>
+          <p>Ще через вісім полів у гру вступають згадані трефи: регулярно з'являються нові сердечка або трефи, коли ви щось з'їли. А оскільки треба прибрати всі трефи і сердечка, перш ніж перейти на вищий рівень...</p>
+          <p>Остання серія з восьми рівнів очевидна: з'являються нові ласі шматочки, і ваша змія рухається безперервно. Важко!</p>
+          <h4>Поля</h4>
+          <p>Отже, це лихо чекає на вас загалом на восьми різних екранах. Деякі прості, інші ні. Наприклад, можуть з'являтися лінії, крізь які, звісно, пройти не можна. Цікаві й екрани, де ці лінії починають рухатися: форма тоді постійно змінюється. Камені, що на деяких екранах відіграють головну роль, самі по собі проблема. Sneekie може штовхати перед собою лише один камінь; два вже занадто важкі. Якщо за каменем ховається щось інше, вага теж завелика для нашої змії. Тож доведеться діяти з розрахунком і обережністю. Найнеприємніші найвищі екрани, де по зображенню рухаються стрілки. Абсолютно смертельні штуки!</p>
+          <h4>Наостанок</h4>
+          <p>Sneekie &mdash; приємна гра, і ми щиро дякуємо автору, панові Herbert Groot Jebbink. Його ім'я та адреса стоять у лістингу на його власне прохання.</p>
+          <p>У його програмі ми змінили лише кілька речей. Наприклад, у його версії було 16 рівнів; ми додали ще чотири, перенісши появу нових сердечок і треф до нової серії рівнів. Це робить базову гру значно зручнішою.</p>
+          <p>У GW-BASIC версії також бракувало читів &mdash; хоча вони були в надісланій разом із нею QuickBASIC версії. Хоча на екрані цього ніде немає: F10 переводить вас на рівень далі, а F9 дає додаткове життя.</p>
+          <p>Sneekie добре грається як GW-BASIC, але бажано на дещо швидшій машині. На 4,77 МГц XT вона, чесно кажучи, трохи повільна.</p>
+          <p>Проте програма без проблем компілюється QuickBASIC, після чого стає дуже придатною для гри і на повільніших XT. Ті, хто не має компілятора, за бажання можуть замовити дискету зі Sneekie; ми обов'язково додамо туди скомпільовану версію.</p>
+        </article>
       </section>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/magazine-closing.webp" alt="3D-змія Sneekie проривається з друкованого журналу, а серця і трефи стрибають зі сторінки." />
       </figure>
     </template>
-    <div id="page-fs" role="dialog" aria-modal="true" aria-label="Magazine page preview" data-i18n-aria="magazinePreview" aria-hidden="true" tabindex="-1"><button id="page-fs-close" class="fs-close" type="button" aria-label="Close" data-i18n-aria="close">&times;</button></div>
+    <div id="page-fs" role="dialog" aria-modal="true" aria-label="Magazine page preview" data-i18n-aria="magazinePreview" aria-hidden="true" tabindex="-1">
+      <button id="page-fs-close" class="fs-close" type="button" aria-label="Close" data-i18n-aria="close">&times;</button>
+      <button id="page-prev" class="fs-nav fs-prev" type="button" aria-label="Previous page" data-i18n-aria="magazinePrevPage">&#8249;</button>
+      <button id="page-next" class="fs-nav fs-next" type="button" aria-label="Next page" data-i18n-aria="magazineNextPage">&#8250;</button>
+      <div id="page-stage">
+        <img id="page-fs-img" alt="" />
+      </div>
+      <p id="page-fs-caption" class="fs-caption"></p>
+      <div class="fs-toolbar" aria-label="Zoom controls" data-i18n-aria="magazineZoomControls">
+        <button id="page-zoom-out" type="button" aria-label="Zoom out" data-i18n-aria="zoomOut">&minus;</button>
+        <button id="page-zoom-reset" type="button" aria-label="Reset zoom" data-i18n-aria="zoomReset">100%</button>
+        <button id="page-zoom-in" type="button" aria-label="Zoom in" data-i18n-aria="zoomIn">+</button>
+      </div>
+    </div>
     <script src="../js/i18n.js"></script>
     <script src="../js/site.js"></script>
     <script src="../js/magazine.js"></script>

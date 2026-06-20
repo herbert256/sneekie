@@ -93,17 +93,35 @@ const staticStrings = {
   en: {
     close: 'Close',
     layoutPreview: 'Layout preview',
-    magazinePreview: 'Magazine page preview'
+    magazinePreview: 'Magazine page preview',
+    magazinePrevPage: 'Previous page',
+    magazineNextPage: 'Next page',
+    magazineZoomControls: 'Zoom controls',
+    zoomOut: 'Zoom out',
+    zoomReset: 'Reset zoom',
+    zoomIn: 'Zoom in'
   },
   nl: {
     close: 'Sluiten',
     layoutPreview: 'Layoutvoorbeeld',
-    magazinePreview: 'Tijdschriftpagina voorbeeld'
+    magazinePreview: 'Tijdschriftpagina voorbeeld',
+    magazinePrevPage: 'Vorige pagina',
+    magazineNextPage: 'Volgende pagina',
+    magazineZoomControls: 'Zoomknoppen',
+    zoomOut: 'Uitzoomen',
+    zoomReset: 'Zoom resetten',
+    zoomIn: 'Inzoomen'
   },
   uk: {
     close: 'Закрити',
     layoutPreview: 'Перегляд схеми',
-    magazinePreview: 'Перегляд сторінки журналу'
+    magazinePreview: 'Перегляд сторінки журналу',
+    magazinePrevPage: 'Попередня сторінка',
+    magazineNextPage: 'Наступна сторінка',
+    magazineZoomControls: 'Керування масштабом',
+    zoomOut: 'Зменшити',
+    zoomReset: 'Скинути масштаб',
+    zoomIn: 'Збільшити'
   }
 };
 
