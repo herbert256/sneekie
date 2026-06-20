@@ -136,7 +136,7 @@
 
 .play-link{
   display:block;
-  max-width:680px;
+  max-width:700px;
   color:inherit;
   text-decoration:none;
 }
@@ -146,11 +146,108 @@
   text-decoration:none;
 }
 
+/* CRT monitor shell around the play image, mirroring the one on game.html */
+.play-link .crt{
+  display:block;
+  background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
+  border-radius:20px;
+  padding:18px 22px 15px;
+  box-shadow:0 38px 84px -28px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45);
+  transition:box-shadow .14s, transform .14s;
+}
+
+.play-link .crt-tube{
+  position:relative;
+  display:block;
+  background:#060708;
+  padding:9px;
+  border-radius:14px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035), inset 0 0 18px 5px rgba(0,0,0,.9);
+}
+
 .play-image{
+  display:block;
+  width:100%;
+  height:auto;
   aspect-ratio:640 / 384;
   object-fit:contain;
   background:#000;
+  border-radius:7px;
   image-rendering:pixelated;
+  box-shadow:0 0 0 2px #000, 0 0 44px -2px var(--glow);
+}
+
+.play-link .crt-glass{
+  position:absolute;
+  inset:9px;
+  border-radius:7px;
+  pointer-events:none;
+  z-index:2;
+  background:linear-gradient(133deg, rgba(255,255,255,.07), rgba(255,255,255,.012) 24%, transparent 40%), radial-gradient(128% 132% at 50% 47%, transparent 56%, rgba(0,0,0,.40) 100%), repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  box-shadow:inset 0 0 26px 5px rgba(0,0,0,.5);
+}
+
+.play-link .crt-panel{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  height:16px;
+  margin-top:13px;
+  padding:0 5px;
+}
+
+.play-link .crt-logo{
+  font:700 10px/1 ui-monospace, monospace;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:#494e53;
+  text-shadow:0 1px 0 rgba(255,255,255,.06), 0 -1px 0 rgba(0,0,0,.55);
+}
+
+.play-link .crt-led{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:radial-gradient(circle at 34% 30%, #e6ffe6, var(--phos) 52%, rgba(0,0,0,.7) 100%);
+  box-shadow:0 0 9px 1px var(--glow);
+}
+
+.play-link .crt-knobs{
+  margin-left:auto;
+  display:flex;
+  gap:11px;
+}
+
+.play-link .crt-knobs i{
+  position:relative;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:radial-gradient(circle at 38% 30%, #4a4f54, #25292c 62%, #15171a 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.6);
+}
+
+.play-link .crt-knobs i::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:2px;
+  width:1.5px;
+  height:5px;
+  background:rgba(0,0,0,.6);
+  border-radius:1px;
+  transform:translateX(-50%);
+}
+
+.play-link:hover .crt,
+.play-link:focus-visible .crt{
+  box-shadow:0 40px 90px -26px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.10), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45), 0 0 24px -6px var(--accent);
+  transform:translateY(-2px);
+}
+
+.play-link:hover .play-image,
+.play-link:focus-visible .play-image{
+  box-shadow:0 0 0 2px #000, 0 0 56px 0 var(--glow);
 }
 
 @media (max-width:900px){
@@ -171,6 +268,10 @@
   }
   .topic-card{
     min-height:0;
+  }
+  .play-link .crt{
+    border-radius:15px;
+    padding:12px 13px 10px;
   }
 }
 
