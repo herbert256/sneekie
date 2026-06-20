@@ -184,23 +184,11 @@ function poke(off, v){
 }
 function peek(off){ return (off >= 0 && off < 4000) ? vram[off] : 0; }
 
-function isPlayFrameCell(i, ch){
-  if(bootActive) return false;
-  if(ch !== 179 && ch !== 180 && ch !== 192 && ch !== 195 &&
-     ch !== 196 && ch !== 217 && ch !== 218 && ch !== 191) return false;
-  const row = (i / 80 | 0) + 1;
-  const col = (i % 80) + 1;
-  if(row === 1 || row === 3 || row === 21 || row === 24) return true;
-  return col === 1 && row >= 2 && row <= 23 ||
-    col === 80 && row >= 2 && row <= 23;
-}
-
 function drawCell(i){
   const ch = vram[i*2], at = vram[i*2+1];
   const dx = (i % 80) * 8, dy = (i / 80 | 0) * 16;
   ctx.fillStyle = '#000';
   ctx.fillRect(dx, dy, 8, 16);
-  if(isPlayFrameCell(i, ch)) return;
   const atlas = theme.cga ? cgaAtlas[cgaColor(ch, at)] : ((at & 8) ? atlasBright : atlasDim);
   ctx.drawImage(atlas, (ch & 31)*8, (ch >> 5)*16, 8, 16, dx, dy, 8, 16);
   if(cursorVisible && cursorBlink && i === cursorCell()){
