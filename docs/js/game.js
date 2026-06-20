@@ -47,8 +47,6 @@ const THEMES = {
 
 const GAME_TEXT = {
   en: {
-    bootPress: 'Press any key to boot',
-    bootTap: 'or tap the monitor screen',
     titleLine: "**** Sneekie ****         (c) July '88 by HerbySoft",
     scoreLine: '10 points      -50 points    Highscore',
     levelScore: 'Level       Score',
@@ -64,8 +62,6 @@ const GAME_TEXT = {
     yesInput: 'y'
   },
   nl: {
-    bootPress: 'Druk op een toets om te starten',
-    bootTap: 'of tik op het monitorscherm',
     titleLine: "**** Sneekie ****         (c) juli '88 door HerbySoft",
     scoreLine: '10 punten      -50 punten    Highscore',
     levelScore: 'Level       Score',
@@ -126,7 +122,8 @@ const ctx = cv.getContext('2d');
 let atlasDim, atlasBright;
 const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
-let bootStartResolve = null;
+let bootStartResolve = null, bootAutoStart = null;
+const BOOT_AUTOSTART_MS = 2000;   // boot starts on its own this long after the BIOS screen appears
 document.body.classList.add('booting');     // hides the touch controls (#touchbar + fullscreen #fstouch) until boot finishes
 
 /* boot-time blinking hardware text cursor (the original game has none) */
@@ -462,6 +459,7 @@ function startBootFromGesture(){
   if(!bootWaiting || bootStarted) return;
   bootWaiting = false;
   bootStarted = true;
+  if(bootAutoStart){ clearTimeout(bootAutoStart); bootAutoStart = null; }
   if(bootStartResolve){ const r = bootStartResolve; bootStartResolve = null; r(); }
 }
 function shouldSkipBoot(){
@@ -658,11 +656,16 @@ function bootConfigBox(top=11){
   locate(r++, left); pc(200); pcn(205, inner); pc(188);            // bottom border
   curR = Math.min(24, r); curC = 1;
 }
-async function waitForBootGesture(){
+async function waitForBootStart(){
   bootWaiting = true;
   bootStarted = false;
   bootSkip = false;
-  return new Promise(resolve => { bootStartResolve = resolve; });
+  return new Promise(resolve => {
+    bootStartResolve = resolve;
+    // Start on its own after BOOT_AUTOSTART_MS; an early key/tap starts it sooner
+    // (and resumes audio, which the autostart path can't do without a gesture).
+    bootAutoStart = setTimeout(startBootFromGesture, BOOT_AUTOSTART_MS);
+  });
 }
 function crtPowerOn(){
   const p = document.getElementById('power');
@@ -676,9 +679,7 @@ async function bootSequence(){
   bootBiosLogo(4);
   bootCenter(11, 'Acme Corporation PC/XT compatible', 15);
   bootCenter(13, '8088  4.77 MHz   640K RAM', 7);
-  bootCenter(22, gt('bootPress'), 15);
-  bootCenter(23, gt('bootTap'), 7);
-  await waitForBootGesture();
+  await waitForBootStart();
 
   await bootCls();
   startCursor();
