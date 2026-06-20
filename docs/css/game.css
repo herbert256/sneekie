@@ -324,6 +324,31 @@
 @media (pointer:coarse) and (max-width:520px){
   .page-index:not(.booting) #touchbar{ display:grid; }
 }
+.page-index:not(.booting) #bezel{
+  padding:0;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  animation:none;
+}
+.page-index:not(.booting) #tube{
+  padding:0;
+  background:#000;
+  border-radius:0;
+  box-shadow:none;
+}
+.page-index:not(.booting) #screen{
+  border-radius:0;
+  box-shadow:none;
+}
+.page-index:not(.booting) #glass,
+.page-index:not(.booting) #power{
+  inset:0;
+  border-radius:0;
+}
+.page-index:not(.booting) #panel{
+  display:none;
+}
 @media print{
   .page-index #controls,
   .page-index #touchbar{ display:none !important; }

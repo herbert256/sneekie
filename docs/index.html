@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Sneekie (1988) by HerbySoft — the original GW-BASIC game from MS(X)DOS Computer Magazine, reborn as a faithful, dependency-free browser game." />
-    <title>Sneekie — a 1988 MS-DOS snake/maze game by HerbySoft</title>
+    <meta name="description" content="Play Sneekie and explore the history, magazine scans, recovered GW-BASIC source, bot, manual, migration notes, and VRAM visualizer behind the 1988 HerbySoft game." />
+    <title>Sneekie - home</title>
     <link rel="canonical" href="https://sneekie.xyz/" />
-    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
-    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/game" />
-    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/game" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.xyz/" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.xyz/index_nl.html" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.xyz/index_uk.html" />
     <link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png" />
@@ -21,18 +21,18 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
-    <meta property="og:title" content="Sneekie (1988)" />
-    <meta property="og:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
+    <meta property="og:title" content="Sneekie - Home" />
+    <meta property="og:description" content="Play Sneekie and explore the complete archive around the 1988 HerbySoft GW-BASIC game." />
     <meta property="og:url" content="https://sneekie.xyz/" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta property="og:image:alt" content="Sneekie - a 1988 MS-DOS snake/maze game" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Sneekie (1988)" />
-    <meta name="twitter:description" content="A 32-level snake/maze game from 1988 by HerbySoft — reborn as a faithful, dependency-free browser game." />
+    <meta name="twitter:title" content="Sneekie - Home" />
+    <meta name="twitter:description" content="Play Sneekie and explore the complete archive around the 1988 HerbySoft GW-BASIC game." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
-    <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
+    <meta name="twitter:image:alt" content="Sneekie - a 1988 MS-DOS snake/maze game" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -61,15 +61,84 @@
         ]
       }
     </script>
+    <link rel="stylesheet" href="css/site.css" />
     <link rel="stylesheet" href="css/index.css" />
   </head>
-  <body>
-    <main id="main">
+  <body class="page-doc page-home">
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top">
+      <a class="brand" href="index.html" aria-label="Sneekie home"><img src="images/logo.png" width="704" height="128" alt="Sneekie" /></a>
+      <nav aria-label="Primary">
+        <a href="en/game.html">&#9654; Play</a>
+        <a href="en/history.html">History</a>
+        <a href="en/magazine.html">Magazine</a>
+        <a href="en/source.html">Source</a>
+        <a href="en/bot.html">Bot</a>
+        <a href="en/manual.html">Manual</a>
+        <a href="en/explained.html">Explained</a>
+        <a href="en/migration.html">Migration</a>
+        <a href="en/vram.html">Visualizer</a>
+      </nav>
+      <div class="lang-switch" aria-label="Language">
+        <a href="index.html" aria-label="English" title="English" aria-current="true"><span class="lang-icon" aria-hidden="true">&#127468;&#127463;</span></a>
+        <a href="index_nl.html" aria-label="Nederlands" title="Nederlands"><span class="lang-icon" aria-hidden="true">&#127475;&#127473;</span></a>
+        <a href="index_uk.html" aria-label="Українська" title="Українська"><span class="lang-icon" aria-hidden="true">&#127482;&#127462;</span></a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
       <h1 class="visually-hidden">Sneekie</h1>
-      <iframe id="game" title="Sneekie game" src="en/game.html" allow="fullscreen"></iframe>
+      <section class="home-game" aria-label="Play Sneekie">
+        <h2>Sneekie - The 1988 MS-DOS text game</h2>
+        <p>Start Sneekie in your browser and try to guide the snake through all 32 maze levels without running into arrows, stones, or your own growing tail.</p>
+        <p class="play-note">Click on the image below to start playing.</p>
+        <a class="play-link" href="en/game.html" aria-label="Play Sneekie">
+          <img class="topic-image play-image" loading="eager" width="640" height="384" src="images/manual/scene-2.webp" alt="" />
+        </a>
+      </section>
+      <section class="home-topics" id="explore" aria-labelledby="explore-title">
+        <h2 id="explore-title">Explore the project</h2>
+        <div class="topic-grid">
+          <a class="topic-card" href="en/history.html">
+            <h3>History</h3>
+            <p>The story follows Sneekie from its 1988 summer of BASIC programming, through magazine publication, OCR recovery, and the 2026 browser port.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/legend-1988.webp" alt="" /></a>
+          <a class="topic-card" href="en/magazine.html">
+            <h3>Magazine</h3>
+            <p>See the original MS(X)DOS Computer Magazine pages, including the printed listing that preserved Sneekie for nearly four decades.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/magazine-hero.webp" alt="" /></a>
+          <a class="topic-card" href="en/source.html">
+            <h3>Source</h3>
+            <p>The recovered GW-BASIC listing is shown as clean, syntax-highlighted source while keeping the original line-numbered structure intact.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/history-17-ocr-recovery.webp" alt="" /></a>
+          <a class="topic-card" href="en/bot.html">
+            <h3>Bot</h3>
+            <p>Watch a modern planner run the real game inside an iframe and clear the deep levels by pressing the same keys a player would press.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/bot-closing.webp" alt="" /></a>
+          <a class="topic-card" href="en/bot-thinking.html">
+            <h3>How the bot thinks</h3>
+            <p>This deeper page explains the bot's route search, danger model, trap checks, and fallback choices in more detail.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/bot-thinking-hero.webp" alt="" /></a>
+          <a class="topic-card" href="en/manual.html">
+            <h3>Manual</h3>
+            <p>The manual covers controls, scoring, hazards, enemies, and the maze gallery so the 1988 rules are easy to learn again.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/manual-hero.webp" alt="" /></a>
+          <a class="topic-card" href="en/explained.html">
+            <h3>Explained</h3>
+            <p>Follow the BASIC listing section by section, with annotations that explain what each line range does inside the game.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/history-18-zero-o-war.webp" alt="" /></a>
+          <a class="topic-card" href="en/migration.html">
+            <h3>Migration</h3>
+            <p>Compare the original GW-BASIC and the JavaScript port side by side to see how the same ideas moved into the browser.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/web-resurrection.webp" alt="" /></a>
+          <a class="topic-card" href="en/vram.html">
+            <h3>VRAM visualizer</h3>
+            <p>The visualizer turns the direct video-memory model into an interactive sandbox where every peek and poke can be followed.</p>
+            <img class="topic-image" loading="lazy" width="1200" height="676" src="images/pages/vram-hero.webp" alt="" /></a>
+        </div>
+      </section>
     </main>
-    <noscript><p class="noscript"><a href="en/game.html">Play Sneekie</a></p></noscript>
-    <script src="js/i18n.js"></script>
-    <script src="js/index.js"></script>
+    <footer>
+      Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
+    </footer>
   </body>
 </html>

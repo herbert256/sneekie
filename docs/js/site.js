@@ -14,18 +14,19 @@ const SITE_LANG_META = Object.fromEntries((SITE_I18N_CONFIG.languages || []).map
 const SITE_I18N = SITE_I18N_CONFIG.strings || {};
 const DEFAULT_LANG = SITE_I18N_CONFIG.defaultLang || 'en';
 
+function queryValue(name){
+  try { return new URLSearchParams(location.search).get(name); }
+  catch(_) { return null; }
+}
+
 function normalizeSiteLang(value){
   const lang = String(value || '').toLowerCase().split('-')[0];
   return SITE_LANGS.includes(lang) ? lang : DEFAULT_LANG;
 }
 
 function querySiteLang(){
-  try {
-    const value = String(new URLSearchParams(location.search).get('lang') || '').toLowerCase().split('-')[0];
-    return SITE_LANGS.includes(value) ? value : null;
-  } catch(_) {
-    return null;
-  }
+  const value = String(queryValue('lang') || '').toLowerCase().split('-')[0];
+  return SITE_LANGS.includes(value) ? value : null;
 }
 
 function sitePathPartsFromPathname(pathname){

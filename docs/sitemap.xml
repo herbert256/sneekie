@@ -2,10 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://sneekie.xyz/</loc>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
-    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.xyz/nl/game" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.xyz/uk/game" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/en/game" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.xyz/" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.xyz/index_nl.html" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.xyz/index_uk.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/" />
+  </url>
+  <url>
+    <loc>https://sneekie.xyz/index_nl.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.xyz/" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.xyz/index_nl.html" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.xyz/index_uk.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/" />
+  </url>
+  <url>
+    <loc>https://sneekie.xyz/index_uk.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.xyz/" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.xyz/index_nl.html" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.xyz/index_uk.html" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.xyz/" />
   </url>
   <url>
     <loc>https://sneekie.xyz/en/game</loc>

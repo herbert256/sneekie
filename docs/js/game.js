@@ -584,7 +584,7 @@ function crtPowerOn(){
   if(p) p.classList.add('go');               // one-shot tube warm-up flash
 }
 async function bootSequence(){
-  if(shouldSkipBoot()){ bootActive = false; document.body.classList.remove('booting'); return; }
+  if(shouldSkipBoot()){ bootActive = false; document.body.classList.remove('booting'); fit(); return; }
 
   crtPowerOn();
   cls();
@@ -662,6 +662,7 @@ async function bootSequence(){
   clearKbd();
   bootActive = false;
   document.body.classList.remove('booting');  // boot done → reveal fullscreen touch controls
+  fit();                                      // borderless play chrome changes the available screen size
 }
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
