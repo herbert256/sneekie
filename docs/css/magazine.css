@@ -166,6 +166,7 @@
   width:auto;
   height:auto;
   transform-origin:center center;
+  -webkit-user-select:none;
   user-select:none;
   pointer-events:none;
   will-change:transform;

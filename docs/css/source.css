@@ -90,6 +90,7 @@
   text-align:right;
   color:var(--gut);
   background:var(--bg);
+  -webkit-user-select:none;
   user-select:none;
 }
 .page-source .code{

@@ -568,6 +568,7 @@ section.card .prose,
   color:var(--muted);
   text-align:center;
   padding:2px 0;
+  -webkit-user-select:none;
   user-select:none;
   opacity:.6;
 }
