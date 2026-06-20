@@ -89,6 +89,7 @@ addEventListener('storage', event => {
   if(event.key === 'sneekie.lang') syncGameSrc();
 });
 addEventListener('message', event => {
+  if(event.source !== game.contentWindow) return;   // only trust our own game iframe
   const data = event.data || {};
   if(data.type === 'sneekie:language' && data.lang){
     setStoredLang(data.lang);
