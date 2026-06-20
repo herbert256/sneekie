@@ -125,7 +125,7 @@
   transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
 .page-bot .leveltabs button:hover{ color:var(--accent); border-color:var(--accent); }
-.page-bot .leveltabs button[aria-selected="true"]{
+.page-bot .leveltabs button[aria-pressed="true"]{
   color:var(--accent);
   border-color:var(--accent);
   background:color-mix(in srgb, var(--accent) 18%, var(--button));
