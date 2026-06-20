@@ -677,7 +677,7 @@ async function bootSequence(){
   clearKbd();
   bootActive = false;
   document.body.classList.remove('booting');  // boot done → reveal fullscreen touch controls
-  fit();                                      // borderless play chrome changes the available screen size
+  fit();                                      // booting class changes touch-control/layout rules
 }
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
