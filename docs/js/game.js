@@ -5,14 +5,25 @@
    recovered by OCR from the magazine listing). BASIC line numbers in comments.
    ============================================================ */
 
-/* surface any runtime error on the page instead of failing silently */
+/* surface any runtime error on the page instead of failing silently.
+   window.onerror also fires for throws inside the requestAnimationFrame render
+   loop, so a persistent render error would fire every frame -- reuse one banner
+   and de-dupe identical messages so a single fault can't flood the DOM. */
+let errorBanner = null;
+const seenErrors = new Set();
 function showError(text){
-  const d = document.createElement('div');
-  d.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;'+
-    'background:#3a0d0d;color:#ffb3b3;border:1px solid #a33;border-radius:4px;'+
-    'padding:8px 14px;font:12px/1.5 monospace;max-width:90vw;';
-  d.textContent = text;
-  document.body.appendChild(d);
+  if(seenErrors.has(text) || !document.body) return;
+  seenErrors.add(text);
+  if(!errorBanner){
+    errorBanner = document.createElement('div');
+    errorBanner.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99;'+
+      'background:#3a0d0d;color:#ffb3b3;border:1px solid #a33;border-radius:4px;'+
+      'padding:8px 14px;font:12px/1.5 monospace;max-width:90vw;';
+    document.body.appendChild(errorBanner);
+  }
+  const line = document.createElement('div');
+  line.textContent = text;
+  errorBanner.appendChild(line);
 }
 window.onerror = (msg, src, line, col) => showError('Error: ' + msg + ' (line ' + line + ':' + col + ')');
 /* The whole game runs as a Promise chain (bootSequence -> program), so a real
