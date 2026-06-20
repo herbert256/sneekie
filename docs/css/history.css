@@ -1,6 +1,4 @@
-/* Page styles for history.html — the combined illustrated chronicle of Sneekie.
-   Consolidates the look of the former making-of pages (cinematic raster figures,
-   hand-drawn SVG comic panels, chapter bands, pull quotes). */
+/* Page styles for history.html — the illustrated chronicle of Sneekie. */
 .page-history main{ max-width:1080px; }
 
 .page-history .kicker{
@@ -43,34 +41,6 @@
   text-align:center;
 }
 .page-history .story-figure figcaption b{ color:var(--heading); }
-
-/* hand-drawn inline-SVG comic panels (480x300) */
-.page-history .panel-fig{
-  max-width:560px;
-  margin:26px auto 30px;
-  padding:14px 14px 0;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:10px;
-  box-shadow:0 18px 40px -28px #000;
-}
-.page-history .panel-fig.wide{ max-width:680px; }
-.page-history .panel-fig svg{
-  display:block;
-  width:100%;
-  height:auto;
-  background:var(--codebg);
-  border:1px solid var(--border);
-  border-radius:8px;
-}
-.page-history .panel-fig figcaption{
-  padding:11px 6px 14px;
-  text-align:center;
-  font-size:13px;
-  line-height:1.5;
-  color:var(--muted);
-}
-.page-history .panel-fig figcaption b{ color:var(--heading); }
 
 /* chapter band */
 .page-history .story-band{
@@ -152,14 +122,12 @@
 @media (max-width:520px){
   .page-history .kicker{ text-align:left; }
   .page-history .story-figure{ margin:22px -2px 26px; }
-  .page-history .panel-fig{ margin:20px auto 24px; padding:10px 10px 0; }
   .page-history .story-ending,
   .page-history .story-pull{ margin-left:0; margin-right:0; }
   .page-history .story-links{ display:grid; grid-template-columns:1fr; }
 }
 @media print{
   .page-history .story-figure img,
-  .page-history .panel-fig,
   .page-history .story-pull,
   .page-history .story-ending{ box-shadow:none; }
 }
