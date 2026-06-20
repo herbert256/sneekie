@@ -255,6 +255,78 @@ function keyOrTimeout(ms){                   // 430-460: INKEY$ poll with Z time
 }
 function waitKey(){ return keyOrTimeout(Infinity); }   // INPUT$(1)
 
+let clickTarget = null;
+let clickStartsLevel = false;
+const CLICK_ROUTE_MS = 120;
+
+function clearClickTarget(){ clickTarget = null; }
+function cellOffset(row, col){ return (row - 1) * 160 + (col - 1) * 2; }
+function cellFromOffset(off){
+  const i = off >> 1;
+  return { row: (i / 80 | 0) + 1, col: (i % 80) + 1 };
+}
+function eventCell(e){
+  const r = cv.getBoundingClientRect();
+  const x = Math.max(0, Math.min(cv.width - 1, (e.clientX - r.left) * cv.width / r.width));
+  const y = Math.max(0, Math.min(cv.height - 1, (e.clientY - r.top) * cv.height / r.height));
+  return {
+    row: Math.max(4, Math.min(20, (y / 16 | 0) + 1)),
+    col: Math.max(2, Math.min(79, (x / 8 | 0) + 1)),
+  };
+}
+function setClickTarget(e){
+  const c = eventCell(e);
+  clickTarget = { row: c.row, col: c.col, off: cellOffset(c.row, c.col) };
+}
+function routePassable(idx){
+  const ch = peek(idx * 2);
+  return ch === 32 || ch === 3 || ch === 5 || ch === 1;
+}
+function nextClickTargetKey(){
+  if(!clickTarget || BTEL <= 0) return null;
+  const start = T[BTEL] >> 1;
+  const target = clickTarget.off >> 1;
+  if(start === target){ clearClickTarget(); return null; }
+
+  const startCell = cellFromOffset(start * 2);
+  const targetCell = cellFromOffset(clickTarget.off);
+  const seen = new Uint8Array(2000);
+  const first = new Int16Array(2000);
+  const q = new Int16Array(2000);
+  const dirs = [
+    { dr:-1, dc: 0, code:72, key:'\0H' },
+    { dr: 0, dc: 1, code:77, key:'\0M' },
+    { dr: 1, dc: 0, code:80, key:'\0P' },
+    { dr: 0, dc:-1, code:75, key:'\0K' },
+  ];
+  let head = 0, tail = 0, best = start;
+  let bestDist = Math.abs(startCell.row - targetCell.row) + Math.abs(startCell.col - targetCell.col);
+  seen[start] = 1; q[tail++] = start;
+
+  while(head < tail){
+    const idx = q[head++];
+    const row = (idx / 80 | 0) + 1;
+    const col = (idx % 80) + 1;
+    const dist = Math.abs(row - targetCell.row) + Math.abs(col - targetCell.col);
+    if(idx !== start && dist < bestDist){ best = idx; bestDist = dist; }
+    if(idx === target) break;
+
+    for(const d of dirs){
+      const nr = row + d.dr, nc = col + d.dc;
+      if(nr < 4 || nr > 20 || nc < 2 || nc > 79) continue;
+      const ni = (nr - 1) * 80 + (nc - 1);
+      if(seen[ni] || !routePassable(ni)) continue;
+      seen[ni] = 1;
+      first[ni] = idx === start ? d.code : first[idx];
+      q[tail++] = ni;
+    }
+  }
+
+  const routeEnd = seen[target] ? target : best;
+  if(routeEnd === start || first[routeEnd] === 0){ clearClickTarget(); return null; }
+  return dirs.find(d => d.code === first[routeEnd]).key;
+}
+
 addEventListener('keydown', e => {
   if(bootActive){
     ensureAudio();
@@ -277,6 +349,7 @@ addEventListener('keydown', e => {
     default: if(e.key.length === 1) s = e.key;
   }
   if(s !== null){
+    clearClickTarget();
     if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
     pushKey(s);
   }
@@ -300,8 +373,11 @@ cv.addEventListener('touchend', e => {
   const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
   tStart = null;
   if(Math.hypot(dx, dy) < 24){ pushKey('\r'); }
-  else if(Math.abs(dx) > Math.abs(dy)) pushKey(dx > 0 ? '\0M' : '\0K');
-  else pushKey(dy > 0 ? '\0P' : '\0H');
+  else {
+    clearClickTarget();
+    if(Math.abs(dx) > Math.abs(dy)) pushKey(dx > 0 ? '\0M' : '\0K');
+    else pushKey(dy > 0 ? '\0P' : '\0H');
+  }
   e.preventDefault();
 }, {passive:false});
 cv.addEventListener('pointerdown', e => {
@@ -311,7 +387,12 @@ cv.addEventListener('pointerdown', e => {
     if(bootWaiting) startBootFromGesture();
     else if(bootStarted) bootSkip = true;
   } else if(e.button === 0) {
-    pushKey('\r');
+    setClickTarget(e);
+    if(clickStartsLevel) pushKey('\r');
+    else {
+      const key = nextClickTargetKey();
+      if(key) pushKey(key);
+    }
   }
   e.preventDefault();
 });
@@ -332,6 +413,7 @@ document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
     ensureAudio();
     const k = b.dataset.key;
     const value = TOUCHKEYS[k] || k;
+    clearClickTarget();
     pushKey(typeof value === 'function' ? value() : value);
   });
 });
@@ -947,6 +1029,7 @@ async function playLevels(){
       place(1); place(3);
       if(K1 === 1) HART++;
     }
+    clearClickTarget();
     /* 370: save area behind popup */
     for(let I = 1; I <= 42; I++) for(let I3 = 0; I3 <= 3; I3++) S[I+I3*42] = peek(1497+I+I3*160);
     /* 380-400: "Level n" popup */
@@ -954,15 +1037,26 @@ async function playLevels(){
     popupText(11, gt('level') + ' ' + LEVEL + ' ');
     popupText(12, gt('pressAny'));
     clearKbd();
+    clickStartsLevel = true;
     await waitKey();
+    clickStartsLevel = false;
     /* 410: restore */
     for(let I = 1; I <= 42; I++) for(let I3 = 0; I3 <= 3; I3++) poke(1497+I+I3*160, S[I+I3*42]);
+    {
+      const key = nextClickTargetKey();
+      if(key) pushKey(key);
+    }
 
     /* 420-1020: the move loop */
     let died = false, skip = false;
     while(HART + KLAVER > 0){
       try{
-        const A$ = await keyOrTimeout(Z * 1000);              // 430-460
+        const waitMs = clickTarget ? Math.min(Z * 1000, CLICK_ROUTE_MS) : Z * 1000;
+        let A$ = await keyOrTimeout(waitMs);                  // 430-460
+        if(!A$.length){
+          const key = nextClickTargetKey();
+          if(key) A$ = key;
+        }
         if(BONUS > 0) BONUS -= BMIN;                          // 470
         locate(23,73); pu(6,BONUS);                           // 480
         if(A$.length === 1){                                  // 490
