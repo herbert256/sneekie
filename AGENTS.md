@@ -37,8 +37,8 @@ https://sneekie.xyz/.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
 - `docs/js/site.js` - shared site behavior: language helpers, clean-link normalization outside
-  the static chrome, service-worker registration, and the shared BASIC tokenizer used by the
-  listing pages. It must not create `header.top` or `<footer>`.
+  the static chrome, cleanup of old offline service-worker registrations/caches, and the shared
+  BASIC tokenizer used by the listing pages. It must not create `header.top` or `<footer>`.
 - `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
   Static header/footer/nav strings do **not** live here; they are build-time chrome strings in
   `tools/generate-locales.js`.
@@ -46,15 +46,15 @@ https://sneekie.xyz/.
   are used by more than one page.
 - `docs/images/` - logo/social/icon PNGs, manual WebP clips, and magazine scans. `favicon.png` stays
   at `docs/favicon.png`.
-- `docs/sw.js` - service worker precache. Bump `CACHE_NAME` when changing existing precached
-  files so deployed users do not keep stale assets.
+- `docs/sw.js` - cleanup-only service worker shim. It unregisters old offline workers and deletes
+  old `sneekie-offline-*` caches; do not add precaching or fetch handlers back.
 - `tools/i18n-source/html/*.html` - editable source templates for localized pages. Edit these
   for translatable page content, then regenerate `docs/en/`, `docs/nl/`, and `docs/uk/`.
 - `tools/generate-locales.js` - generates localized HTML pages, static shared chrome, canonical
   and hreflang links, and `docs/sitemap.xml`.
 - `tools/verify-i18n.js` - verifies generated localization output, static chrome invariants,
-  service-worker precache entries, sitemap entries, and that runtime `docs/js/i18n.js` does not
-  regain static chrome strings.
+  sitemap entries, offline-cleanup invariants, and that runtime `docs/js/i18n.js` does not regain
+  static chrome strings.
 - `tools/make-icons.py` - regenerates icon/social/logo PNGs using the CP437 font embedded in
   `docs/js/game.js`.
 
@@ -153,10 +153,6 @@ python3 -m http.server
 Then open `http://localhost:8000/`. You can also serve from the repo root and open
 `/docs/index.html`.
 
-The service worker precaches production clean URL variants such as `en/manual`; those resolve
-on GitHub Pages/Cloudflare but return 404 under a plain `python3 -m http.server`. Use the `.html`
-paths for local manual testing, or test clean URL caching against production.
-
 Useful checks after edits:
 
 ```sh
@@ -203,7 +199,7 @@ These intentionally go beyond the 1988 source: localStorage persistence (`sneeki
 `sneekie.muted`, `sneekie.highscore`), theme switching and CGA colorization, fullscreen,
 touch controls, responsive scaling, the on-page error banner, the CRT monitor shell, the
 short 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs,
-the service worker cache, and localized runtime UI strings.
+and localized runtime UI strings.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern
 shell, and keep the BASIC line-number comments intact either way.

@@ -8,6 +8,28 @@ function pageHref(path){
   return useCleanUrls() ? path.replace(/\.html$/, '') : path;
 }
 
+function removeOfflineSupport(){
+  const cleanup = () => {
+    if('serviceWorker' in navigator){
+      const rootScope = new URL('./', location.href).href;
+      navigator.serviceWorker.getRegistrations()
+        .then(registrations => Promise.all(registrations
+          .filter(registration => registration.scope === rootScope)
+          .map(registration => registration.unregister())))
+        .catch(() => {});
+    }
+    if('caches' in window){
+      caches.keys()
+        .then(keys => Promise.all(keys
+          .filter(key => key.startsWith('sneekie-offline-'))
+          .map(key => caches.delete(key))))
+        .catch(() => {});
+    }
+  };
+  if(document.readyState === 'complete') cleanup();
+  else addEventListener('load', cleanup, { once:true });
+}
+
 const I18N = window.SNEEKIE_I18N || {};
 const LANGS = I18N.languageCodes || ['en'];
 const DEFAULT_LANG = I18N.defaultLang || 'en';
@@ -59,6 +81,7 @@ function syncGameSrc(){
 }
 
 if(queryLang()) setStoredLang(queryLang());
+removeOfflineSupport();
 syncGameSrc();
 game.addEventListener('load', () => game.focus());
 addEventListener('pointerdown', () => game.focus(), {passive:true});

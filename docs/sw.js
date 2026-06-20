@@ -1,171 +1,18 @@
 'use strict';
 
-const CACHE_NAME = 'sneekie-offline-v70';
-
-/* Precache only the lightweight app shell: HTML, CSS, JS, the BASIC
-   source, the manifest, and the small icons. The heavy magazine scans and manual
-   clips are NOT precached — the fetch handler's cacheFirstAsset() caches them on
-   demand the first time a visitor actually opens those pages, so offline still
-   works after a real visit without forcing every first-time visitor to download
-   several megabytes of media up front. */
-const PRECACHE_ASSETS = [
-  './',
-  'index.html',
-  'en/game.html',
-  'en/game',
-  'en/history.html',
-  'en/history',
-  'en/source.html',
-  'en/source',
-  'en/manual.html',
-  'en/manual',
-  'en/bot.html',
-  'en/bot',
-  'en/bot-thinking.html',
-  'en/bot-thinking',
-  'en/magazine.html',
-  'en/magazine',
-  'en/explained.html',
-  'en/explained',
-  'en/migration.html',
-  'en/migration',
-  'en/vram.html',
-  'en/vram',
-  'nl/game.html',
-  'nl/game',
-  'nl/history.html',
-  'nl/history',
-  'nl/source.html',
-  'nl/source',
-  'nl/manual.html',
-  'nl/manual',
-  'nl/bot.html',
-  'nl/bot',
-  'nl/bot-thinking.html',
-  'nl/bot-thinking',
-  'nl/magazine.html',
-  'nl/magazine',
-  'nl/explained.html',
-  'nl/explained',
-  'nl/migration.html',
-  'nl/migration',
-  'nl/vram.html',
-  'nl/vram',
-  'uk/game.html',
-  'uk/game',
-  'uk/history.html',
-  'uk/history',
-  'uk/source.html',
-  'uk/source',
-  'uk/manual.html',
-  'uk/manual',
-  'uk/bot.html',
-  'uk/bot',
-  'uk/bot-thinking.html',
-  'uk/bot-thinking',
-  'uk/magazine.html',
-  'uk/magazine',
-  'uk/explained.html',
-  'uk/explained',
-  'uk/migration.html',
-  'uk/migration',
-  'uk/vram.html',
-  'uk/vram',
-  'SNEEKIE.BAS',
-  'site.webmanifest',
-  'css/index.css',
-  'css/site.css',
-  'css/game.css',
-  'css/manual.css',
-  'css/bot.css',
-  'css/bot-thinking.css',
-  'css/magazine.css',
-  'css/source.css',
-  'css/explained.css',
-  'css/migration.css',
-  'css/vram.css',
-  'css/history.css',
-  'js/index.js',
-  'js/i18n.js',
-  'js/site.js',
-  'js/game.js',
-  'js/bot.js',
-  'js/manual.js',
-  'js/magazine.js',
-  'js/source.js',
-  'js/explained.js',
-  'js/migration.js',
-  'js/vram.js',
-  'favicon.png',
-  'images/logo.png',
-  'images/apple-touch-icon.png',
-  'images/icon-192.png',
-  'images/icon-512.png',
-  'images/icon-512-maskable.png'
-];
+/* Offline support was removed. This file remains only as a cleanup shim for
+   browsers that already installed the old cache-first service worker. */
 
 self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const urls = PRECACHE_ASSETS.map(path =>
-      new Request(new URL(path, self.registration.scope), { cache: 'reload' })
-    );
-    // Cache each asset independently: cache.addAll() is all-or-nothing, so a
-    // single missing/renamed/transiently-failing asset would reject the whole
-    // install, skipWaiting() would never run, and users would stay pinned to the
-    // old worker and a stale cache — silently. allSettled lets the install
-    // succeed with whatever fetched; the rest is filled in on demand later.
-    // The clean URL entries (en/manual, etc.) are production-only conveniences:
-    // GitHub Pages/Cloudflare serve them, while a plain local http.server 404s.
-    await Promise.allSettled(urls.map(req => cache.add(req)));
-    await self.skipWaiting();
-  })());
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys
-      .filter(key => key.startsWith('sneekie-offline-') && key !== CACHE_NAME)
+      .filter(key => key.startsWith('sneekie-offline-'))
       .map(key => caches.delete(key)));
-    await self.clients.claim();
+    await self.registration.unregister();
   })());
 });
-
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  if(request.method !== 'GET') return;
-
-  const url = new URL(request.url);
-  if(url.origin !== location.origin) return;
-  if(!url.href.startsWith(self.registration.scope)) return;
-
-  event.respondWith(request.mode === 'navigate'
-    ? networkFirstNavigation(request)
-    : cacheFirstAsset(request));
-});
-
-async function networkFirstNavigation(request){
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const fresh = await fetch(request);
-    if(fresh.ok) await cache.put(request, fresh.clone());
-    return fresh;
-  } catch(_) {
-    return await cache.match(request, { ignoreSearch: true }) ||
-      await cache.match(new URL('index.html', self.registration.scope)) ||
-      Response.error();
-  }
-}
-
-async function cacheFirstAsset(request){
-  const cached = await caches.match(request, { ignoreSearch: true });
-  if(cached) return cached;
-
-  const fresh = await fetch(request);
-  if(fresh.ok) {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, fresh.clone());
-  }
-  return fresh;
-}

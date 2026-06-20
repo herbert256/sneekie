@@ -151,18 +151,32 @@ function normalizeCleanLinks(){
   });
 }
 
-function registerOfflineCache(){
-  if('serviceWorker' in navigator){
-    addEventListener('load', () => {
-      navigator.serviceWorker.register(new URL(pageRoot() + 'sw.js', location.href).href).catch(() => {});
-    });
-  }
+function removeOfflineSupport(){
+  const cleanup = () => {
+    if('serviceWorker' in navigator){
+      const rootScope = new URL(pageRoot(), location.href).href;
+      navigator.serviceWorker.getRegistrations()
+        .then(registrations => Promise.all(registrations
+          .filter(registration => registration.scope === rootScope)
+          .map(registration => registration.unregister())))
+        .catch(() => {});
+    }
+    if('caches' in window){
+      caches.keys()
+        .then(keys => Promise.all(keys
+          .filter(key => key.startsWith('sneekie-offline-'))
+          .map(key => caches.delete(key))))
+        .catch(() => {});
+    }
+  };
+  if(document.readyState === 'complete') cleanup();
+  else addEventListener('load', cleanup, { once:true });
 }
 
 redirectLegacyLanguageQuery();
 setSiteLanguage(siteLang, { silent: true });
 normalizeCleanLinks();
-registerOfflineCache();
+removeOfflineSupport();
 
 /* ---------- GW-BASIC token classification ---------- */
 const KW = new Set(('REM DEFINT DEFSNG DEFDBL DEFSTR SCREEN WIDTH CLS RANDOMIZE DEF SEG ' +

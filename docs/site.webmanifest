@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Sneekie - 1988 MS-DOS text game",
   "short_name": "Sneekie",
-  "description": "Play the restored 1988 GW-BASIC snake/maze game offline, with its story, manual, source, magazine scans, visualizer, and live bot.",
+  "description": "Play the restored 1988 GW-BASIC snake/maze game, with its story, manual, source, magazine scans, visualizer, and live bot.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "index.html",

@@ -143,6 +143,9 @@ assert(rootIndex.includes('src="js/i18n.js"'), 'docs/index.html does not load js
 for(const lang of languageCodes){
   assert(rootIndex.includes('hreflang="' + lang + '" href="' + pageUrl(lang, 'game') + '"'), 'docs/index.html lacks game hreflang for ' + lang + '.');
 }
+const rootIndexJs = read(path.join(docs, 'js', 'index.js'));
+assert(!rootIndexJs.includes('serviceWorker.register'), 'index.js must not register a service worker.');
+assert(rootIndexJs.includes('removeOfflineSupport'), 'index.js must clean up old offline registrations.');
 
 for(const slug of i18n.pageSlugs){
   const sourcePath = path.join(sourceDir, slug + '.html');
@@ -196,14 +199,14 @@ for(const slug of i18n.pageSlugs){
 }
 
 const sw = read(path.join(docs, 'sw.js'));
-assert(sw.includes('js/i18n.js'), 'Service worker does not precache js/i18n.js.');
-for(const slug of i18n.pageSlugs){
-  for(const lang of languageCodes){
-    const prefix = languagePathPrefix(lang);
-    assert(sw.includes("'" + prefix + '/' + slug + ".html'"), 'Service worker misses ' + prefix + '/' + slug + '.html.');
-    assert(sw.includes("'" + prefix + '/' + slug + "'"), 'Service worker misses clean URL ' + prefix + '/' + slug + '.');
-  }
-}
+const siteJs = read(path.join(docs, 'js', 'site.js'));
+assert(!siteJs.includes('serviceWorker.register'), 'site.js must not register a service worker.');
+assert(siteJs.includes('removeOfflineSupport'), 'site.js must clean up old offline registrations.');
+assert(!sw.includes('PRECACHE_ASSETS'), 'sw.js must not precache assets.');
+assert(!sw.includes("addEventListener('fetch'") && !sw.includes('addEventListener("fetch"'),
+  'sw.js must not intercept fetch requests.');
+assert(sw.includes('registration.unregister'), 'sw.js must unregister old service worker registrations.');
+assert(sw.includes("startsWith('sneekie-offline-')"), 'sw.js must delete old offline caches.');
 
 const sitemap = read(path.join(docs, 'sitemap.xml'));
 for(const slug of i18n.pageSlugs){

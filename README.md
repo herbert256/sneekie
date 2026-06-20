@@ -48,11 +48,11 @@ docs/
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
   favicon.png
   site.webmanifest
-  sw.js
+  sw.js                # cleanup shim for old offline service workers/caches
 tools/
   i18n-source/html/   # editable localized page templates
   generate-locales.js # regenerates localized static pages and shared chrome
-  verify-i18n.js      # checks localized output, chrome, sitemap, and cache entries
+  verify-i18n.js      # checks localized output, chrome, sitemap, and cleanup invariants
   make-icons.py       # regenerates icon/social PNG assets from the CP437 font
 AGENTS.md             # guidance for Codex
 CLAUDE.md             # guidance for Claude Code
