@@ -35,13 +35,6 @@
   box-shadow:0 20px 52px -32px rgba(0,0,0,.95);
 }
 .page-history .hero-figure{ margin-top:22px; }
-/* square AI illustrations (1024x1024 png) */
-.page-history .story-figure.square{ display:flex; flex-direction:column; align-items:center; }
-.page-history .story-figure.square img{
-  width:100%;
-  max-width:460px;
-  aspect-ratio:1 / 1;
-}
 .page-history .story-figure figcaption{
   margin-top:9px;
   color:var(--muted);
