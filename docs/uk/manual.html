@@ -39,7 +39,7 @@
   <body class="page-doc page-manual">
     <a class="skip" href="#main">Перейти до вмісту</a>
     <header class="top">
-      <a class="brand" href="../uk/game.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" alt="Sneekie" /></a>
+      <a class="brand" href="../uk/game.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" width="704" height="128" alt="Sneekie" /></a>
       <nav aria-label="Основна навігація">
         <a href="../uk/game.html" target="_top">&#9654; Грати</a>
         <a href="../uk/history.html" target="_top">Історія</a>
@@ -59,64 +59,256 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Посібник гравця</h1>
-      <p class="lead"><strong>Sneekie</strong> — це гра про змію в лабіринті з липня 1988 року. Ви ведете змію по арені зі стінами, збираєте <span class="ico h">&hearts;</span> серця, уникаєте стріл і не даєте довгому тілу замкнути себе в пастку. У грі <em>32 рівні</em>, побудовані з <em>8 схем лабіринтів</em>.</p>
+      <p class="lead"><strong>Sneekie</strong> — це гра про змію в лабіринті з липня 1988 року. Ви керуєте змією, що росте, на арені зі стінами й збираєте <span class="ico h">&hearts;</span> серця. Зберіть усі серця — і переходьте далі: через <em>32 рівні</em>, побудовані з <em>8 схем лабіринтів</em>. Стережіться стін, смертельних стріл і смайликів, які <em>забирають</em> очки. Ця сторінка пояснює все: керування, підрахунок очок, кожну з 8 схем і те, як складені 32 рівні.</p>
       <figure class="intro-figure">
-        <img loading="lazy" width="1200" height="676" src="../images/pages/manual-hero.webp" alt="Посібник гравця, схеми лабіринтів і зелений екран Sneekie на столі 1988 року." />
+        <img loading="lazy" width="1200" height="676" src="../images/pages/manual-hero.webp" alt="Посібник гравця 1988 року, схеми лабіринтів і зелений екран Sneekie на столі." />
       </figure>
-      <div class="note"><strong>Вперше тут?</strong> Натисніть <a href="game.html">&#9654; Грати</a> і збирайте серця. Перші рівні покрокові, тож можна не поспішати.</div>
+      <div class="note"><strong>Вперше тут?</strong> Просто натисніть <a href="game.html">&#9654; Грати</a> і починайте збирати серця — перші кілька рівнів покрокові й поблажливі. Поверніться сюди, коли захочете знати, що роблять смайлики або чому стріли постійно вас убивають.</div>
       <h2>Мета</h2>
-      <p>На кожному рівні треба зібрати всі <span class="ico h">&hearts;</span> <strong>серця</strong>. Коли вони зібрані, залишок <strong>bonus</strong> додається до score, ви отримуєте життя, і починається наступний рівень. Змія росте щоразу, коли щось їсть, тому простір швидко стає тіснішим.</p>
+      <p>Кожен рівень розкидає по арені купу <span class="ico h">&hearts;</span> <strong>сердець</strong>. <strong>З'їжте їх усі</strong>, і рівень пройдено — залишок <strong>bonus</strong> додається до вашого score, ви отримуєте життя, і починається наступний рівень. Змія <strong>росте на один сегмент щоразу, коли щось їсть</strong>, тому поле стає дедалі тіснішим.</p>
       <h2>Керування</h2>
       <table>
-        <thead><tr><th>Клавіша</th><th>Дотик</th><th>Дія</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Клавіша</th>
+            <th>Дотик</th>
+            <th>Що робить</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td><td>Свайп</td><td>Керувати змією. Вона не може розвернутися прямо у власне тіло.</td></tr>
-          <tr><td>будь-яка клавіша</td><td>Торкання</td><td>Закрити повідомлення <em>Press any key</em> між рівнями.</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>&mdash;</td><td><strong>Здатися</strong>, якщо ви замкнені. Це коштує одне життя і перезапускає рівень.</td></tr>
-          <tr><td><kbd>F9</kbd></td><td>&mdash;</td><td>Cheat: <strong>додаткове життя</strong> і перехід на наступний рівень.</td></tr>
-          <tr><td><kbd>F10</kbd></td><td>&mdash;</td><td>Cheat: <strong>пропустити рівень</strong>.</td></tr>
+          <tr>
+            <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
+            <td>Свайп</td>
+            <td>Керує змією. Вона не може розвернутися прямо у власне тіло.</td>
+          </tr>
+          <tr>
+            <td>будь-яка клавіша</td>
+            <td>Торкання</td>
+            <td>Закриває повідомлення <em>&ldquo;Press any key&rdquo;</em> між рівнями.</td>
+          </tr>
+          <tr>
+            <td><kbd>Esc</kbd></td>
+            <td>&mdash;</td>
+            <td><strong>Здатися</strong>, коли ви замкнені. Це коштує одне життя і перезапускає рівень.</td>
+          </tr>
+          <tr>
+            <td><kbd>F9</kbd></td>
+            <td>&mdash;</td>
+            <td>Чит: <strong>додаткове життя</strong> — і перехід на наступний рівень.</td>
+          </tr>
+          <tr>
+            <td><kbd>F10</kbd></td>
+            <td>&mdash;</td>
+            <td>Чит: <strong>пропустити рівень</strong>.</td>
+          </tr>
         </tbody>
       </table>
-      <h2>Предмети і score</h2>
-      <table>
-        <thead><tr><th>Символ</th><th>Предмет</th><th>Ефект</th></tr></thead>
-        <tbody>
-          <tr><td><span class="ico h">&hearts;</span></td><td>Серце</td><td><strong>+10</strong>. Зберіть усі, щоб пройти рівень.</td></tr>
-          <tr><td><span class="ico c">&clubs;</span></td><td>Трефа</td><td><strong>+25</strong>. З рівня 17 серця можуть залишати трефи.</td></tr>
-          <tr><td><span class="ico s">&#9786;</span></td><td>Смайлик</td><td><strong>&minus;50</strong>. Пастка: забирає очки і все одно збільшує змію.</td></tr>
-          <tr><td><span class="ico t">&#9689;</span></td><td>Камінь</td><td>Очок не дає, але його можна <strong>штовхнути</strong> на одну клітинку, якщо позаду порожньо.</td></tr>
-          <tr><td><span class="ico a">&uarr;&rarr;&larr;</span></td><td>Стріла</td><td><strong>Смертельно.</strong> Дотик до рухомої стріли коштує життя.</td></tr>
-          <tr><td><span class="ico w">&#9474;&#9472;</span></td><td>Стіна / тіло</td><td>Тверда перешкода. Ви не помираєте, але стоїте на місці і втрачаєте bonus.</td></tr>
-        </tbody>
-      </table>
-      <h2>Вісім схем</h2>
-      <p>Рівні повторюють ці 8 арен чотири рази. Схеми 1&ndash;4 — чисті лабіринти; схеми 5&ndash;8 додають рухому небезпеку.</p>
-      <div class="gallery">
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-1.webp" alt="Автогра у відкритій арені: змія збирає серця." /><div class="body"><span class="num">1</span><h3>Відкрита арена</h3><div class="lv">Рівні 1 &middot; 9 &middot; 17 &middot; 25</div><p>Тільки зовнішні стіни. Наймʼякший вступ.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-2.webp" alt="Автогра між гребінцями і хрестами." /><div class="body"><span class="num">2</span><h3>Гребінці і хрести</h3><div class="lv">Рівні 2 &middot; 10 &middot; 18 &middot; 26</div><p>Скупчення стін, між якими треба лавірувати.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-3.webp" alt="Автогра крізь дверні отвори кімнатної сітки." /><div class="body"><span class="num">3</span><h3>Сітка кімнат</h3><div class="lv">Рівні 3 &middot; 11 &middot; 19 &middot; 27</div><p>Арена поділена на кімнати з вузькими проходами.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-4.webp" alt="Автогра з штовханням каменів." /><div class="body"><span class="num">4</span><h3>Камʼяне поле</h3><div class="lv">Рівні 4 &middot; 12 &middot; 20 &middot; 28</div><p>Багато каменів <span class="ico t">&#9689;</span>; штовхайте їх, щоб прокласти шлях.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-5.webp" alt="Автогра між колонками з рухомими отворами." /><div class="body"><span class="num">5</span><h3>Колонки</h3><div class="lv">Рівні 5 &middot; 13 &middot; 21 &middot; 29</div><p><span class="enemy">Небезпека:</span> отвори у стінах повзуть вгору і вниз.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-6.webp" alt="Автогра з ухилянням від стріл вгору." /><div class="body"><span class="num">6</span><h3>Стріли вгору</h3><div class="lv">Рівні 6 &middot; 14 &middot; 22 &middot; 30</div><p><span class="ico a">&uarr;</span> стріли рухаються вгору; дотик смертельний.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-7.webp" alt="Автогра між боковими стрілами." /><div class="body"><span class="num">7</span><h3>Бокові стріли</h3><div class="lv">Рівні 7 &middot; 15 &middot; 23 &middot; 31</div><p><span class="ico a">&larr;&rarr;</span> стріли ковзають по рядках ліворуч і праворуч.</p></div></div>
-        <div class="lay"><img loading="lazy" width="640" height="384" src="../images/manual/scene-8.webp" alt="Автогра у найважчій схемі зі стінами і камінням." /><div class="body"><span class="num">8</span><h3>Сховище</h3><div class="lv">Рівні 8 &middot; 16 &middot; 24 &middot; 32</div><p>Стіни, камені і рухомі отвори. Найважча комбінація.</p></div></div>
-      </div>
-      <h2>Як влаштовані 32 рівні</h2>
+      <p>Якщо натиснути <em>літеру</em> (або врізатися в стіну), змія лише б'ється об перешкоду: ви залишаєтеся на місці й трохи втрачаєте bonus. Під екраном є кнопки кабінету: теми дисплея <strong>Green / Amber / White / CGA</strong>, перемикач <strong>Sound</strong> і <strong>Fullscreen</strong> (у повноекранному режимі натисніть і утримуйте <kbd>Esc</kbd>, щоб вийти; один короткий натиск усе ще працює як &ldquo;здатися&rdquo;).</p>
+      <h2>Екран</h2>
+      <p>Ігрове поле обрамлене рамкою, яку не можна перетнути. Нижня статусна смуга показує:</p>
       <ul>
-        <li><strong>1&ndash;8:</strong> покрокова гра. Змія чекає на ваш хід.</li>
-        <li><strong>9&ndash;16:</strong> змія рухається сама, якщо ви не натиснете клавішу вчасно.</li>
-        <li><strong>17&ndash;32:</strong> повтор перших 16 рівнів, але серця можуть створювати <span class="ico c">&clubs;</span> трефи.</li>
+        <li><strong>Level</strong> — на якому з 32 рівнів ви перебуваєте.</li>
+        <li><strong>Score</strong> / <strong>Highscore</strong> — ваші очки; найкращий результат зберігається між відвідинами.</li>
+        <li><strong>Lives</strong> — скільки спроб лишилося.</li>
+        <li><strong>Bonus</strong> — таймер, який стартує з <code>10000</code> і зменшується на кожному кроці. Пройдіть рівень швидко, і залишок додасться до score.</li>
       </ul>
+      <h2>Предмети і підрахунок очок</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Символ</th>
+            <th>Предмет</th>
+            <th>Ефект</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="ico h">&hearts;</span></td>
+            <td>Серце</td>
+            <td><strong>+10</strong>. Зберіть <em>усі</em>, щоб пройти рівень.</td>
+          </tr>
+          <tr>
+            <td><span class="ico c">&clubs;</span></td>
+            <td>Трефа</td>
+            <td><strong>+25</strong>. Смачніший бонус: з рівня 17 серця можуть залишати одну таку.</td>
+          </tr>
+          <tr>
+            <td><span class="ico s">&#9786;</span></td>
+            <td>Смайлик</td>
+            <td><strong>&minus;50!</strong> — пастка. З'їсти його боляче, і змія росте без користі. Об'їжджайте їх.</td>
+          </tr>
+          <tr>
+            <td><span class="ico t">&#9689;</span></td>
+            <td>Камінь</td>
+            <td>Брила. Очок не дає, але її можна <strong>штовхнути</strong> на одну клітинку, якщо простір позаду вільний.</td>
+          </tr>
+          <tr>
+            <td><span class="ico a">&uarr;&rarr;&larr;</span></td>
+            <td>Стріла</td>
+            <td><strong>Смертельно.</strong> Торкніться рухомої стріли — і втратите життя.</td>
+          </tr>
+          <tr>
+            <td><span class="ico w">&#9474;&#9472;</span></td>
+            <td>Стіна / ви самі</td>
+            <td>Тверда перешкода. У стіну або власне тіло пройти не можна — змія лише вдариться й втратить bonus.</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2>Життя</h2>
+      <p>Ви починаєте з <strong>3 життів</strong>. Ви <strong>втрачаєте одне</strong>, коли помираєте: торкаєтеся рухомої стріли або натискаєте <kbd>Esc</kbd>, щоб здатися в пастці. Але ви <strong>отримуєте життя щоразу, коли проходите рівень</strong> (і <kbd>F9</kbd> теж дає одне), тому акуратний гравець тримає запас здоровим. Коли життя закінчуються, настає <em>game over</em> — після цього можна почати знову.</p>
+      <h2>Вісім схем</h2>
+      <p>Кожен рівень використовує одну з цих восьми арен. Схеми <strong>1&ndash;4</strong> — чисті лабіринти: єдина небезпека в тому, щоб застрягнути. Схеми <strong>5&ndash;8</strong> додають <span style="color: var(--red)">рухому небезпеку</span>. Нижче кожна схема показана фрагментом автогри — змія сама полює на серця, штовхає камені й ухиляється від стріл:</p>
+      <div class="gallery">
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-1.webp" alt="Автогра на відкритій арені: змія прочісує порожнє поле й збирає серця." />
+          <div class="body">
+            <span class="num">1</span>
+            <h3>Відкрита арена</h3>
+            <div class="lv">Рівні 1 &middot; 9 &middot; 17 &middot; 25</div>
+            <p>Нічого, крім чотирьох зовнішніх стін. Чисте збирання сердець — найм'якший вступ.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-2.webp" alt="Автогра, що петляє між стінами-гребінцями та хрестами." />
+          <div class="body">
+            <span class="num">2</span>
+            <h3>Гребінці і хрести</h3>
+            <div class="lv">Рівні 2 &middot; 10 &middot; 18 &middot; 26</div>
+            <p>Скупчення стін-гребінців і хрестоподібних перешкод розкидані по квадрантах, тож між ними треба лавірувати.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-3.webp" alt="Автогра, що прослизає крізь дверні отвори сітки кімнат." />
+          <div class="body">
+            <span class="num">3</span>
+            <h3>Сітка кімнат</h3>
+            <div class="lv">Рівні 3 &middot; 11 &middot; 19 &middot; 27</div>
+            <p>Вертикальні й горизонтальні стіни ділять арену на сітку кімнат; у кожній є дверний отвір, крізь який треба прослизнути.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-4.webp" alt="Автогра, що відштовхує камені в кам'яному полі." />
+          <div class="body">
+            <span class="num">4</span>
+            <h3>Кам'яне поле</h3>
+            <div class="lv">Рівні 4 &middot; 12 &middot; 20 &middot; 28</div>
+            <p>Щільна решітка рухомих <span class="ico t">&#9689;</span> каменів. Штовхайте їх убік, щоб прокладати власні шляхи до сердець.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-5.webp" alt="Автогра між колонами-частоколами з рухомими отворами." />
+          <div class="body">
+            <span class="num">5</span>
+            <h3>Колони-частоколи</h3>
+            <div class="lv">Рівні 5 &middot; 13 &middot; 21 &middot; 29</div>
+            <p>Високі стіни звисають від верхнього й нижнього країв. <span class="enemy">Небезпека:</span> отвори в них повзуть угору й униз — прохід може закритися просто на вас.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-6.webp" alt="Автогра, що ухиляється від стріл, які рухаються вгору." />
+          <div class="body">
+            <span class="num">6</span>
+            <h3>Висхідні стріли</h3>
+            <div class="lv">Рівні 6 &middot; 14 &middot; 22 &middot; 30</div>
+            <p>Відкрите поле засіяне стрілами <span class="ico a">&uarr;</span>, які <span class="enemy">крок за кроком рухаються вгору</span>. Дотик смертельний.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-7.webp" alt="Автогра, що вчасно перетинає ряди між бічними стрілами." />
+          <div class="body">
+            <span class="num">7</span>
+            <h3>Змітаючі стріли</h3>
+            <div class="lv">Рівні 7 &middot; 15 &middot; 23 &middot; 31</div>
+            <p>Відкрите поле зі стрілами <span class="ico a">&larr;&rarr;</span>, які <span class="enemy">ковзають ліворуч і праворуч</span> по кожному рядку. Переходи треба вчасно підгадувати.</p>
+          </div>
+        </div>
+        <div class="lay">
+          <img loading="lazy" width="640" height="384" src="../images/manual/scene-8.webp" alt="Автогра, що проходить стіни й колони каменів у сховищі." />
+          <div class="body">
+            <span class="num">8</span>
+            <h3>Сховище</h3>
+            <div class="lv">Рівні 8 &middot; 16 &middot; 24 &middot; 32</div>
+            <p>Вертикальні стіни з колонами <span class="ico t">&#9689;</span> каменів між ними — <span class="enemy">і рухомі отвори у стінах</span>. Найважча суміш у грі.</p>
+          </div>
+        </div>
+      </div>
+      <h2>32 рівні</h2>
+      <p>У грі лише 8 схем, тому вона проходить їх <strong>чотири рази</strong>. Кожного кола повертаються ті самі вісім арен, але змінюється те, <em>як рухається</em> змія:</p>
+      <ul>
+        <li><strong>Рівні 1&ndash;8 — покрокові.</strong> Змія чекає на вашу клавішу; можна не поспішати (bonus усе одно зменшується).</li>
+        <li><strong>Рівні 9&ndash;16 — змія рухається сама.</strong> Якщо ви не повернете в межах темпу рівня (<code>0.4</code>&ndash;<code>1.2</code> секунди — швидше на відкритих аренах, повільніше на захаращених), змія продовжить рух сама. Керувати можна будь-коли.</li>
+        <li><strong>Рівні 17&ndash;32 — повтор на біс.</strong> Рівні 17&ndash;24 повторюють 1&ndash;8 (покрокові), а 25&ndash;32 повторюють 9&ndash;16 (самохідні) — з одним поворотом: з рівня 17 з'їдене серце може залишити <span class="ico c">&clubs;</span> трефу за додаткові очки.</li>
+      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Схема</th>
+            <th>Небезпека</th>
+            <th>Покрокові рівні</th>
+            <th>Самохідні рівні (темп)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1 &middot; Відкрита арена</td>
+            <td>&mdash;</td>
+            <td class="mono">1, 17</td>
+            <td class="mono">9, 25 &nbsp;(0.4 с)</td>
+          </tr>
+          <tr>
+            <td>2 &middot; Гребінці і хрести</td>
+            <td>стіни</td>
+            <td class="mono">2, 18</td>
+            <td class="mono">10, 26 &nbsp;(0.6 с)</td>
+          </tr>
+          <tr>
+            <td>3 &middot; Сітка кімнат</td>
+            <td>стіни</td>
+            <td class="mono">3, 19</td>
+            <td class="mono">11, 27 &nbsp;(0.6 с)</td>
+          </tr>
+          <tr>
+            <td>4 &middot; Кам'яне поле</td>
+            <td>камені</td>
+            <td class="mono">4, 20</td>
+            <td class="mono">12, 28 &nbsp;(0.9 с)</td>
+          </tr>
+          <tr>
+            <td>5 &middot; Колони-частоколи</td>
+            <td class="enemy" style="color: var(--red)">рухомі отвори</td>
+            <td class="mono">5, 21</td>
+            <td class="mono">13, 29 &nbsp;(0.9 с)</td>
+          </tr>
+          <tr>
+            <td>6 &middot; Висхідні стріли</td>
+            <td class="enemy" style="color: var(--red)">стріли вгору</td>
+            <td class="mono">6, 22</td>
+            <td class="mono">14, 30 &nbsp;(1.0 с)</td>
+          </tr>
+          <tr>
+            <td>7 &middot; Змітаючі стріли</td>
+            <td class="enemy" style="color: var(--red)">бічні стріли</td>
+            <td class="mono">7, 23</td>
+            <td class="mono">15, 31 &nbsp;(1.0 с)</td>
+          </tr>
+          <tr>
+            <td>8 &middot; Сховище</td>
+            <td class="enemy" style="color: var(--red)">камені + рухомі отвори</td>
+            <td class="mono">8, 24</td>
+            <td class="mono">16, 32 &nbsp;(1.2 с)</td>
+          </tr>
+        </tbody>
+      </table>
       <h2>Поради</h2>
       <ul>
-        <li><strong>Грайте швидко.</strong> Залишок bonus — це реальні очки.</li>
-        <li><strong>Уникайте смайликів.</strong> Вони забирають 50 очок і подовжують змію.</li>
-        <li><strong>Власний хвіст не вбиває,</strong> але блокує рух. Якщо справді застрягли, <kbd>Esc</kbd> обмежить втрати одним життям.</li>
-        <li><strong>Штовхайте камені</strong> у глухі кути, щоб відкривати проходи.</li>
-        <li><strong>На рівнях зі стрілами рухайтесь ритмічно.</strong> Не стійте в рядку або колонці, яку зараз прочісує стріла.</li>
+        <li><strong>Проходьте швидко.</strong> Bonus — це справжні очки; зволікання на рівні 1 може викинути до 10 000.</li>
+        <li><strong>Тримайтеся подалі від смайликів.</strong> Випадковий <span class="ico s">&#9786;</span> коштує 50 очок <em>і</em> подовжує змію, ускладнюючи арену.</li>
+        <li><strong>Від власного хвоста ви не помрете</strong> — просто не зможете пройти крізь нього. Але довга змія може замкнути себе; коли справді застрягли, <kbd>Esc</kbd> обмежить втрати одним життям.</li>
+        <li><strong>Штовхайте камені в глухі кути</strong>, щоб відкрити доріжку, але штовхнути можна лише той камінь, за яким є порожня клітинка.</li>
+        <li><strong>На рівнях зі стрілами не зупиняйтеся.</strong> Читайте напрямок стріл і прослизайте крізь проміжки; ніколи не паркуйтеся в колонці (рівень 6) або рядку (рівень 7), який зараз прочісує стріла.</li>
       </ul>
       <h2>Про гру</h2>
-      <p>Sneekie була написана GW-BASIC у липні 1988 року <strong>HerbySoft</strong> і надрукована в MS(X)DOS Computer Magazine № 25. У 2026 році друкований лістинг відновили OCR-ом і перенесли на цей сайт рядок за рядком. Сторінка <a href="vram.html">Візуалізатор</a> показує трюк "екран є памʼяттю", а <a href="explained.html">Пояснення</a> розбирає оригінальний код.</p>
+      <p>Sneekie була написана GW-BASIC у липні 1988 року <strong>HerbySoft</strong> і надрукована в MS(X)DOS Computer Magazine № 25. У 2026 році її друкований лістинг відновили за допомогою OCR і перенесли на цей сайт рядок за рядком. Цікаво, як це працює? <a href="vram.html">Візуалізатор</a> показує трюк &ldquo;екран і є пам'ять&rdquo;, що лежить в основі гри, а розділ <a href="explained.html">Пояснення</a> проходить оригінальним кодом.</p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/manual-closing.webp" alt="Світна змія Sneekie виривається з посібника, а серця і трефи стрибають у кімнату." />
       </figure>
