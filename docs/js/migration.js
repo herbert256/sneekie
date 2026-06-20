@@ -131,6 +131,11 @@ if(migrationLang === 'nl' || migrationLang === 'uk'){
   const localized = migrationLang === 'uk' ? MIGRATION_UK_SECTIONS : MIGRATION_NL_SECTIONS;
   localized.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
 }
+const MID_IMAGE_ALT = {
+  en: 'An older red-and-gray-bearded programmer watches an old CRT BASIC game transform into a modern browser game with glowing AI helpers.',
+  nl: 'Een oudere programmeur met rode/grijze baard ziet een oud CRT BASIC-spel veranderen in een moderne browsergame met gloeiende AI-helpers.',
+  uk: 'Старший програміст із рудо-сивою бородою дивиться, як стара CRT BASIC-гра переходить у сучасну браузерну гру з AI-помічниками.'
+};
 
 /* ---------- render ---------- */
 const pairs = document.getElementById('pairs');
@@ -158,6 +163,18 @@ function fillJs(host, ranges){
   });
 }
 function gap(){ const g = document.createElement('div'); g.className = 'gap'; g.textContent = '⋯'; return g; }
+function addMidFigure(){
+  const figure = document.createElement('figure');
+  figure.className = 'intro-figure migration-mid-figure';
+  const img = document.createElement('img');
+  img.loading = 'lazy';
+  img.width = 1200;
+  img.height = 676;
+  img.src = '../images/pages/web-resurrection.webp';
+  img.alt = MID_IMAGE_ALT[migrationLang] || MID_IMAGE_ALT.en;
+  figure.appendChild(img);
+  pairs.appendChild(figure);
+}
 
 SECTIONS.forEach((sec, idx) => {
   const num = idx + 1;
@@ -176,4 +193,5 @@ SECTIONS.forEach((sec, idx) => {
   const li = document.createElement('li');
   li.innerHTML = '<span class="n">' + num + '</span><a href="#p-' + num + '">' + sec.t + '</a>';
   tocList.appendChild(li);
+  if(num === Math.floor(SECTIONS.length / 2)) addMidFigure();
 });
