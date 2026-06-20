@@ -16,8 +16,8 @@ const pages = i18n.pageSlugs;
 const chromeNav = [
   ['game', 'navGame'],
   ['history', 'navHistory'],
-  ['source', 'navSource'],
   ['manual', 'navManual'],
+  ['source', 'navSource'],
   ['bot', 'navBot'],
   ['magazine', 'navMagazine'],
   ['explained', 'navExplained'],
