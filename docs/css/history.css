@@ -42,12 +42,36 @@
 }
 .page-history .story-figure figcaption b{ color:var(--heading); }
 
+.page-history .paragraph-figure{
+  max-width:860px;
+  margin:16px auto 24px;
+}
+.page-history .paragraph-figure img{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:1200 / 676;
+  object-fit:cover;
+  border:1px solid color-mix(in srgb, var(--accent) 20%, var(--border));
+  border-radius:8px;
+  background:#050607;
+  box-shadow:0 14px 38px -28px rgba(0,0,0,.95);
+}
 /* chapter band */
 .page-history .story-band{
   position:relative;
-  margin:34px 0;
+  --story-indent:25px;
+  max-width:860px;
+  margin:34px auto;
   padding:0 0 0 22px;
   border-left:3px solid color-mix(in srgb, var(--annot) 72%, var(--border));
+  box-sizing:border-box;
+}
+.page-history .story-band .paragraph-figure{
+  width:calc(100% + var(--story-indent));
+  max-width:none;
+  margin-left:calc(-1 * var(--story-indent));
+  margin-right:0;
 }
 .page-history .story-band::before{
   content:"";
@@ -90,11 +114,24 @@
 .page-history .finale{ border-left-color:color-mix(in srgb, var(--blue) 72%, var(--border)); }
 .page-history .finale::before{ background:linear-gradient(90deg, color-mix(in srgb, var(--blue) 44%, transparent), transparent 64%); }
 .page-history .story-ending{
-  margin:42px 0 0;
-  padding:24px 26px;
+  max-width:860px;
+  margin:42px auto 0;
+  padding:24px 0;
   background:linear-gradient(135deg, rgba(125,255,125,.1), rgba(227,168,87,.12), rgba(121,192,255,.08));
   border:1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
   border-radius:10px;
+  box-sizing:border-box;
+}
+.page-history .story-ending h2,
+.page-history .story-ending p{
+  padding-left:26px;
+  padding-right:26px;
+}
+.page-history .story-ending .paragraph-figure{
+  width:calc(100% + 2px);
+  max-width:none;
+  margin-left:-1px;
+  margin-right:-1px;
 }
 .page-history .story-ending h2{ color:#d7ffdb; }
 .page-history .story-links{
@@ -114,7 +151,7 @@
 
 @media (max-width:720px){
   .page-history .lead{ font-size:16px; text-align:left; }
-  .page-history .story-band{ padding-left:16px; }
+  .page-history .story-band{ --story-indent:19px; padding-left:16px; }
   .page-history .story-band h2,
   .page-history .story-ending h2{ font-size:21px; }
   .page-history .story-pull{ padding:18px 20px; font-size:21px; }
@@ -128,6 +165,7 @@
 }
 @media print{
   .page-history .story-figure img,
+  .page-history .paragraph-figure img,
   .page-history .story-pull,
   .page-history .story-ending{ box-shadow:none; }
 }
