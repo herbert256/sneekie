@@ -34,11 +34,11 @@ document.getElementById('print')?.addEventListener('click', () => window.print()
 
 /* ---------- themes (shared with the game via localStorage) ---------- */
 const THEMES = {
-  hercules:{ bg:'#020503', phos:'#7dff7d', glow:'rgba(125,255,125,.13)',
+  hercules:{ bg:'#020503', phos:'#7dff7d', glow:'rgba(125,255,125,.13)', meta:'#051005',
     gut:'#44864f', ln:'#46c95a', kw:'#d6ffd6', fn:'#7ff09a', str:'#5ad06f', num:'#a9f4b6', com:'#3c8f49', id:'#86ff86', op:'#54bf69', pn:'#4a9a5a' },
-  amber:{ bg:'#070401', phos:'#ffc438', glow:'rgba(255,196,56,.12)',
+  amber:{ bg:'#070401', phos:'#ffc438', glow:'rgba(255,196,56,.12)', meta:'#140c00',
     gut:'#8a6a2a', ln:'#ffb732', kw:'#ffe7a0', fn:'#ffc861', str:'#f0a838', num:'#ffd873', com:'#9a6a18', id:'#ffcb52', op:'#cf9a2c', pn:'#a07d34' },
-  cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)',
+  cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)', meta:'#001010',
     gut:'#0a6a6a', ln:'#55ffff', kw:'#55ff55', fn:'#55ffff', str:'#ffff55', num:'#ff55ff', com:'#aaaaaa', id:'#ffffff', op:'#ff5555', pn:'#888888' },
 };
 function applyTheme(name, persist){
@@ -48,6 +48,8 @@ function applyTheme(name, persist){
   document.querySelectorAll('#themes button').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset.theme === name)));
   if(persist) lsSet('sneekie.theme', name);                                       // same key the game uses; only on an explicit pick
+  const metaTag = document.querySelector('meta[name="theme-color"]');
+  if(metaTag) metaTag.content = t.meta || '#0a0c0d';
 }
 document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => applyTheme(b.dataset.theme, true)));

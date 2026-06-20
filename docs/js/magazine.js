@@ -5,7 +5,6 @@ const pageFsClose = document.getElementById('page-fs-close');
 const pagePrev = document.getElementById('page-prev');
 const pageNext = document.getElementById('page-next');
 const pageStage = document.getElementById('page-stage');
-const pageFsImg = document.getElementById('page-fs-img');
 const pageFsCaption = document.getElementById('page-fs-caption');
 const pageZoomOut = document.getElementById('page-zoom-out');
 const pageZoomReset = document.getElementById('page-zoom-reset');
@@ -13,7 +12,7 @@ const pageZoomIn = document.getElementById('page-zoom-in');
 const pageThumbs = Array.from(document.querySelectorAll('.page-gallery .thumb[data-full]'));
 const magText = key => typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
 
-if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumbs.length){
+if(pageFs && pageFsClose && pageStage && pageFsCaption && pageThumbs.length){
   let pageLastFocus = null;
   let pageIndex = 0;
   let scale = 1;
@@ -21,6 +20,7 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
   let offsetY = 0;
   let drag = null;
   let pinch = null;
+  let pageFsImg = null;
   const pointers = new Map();
   const minScale = 1;
   const maxScale = 4;
@@ -34,8 +34,24 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
     return thumb.dataset.cap || thumb.querySelector('img')?.alt || magText('magazinePreviewFallback');
   }
 
+  function ensurePageImage(){
+    if(pageFsImg && pageFsImg.isConnected) return pageFsImg;
+    pageFsImg = document.createElement('img');
+    pageFsImg.id = 'page-fs-img';
+    pageFsImg.alt = '';
+    pageFsImg.addEventListener('load', updateTransform);
+    pageStage.appendChild(pageFsImg);
+    return pageFsImg;
+  }
+
+  function removePageImage(){
+    if(!pageFsImg) return;
+    pageFsImg.remove();
+    pageFsImg = null;
+  }
+
   function clampOffset(){
-    if(scale <= minScale || !pageFsImg.offsetWidth || !pageFsImg.offsetHeight){
+    if(scale <= minScale || !pageFsImg?.offsetWidth || !pageFsImg?.offsetHeight){
       offsetX = 0;
       offsetY = 0;
       return;
@@ -48,6 +64,7 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
 
   function updateTransform(){
     clampOffset();
+    if(!pageFsImg) return;
     pageFsImg.style.transform = `translate3d(${Math.round(offsetX)}px, ${Math.round(offsetY)}px, 0) scale(${scale.toFixed(3)})`;
     pageStage.classList.toggle('is-zoomed', scale > 1.01);
     pageZoomReset.textContent = `${Math.round(scale * 100)}%`;
@@ -81,8 +98,9 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
     pageIndex = wrapPage(index);
     const thumb = pageThumbs[pageIndex];
     const caption = pageCaption(thumb);
-    pageFsImg.src = thumb.dataset.full;
-    pageFsImg.alt = caption;
+    const image = ensurePageImage();
+    image.src = thumb.dataset.full;
+    image.alt = caption;
     pageFsCaption.textContent = caption;
     pointers.clear();
     drag = null;
@@ -107,13 +125,12 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
     pageFs.classList.remove('on');
     pageFs.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
-    pageFsImg.removeAttribute('src');
-    pageFsImg.alt = '';
     pageFsCaption.textContent = '';
     pointers.clear();
     drag = null;
     pinch = null;
     resetZoom();
+    removePageImage();
     if(pageLastFocus && typeof pageLastFocus.focus === 'function'){
       pageLastFocus.focus({ preventScroll:true });
     }
@@ -197,8 +214,6 @@ if(pageFs && pageFsClose && pageStage && pageFsImg && pageFsCaption && pageThumb
     e.stopPropagation();
     zoomBy(0.35);
   });
-
-  pageFsImg.addEventListener('load', updateTransform);
 
   pageStage.addEventListener('wheel', e => {
     if(!isOpen()) return;

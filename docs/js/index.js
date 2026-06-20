@@ -93,5 +93,8 @@ addEventListener('message', event => {
   if(data.type === 'sneekie:language' && data.lang){
     setStoredLang(data.lang);
     syncGameSrc();
+  } else if(data.type === 'sneekie:theme' && data.color){
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.content = data.color;
   }
 });
