@@ -319,26 +319,32 @@
 
   /* ---- driver: drive game.js continuously, jumping to the selected level ----
      Each tick we press one key. The bot's own move keys dismiss the "Level n /
-     press any key" popups; a real game-over leaves the snake fully unwound
-     (ETEL > BTEL) at "Play again (y/n)", which we answer to keep it going. */
+     press any key" popups. When the game ends, playLevels() returns and the
+     FOR loop leaves LEVEL at 33, parking at "Play again (y/n)". That happens both
+     on a final death (snake fully unwound, ETEL > BTEL) AND on a clean win where
+     the bot clears the last level with the snake intact (ETEL <= BTEL) -- so we
+     key off LEVEL > 32, not the snake state, or a clean win would freeze here. */
   const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
   (async () => {
     let idle = 0, prevScore = 0, over = 0;
     const headTrail = [];
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
+      // game finished (final death or clean win) -> answer "play again", re-target.
+      // Checked before the jump below so a tab click can't overwrite LEVEL first.
+      if(LEVEL > 32){
+        if(++over >= 4){ pushKey('\r'); pushKey(yesKey()); pendingJump = target; over = 0; }
+        await sleep(botDelay()); continue;
+      }
+      over = 0;
+      // mid-death unwind: snake is retracting -> wait it out, don't act on a half-state
+      if(ETEL > BTEL){ await sleep(botDelay()); continue; }
       // jump to the selected level once the snake is safely in the move loop
       if(pendingJump !== null && BTEL > 2 && ETEL <= BTEL){
         LEVEL = pendingJump - 1; pushKey(' D');          // F10 skips straight into the target level
         pendingJump = null; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }
-      // real game-over -> answer "play again" and re-target the chosen level
-      if(ETEL > BTEL){
-        if(++over >= 4){ pushKey('\r'); pushKey(yesKey()); pendingJump = target; over = 0; }
-        await sleep(botDelay()); continue;
-      }
-      over = 0;
       if(ZCORE > prevScore) idle = 0; else idle++;
       prevScore = ZCORE;
       headTrail.push(T[BTEL]);
