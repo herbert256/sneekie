@@ -22,9 +22,13 @@ The repository root **is** the git repo (remote `github.com:herbert256/sneekie`)
 publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
 https://sneekie.xyz/.
 
-- `docs/index.html` - the root Play entry shell. It is intentionally only an iframe wrapper
-  around the localized game page. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
-  structured-data script inline for search crawlers.
+- `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
+  landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
+  standard static header/footer chrome, a hero "play" section whose CRT image links to the
+  matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
+  `css/site.css` and `css/index.css` only — no `js/site.js`/`js/i18n.js`; instead each carries an
+  inline service-worker/cache cleanup script and an inline JSON-LD structured-data block (keep
+  both inline for search crawlers).
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
@@ -53,9 +57,10 @@ https://sneekie.xyz/.
 - `docs/sw.js` - cleanup-only service worker shim. It unregisters old offline workers and deletes
   old `sneekie-offline-*` caches; do not add precaching or fetch handlers back.
 
-Only the iframe wrapper `docs/index.html` remains at the site root. Content pages live under
-`docs/en/`, `docs/nl/`, and `docs/uk/`, so root-level links should include the language prefix;
-links between content pages can use same-language relative `.html` paths.
+The three localized landing pages (`docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html`)
+are the only HTML at the site root. Content pages live under `docs/en/`, `docs/nl/`, and
+`docs/uk/`, so root-level links should include the language prefix; links between content pages
+can use same-language relative `.html` paths.
 
 To ship a change: edit source files, commit, and push to `master`. GitHub Pages is configured
 to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
@@ -99,7 +104,8 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.
 - `docs/<lang>/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
   comments and the original variable names when changing game behavior.
-- `docs/index.html` - the root iframe wrapper for the playable port.
+- `docs/index.html` (+ `index_nl.html`, `index_uk.html`) - the localized root landing pages; the
+  hero "play" image links into `<lang>/game.html` (see Layout & Deployment).
 
 ## Shared Chrome
 
