@@ -258,6 +258,8 @@ let clickTarget = null;
 let clickStartsLevel = false;
 const CLICK_ROUTE_MS = 120;
 
+window.sneekieWaitingForKey = () => clickStartsLevel;
+
 function clearClickTarget(){ clickTarget = null; }
 function cellOffset(row, col){ return (row - 1) * 160 + (col - 1) * 2; }
 function cellFromOffset(off){

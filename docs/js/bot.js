@@ -43,6 +43,8 @@
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
   const routeBudget = () => Math.max(35, Math.min(70, botDelay() * 0.8));
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
+  const waitingForKey = () =>
+    typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
   const planner = window.SneekieBotEngine && window.SneekieBotEngine.create({
     now,
     peek: o => peek(o),
@@ -166,7 +168,7 @@
         await sleep(botDelay()); continue;
       }
       const tickStarted = now();
-      if(BTEL <= 2){
+      if(waitingForKey()){
         escapeQueued = false;
         pushKey('\r');                                 // under the level popup -> any key dismisses it
         await sleepForTick(tickStarted); continue;
