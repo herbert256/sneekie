@@ -300,19 +300,23 @@
 }
 .page-index #bezel:fullscreen #fstouch{
   position:fixed;
-  top:max(8px, env(safe-area-inset-top));
+  top:50%;
   right:max(8px, env(safe-area-inset-right));
-  bottom:max(8px, env(safe-area-inset-bottom));
-  left:max(8px, env(safe-area-inset-left));
+  bottom:auto;
+  left:auto;
   z-index:10;
   display:none;
+  grid-template-columns:repeat(3, var(--fs-key-w));
+  grid-template-rows:repeat(3, var(--fs-key-h));
+  gap:var(--fs-key-gap);
+  transform:translateY(-50%);
   pointer-events:none;
   --fs-key-w:clamp(46px, 7vw, 58px);
   --fs-key-h:clamp(40px, 11vh, 48px);
   --fs-key-gap:clamp(5px, 1.7vh, 8px);
 }
 .page-index #bezel:fullscreen #fstouch button{
-  position:absolute;
+  position:static;
   width:var(--fs-key-w);
   min-width:0;
   height:var(--fs-key-h);
@@ -323,20 +327,13 @@
   pointer-events:auto;
   touch-action:manipulation;
 }
-.page-index #bezel:fullscreen #fstouch button[data-key="esc"],
-.page-index #bezel:fullscreen #fstouch button[data-key="up"],
-.page-index #bezel:fullscreen #fstouch button[data-key="left"],
-.page-index #bezel:fullscreen #fstouch button[data-key="down"],
-.page-index #bezel:fullscreen #fstouch button[data-key="right"]{ left:0; }
-.page-index #bezel:fullscreen #fstouch button[data-key="f9"],
-.page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ right:0; }
-.page-index #bezel:fullscreen #fstouch button[data-key="esc"],
-.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ top:0; }
-.page-index #bezel:fullscreen #fstouch button[data-key="up"],
-.page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 1); }
-.page-index #bezel:fullscreen #fstouch button[data-key="left"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 2); }
-.page-index #bezel:fullscreen #fstouch button[data-key="down"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 3); }
-.page-index #bezel:fullscreen #fstouch button[data-key="right"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 4); }
+.page-index #bezel:fullscreen #fstouch button[data-key="esc"]{ grid-column:1; grid-row:1; }
+.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ grid-column:2; grid-row:1; }
+.page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ grid-column:3; grid-row:1; }
+.page-index #bezel:fullscreen #fstouch button[data-key="up"]{ grid-column:2; grid-row:2; }
+.page-index #bezel:fullscreen #fstouch button[data-key="left"]{ grid-column:1; grid-row:3; }
+.page-index #bezel:fullscreen #fstouch button[data-key="down"]{ grid-column:2; grid-row:3; }
+.page-index #bezel:fullscreen #fstouch button[data-key="right"]{ grid-column:3; grid-row:3; }
 .page-index #touchbar{
   display:none;
   margin-top:12px;
@@ -356,7 +353,8 @@
 .page-index #hint .tc{ display:none; }
 @media (pointer:coarse){
   .page-index:not(.booting) #touchbar{ display:flex; }
-  .page-index:not(.booting) #bezel:fullscreen #fstouch{ display:block; }
+  .page-index:not(.booting) #bezel:fullscreen #tube{ margin-right:var(--fs-touch-reserve, 0px); }
+  .page-index:not(.booting) #bezel:fullscreen #fstouch{ display:grid; }
   .page-index #bezel:fullscreen{ padding:0; }
   .page-index #hint .kb{ display:none; }
   .page-index #hint .tc{ display:inline; }

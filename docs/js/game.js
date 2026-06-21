@@ -1303,13 +1303,17 @@ paintMute();
 function fit(){
   if(document.fullscreenElement){
     /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384).
-       On touch, leave space at the left and right for the fullscreen key columns. */
-    const sideReserve = matchMedia('(pointer:coarse)').matches ? 144 : 0;
-    const s = Math.min(Math.max(160, innerWidth - sideReserve)/640, innerHeight/384);
+       On touch, leave one right-side pad for the fullscreen buttons. */
+    const touchReserve = matchMedia('(pointer:coarse)').matches
+      ? Math.min(206, Math.max(154, innerWidth * 0.28))
+      : 0;
+    bezel.style.setProperty('--fs-touch-reserve', touchReserve + 'px');
+    const s = Math.min(Math.max(160, innerWidth - touchReserve)/640, innerHeight/384);
     cv.style.width = (640*s) + 'px';
     cv.style.height = (384*s) + 'px';
     return;
   }
+  bezel.style.removeProperty('--fs-touch-reserve');
   const num = v => parseFloat(v) || 0;
   const inlinePad = el => {
     const st = getComputedStyle(el);
