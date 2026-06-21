@@ -206,22 +206,24 @@
           </div>
           <div class="step">
             <b>6. Survive locally</b>
-            <p>Only before loop pressure, pick a one-step move into open space; do not chase the tail as its own goal.</p>
+            <p>As the final fallback, pick a one-step move into open space; do not chase the tail as its own goal.</p>
           </div>
           <div class="step">
             <b>7. Give up cleanly</b>
-            <p>If pressure cannot find food once the bot is idle or looping, stop circling and let the game advance to the next bot level.</p>
+            <p>Only give up when even the local survival fallback cannot find a survivable move.</p>
           </div>
         </div>
         <pre><code>const decide = (idle, looping) =&gt; {
   resetDanger();
   const urgent = idle &gt;= 18 || looping;
-  return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-    (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-    pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-    (!urgent ? survivalMove() : null);
+  const food = nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true);
+  if(food !== null) return food;
+  return (urgent
+    ? pressureFood(false, true) ?? pressureFood(true, true)
+    : pressureFood(false, false) ?? pressureFood(true, false)) ??
+    survivalMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If that pressure cannot find a food route, it returns no move instead of orbiting the tail.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If that pressure cannot find a food route, the bot still takes the best immediate survival move; Escape is reserved for positions where no survivable move remains.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -371,11 +373,11 @@
             <tr>
               <td><code>survivalMove()</code></td>
               <td>Short bridge</td>
-              <td>Before loop pressure only, scores each immediately legal move by reachable space, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
+              <td>As the final fallback, scores each immediately legal move by reachable space, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
-        <p>This gives the bot a survival instinct without letting that instinct become endless circling. If the map says "do not eat yet", it may move into a larger open region briefly, but repeated head positions make the next decisions prefer food pressure; if pressure still fails, the bot gives up and the live demo advances.</p>
+        <p>This gives the bot a survival instinct without letting that instinct become the first answer to every hard board. If the map says "do not eat yet", it may move into a larger open region briefly, but repeated head positions make the next decisions prefer food pressure. If pressure still cannot prove a route, the bot keeps moving only while the local fallback can find a survivable step.</p>
       </section>
       <section id="score">
         <h2>9. Route scoring</h2>
@@ -429,9 +431,9 @@
           <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
           <li><code>escapeProof()</code> keeps the 48 best post-pickup states per depth while proving that a food route has a way out.</li>
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
-          <li>The page speed slider changes the delay between key presses, not the search itself.</li>
+          <li>The page speed slider sets the target cadence between key presses; planner time is counted inside that cadence when it fits.</li>
         </ul>
-        <p>The slider snaps to the page's speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move.</p>
+        <p>The slider snaps to the page's speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move. Normal planning time is subtracted from that wait; if a search overruns the target cadence, the next key is sent immediately.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
@@ -458,16 +460,16 @@
               <td>The snake is boxed, dying, or not moving. Flash red after the stall threshold.</td>
             </tr>
             <tr>
-              <td>No safe move</td>
-              <td>All planners failed. Flash red.</td>
+              <td>No survivable move</td>
+              <td>Food planners and the local survival fallback failed. Flash red.</td>
             </tr>
             <tr>
-              <td>No score gain past the dynamic idle limit</td>
-              <td>Progress stalled. Flash red. The limit is 160 moves normally, then 210, 280, 400, or 520 moves as the remaining item count drops to 8, 4, 2, or 1.</td>
+              <td>No score gain or repeated head positions</td>
+              <td>Switch to urgent food pressure. This is not a restart condition by itself.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle timer instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the dynamic timeout gives it more room before declaring the bot stuck.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the bot now keeps moving safely instead of treating that silence as stuck.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>

@@ -119,16 +119,18 @@
           <div class="step"><b>3. Bredere schone route</b><p>Als dichtbij niets veilig is, zoekt de voorzichtige planner verder.</p></div>
           <div class="step"><b>4. Smileys als ontsnapping</b><p>Pas als schone routes falen, worden dezelfde zoekacties met smileys toegestaan.</p></div>
           <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen.</p></div>
-          <div class="step"><b>6. Lokaal overleven</b><p>Alleen voor lusdruk kiest hij een directe zet naar open ruimte; de staart najagen is geen eigen doel meer.</p></div>
-          <div class="step"><b>7. Netjes opgeven</b><p>Als druk geen voedselroute vindt terwijl de bot stilvalt of lussen draait, stopt hij met rondjes lopen en gaat de demo door naar het volgende botlevel.</p></div>
+          <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij een directe zet naar open ruimte; de staart najagen is geen eigen doel meer.</p></div>
+          <div class="step"><b>7. Netjes opgeven</b><p>Alleen als zelfs de lokale overlevingsfallback geen overleefbare zet vindt, geeft de bot op.</p></div>
         </div>
         <pre><code>const decide = (idle, looping) =&gt; {
   resetDanger();
   const urgent = idle &gt;= 18 || looping;
-  return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-    (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-    pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-    (!urgent ? survivalMove() : null);
+  const food = nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true);
+  if(food !== null) return food;
+  return (urgent
+    ? pressureFood(false, true) ?? pressureFood(true, true)
+    : pressureFood(false, false) ?? pressureFood(true, false)) ??
+    survivalMove();
 };</code></pre>
       </section>
       <section id="danger">
@@ -190,7 +192,7 @@
           <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
           <tbody>
             <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of herhaalde kopposities.</td></tr>
-            <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Scoret directe zetten voor lusdruk op ruimte, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
+            <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Als laatste fallback scoort hij directe zetten op ruimte, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
           </tbody>
         </table>
       </section>
@@ -222,9 +224,9 @@
           <li><code>pressureFood()</code> gebruikt 720 toestanden normaal en 1050 wanneer urgent.</li>
           <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
           <li><code>escapeProof()</code> bewaart per diepte de 48 beste toestanden na het oppakken terwijl hij bewijst dat de voedselroute een uitweg heeft.</li>
-          <li>De schuifregelaar verandert de wachttijd tussen toetsaanslagen, niet de zoeklogica.</li>
+          <li>De schuifregelaar zet het doeltempo tussen toetsaanslagen; plannertijd telt mee binnen dat tempo wanneer dat past.</li>
         </ul>
-        <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet.</p>
+        <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet. Normale plannertijd wordt van die wachttijd afgetrokken; als een zoekactie langer duurt dan het doeltempo, gaat de volgende toets meteen door.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
@@ -236,11 +238,11 @@
             <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Schoon gehaald. Groen flitsen en door naar het volgende gekozen level.</td></tr>
             <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
             <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang zit vast, sterft of beweegt niet. Rood na de stall-drempel.</td></tr>
-            <tr><td>Geen veilige zet</td><td>Alle planners faalden. Rood.</td></tr>
-            <tr><td>Geen scorewinst voorbij de dynamische idle-limiet</td><td>Voortgang stokt. Rood. De limiet groeit wanneer er weinig items over zijn.</td></tr>
+            <tr><td>Geen overleefbare zet</td><td>Voedselplanners en lokale overlevingsfallback faalden. Rood.</td></tr>
+            <tr><td>Geen scorewinst of herhaalde kopposities</td><td>Schakel naar urgente voedseldruk. Dit is op zichzelf geen herstartvoorwaarde.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor de idle-timer in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert.</p>
+        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert, dus de bot blijft nu veilig bewegen in plaats van die stilte als vastzitten te behandelen.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>

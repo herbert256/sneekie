@@ -32,6 +32,8 @@
     updateSpeed();
   }
   function botDelay(){ return speedToDelay(botSpeed); }
+  const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
 
   const DIRS = [[72,-160],[80,160],[75,-2],[77,2]];
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
@@ -312,9 +314,10 @@
     resetDanger();
     const urgent = idle >= 18 || looping;
     return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-      (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-      pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-      (!urgent ? survivalMove() : null);
+      (urgent
+        ? pressureFood(false, true) ?? pressureFood(true, true)
+        : pressureFood(false, false) ?? pressureFood(true, false)) ??
+      survivalMove();
   };
 
   /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
@@ -331,8 +334,8 @@
   const tabs = new Map();
   function markTabs(){ tabs.forEach((b, n) => b.setAttribute('aria-pressed', String(n === target))); }
   function queueLevel(n){
+    // target is the requested tab; activeLevel is only updated once the game reaches it.
     target = n;
-    activeLevel = n;
     pendingJump = n;
     jumpingTo = null;
     markTabs();
@@ -362,6 +365,7 @@
   const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false;
+    let observedLive = null;
     const headTrail = [];
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
@@ -372,6 +376,7 @@
           if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
           pushKey('\r'); pushKey(yesKey()); over = 0;
         }
+        observedLive = LIVE;
         await sleep(botDelay()); continue;
       }
       over = 0;
@@ -383,10 +388,18 @@
           gameEndQueued = true;
           deathQueued = true;
           idle = 0; headTrail.length = 0;
+          observedLive = LIVE;
           pushKey('\r');
         }
         await sleep(botDelay()); continue;
       }
+      // deathSeq() can finish and rebuild the same BASIC level between bot ticks.
+      // The lower life count is the stable signal that the previous level failed.
+      if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
+        queueNextLevel();
+        idle = 0; headTrail.length = 0;
+      }
+      observedLive = LIVE;
       deathQueued = false;
       gameEndQueued = false;
       if(jumpingTo !== null){
@@ -410,6 +423,7 @@
         pendingJump = null; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }
+      const tickStarted = now();
       if(ZCORE > prevScore) idle = 0; else idle++;
       prevScore = ZCORE;
       headTrail.push(T[BTEL]);
@@ -420,8 +434,8 @@
       const sc = decide(idle, looping);
       if(sc !== null) pushKey(keyOf[sc]);              // a safe move
       else if(BTEL <= 2) pushKey('\r');               // under the level popup -> any key dismisses it
-      else pushKey('\x1b');                            // boxed mid-level -> give up like a player (ESC)
-      await sleep(botDelay());
+      else pushKey('\x1b');                            // no survivable move -> give up like a player (ESC)
+      await sleepForTick(tickStarted);
     }
   })();
 })();
