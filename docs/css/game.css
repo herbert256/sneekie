@@ -382,8 +382,10 @@
     max-width:100%;
   }
   .page-index #game-toolbar{
-    flex-wrap:wrap;
-    gap:7px;
+    flex-wrap:nowrap;
+    gap:5px;
+    align-items:center;
+    justify-content:space-between;
     margin-bottom:8px;
   }
   .page-index #bezel{
@@ -420,27 +422,27 @@
   .page-index #panel .knobs{ gap:8px; }
   .page-index #panel .knobs i{ width:12px; height:12px; }
   .page-index #themes{
-    width:100%;
-    flex:1 1 100%;
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:5px;
-    padding:0 1px;
+    width:auto;
+    flex:0 0 auto;
+    flex-wrap:nowrap;
+    gap:3px;
+    padding:0;
   }
   .page-index #controls{
-    width:100%;
-    flex:1 1 100%;
-    gap:7px;
+    width:auto;
+    min-width:0;
+    flex:0 1 auto;
+    gap:3px;
     justify-content:flex-end;
     margin:0;
-    padding:0 1px;
+    padding:0;
   }
   .page-index #controls .grp{
-    width:min(100%, 340px);
-    display:grid;
-    grid-auto-flow:column;
-    grid-auto-columns:minmax(0, 1fr);
-    gap:5px;
+    width:auto;
+    min-width:0;
+    display:flex;
+    flex-wrap:nowrap;
+    gap:3px;
   }
   .page-index button{
     min-width:0;
@@ -448,6 +450,14 @@
     font-size:10px;
     letter-spacing:.055em;
     min-height:32px;
+  }
+  .page-index #game-toolbar button{
+    padding:6px 2px;
+    font-size:8.5px;
+    line-height:1;
+    letter-spacing:0;
+    white-space:nowrap;
+    min-height:26px;
   }
   .page-index #touchbar{
     width:100%;
