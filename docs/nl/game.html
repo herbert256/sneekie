@@ -87,11 +87,9 @@
             <span class="led"></span>
             <span class="knobs"><i></i><i></i></span>
           </div>
-          <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
-       (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
+          <!-- Touch controls live inside the bezel, so they survive fullscreen.
        Shown only in fullscreen on a coarse pointer; see CSS. -->
           <div id="fstouch">
-            <button type="button" data-key="esc">ESC</button>
             <button type="button" data-key="left" aria-label="Links">&#8592;</button>
             <button type="button" data-key="up" aria-label="Omhoog">&#8593;</button>
             <button type="button" data-key="down" aria-label="Omlaag">&#8595;</button>
@@ -109,12 +107,9 @@
           </div>
         </div>
       </div>
-      <div id="touchbar">
-        <button type="button" data-key="esc">ESC</button>
-      </div>
       <p id="hint">
         <span class="kb">Pijltjestoetsen sturen de slang<br />Tik / klik = de slang loopt naar dat punt<br />&lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven / F10 = level overslaan</span>
-        <span class="tc">Pijltjestoetsen sturen de slang<br />Tik / klik = de slang loopt naar dat punt<br />&lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven / F10 = level overslaan</span>
+        <span class="tc">Veeg om de slang te sturen<br />Tik = de slang loopt naar dat punt<br />F9 = extra leven / F10 = level overslaan</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="Een gloeiende Sneekie-slang barst door een CRT-spelscherm terwijl harten, klavers, stenen en doolhofstukken naar buiten vliegen." />

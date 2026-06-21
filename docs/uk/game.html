@@ -87,11 +87,9 @@
             <span class="led"></span>
             <span class="knobs"><i></i><i></i></span>
           </div>
-          <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
-       (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
+          <!-- Touch controls live inside the bezel, so they survive fullscreen.
        Shown only in fullscreen on a coarse pointer; see CSS. -->
           <div id="fstouch">
-            <button type="button" data-key="esc">ESC</button>
             <button type="button" data-key="left" aria-label="Ліворуч">&#8592;</button>
             <button type="button" data-key="up" aria-label="Вгору">&#8593;</button>
             <button type="button" data-key="down" aria-label="Вниз">&#8595;</button>
@@ -109,12 +107,9 @@
           </div>
         </div>
       </div>
-      <div id="touchbar">
-        <button type="button" data-key="esc">ESC</button>
-      </div>
       <p id="hint">
         <span class="kb">Стрілки керують змійкою<br />Дотик / клік = змійка йде до цієї точки<br />&lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя / F10 = пропустити рівень</span>
-        <span class="tc">Стрілки керують змійкою<br />Дотик / клік = змійка йде до цієї точки<br />&lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя / F10 = пропустити рівень</span>
+        <span class="tc">Проведіть пальцем, щоб керувати змійкою<br />Дотик = змійка йде до цієї точки<br />F9 = додаткове життя / F10 = пропустити рівень</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="Світна змія Sneekie проривається крізь CRT-екран гри, а серця, трефи, камені й частини лабіринту летять назовні." />

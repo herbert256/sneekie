@@ -123,7 +123,7 @@ const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
 let bootStartResolve = null, bootAutoStart = null;
 const BOOT_AUTOSTART_MS = 2000;   // boot starts on its own this long after the BIOS screen appears
-document.body.classList.add('booting');     // hides the touch controls (#touchbar + fullscreen #fstouch) until boot finishes
+document.body.classList.add('booting');     // hides the fullscreen touch controls until boot finishes
 
 /* boot-time blinking hardware text cursor (the original game has none) */
 let cursorVisible = false, cursorBlink = false, cursorPrevIdx = -1, cursorTimer = null;
@@ -491,10 +491,10 @@ cv.addEventListener('pointerdown', e => {
 
 /* on-screen button -> the same INKEY$ strings the keyboard produces */
 const TOUCHKEYS = {
-  esc:'\x1b', up:'\0H', down:'\0P', left:'\0K', right:'\0M',
+  up:'\0H', down:'\0P', left:'\0K', right:'\0M',
   f9:'\0C', f10:'\0D',                                      // F9/F10 = extra life / skip level
 };
-document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
+document.querySelectorAll('#fstouch button').forEach(b => {
   b.addEventListener('click', () => {
     if(bootActive){
       ensureAudio();

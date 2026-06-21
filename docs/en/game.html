@@ -87,11 +87,9 @@
             <span class="led"></span>
             <span class="knobs"><i></i><i></i></span>
           </div>
-          <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
-       (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
+          <!-- Touch controls live inside the bezel, so they survive fullscreen.
        Shown only in fullscreen on a coarse pointer; see CSS. -->
           <div id="fstouch">
-            <button type="button" data-key="esc">ESC</button>
             <button type="button" data-key="left" aria-label="Left">&#8592;</button>
             <button type="button" data-key="up" aria-label="Up">&#8593;</button>
             <button type="button" data-key="down" aria-label="Down">&#8595;</button>
@@ -109,12 +107,9 @@
           </div>
         </div>
       </div>
-      <div id="touchbar">
-        <button type="button" data-key="esc">ESC</button>
-      </div>
       <p id="hint">
         <span class="kb">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
-        <span class="tc">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
+        <span class="tc">Swipe to steer the snake<br />Tap = the snake walks to that point<br />F9 = extra life / F10 = skip level</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="A glowing Sneekie snake bursting through a CRT game screen while hearts, clubs, stones, and maze pieces fly outward." />

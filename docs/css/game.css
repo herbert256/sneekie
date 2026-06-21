@@ -342,22 +342,12 @@
   pointer-events:auto;
   touch-action:manipulation;
 }
-.page-index #bezel:fullscreen #fstouch button[data-key="esc"]{ grid-column:1; grid-row:1; }
-.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ grid-column:2; grid-row:1; }
+.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ grid-column:1; grid-row:1; }
 .page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ grid-column:3; grid-row:1; }
 .page-index #bezel:fullscreen #fstouch button[data-key="up"]{ grid-column:2; grid-row:3; }
 .page-index #bezel:fullscreen #fstouch button[data-key="left"]{ grid-column:1; grid-row:4; }
 .page-index #bezel:fullscreen #fstouch button[data-key="down"]{ grid-column:2; grid-row:4; }
 .page-index #bezel:fullscreen #fstouch button[data-key="right"]{ grid-column:3; grid-row:4; }
-.page-index #touchbar{
-  display:none;
-  margin-top:12px;
-  gap:10px;
-}
-.page-index #touchbar button{
-  padding:12px 22px;
-  font-size:13px;
-}
 .page-index #hint{
   margin:8px 0 0;
   color:var(--ink-dim);
@@ -367,7 +357,6 @@
 }
 .page-index #hint .tc{ display:none; }
 @media (pointer:coarse){
-  .page-index:not(.booting) #touchbar{ display:flex; }
   .page-index:not(.booting) #bezel:fullscreen #tube{ margin-right:var(--fs-touch-reserve, 0px); }
   .page-index:not(.booting) #bezel:fullscreen #fstouch{ display:grid; }
   .page-index #bezel:fullscreen{ padding:0; }
@@ -474,15 +463,6 @@
     white-space:nowrap;
     min-height:26px;
   }
-  .page-index #touchbar{
-    width:100%;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:7px;
-  }
-  .page-index #touchbar button{
-    padding:12px 6px;
-    font-size:12px;
-  }
   .page-index #hint{
     margin-top:7px;
     font-size:11px;
@@ -503,12 +483,8 @@
     font-size:12px;
   }
 }
-@media (pointer:coarse) and (max-width:520px){
-  .page-index:not(.booting) #touchbar{ display:grid; }
-}
 @media print{
   .page-index #themes,
   .page-index #game-toolbar,
-  .page-index #controls,
-  .page-index #touchbar{ display:none !important; }
+  .page-index #controls{ display:none !important; }
 }
