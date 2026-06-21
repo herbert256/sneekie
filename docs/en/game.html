@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
+    <meta name="description" content="Play Sneekie, the 1988 MS-DOS snake and maze game rebuilt for the browser." />
     <title>Sneekie - the 1988 game</title>
     <link rel="canonical" href="https://sneekie.xyz/en/game" />
     <link rel="alternate" hreflang="en" href="https://sneekie.xyz/en/game" />
@@ -22,7 +22,7 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - The 1988 Game" />
-    <meta property="og:description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
+    <meta property="og:description" content="Play Sneekie, the 1988 MS-DOS snake and maze game rebuilt for the browser." />
     <meta property="og:url" content="https://sneekie.xyz/en/game" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -30,7 +30,7 @@
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - The 1988 Game" />
-    <meta name="twitter:description" content="A MS-DOS text game from 1988 - reborn as a browser game" />
+    <meta name="twitter:description" content="Play Sneekie, the 1988 MS-DOS snake and maze game rebuilt for the browser." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -60,8 +60,12 @@
     <main id="main" tabindex="-1">
       <header class="hero">
         <h1 class="page-title">The 1988 Game</h1>
-        <p class="sub">A MS-DOS text game from 1988 &mdash; reborn as a browser game</p>
       </header>
+      <div class="grp" id="themes">
+        <button type="button" data-theme="hercules">Green</button>
+        <button type="button" data-theme="amber">Amber</button>
+        <button type="button" data-theme="cga">CGA</button>
+      </div>
       <div id="bezel">
         <div id="tube">
           <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
@@ -89,11 +93,6 @@
         </div>
       </div>
       <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Green</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="cga">CGA</button>
-        </div>
         <div class="grp">
           <button type="button" id="mute">Sound: on</button>
           <button type="button" id="fs">Fullscreen</button>
@@ -105,8 +104,8 @@
         <button type="button" data-key="n">N</button>
       </div>
       <p id="hint">
-        <span class="kb">Arrow keys steer the snake &middot; &lt;ESC&gt; = give up when stuck<br />F9 = extra life &middot; F10 = skip level &middot; any key continues</span>
-        <span class="tc">Swipe to steer &middot; tap = any key</span>
+        <span class="kb">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
+        <span class="tc">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="A glowing Sneekie snake bursting through a CRT game screen while hearts, clubs, stones, and maze pieces fly outward." />

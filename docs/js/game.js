@@ -277,7 +277,7 @@ function setClickTarget(e){
 }
 function routePassable(idx){
   const ch = peek(idx * 2);
-  return ch === 32 || ch === 3 || ch === 5 || ch === 1;
+  return ch === 32 || ch === 3 || ch === 5;
 }
 function nextClickTargetKey(){
   if(!clickTarget || BTEL <= 0) return null;
@@ -1072,7 +1072,7 @@ async function playLevels(){
         if(A$.length === 2) E = A$.charCodeAt(1);             // 640
         let A = T[BTEL];                                      // 650
         if(E === 68){ skip = true; break; }                   // 660: F10
-        if(E === 67){ LIVE++; skip = true; break; }           // 670: F9
+        if(E === 67){ LIVE++; locate(23,61); pu(2,LIVE); E = F; continue; } // 670: F9
         if(E === 80) A += 160; else if(E === 72) A -= 160;    // 680
         if(E === 77) A += 2;   else if(E === 75) A -= 2;      // 690
         const d = peek(A);                                    // 700

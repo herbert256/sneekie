@@ -132,9 +132,9 @@ if(migrationLang === 'nl' || migrationLang === 'uk'){
   localized.forEach(([t, h], i) => { if(SECTIONS[i]){ SECTIONS[i].t = t; SECTIONS[i].h = h; } });
 }
 const MID_IMAGE_ALT = {
-  en: 'An older red-and-gray-bearded programmer watches an old CRT BASIC game transform into a modern browser game with glowing AI helpers.',
-  nl: 'Een oudere programmeur met rode/grijze baard ziet een oud CRT BASIC-spel veranderen in een moderne browsergame met gloeiende AI-helpers.',
-  uk: 'Старший програміст із рудо-сивою бородою дивиться, як стара CRT BASIC-гра переходить у сучасну браузерну гру з ШІ-помічниками.'
+  en: 'A short-lived AI comet carries a 1988 BASIC snake game into a glowing browser port.',
+  nl: 'Een kortlevende AI-komeet draagt een BASIC-slangenspel uit 1988 naar een gloeiende browserport.',
+  uk: 'Короткочасна AI-комета переносить BASIC-гру зі змійкою 1988 року в сяйний браузерний порт.'
 };
 
 /* ---------- render ---------- */
@@ -170,7 +170,7 @@ function addMidFigure(){
   img.loading = 'lazy';
   img.width = 1200;
   img.height = 676;
-  img.src = '../images/pages/web-resurrection.webp';
+  img.src = '../images/pages/history-19-fable-port.webp';
   img.alt = MID_IMAGE_ALT[migrationLang] || MID_IMAGE_ALT.en;
   figure.appendChild(img);
   pairs.appendChild(figure);

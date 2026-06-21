@@ -164,6 +164,13 @@
   border-color:var(--accent);
   box-shadow:0 0 12px -5px var(--accent);
 }
+.page-index #themes{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  justify-content:center;
+  margin:0 0 12px;
+}
 .page-index #controls{
   display:flex;
   flex-wrap:wrap;
@@ -248,6 +255,7 @@
   margin:8px 0 0;
   color:var(--ink-dim);
   font-size:13px;
+  line-height:1.55;
   text-align:center;
 }
 .page-index #hint .tc{ display:none; }
@@ -309,6 +317,14 @@
   .page-index #panel .led{ width:6px; height:6px; }
   .page-index #panel .knobs{ gap:8px; }
   .page-index #panel .knobs i{ width:12px; height:12px; }
+  .page-index #themes{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:5px;
+    margin-bottom:8px;
+    padding:0 1px;
+  }
   .page-index #controls{
     width:100%;
     gap:7px;
@@ -348,6 +364,7 @@
   .page-index:not(.booting) #touchbar{ display:grid; }
 }
 @media print{
+  .page-index #themes,
   .page-index #controls,
   .page-index #touchbar{ display:none !important; }
 }
