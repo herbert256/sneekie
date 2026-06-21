@@ -179,14 +179,16 @@
       if(headTrail.length > 96) headTrail.shift();
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
-      const looping = idle > 24 && repeats >= 2;
-      const sc = planner ? planner.decide({ idle, looping, budgetMs:routeBudget() }) : null;
+      const looping = idle > 20 && repeats >= 2;
+      const stalled = idle > 180 || (idle > 96 && repeats >= 4);
+      const sc = stalled ? null : (planner ? planner.decide({ idle, looping, budgetMs:routeBudget() }) : null);
       if(sc !== null){
         escapeQueued = false;
         pushKey(keyOf[sc]);                            // a safe move
       }
       else if(!escapeQueued){
         escapeQueued = true;
+        idle = 0; headTrail.length = 0;
         pushKey('\x1b');                              // no survivable move -> give up like a player (ESC)
       }
       await sleepForTick(tickStarted);

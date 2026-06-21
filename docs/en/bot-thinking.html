@@ -231,7 +231,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   }
   return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. Escape is reserved for positions where no survivable move remains.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. Escape is used when no survivable move remains, and also after a sustained no-score stall so the live demo does not orbit indefinitely.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -473,11 +473,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td>No score gain or repeated head positions</td>
-              <td>Switch to urgent food pressure. This is not a restart condition by itself.</td>
+              <td>Switch to urgent food pressure; after a sustained stall, give up cleanly and advance.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the bot now keeps moving safely instead of treating that silence as stuck.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the bot first keeps moving safely, then gives up only after the stall window is clearly too long.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>
