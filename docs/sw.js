@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-vram-auto-restart-1';
+const VERSION = '2026-06-21-home-play-card-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
