@@ -489,7 +489,8 @@ document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
 
 /* ---------- AUDIO: GW-BASIC SOUND f,d (d in 1/18.2s clock ticks) ---------- */
 let actx = null, qEnd = 0;
-let muted = lsGet('sneekie.muted') === '1';
+let muted = false;
+try { localStorage.removeItem('sneekie.muted'); } catch(_) {}
 function ensureAudio(){
   if(!actx){
     try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(_){ }
@@ -1295,7 +1296,6 @@ function paintMute(){ muteBtn.textContent = muted ? gameUiText('soundOff') : gam
 muteBtn.addEventListener('click', () => {
   ensureAudio();
   muted = !muted;
-  lsSet('sneekie.muted', muted ? '1' : '0');
   paintMute();
 });
 paintMute();
