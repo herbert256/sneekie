@@ -38,6 +38,21 @@
   position:relative;
   animation:poweron .6s ease-out both .08s;
 }
+.page-index #game-stage{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  width:max-content;
+  max-width:100%;
+}
+.page-index #game-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  margin:0 0 12px;
+}
 .page-index #bezel{
   display:flex;
   flex-direction:column;
@@ -168,18 +183,23 @@
   display:flex;
   flex-wrap:wrap;
   gap:6px;
-  justify-content:center;
-  margin:0 0 12px;
+  justify-content:flex-start;
+  margin:0;
 }
 .page-index #controls{
   display:flex;
   flex-wrap:wrap;
   gap:8px;
-  justify-content:center;
+  justify-content:flex-end;
   align-items:center;
-  margin-top:12px;
+  margin:0 0 0 auto;
 }
-.page-index #controls .grp{ display:flex; gap:6px; }
+.page-index #controls .grp{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:6px;
+}
 .page-index #bezel:fullscreen{
   display:flex;
   align-items:center;
@@ -284,6 +304,15 @@
     line-height:1.45;
     letter-spacing:.08em;
   }
+  .page-index #game-stage{
+    width:100%;
+    max-width:100%;
+  }
+  .page-index #game-toolbar{
+    flex-wrap:wrap;
+    gap:7px;
+    margin-bottom:8px;
+  }
   .page-index #bezel{
     width:100%;
     max-width:100%;
@@ -319,20 +348,22 @@
   .page-index #panel .knobs i{ width:12px; height:12px; }
   .page-index #themes{
     width:100%;
+    flex:1 1 100%;
     display:grid;
     grid-template-columns:repeat(3, minmax(0, 1fr));
     gap:5px;
-    margin-bottom:8px;
     padding:0 1px;
   }
   .page-index #controls{
     width:100%;
+    flex:1 1 100%;
     gap:7px;
-    margin-top:10px;
+    justify-content:flex-end;
+    margin:0;
     padding:0 1px;
   }
   .page-index #controls .grp{
-    width:100%;
+    width:min(100%, 340px);
     display:grid;
     grid-auto-flow:column;
     grid-auto-columns:minmax(0, 1fr);
@@ -365,6 +396,7 @@
 }
 @media print{
   .page-index #themes,
+  .page-index #game-toolbar,
   .page-index #controls,
   .page-index #touchbar{ display:none !important; }
 }

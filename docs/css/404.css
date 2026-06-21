@@ -1,0 +1,114 @@
+.page-404 main{
+  max-width:1080px;
+  padding-top:20px;
+}
+
+.page-404 .not-found{
+  text-align:center;
+}
+
+.page-404 .error-code{
+  margin:8px 0 0;
+  color:var(--annot);
+  font:700 18px/1 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.page-404 .lead{
+  margin:0 auto 24px;
+  max-width:760px;
+  color:#d9e2dc;
+  font-size:20px;
+  line-height:1.6;
+  text-align:center;
+}
+
+.page-404 .lost-snake-figure{
+  width:min(100%, 960px);
+  margin:28px auto 26px;
+  overflow:hidden;
+  border:1px solid rgba(125,255,125,.34);
+  border-radius:7px;
+  background:#020503;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.72),
+    0 0 42px rgba(125,255,125,.12),
+    0 22px 70px rgba(0,0,0,.48);
+}
+
+.page-404 .lost-snake-figure img{
+  display:block;
+  width:100%;
+  height:auto;
+}
+
+.page-404 .not-found-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:26px auto 18px;
+}
+
+.page-404 .not-found-actions a{
+  min-width:154px;
+  padding:10px 16px;
+  color:var(--ink);
+  background:linear-gradient(180deg, rgba(28,31,34,.96), rgba(11,13,14,.96));
+  border:1px solid var(--border);
+  border-radius:4px;
+  font:700 12px/1.2 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:color .12s, border-color .12s, box-shadow .12s, transform .12s;
+}
+
+.page-404 .not-found-actions a:hover,
+.page-404 .not-found-actions a:focus-visible{
+  color:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 16px -6px var(--accent);
+  text-decoration:none;
+  transform:translateY(-1px);
+}
+
+.page-404 .not-found-status{
+  max-width:740px;
+  margin:0 auto;
+  color:var(--muted);
+  font:13px/1.7 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+}
+
+@media (max-width:680px){
+  .page-404 main{
+    padding-top:10px;
+  }
+
+  .page-404 .error-code{
+    font-size:14px;
+  }
+
+  .page-404 .lead{
+    font-size:17px;
+  }
+
+  .page-404 .lost-snake-figure{
+    width:calc(100% + 32px);
+    margin-left:-16px;
+    margin-right:-16px;
+    border-left:0;
+    border-right:0;
+    border-radius:0;
+  }
+
+  .page-404 .not-found-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .page-404 .not-found-actions a{
+    width:100%;
+  }
+}

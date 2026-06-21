@@ -58,44 +58,49 @@
       </div>
     </header>
     <main id="main" tabindex="-1">
+      <noscript><div class="noscript-warn">Для запуску цієї гри MS-DOS 1988 року в браузері потрібен JavaScript.</div></noscript>
       <header class="hero">
         <h1 class="page-title">Гра 1988 року</h1>
       </header>
-      <div class="grp" id="themes">
-        <button type="button" data-theme="hercules">Зелений</button>
-        <button type="button" data-theme="amber">Бурштин</button>
-        <button type="button" data-theme="cga">CGA</button>
-      </div>
-      <div id="bezel">
-        <div id="tube">
-          <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран Sneekie"></canvas>
-          <div id="glass" aria-hidden="true"></div>
-          <div id="power" aria-hidden="true"></div>
+      <div id="game-stage">
+        <div id="game-toolbar" aria-label="Параметри гри">
+          <div class="grp" id="themes">
+            <button type="button" data-theme="hercules">Зелений</button>
+            <button type="button" data-theme="amber">Бурштин</button>
+            <button type="button" data-theme="cga">CGA</button>
+          </div>
+          <div id="controls">
+            <div class="grp">
+              <button type="button" id="mute">Звук: увімкнено</button>
+              <button type="button" id="fs">На весь екран</button>
+            </div>
+          </div>
         </div>
-        <div id="panel" aria-hidden="true">
-          <span class="logo">Корпорація Acme</span>
-          <span class="led"></span>
-          <span class="knobs"><i></i><i></i></span>
-        </div>
-        <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
+        <div id="bezel">
+          <div id="tube">
+            <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран Sneekie"></canvas>
+            <div id="glass" aria-hidden="true"></div>
+            <div id="power" aria-hidden="true"></div>
+          </div>
+          <div id="panel" aria-hidden="true">
+            <span class="logo">Корпорація Acme</span>
+            <span class="led"></span>
+            <span class="knobs"><i></i><i></i></span>
+          </div>
+          <!-- touch controls that live INSIDE the bezel, so they survive fullscreen
        (only #bezel is fullscreened — the sibling #touchbar below is not rendered).
        Shown only in fullscreen on a coarse pointer; see CSS. -->
-        <div id="fstouch">
-          <button type="button" data-key="esc">ESC</button>
-          <button type="button" data-key="left" aria-label="Ліворуч">&#8592;</button>
-          <button type="button" data-key="up" aria-label="Вгору">&#8593;</button>
-          <button type="button" data-key="down" aria-label="Вниз">&#8595;</button>
-          <button type="button" data-key="right" aria-label="Праворуч">&#8594;</button>
-          <button type="button" data-key="y">Y</button>
-          <button type="button" data-key="n">N</button>
-          <button type="button" data-key="f9">F9</button>
-          <button type="button" data-key="f10">F10</button>
-        </div>
-      </div>
-      <div id="controls">
-        <div class="grp">
-          <button type="button" id="mute">Звук: увімкнено</button>
-          <button type="button" id="fs">На весь екран</button>
+          <div id="fstouch">
+            <button type="button" data-key="esc">ESC</button>
+            <button type="button" data-key="left" aria-label="Ліворуч">&#8592;</button>
+            <button type="button" data-key="up" aria-label="Вгору">&#8593;</button>
+            <button type="button" data-key="down" aria-label="Вниз">&#8595;</button>
+            <button type="button" data-key="right" aria-label="Праворуч">&#8594;</button>
+            <button type="button" data-key="y">Y</button>
+            <button type="button" data-key="n">N</button>
+            <button type="button" data-key="f9">F9</button>
+            <button type="button" data-key="f10">F10</button>
+          </div>
         </div>
       </div>
       <div id="touchbar">

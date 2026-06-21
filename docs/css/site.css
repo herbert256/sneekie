@@ -430,6 +430,18 @@ footer a:hover{
   padding:18px 20px;
   margin:24px 0;
 }
+.noscript-warn{
+  display:block;
+  margin:24px auto;
+  max-width:860px;
+  padding:14px 18px;
+  background:#3a0d0d;
+  color:#ffb3b3;
+  border:1px solid #a33;
+  border-radius:8px;
+  text-align:center;
+  font:13.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
 .page-doc .callout h2,
 .page-doc .toc h2{
   margin:0 0 8px;
