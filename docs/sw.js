@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-bot-stall-guard-1';
+const VERSION = '2026-06-22-flag-images-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -36,6 +36,9 @@ const CORE_ASSETS = [
   'favicon.ico',
   'favicon.png',
   'images/apple-touch-icon.png',
+  'images/flags/gb.svg',
+  'images/flags/nl.svg',
+  'images/flags/ua.svg',
   'images/home-title-en.webp',
   'images/home-title-nl.webp',
   'images/home-title-uk.webp',

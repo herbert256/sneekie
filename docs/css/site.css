@@ -180,12 +180,13 @@ header.top .lang-switch a{
   height:32px;
   padding:0;
 }
-header.top .lang-icon{
+header.top .lang-flag{
   display:block;
-  font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
-  font-size:18px;
-  line-height:1;
-  letter-spacing:0;
+  width:24px;
+  height:16px;
+  border-radius:1px;
+  box-shadow:0 0 0 1px rgba(234,255,203,.22);
+  object-fit:cover;
 }
 header.top nav a:hover,
 header.top nav button:hover,
