@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-html-viewer-labels-1';
+const VERSION = '2026-06-21-home-migration-image-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
