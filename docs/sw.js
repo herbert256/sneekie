@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-bot-planner-cadence-1';
+const VERSION = '2026-06-21-bot-pressure-step-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);

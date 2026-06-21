@@ -112,26 +112,33 @@
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
-        <p>Elke zet volgt dezelfde ladder. De eerste strategie die een richting oplevert wint; de bot drukt die toets, wacht volgens de snelheidsschuif, en rekent daarna opnieuw vanuit de nieuwe live toestand.</p>
+        <p>Elke zet volgt dezelfde ladder. De eerste strategie die een richting oplevert wint; de bot drukt die toets, wacht volgens de snelheidsschuif, en rekent daarna opnieuw vanuit de nieuwe live toestand. De routebewijzen delen een klein tijdbudget per tick, zodat een lastig doolhof de bot niet zichtbaar laat pauzeren.</p>
         <div class="ladder">
           <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
           <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
           <div class="step"><b>3. Bredere schone route</b><p>Als dichtbij niets veilig is, zoekt de voorzichtige planner verder.</p></div>
           <div class="step"><b>4. Smileys als ontsnapping</b><p>Pas als schone routes falen, worden dezelfde zoekacties met smileys toegestaan.</p></div>
-          <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen.</p></div>
+          <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen. Als er niet op tijd een volledig bewezen route is, kiest hij een directe drukzet richting bereikbaar voedsel.</p></div>
           <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij een directe zet naar open ruimte; de staart najagen is geen eigen doel meer.</p></div>
           <div class="step"><b>7. Netjes opgeven</b><p>Alleen als zelfs de lokale overlevingsfallback geen overleefbare zet vindt, geeft de bot op.</p></div>
         </div>
         <pre><code>const decide = (idle, looping) =&gt; {
   resetDanger();
   const urgent = idle &gt;= 18 || looping;
-  const food = nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true);
-  if(food !== null) return food;
-  return (urgent
-    ? pressureFood(false, true) ?? pressureFood(true, true)
-    : pressureFood(false, false) ?? pressureFood(true, false)) ??
-    survivalMove();
+  routeDeadline = now() + routeBudget();
+  let proved = null;
+  try {
+    proved = nearFood(false) ?? routeFood(false) ??
+      nearFood(true) ?? routeFood(true) ??
+      (urgent
+        ? pressureFood(false, true) ?? pressureFood(true, true)
+        : pressureFood(false, false) ?? pressureFood(true, false));
+  } finally {
+    routeDeadline = 0;
+  }
+  return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
 };</code></pre>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Escape blijft gereserveerd voor posities zonder overleefbare zet.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>

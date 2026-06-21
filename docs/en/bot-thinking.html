@@ -182,7 +182,7 @@
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
-        <p>Every bot move follows the same ladder. The first strategy that returns a direction wins; the bot presses that key, waits according to the speed slider, then recalculates from the new live game state.</p>
+        <p>Every bot move follows the same ladder. The first strategy that returns a direction wins; the bot presses that key, waits according to the speed slider, then recalculates from the new live game state. The route-proof searches share a small per-tick time budget so a hard maze cannot make the bot pause while it thinks.</p>
         <div class="ladder">
           <div class="step">
             <b>1. Reset danger cache</b>
@@ -202,7 +202,7 @@
           </div>
           <div class="step">
             <b>5. Loop pressure</b>
-            <p>If the head is repeating positions or the score has been idle, push toward food instead of circling the tail.</p>
+            <p>If the head is repeating positions or the score has been idle, push toward food instead of circling the tail. If no fully proved route is found in time, use a one-step food-directed pressure move.</p>
           </div>
           <div class="step">
             <b>6. Survive locally</b>
@@ -216,14 +216,20 @@
         <pre><code>const decide = (idle, looping) =&gt; {
   resetDanger();
   const urgent = idle &gt;= 18 || looping;
-  const food = nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true);
-  if(food !== null) return food;
-  return (urgent
-    ? pressureFood(false, true) ?? pressureFood(true, true)
-    : pressureFood(false, false) ?? pressureFood(true, false)) ??
-    survivalMove();
+  routeDeadline = now() + routeBudget();
+  let proved = null;
+  try {
+    proved = nearFood(false) ?? routeFood(false) ??
+      nearFood(true) ?? routeFood(true) ??
+      (urgent
+        ? pressureFood(false, true) ?? pressureFood(true, true)
+        : pressureFood(false, false) ?? pressureFood(true, false));
+  } finally {
+    routeDeadline = 0;
+  }
+  return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If that pressure cannot find a food route, the bot still takes the best immediate survival move; Escape is reserved for positions where no survivable move remains.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. Escape is reserved for positions where no survivable move remains.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>

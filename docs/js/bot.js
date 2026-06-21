@@ -34,6 +34,9 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
+  let routeDeadline = 0;
+  const routeTimeUp = () => routeDeadline > 0 && now() >= routeDeadline;
+  const routeBudget = () => Math.max(35, Math.min(70, botDelay() * 0.8));
 
   const DIRS = [[72,-160],[80,160],[75,-2],[77,2]];
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
@@ -125,10 +128,10 @@
     for(const [sc] of DIRS) if(canMove(st, sc, allowSmile)) count++;
     return count;
   };
-  const spaceInfo = st => {
+  const spaceInfo = (st, limited = true) => {
     const tail = st.body[0], seen = new Set([visitKey(st.head, st.dir)]), cells = new Set([st.head]), qo = [st.head], qd = [st.dir];
     let h = 0, tailReach = st.head === tail;
-    while(h<qo.length){
+    while(h<qo.length && (!limited || !routeTimeUp())){
       const o = qo[h], dir = qd[h++];
       if(o===tail) tailReach = true;
       for(const [sc,d] of DIRS){
@@ -149,8 +152,10 @@
   const survivalDepth = (start, limit) => {
     let frontier = [start], seen = new Set([stateKey(start)]), best = 0;
     for(let depth=1; depth<=limit; depth++){
+      if(routeTimeUp()) return best;
       const next = [];
       for(const st of frontier){
+        if(routeTimeUp()) return best;
         for(const ns of legal(st, true)){
           const key = stateKey(ns);
           if(seen.has(key)) continue;
@@ -169,8 +174,10 @@
     let frontier = [start], seen = new Set([stateKey(start)]);
     let best = { ok:false, depth:0, space:0, tailReach:false, exits:0 };
     for(let depth=1; depth<=limit; depth++){
+      if(routeTimeUp()) return best;
       const next = [];
       for(const st of frontier){
+        if(routeTimeUp()) return best;
         for(const ns of legal(st, allowSmile)){
           const key = stateKey(ns);
           if(seen.has(key)) continue;
@@ -198,10 +205,11 @@
     const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
     const maxDepth = few ? 12 : 9;
     let h = 0, best = null, bs = -1e18;
-    while(h<q.length && h<260){
+    while(h<q.length && h<260 && !routeTimeUp()){
       const st = q[h++];
       if(st.dist >= maxDepth) continue;
       for(const [sc] of DIRS){
+        if(routeTimeUp()) return best;
         const ns = move(st, sc, allowSmile); if(!ns) continue;
         const key = stateKey(ns);
         if(seen.has(key)) continue; seen.add(key);
@@ -230,10 +238,11 @@
     const cycle = (LEVEL-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
     const maxDepth = few ? 115 : 78; let h = 0, checked = 0, best = null, bs = -1e18;
     seen.add(stateKey(start));
-    while(h<q.length && h<950){
+    while(h<q.length && h<950 && !routeTimeUp()){
       const st = q[h++];
       if(st.dist >= maxDepth) continue;
       for(const [sc] of DIRS){
+        if(routeTimeUp()) return best;
         const ns = move(st, sc, allowSmile); if(!ns) continue;
         const key = stateKey(ns);
         if(seen.has(key)) continue; seen.add(key);
@@ -267,10 +276,11 @@
     const maxDepth = few ? (urgent ? 125 : 100) : (urgent ? 88 : 70);
     const scanLimit = urgent ? 1050 : 720, checkLimit = urgent ? 38 : 22;
     let h = 0, checked = 0, best = null, bs = -1e18;
-    while(h<q.length && h<scanLimit){
+    while(h<q.length && h<scanLimit && !routeTimeUp()){
       const st = q[h++];
       if(st.dist >= maxDepth) continue;
       for(const [sc] of DIRS){
+        if(routeTimeUp()) return best;
         const ns = move(st, sc, allowSmile); if(!ns) continue;
         const key = stateKey(ns);
         if(seen.has(key)) continue; seen.add(key);
@@ -303,9 +313,42 @@
     for(const ns of legal(st, true)){
       const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
       if(!exits) continue;
-      const info = spaceInfo(ns);
+      const info = spaceInfo(ns, false);
       const sp = info.space;
       const score = sp*24 + exits*900 + (isFood(c)?2200:0) - (c===1?1800:0) - ns.stones*35 + (ns.first===st.dir?40:0);
+      if(score > bs){ bs = score; best = ns.first; }
+    }
+    return best;
+  };
+  const foodDistance = (st, limit) => {
+    const seen = new Set([visitKey(st.head, st.dir)]), qo = [st.head], qd = [st.dir], dist = [0];
+    let h = 0;
+    while(h < qo.length && h < limit){
+      const o = qo[h], dir = qd[h], d0 = dist[h++];
+      for(const [sc,d] of DIRS){
+        if(sc===opp[dir]) continue;
+        const n = o + d;
+        if(danger(n) || st.bodySet.has(n)) continue;
+        const c = cell(st,n);
+        if(isFood(c)) return d0 + 1;
+        if(!open(c)) continue;
+        const key = visitKey(n, sc);
+        if(seen.has(key)) continue;
+        seen.add(key);
+        qo.push(n); qd.push(sc); dist.push(d0 + 1);
+      }
+    }
+    return Infinity;
+  };
+  const pressureStep = () => {
+    const st = makeState(); let best = null, bs = -1e18;
+    for(const ns of legal(st, true)){
+      const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+      if(!exits) continue;
+      const info = spaceInfo(ns, false), dist = isFood(c) ? 0 : foodDistance(ns, 260);
+      if(!Number.isFinite(dist)) continue;
+      const score = -dist*1700 + info.space*9 + exits*1500 + (info.tailReach?7000:0) +
+        (isFood(c)?24000:0) - (c===1?1300:0) - ns.stones*70 + (ns.first===st.dir?60:0);
       if(score > bs){ bs = score; best = ns.first; }
     }
     return best;
@@ -313,11 +356,26 @@
   const decide = (idle, looping) => {
     resetDanger();
     const urgent = idle >= 18 || looping;
-    return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
-      (urgent
-        ? pressureFood(false, true) ?? pressureFood(true, true)
-        : pressureFood(false, false) ?? pressureFood(true, false)) ??
-      survivalMove();
+    const tryPlan = fn => {
+      if(routeTimeUp()) return null;
+      return fn();
+    };
+    routeDeadline = now() + routeBudget();
+    let proved = null;
+    try {
+      proved = tryPlan(() => nearFood(false)) ??
+        tryPlan(() => routeFood(false)) ??
+        tryPlan(() => nearFood(true)) ??
+        tryPlan(() => routeFood(true)) ??
+        (urgent
+          ? tryPlan(() => pressureFood(false, true)) ??
+            tryPlan(() => pressureFood(true, true))
+          : tryPlan(() => pressureFood(false, false)) ??
+            tryPlan(() => pressureFood(true, false)));
+    } finally {
+      routeDeadline = 0;
+    }
+    return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
   };
 
   /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
@@ -364,7 +422,7 @@
      key off LEVEL > 32, not the snake state, or a clean win would freeze here. */
   const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
   (async () => {
-    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false;
+    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, escapeQueued = false;
     let observedLive = null;
     const headTrail = [];
     while(true){
@@ -374,6 +432,7 @@
       if(LEVEL > 32){
         if(++over >= 4){
           if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
+          escapeQueued = false;
           pushKey('\r'); pushKey(yesKey()); over = 0;
         }
         observedLive = LIVE;
@@ -387,6 +446,7 @@
           queueNextLevel();
           gameEndQueued = true;
           deathQueued = true;
+          escapeQueued = false;
           idle = 0; headTrail.length = 0;
           observedLive = LIVE;
           pushKey('\r');
@@ -397,6 +457,7 @@
       // The lower life count is the stable signal that the previous level failed.
       if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
         queueNextLevel();
+        escapeQueued = false;
         idle = 0; headTrail.length = 0;
       }
       observedLive = LIVE;
@@ -407,6 +468,7 @@
           activeLevel = LEVEL;
           target = LEVEL;
           jumpingTo = null;
+          escapeQueued = false;
           markTabs();
         } else {
           await sleep(botDelay()); continue;
@@ -420,7 +482,7 @@
       if(pendingJump !== null && BTEL > 2 && ETEL <= BTEL){
         jumpingTo = pendingJump;
         LEVEL = pendingJump - 1; pushKey(' D');          // F10 skips straight into the target level
-        pendingJump = null; idle = 0; headTrail.length = 0;
+        pendingJump = null; escapeQueued = false; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }
       const tickStarted = now();
@@ -432,9 +494,17 @@
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 24 && repeats >= 2;
       const sc = decide(idle, looping);
-      if(sc !== null) pushKey(keyOf[sc]);              // a safe move
-      else if(BTEL <= 2) pushKey('\r');               // under the level popup -> any key dismisses it
-      else pushKey('\x1b');                            // no survivable move -> give up like a player (ESC)
+      if(sc !== null){
+        escapeQueued = false;
+        pushKey(keyOf[sc]);                            // a safe move
+      }
+      else if(BTEL <= 2){
+        escapeQueued = false;
+        pushKey('\r');                                 // under the level popup -> any key dismisses it
+      } else if(!escapeQueued){
+        escapeQueued = true;
+        pushKey('\x1b');                              // no survivable move -> give up like a player (ESC)
+      }
       await sleepForTick(tickStarted);
     }
   })();
