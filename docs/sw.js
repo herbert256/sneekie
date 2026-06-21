@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-static-migration-1';
+const VERSION = '2026-06-21-static-explained-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -112,7 +112,6 @@ const CORE_ASSETS = [
   'index_nl.html',
   'index_uk.html',
   'js/bot.js',
-  'js/explained.js',
   'js/game.js',
   'js/i18n.js',
   'js/magazine.js',
@@ -186,10 +185,24 @@ function isImageAsset(request){
   return request.destination === 'image' || /\.(?:png|ico|gif|jpe?g|webp|svg)$/i.test(url.pathname);
 }
 
+/* A response obtained by following a redirect (e.g. Cloudflare's `.html` -> clean-URL 307)
+   is flagged `redirected`, and the platform refuses to hand such a response to a navigation
+   ("a redirected response was used for a request whose redirect mode is not 'follow'").
+   Rebuild it so the cached copy is a plain, non-redirected response. */
+async function flatten(response){
+  if(!response || !response.redirected) return response;
+  const body = await response.clone().arrayBuffer();
+  return new Response(body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 async function cacheResponse(cacheName, request, response){
   if(!response || !response.ok) return response;
   const cache = await caches.open(cacheName);
-  await cache.put(normalizedRequest(request), response.clone());
+  await cache.put(normalizedRequest(request), await flatten(response.clone()));
   return response;
 }
 
@@ -199,7 +212,7 @@ async function precacheCore(){
     const url = scopedUrl(asset);
     try {
       const response = await fetch(new Request(url.href, { cache:'reload', credentials:'same-origin' }));
-      if(response.ok) await cache.put(normalizedRequest(url.href), response);
+      if(response.ok) await cache.put(normalizedRequest(url.href), await flatten(response));
     } catch(_) {
       /* One optional asset should not prevent installing an otherwise usable app. */
     }

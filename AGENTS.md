@@ -32,10 +32,10 @@ https://sneekie.xyz/.
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only; no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
-  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `migration`,
-  and `404`) load no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`,
+  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
+  `migration`, and `404`) load no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`,
   `../js/site.js`, and the page script they need (`game`, `source`, `manual`, `bot`,
-  `magazine`, `explained`, or `vram`).
+  `magazine`, or `vram`).
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -75,11 +75,9 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
   drops the first 10 banner lines for display, and shows only the BASIC line numbers. This page
   also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the
   top; `source.js` wires Print to `window.print()`).
-- `docs/<lang>/explained.html` + `docs/js/explained.js` - single-column annotated walkthrough of
-  the same source, rendered into `#listing`/`#toc-list`. Prose lives in the `SECTIONS` array
-  (`{at, t, h}`, keyed by GW-BASIC line) and the `NOTES` map; the BASIC is tokenized with the
-  shared `tokenizeBasicLine` (`site.js`) and `SNEEKIE.BAS` is embedded as base64 (renders from
-  `file://`).
+- `docs/<lang>/explained.html` - static single-column annotated walkthrough of the same source.
+  The TOC, section cards, BASIC listing, and amber line notes are rendered directly into each
+  localized HTML page; these pages do not load runtime JavaScript.
 - `docs/<lang>/migration.html` - static 1988 BASIC and 2026 JavaScript side-by-side pages.
   These pages do not load runtime JavaScript. The rendered code pairs were generated from the
   frozen base64 snapshots in `docs/js/migration.js`, not from the current live source files, so
@@ -128,7 +126,7 @@ When changing page copy, static chrome, canonical links, hreflang alternates, or
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
 `docs/js/i18n.js` is only for runtime language metadata and dynamic JavaScript strings
-(game/source/manual/bot/magazine/explained/vram text). Static chrome strings and static prose
+(game/source/manual/bot/magazine/vram text). Static chrome strings and static prose
 live in the HTML pages, not in runtime `docs/js/i18n.js`.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
@@ -141,10 +139,11 @@ There is no Light/Dark mode.
 behavior. The listing pages embed it as base64 (so every page also renders straight from
 `file://`, not just over http):
 
-- `docs/js/source.js` and `docs/js/explained.js` each embed `docs/SNEEKIE.BAS` as base64 and
-  key off it directly. The display code drops the 10-line header with `slice(10)`, so keep that
-  header intact. `SNEEKIE.BAS` is permanently frozen, so these embeds normally do not need
-  refreshing.
+- `docs/js/source.js` embeds `docs/SNEEKIE.BAS` as base64 and keys off it directly. The display
+  code drops the 10-line header with `slice(10)`, so keep that header intact. `SNEEKIE.BAS` is
+  permanently frozen, so this embed normally does not need refreshing.
+- `docs/<lang>/explained.html` contains static rendered annotations for the same BASIC source.
+  When changing those pages, keep the English, Dutch, and Ukrainian static listings aligned.
 - `docs/<lang>/migration.html` contains static rendered side-by-side code pairs. They were
   generated from the frozen base64 snapshots in `docs/js/migration.js`, not from the current
   live `docs/SNEEKIE.BAS` or `docs/js/game.js`. When changing those pages, keep using that

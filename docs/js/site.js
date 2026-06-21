@@ -1,7 +1,6 @@
 /* site.js — shared page helpers plus the GW-BASIC syntax tokenizer used by
-   source.html and explained.html. The tokenizer returns [class, text] tokens
-   per physical line; classes: ws ln com str num kw fn op id pn. explained.js
-   carries its own small JavaScript tokenizer too (for the right-hand port column). */
+   source.html. The tokenizer returns [class, text] tokens per physical line;
+   classes: ws ln com str num kw fn op id pn. */
 'use strict';
 
 /* ---------- shared page helpers ---------- */

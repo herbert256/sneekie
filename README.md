@@ -67,9 +67,9 @@ The faithful game logic lives in `docs/js/game.js`. `docs/<lang>/game.html`
 provides the game page markup. The root `docs/index*.html` files are localized
 home pages that link to the matching game page; they use `docs/css/site.css` and
 `docs/css/index.css` and do not use page JavaScript beyond inline service-worker
-registration. Static prose/error pages (`history`, `bot-thinking`, `migration`,
-`404`) load no runtime JavaScript. Generated or interactive pages keep the
-scripts they need (`game`, `source`, `manual`, `bot`, `magazine`, `explained`,
+registration. Static prose/error pages (`history`, `bot-thinking`, `explained`,
+`migration`, `404`) load no runtime JavaScript. Generated or interactive pages
+keep the scripts they need (`game`, `source`, `manual`, `bot`, `magazine`,
 `vram`).
 `docs/css/game.css` styles the monitor shell, and `docs/css/site.css` styles the
 static shared chrome used by the content pages.
