@@ -152,32 +152,25 @@ function normalizeCleanLinks(){
   });
 }
 
-function removeOfflineSupport(){
-  const cleanup = () => {
-    const siteScope = new URL(pageRoot(), location.href).href;
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.getRegistrations()
-        .then(registrations => Promise.all(registrations
-          .filter(registration => registration.scope.startsWith(siteScope))
-          .map(registration => registration.unregister())))
-        .catch(() => {});
-    }
-    if('caches' in window){
-      caches.keys()
-        .then(keys => Promise.all(keys
-          .filter(key => key.startsWith('sneekie-offline-'))
-          .map(key => caches.delete(key))))
-        .catch(() => {});
-    }
+function canUseServiceWorker(){
+  return 'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || ['localhost', '127.0.0.1', '::1'].includes(location.hostname));
+}
+
+function registerOfflineSupport(){
+  if(!canUseServiceWorker()) return;
+  const siteRoot = new URL(pageRoot(), location.href);
+  const register = () => {
+    navigator.serviceWorker.register(new URL('sw.js', siteRoot).href, { scope:siteRoot.href }).catch(() => {});
   };
-  if(document.readyState === 'complete') cleanup();
-  else addEventListener('load', cleanup, { once:true });
+  if(document.readyState === 'complete') register();
+  else addEventListener('load', register, { once:true });
 }
 
 redirectLegacyLanguageQuery();
 setSiteLanguage(siteLang, { silent: true });
 normalizeCleanLinks();
-removeOfflineSupport();
+registerOfflineSupport();
 
 /* ---------- GW-BASIC token classification ---------- */
 const KW = new Set(('REM DEFINT DEFSNG DEFDBL DEFSTR SCREEN WIDTH CLS RANDOMIZE DEF SEG ' +

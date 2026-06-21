@@ -26,8 +26,8 @@ https://sneekie.xyz/.
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
   standard static header/footer chrome, a hero "play" section whose CRT image links to the
   matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
-  `css/site.css` and `css/index.css` only; there is no `js/index.js`. Keep the inline
-  service-worker/cache cleanup script and JSON-LD structured-data block inline.
+  `css/site.css` and `css/index.css` only; there is no `js/index.js`. Keep the inline service
+  worker registration and JSON-LD structured-data block inline.
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only; no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
@@ -42,9 +42,9 @@ https://sneekie.xyz/.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
 - `docs/js/site.js` - shared site behavior: language helpers, clean-link normalization outside
-  the static chrome, cleanup of old offline service-worker registrations/caches, and the shared
-  BASIC tokenizer used by the listing pages. It must not create `header.top` or `<footer>`.
-  Download and Print live on the Source page, not in the header.
+  the static chrome, service-worker registration for localized pages, and the shared BASIC
+  tokenizer used by the listing pages. It must not create `header.top` or `<footer>`. Download
+  and Print live on the Source page, not in the header.
 - `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
   Static header/footer/nav strings do **not** live here; they are literal HTML in the localized
   pages under `docs/<lang>/`.
@@ -53,8 +53,10 @@ https://sneekie.xyz/.
 - `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
   WebP), localized home-title WebP images, and dramatic page hero/closing images.
   `favicon.png` stays at `docs/favicon.png`.
-- `docs/sw.js` - cleanup-only service worker shim. It unregisters old offline workers and deletes
-  old `sneekie-offline-*` caches; do not add precaching or fetch handlers back.
+- `docs/sw.js` - versioned PWA service worker. It precaches the static site for offline play,
+  deletes obsolete `sneekie-*` caches during activation, serves images cache-first, and serves
+  HTML/CSS/JS with stale-while-revalidate. Bump `VERSION` and keep `CORE_ASSETS` in sync when
+  changing existing precached files or adding new offline-critical assets.
 
 The three localized landing pages (`docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html`)
 are the only normal HTML entry pages at the site root, plus the root `docs/404.html`. Content
@@ -210,7 +212,7 @@ high score (`sneekie.theme`, `sneekie.highscore`), theme switching and CGA color
 fullscreen, touch controls, click/tap route targeting, stuck detection with a red flash and
 restart popup, responsive scaling, the on-page error banner, the CRT monitor shell, the short
 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs, localized
-runtime UI strings, and service-worker cleanup. Sound starts on at page load; mute is a
+runtime UI strings, and PWA offline support. Sound starts on at page load; mute is a
 session-only button state and `sneekie.muted` is cleared for old visitors.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern

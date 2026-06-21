@@ -58,7 +58,7 @@ docs/
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
   favicon.png
   site.webmanifest
-  sw.js                # cleanup shim for old offline service workers/caches
+  sw.js                # PWA service worker for offline play
 AGENTS.md             # guidance for Codex
 CLAUDE.md             # guidance for Claude Code
 ```
@@ -77,8 +77,11 @@ JavaScript. Runtime language metadata and dynamic UI strings live in `docs/js/i1
 Edit localized pages directly under `docs/<lang>/` and keep the English, Dutch,
 and Ukrainian versions aligned by hand.
 
-`docs/sw.js` is a self-destruct service-worker shim. It unregisters old offline
-workers and clears old caches; do not add offline precaching back.
+`docs/sw.js` is a versioned PWA service worker. It precaches the static site for
+offline play, serves images cache-first, serves HTML/CSS/JS with stale-while-
+revalidate, and deletes obsolete `sneekie-*` caches when a new version activates.
+Bump its `VERSION` and update `CORE_ASSETS` when changing existing precached files
+or adding new offline-critical assets.
 
 Useful checks after edits:
 
