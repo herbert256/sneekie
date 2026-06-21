@@ -19,19 +19,25 @@ localized pages in `docs/en/`, `docs/nl/`, and `docs/uk/`.
 ## Controls
 
 - **Arrow keys** steer the snake; swipe works on touch devices.
+- **Tap / click** inside the game screen lets the snake walk toward that point.
 - Hearts = +10 points, clubs = +25 points, smileys = -50 points, stones can be pushed.
-- **Esc** gives up when stuck and costs one life.
+- **Esc** on a keyboard gives up and costs one life. Touch layouts do not show Esc anymore;
+  stuck detection flashes the screen red and offers an any-key restart when the snake is trapped.
+- **F9** gives one extra life; **F10** skips the current level.
 - Levels 1-8 are turn-based; from level 9 the snake moves by itself.
-- Display themes: green, amber, white monochrome, and colorized CGA.
+- Sound starts on at page load; the Sound button is session-only.
+- Display themes: green, amber, and colorized CGA.
 - Fullscreen gives the full monitor-shell experience.
 
 ## On the site
 
 - **[Play](https://sneekie.xyz/)** - the game, including the 1988-style boot/GW-BASIC intro.
-- **[Manual](https://sneekie.xyz/en/manual)** - controls, scoring, maze layouts, and all 32 levels.
-- **[Bot](https://sneekie.xyz/en/bot)** - the real game played by a smart bot in your browser.
+- **[History](https://sneekie.xyz/en/history)** - the story from the 1988 BASIC listing to the 2026 recovery.
 - **[Magazine](https://sneekie.xyz/en/magazine)** - scans from the original 1988 publication.
 - **[Source](https://sneekie.xyz/en/source)** - the recovered GW-BASIC listing.
+- **[Manual](https://sneekie.xyz/en/manual)** - controls, scoring, maze layouts, and all 32 levels.
+- **[Bot](https://sneekie.xyz/en/bot)** - the real game played live by a smart bot in the same page.
+- **[How the bot thinks](https://sneekie.xyz/en/bot-thinking)** - route search, danger modeling, and fallback choices.
 - **[Explained](https://sneekie.xyz/en/explained)** - an annotated walkthrough of the source.
 - **[Migration](https://sneekie.xyz/en/migration)** - BASIC and JavaScript shown side by side.
 - **[Visualizer](https://sneekie.xyz/en/vram)** - an interactive look at the text-VRAM trick.
@@ -40,11 +46,15 @@ localized pages in `docs/en/`, `docs/nl/`, and `docs/uk/`.
 
 ```
 docs/
-  index.html          # root iframe shell that loads the localized game page
+  index.html          # English standalone home page
+  index_nl.html       # Dutch standalone home page
+  index_uk.html       # Ukrainian standalone home page
+  404.html            # root dramatic 404 page
   en/, nl/, uk/       # localized content pages
+    404.html          # localized dramatic 404 pages
   css/                # shared site.css plus one page CSS file per page
   js/                 # shared site.js plus one page JS file per page
-  images/             # logo, social images, manual WebP clips, magazine scans
+  images/             # logo, social images, manual WebP clips, magazine scans, page art
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
   favicon.png
   site.webmanifest
@@ -54,8 +64,9 @@ CLAUDE.md             # guidance for Claude Code
 ```
 
 The faithful game logic lives in `docs/js/game.js`. `docs/<lang>/game.html`
-provides the game page markup, `docs/index.html` embeds it at the site root
-using `docs/css/index.css` and `docs/js/index.js`, `docs/css/game.css` styles
+provides the game page markup. The root `docs/index*.html` files are localized
+home pages that link to the matching game page; they use `docs/css/site.css` and
+`docs/css/index.css` and do not use page JavaScript. `docs/css/game.css` styles
 the monitor shell, and `docs/css/site.css` styles the static shared chrome used
 by the content pages.
 
@@ -65,6 +76,9 @@ Shared header/footer/nav text is static HTML in the localized pages, not runtime
 JavaScript. Runtime language metadata and dynamic UI strings live in `docs/js/i18n.js`.
 Edit localized pages directly under `docs/<lang>/` and keep the English, Dutch,
 and Ukrainian versions aligned by hand.
+
+`docs/sw.js` is a self-destruct service-worker shim. It unregisters old offline
+workers and clears old caches; do not add offline precaching back.
 
 Useful checks after edits:
 

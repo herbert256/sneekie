@@ -22,15 +22,20 @@ The repository root **is** the git repo (remote `github.com:herbert256/sneekie`)
 publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
 https://sneekie.xyz/.
 
-- `docs/index.html` - the root Play entry shell. It is intentionally only an iframe wrapper
-  around the localized game page. It loads `css/index.css` and `js/index.js`; keep the JSON-LD
-  structured-data script inline for search crawlers.
+- `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
+  landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
+  standard static header/footer chrome, a hero "play" section whose CRT image links to the
+  matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
+  `css/site.css` and `css/index.css` only; there is no `js/index.js`. Keep the inline
+  service-worker/cache cleanup script and JSON-LD structured-data block inline.
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
-  `../css/game.css`, `../js/site.js`, and `../js/game.js`.
+  `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only; no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
   `migration`, and `vram`. Each content page loads `../css/site.css`, page-specific CSS when
   present (`game` uses `../css/game.css`), `../js/site.js`, and its own page JS.
+  `bot-thinking` has no page JS (only `site.js`); `bot-thinking` is reachable only via a link on
+  `bot.html`, not from the header nav.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -39,19 +44,22 @@ https://sneekie.xyz/.
 - `docs/js/site.js` - shared site behavior: language helpers, clean-link normalization outside
   the static chrome, cleanup of old offline service-worker registrations/caches, and the shared
   BASIC tokenizer used by the listing pages. It must not create `header.top` or `<footer>`.
+  Download and Print live on the Source page, not in the header.
 - `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
   Static header/footer/nav strings do **not** live here; they are literal HTML in the localized
   pages under `docs/<lang>/`.
 - `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
   are used by more than one page.
-- `docs/images/` - logo/social/icon PNGs, manual WebP clips, and magazine scans. `favicon.png` stays
-  at `docs/favicon.png`.
+- `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
+  WebP), localized home-title WebP images, and dramatic page hero/closing images.
+  `favicon.png` stays at `docs/favicon.png`.
 - `docs/sw.js` - cleanup-only service worker shim. It unregisters old offline workers and deletes
   old `sneekie-offline-*` caches; do not add precaching or fetch handlers back.
 
-Only the iframe wrapper `docs/index.html` remains at the site root. Content pages live under
-`docs/en/`, `docs/nl/`, and `docs/uk/`, so root-level links should include the language prefix;
-links between content pages can use same-language relative `.html` paths.
+The three localized landing pages (`docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html`)
+are the only normal HTML entry pages at the site root, plus the root `docs/404.html`. Content
+pages live under `docs/en/`, `docs/nl/`, and `docs/uk/`, so root-level links should include the
+language prefix; links between content pages can use same-language relative `.html` paths.
 
 To ship a change: edit source files, commit, and push to `master`. GitHub Pages is configured
 to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
@@ -63,28 +71,41 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
 - `docs/<lang>/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
   listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64 (so it renders from `file://` too),
   drops the first 10 banner lines for display, and shows only the BASIC line numbers. This page
-  also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons.
-- `docs/<lang>/explained.html` + `docs/js/explained.js` - annotated walkthrough of the same
-  source. Prose lives in the `SECTIONS` array and `NOTES` map in `explained.js`; the BASIC is
-  embedded as base64 and tokenized with the shared `tokenizeBasicLine` from `site.js`.
-- `docs/<lang>/migration.html` + `docs/js/migration.js` - BASIC and JavaScript side by side.
-  `migration.js` embeds both `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64, then slices
-  them by line ranges in `SECTIONS`. The embeds are a frozen snapshot co-calibrated with those
-  ranges; if refreshing the page against newer `game.js`, regenerate the JS embed and re-check
-  those line ranges together.
+  also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the
+  top; `source.js` wires Print to `window.print()`).
+- `docs/<lang>/explained.html` + `docs/js/explained.js` - single-column annotated walkthrough of
+  the same source, rendered into `#listing`/`#toc-list`. Prose lives in the `SECTIONS` array
+  (`{at, t, h}`, keyed by GW-BASIC line) and the `NOTES` map; the BASIC is tokenized with the
+  shared `tokenizeBasicLine` (`site.js`) and `SNEEKIE.BAS` is embedded as base64 (renders from
+  `file://`).
+- `docs/<lang>/migration.html` + `docs/js/migration.js` - the 1988 BASIC and the 2026 JavaScript
+  side by side, rendered into `#pairs`/`#toc-list`. `migration.js` embeds BOTH `docs/SNEEKIE.BAS`
+  and `docs/js/game.js` as base64 and slices them by the line ranges in its `SECTIONS`. The
+  embeds are a frozen snapshot co-calibrated with those ranges; if refreshing the page against
+  newer `game.js`, regenerate the JS embed and re-check those line ranges together.
 - `docs/<lang>/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
-- `docs/<lang>/bot.html` + `docs/js/bot.js` - live bot demo. It hosts the real game in the same
-  page, sets `window.SNEEKIE_SKIPBOOT = true`, and steers by reading `game.js` globals and
-  calling `pushKey()`. Keep this page and `docs/<lang>/bot-thinking.html` in sync with
-  `docs/js/bot.js` when planner behavior changes.
+- `docs/<lang>/bot.html` + `docs/js/bot.js` - the **Live bot** demo. It hosts the real game in the
+  same page (no iframe, so it works from `file://`): it loads `../css/game.css` +
+  `../js/game.js`, sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot animation, then
+  `bot.js` reads `game.js` globals directly and steers via `pushKey()`. Level tabs (26-32) jump
+  the bot into a maze; a speed slider sets the pace. Body class is `page-index page-bot` (the
+  game styling comes from `.page-index`; `bot.css` only adds the lead/speed/tabs/note). The
+  page links to `bot-thinking.html`. Keep the planner in `bot.js` in sync with
+  `bot-thinking.html`.
+- `docs/<lang>/bot-thinking.html` - prose explaining how the bot plans (loads only `site.js`; no
+  page JS). It is linked only from `bot.html`, not from the nav. Keep it in sync with the
+  planner in `docs/js/bot.js` when planner behavior changes. CSS class is `.page-bot-thinking`.
 - `docs/<lang>/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
-  page images. Media lives in `docs/images/magazine/`.
+  page images. Media lives in `docs/images/magazine/`. Reachable from the header.
 - `docs/<lang>/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
   comments and the original variable names when changing game behavior.
-- `docs/index.html` - the root iframe wrapper for the playable port.
+- `docs/index.html` (+ `index_nl.html`, `index_uk.html`) - the localized root landing pages; the
+  hero "play" image links into `<lang>/game.html` (see Layout & Deployment).
+- `docs/404.html` and `docs/<lang>/404.html` - dramatic localized 404 pages styled by
+  `docs/css/404.css`, using `docs/images/pages/404-lost-snake.webp`.
 
 ## Shared Chrome
 
@@ -93,7 +114,7 @@ Do not rely on `docs/js/site.js` to inject `header.top` or `<footer>`. When chan
 chrome, edit every affected `docs/<lang>/*.html` page directly. The top-left brand is
 `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
 The header nav is `game, history, magazine, source, bot, manual, explained, migration, vram`
-(9 links, no buttons). `bot-thinking` is linked from `bot.html` and marks `bot` current.
+(9 links, no buttons). `bot` is the Live bot demo; `bot-thinking` marks `bot` current.
 
 Download and Print live on the **Source** page (a `.toolbar`), not in the header. Print calls
 `window.print()` directly (`source.css` `@media print` hides the chrome so only the listing
@@ -109,14 +130,15 @@ edit the corresponding files in `docs/` directly and keep all three languages co
 (game/source/manual/magazine/vram text). Static chrome strings live in the HTML pages, not in
 runtime `docs/js/i18n.js`.
 
-The game page and plain Source listing keep the Green/Amber/White/CGA theme switcher
+The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
 There is no Light/Dark mode.
 
 ## Source Embeds
 
 `docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
-behavior. Keep its 10-line header intact because the display code uses `slice(10)`.
+behavior. The listing pages embed it as base64 (so every page also renders straight from
+`file://`, not just over http):
 
 - `docs/js/source.js` and `docs/js/explained.js` each embed `docs/SNEEKIE.BAS` as base64 and
   key off it directly. The display code drops the 10-line header with `slice(10)`, so keep that
@@ -125,7 +147,9 @@ behavior. Keep its 10-line header intact because the display code uses `slice(10
 - `docs/js/migration.js` embeds **both** `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64.
   The side-by-side view pairs hard-coded BASIC and JS line ranges, so the embeds are a frozen
   snapshot co-calibrated with those ranges. To refresh the migration page against newer
-  `game.js`, regenerate the embedded JS base64 and re-check the `SECTIONS` ranges together.
+  `game.js`, regenerate the embedded JS base64
+  (`python3 -c "import base64; print(base64.b64encode(open('docs/js/game.js','rb').read()).decode())"`)
+  and re-check the `SECTIONS` ranges together.
 
 ## Running & Verification
 
@@ -173,17 +197,21 @@ model rather than building a modern game-object model.** Everything follows from
   `keyOrTimeout`, `waitKey`) stands in for `INKEY$`/`INPUT$`; `throw DEATH` mirrors the BASIC
   death jump.
 - **Input mirrors DOS scancodes.** Arrow keys map to the two-byte extended-key strings DOS
-  `INKEY$` returned; Escape and the F9/F10 cheats are preserved.
+  `INKEY$` returned. Physical Escape gives up, F9 gives one extra life, and F10 skips the
+  current level. Touch fullscreen controls intentionally expose only arrows plus F9/F10; stuck
+  detection handles trapped touch players.
 - **Audio mirrors `SOUND f,d`.** Web Audio square-wave oscillators reproduce GW-BASIC `SOUND`
   durations in 1/18.2-second ticks.
 
 ## Modern Additions
 
-These intentionally go beyond the 1988 source: localStorage persistence (`sneekie.theme`,
-`sneekie.muted`, `sneekie.highscore`), theme switching and CGA colorization, fullscreen,
-touch controls, responsive scaling, the on-page error banner, the CRT monitor shell, the
-short 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs,
-and localized runtime UI strings.
+These intentionally go beyond the 1988 source: localStorage persistence for the theme and
+high score (`sneekie.theme`, `sneekie.highscore`), theme switching and CGA colorization,
+fullscreen, touch controls, click/tap route targeting, stuck detection with a red flash and
+restart popup, responsive scaling, the on-page error banner, the CRT monitor shell, the short
+1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs, localized
+runtime UI strings, and service-worker cleanup. Sound starts on at page load; mute is a
+session-only button state and `sneekie.muted` is cleared for old visitors.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern
 shell, and keep the BASIC line-number comments intact either way.

@@ -106,6 +106,8 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
   comments and the original variable names when changing game behavior.
 - `docs/index.html` (+ `index_nl.html`, `index_uk.html`) - the localized root landing pages; the
   hero "play" image links into `<lang>/game.html` (see Layout & Deployment).
+- `docs/404.html` and `docs/<lang>/404.html` - dramatic localized 404 pages styled by
+  `docs/css/404.css`, using `docs/images/pages/404-lost-snake.webp`.
 
 ## Shared Chrome
 
@@ -130,7 +132,7 @@ edit the corresponding files in `docs/` directly and keep all three languages co
 (game/source/manual/magazine/vram text). Static chrome strings live in the HTML pages, not in
 runtime `docs/js/i18n.js`.
 
-The game page and plain Source listing keep the Green/Amber/White/CGA theme switcher
+The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
 There is no Light/Dark mode.
 
@@ -198,17 +200,21 @@ model rather than building a modern game-object model.** Everything follows from
   `keyOrTimeout`, `waitKey`) stands in for `INKEY$`/`INPUT$`; `throw DEATH` mirrors the BASIC
   death jump.
 - **Input mirrors DOS scancodes.** Arrow keys map to the two-byte extended-key strings DOS
-  `INKEY$` returned; Escape and the F9/F10 cheats are preserved.
+  `INKEY$` returned. Physical Escape gives up, F9 gives one extra life, and F10 skips the
+  current level. Touch fullscreen controls intentionally expose only arrows plus F9/F10; stuck
+  detection handles trapped touch players.
 - **Audio mirrors `SOUND f,d`.** Web Audio square-wave oscillators reproduce GW-BASIC `SOUND`
   durations in 1/18.2-second ticks.
 
 ## Modern Additions
 
-These intentionally go beyond the 1988 source: localStorage persistence (`sneekie.theme`,
-`sneekie.muted`, `sneekie.highscore`), theme switching and CGA colorization, fullscreen,
-touch controls, responsive scaling, the on-page error banner, the CRT monitor shell, the
-short 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs,
-and localized runtime UI strings.
+These intentionally go beyond the 1988 source: localStorage persistence for the theme and
+high score (`sneekie.theme`, `sneekie.highscore`), theme switching and CGA colorization,
+fullscreen, touch controls, click/tap route targeting, stuck detection with a red flash and
+restart popup, responsive scaling, the on-page error banner, the CRT monitor shell, the short
+1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs, localized
+runtime UI strings, and service-worker cleanup. Sound starts on at page load; mute is a
+session-only button state and `sneekie.muted` is cleared for old visitors.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern
 shell, and keep the BASIC line-number comments intact either way.
