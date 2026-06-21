@@ -154,11 +154,11 @@ function normalizeCleanLinks(){
 
 function removeOfflineSupport(){
   const cleanup = () => {
+    const siteScope = new URL(pageRoot(), location.href).href;
     if('serviceWorker' in navigator){
-      const rootScope = new URL(pageRoot(), location.href).href;
       navigator.serviceWorker.getRegistrations()
         .then(registrations => Promise.all(registrations
-          .filter(registration => registration.scope === rootScope)
+          .filter(registration => registration.scope.startsWith(siteScope))
           .map(registration => registration.unregister())))
         .catch(() => {});
     }

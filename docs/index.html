@@ -151,5 +151,28 @@
     <footer>
       Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
     </footer>
+    <script>
+      (() => {
+        const cleanup = () => {
+          const siteScope = new URL('.', location.href).href;
+          if('serviceWorker' in navigator){
+            navigator.serviceWorker.getRegistrations()
+              .then(registrations => Promise.all(registrations
+                .filter(registration => registration.scope.startsWith(siteScope))
+                .map(registration => registration.unregister())))
+              .catch(() => {});
+          }
+          if('caches' in window){
+            caches.keys()
+              .then(keys => Promise.all(keys
+                .filter(key => key.startsWith('sneekie-offline-'))
+                .map(key => caches.delete(key))))
+              .catch(() => {});
+          }
+        };
+        if(document.readyState === 'complete') cleanup();
+        else addEventListener('load', cleanup, { once:true });
+      })();
+    </script>
   </body>
 </html>
