@@ -159,8 +159,19 @@ function canUseServiceWorker(){
 function registerOfflineSupport(){
   if(!canUseServiceWorker()) return;
   const siteRoot = new URL(pageRoot(), location.href);
+  const hadController = !!navigator.serviceWorker.controller;
+  let refreshing = false;
+  if(hadController){
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(refreshing) return;
+      refreshing = true;
+      location.reload();
+    });
+  }
   const register = () => {
-    navigator.serviceWorker.register(new URL('sw.js', siteRoot).href, { scope:siteRoot.href }).catch(() => {});
+    navigator.serviceWorker.register(new URL('sw.js', siteRoot).href, { scope:siteRoot.href, updateViaCache:'none' })
+      .then(registration => registration.update())
+      .catch(() => {});
   };
   if(document.readyState === 'complete') register();
   else addEventListener('load', register, { once:true });

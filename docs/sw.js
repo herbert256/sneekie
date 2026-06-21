@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-bot-pressure-step-1';
+const VERSION = '2026-06-21-network-first-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -244,18 +244,15 @@ async function cachedCleanHtmlFallback(request){
   return null;
 }
 
-async function staleWhileRevalidate(request, event){
+async function networkFirst(request){
   const key = normalizedRequest(request);
-  const cached = await caches.match(key) || (isHtmlLike(request) ? await cachedCleanHtmlFallback(request) : null);
-  const refresh = fetch(request)
-    .then(response => cacheResponse(RUNTIME, key, response))
-    .catch(() => null);
-  if(cached){
-    event.waitUntil(refresh);
-    return cached;
+  try {
+    const response = await fetch(new Request(request, { cache:'reload' }));
+    return cacheResponse(RUNTIME, key, response);
+  } catch(_) {
+    const cached = await caches.match(key) || (isHtmlLike(request) ? await cachedCleanHtmlFallback(request) : null);
+    if(cached) return cached;
   }
-  const response = await refresh;
-  if(response) return response;
   if(isHtmlLike(request)){
     return await cachedCleanHtmlFallback(request) ||
       await caches.match(normalizedRequest(scopedUrl('index.html').href)) ||
@@ -299,7 +296,7 @@ self.addEventListener('fetch', event => {
     return;
   }
   if(isFreshenedAsset(request)){
-    event.respondWith(staleWhileRevalidate(request, event));
+    event.respondWith(networkFirst(request));
     return;
   }
   event.respondWith(cacheFirst(request));
