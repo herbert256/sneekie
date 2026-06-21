@@ -78,8 +78,9 @@ static shared chrome used by the content pages.
 
 Shared header/footer/nav text is static HTML in the localized pages, not runtime
 JavaScript. Runtime language metadata and dynamic UI strings live in `docs/js/i18n.js`
-only for JavaScript-backed pages. Edit localized pages directly under `docs/<lang>/`
-and keep the English, Dutch, and Ukrainian versions aligned by hand.
+only for pages that still need translated runtime text (`game`, `source`, `bot`, and
+`vram`). Edit localized pages directly under `docs/<lang>/` and keep the English,
+Dutch, and Ukrainian versions aligned by hand.
 
 `docs/sw.js` is a versioned PWA service worker. It precaches the static site for
 offline play, serves images cache-first, serves HTML/CSS/JS with stale-while-

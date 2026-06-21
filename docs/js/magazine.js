@@ -10,7 +10,6 @@ const pageZoomOut = document.getElementById('page-zoom-out');
 const pageZoomReset = document.getElementById('page-zoom-reset');
 const pageZoomIn = document.getElementById('page-zoom-in');
 const pageThumbs = Array.from(document.querySelectorAll('.page-gallery .thumb[data-full]'));
-const magText = key => typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
 
 if(pageFs && pageFsClose && pageStage && pageFsCaption && pageThumbs.length){
   let pageLastFocus = null;
@@ -29,9 +28,10 @@ if(pageFs && pageFsClose && pageStage && pageFsCaption && pageThumbs.length){
   const isOpen = () => pageFs.classList.contains('on');
   const wrapPage = index => (index + pageThumbs.length) % pageThumbs.length;
   const focusables = () => [pageFsClose, pagePrev, pageNext, pageZoomOut, pageZoomReset, pageZoomIn].filter(Boolean);
+  const previewFallback = pageFs.dataset.previewFallback || 'Magazine page preview';
 
   function pageCaption(thumb){
-    return thumb.dataset.cap || thumb.querySelector('img')?.alt || magText('magazinePreviewFallback');
+    return thumb.dataset.cap || thumb.querySelector('img')?.alt || previewFallback;
   }
 
   function ensurePageImage(){

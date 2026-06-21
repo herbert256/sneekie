@@ -5,7 +5,8 @@ const lb = document.getElementById('lb');
 const lbClose = document.getElementById('lb-close');
 let lbImg = null;
 let lbLastFocus = null;
-const mt = key => typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
+const openLargerLabel = document.body.dataset.openLarger || '';
+const layoutPreviewFallback = document.body.dataset.layoutPreviewFallback || 'layout preview';
 
 function ensureLbImg(){
   if(lbImg) return lbImg;
@@ -39,7 +40,7 @@ function closeLb(){
 document.querySelectorAll('.gallery .lay img').forEach(img => {
   img.tabIndex = 0;
   img.setAttribute('role', 'button');
-  img.setAttribute('aria-label', mt('openLarger') + (img.alt || mt('layoutPreviewFallback')));
+  img.setAttribute('aria-label', openLargerLabel + (img.alt || layoutPreviewFallback));
   img.addEventListener('click', () => openLb(img));
   img.addEventListener('keydown', e => {
     if(e.key === 'Enter' || e.key === ' '){

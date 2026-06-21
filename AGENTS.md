@@ -33,9 +33,9 @@ https://sneekie.xyz/.
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
   `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
-  `migration`, and `404`) load no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`,
-  `../js/site.js`, and the page script they need (`game`, `source`, `manual`, `bot`,
-  `magazine`, or `vram`).
+  `migration`, and `404`) load no runtime JavaScript. JavaScript-backed pages load `../js/site.js`
+  and the page script they need (`game`, `source`, `manual`, `bot`, `magazine`, or `vram`);
+  pages with runtime UI text also load `../js/i18n.js` (`game`, `source`, `bot`, `vram`).
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -126,7 +126,7 @@ When changing page copy, static chrome, canonical links, hreflang alternates, or
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
 `docs/js/i18n.js` is only for runtime language metadata and dynamic JavaScript strings
-(game/source/manual/bot/magazine/vram text). Static chrome strings and static prose
+(game/source/bot/vram text). Static chrome strings and static prose
 live in the HTML pages, not in runtime `docs/js/i18n.js`.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
