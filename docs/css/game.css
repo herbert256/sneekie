@@ -218,6 +218,86 @@
 .page-index #bezel:fullscreen #power{ inset:0; border-radius:0; }
 .page-index #bezel:fullscreen #panel{ display:none; }
 .page-index #fstouch{ display:none; }
+.page-index #fs-help[hidden]{ display:none; }
+.page-index #fs-help{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:radial-gradient(circle at 50% 42%, rgba(0,0,0,.58), rgba(0,0,0,.88) 72%);
+  pointer-events:auto;
+}
+.page-index #bezel:fullscreen #fs-help{
+  position:fixed;
+  inset:0;
+  padding:max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+}
+.page-index .fs-help-card{
+  width:min(92vw, 520px);
+  max-height:min(82vh, 560px);
+  overflow:auto;
+  padding:22px 24px 20px;
+  color:var(--text);
+  background:linear-gradient(180deg, rgba(20,23,26,.96), rgba(5,8,7,.96));
+  border:1px solid rgba(125,255,125,.44);
+  border-radius:8px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.65), 0 0 38px rgba(125,255,125,.16), 0 28px 70px rgba(0,0,0,.55);
+}
+.page-index .fs-help-card h2{
+  margin:0 0 10px;
+  color:#fff;
+  font-size:22px;
+  line-height:1.2;
+  text-align:center;
+}
+.page-index .fs-help-card p{
+  margin:0 0 14px;
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.55;
+  text-align:center;
+}
+.page-index .fs-help-card ul{
+  margin:0;
+  padding:0;
+  list-style:none;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.55;
+}
+.page-index .fs-help-card li{
+  position:relative;
+  margin:8px 0;
+  padding-left:18px;
+}
+.page-index .fs-help-card li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:.64em;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 10px var(--glow);
+}
+.page-index #fs-help-play{
+  display:block;
+  min-width:138px;
+  margin:18px auto 0;
+  color:#061006;
+  background:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 18px -5px var(--accent);
+}
+.page-index #fs-help-play:hover,
+.page-index #fs-help-play:focus-visible{
+  color:#000;
+  background:#c8ffc8;
+}
 .page-index #bezel:fullscreen #fstouch{
   position:fixed;
   top:max(8px, env(safe-area-inset-top));
@@ -388,6 +468,20 @@
     margin-top:7px;
     font-size:11px;
     line-height:1.45;
+  }
+  .page-index #fs-help{
+    padding:14px;
+  }
+  .page-index .fs-help-card{
+    width:min(92vw, 420px);
+    padding:18px 16px 16px;
+  }
+  .page-index .fs-help-card h2{
+    font-size:18px;
+  }
+  .page-index .fs-help-card p,
+  .page-index .fs-help-card ul{
+    font-size:12px;
   }
 }
 @media (pointer:coarse) and (max-width:520px){

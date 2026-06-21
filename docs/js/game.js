@@ -277,7 +277,23 @@ function setClickTarget(e){
 }
 function routePassable(idx){
   const ch = peek(idx * 2);
-  return ch === 32 || ch === 3 || ch === 5;
+  return (ch === 32 || ch === 3 || ch === 5) && !routeArrowNextUnsafe(idx);
+}
+function routeArrowNextUnsafe(idx){
+  const row = (idx / 80 | 0) + 1;
+  const col = (idx % 80) + 1;
+  const mode = (LEVEL - 1) % 16;
+  if(mode === 5){
+    if(col < 2 || col > 78 || col % 2 !== 0) return false;
+    return row === (D[col][1] === 4 ? 20 : D[col][1] - 1);
+  }
+  if(mode === 6){
+    if(row < 4 || row > 20) return false;
+    const rightNext = D[row][1] === 79 ? 2 : D[row][1] + 1;
+    const leftNext = D[row + 20][1] === 2 ? 79 : D[row + 20][1] - 1;
+    return col === rightNext || col === leftNext;
+  }
+  return false;
 }
 function nextClickTargetKey(){
   if(!clickTarget || BTEL <= 0) return null;
@@ -334,7 +350,62 @@ function aimAtEventCell(e){
   if(key) pushKey(key);
 }
 
+const fsHelp = document.getElementById('fs-help');
+const fsHelpTitle = document.getElementById('fs-help-title');
+const fsHelpLead = document.getElementById('fs-help-lead');
+const fsHelpList = document.getElementById('fs-help-list');
+const fsHelpPlay = document.getElementById('fs-help-play');
+let fsHelpOpen = false;
+
+function fillFullscreenHelp(){
+  const touch = matchMedia('(pointer:coarse)').matches;
+  const leadKey = touch ? 'fsHelpLeadTouch' : 'fsHelpLeadMouse';
+  const itemKeys = touch
+    ? ['fsHelpTouchMove', 'fsHelpTouchTarget', 'fsHelpTouchButtons', 'fsHelpTouchExit']
+    : ['fsHelpMouseMove', 'fsHelpMouseTarget', 'fsHelpMouseGiveUp', 'fsHelpMouseCheats'];
+  fsHelpTitle.textContent = gameUiText('fsHelpTitle');
+  fsHelpLead.textContent = gameUiText(leadKey);
+  fsHelpPlay.textContent = gameUiText('fsHelpPlay');
+  fsHelpList.replaceChildren(...itemKeys.map(key => {
+    const li = document.createElement('li');
+    li.textContent = gameUiText(key);
+    return li;
+  }));
+}
+
+function showFullscreenHelp(){
+  if(!fsHelp) return;
+  fillFullscreenHelp();
+  fsHelp.hidden = false;
+  fsHelp.setAttribute('aria-hidden', 'false');
+  fsHelpOpen = true;
+  fsHelpPlay.focus({ preventScroll:true });
+}
+
+function hideFullscreenHelp(){
+  if(!fsHelp) return;
+  fsHelpOpen = false;
+  fsHelp.setAttribute('aria-hidden', 'true');
+  fsHelp.hidden = true;
+}
+
+if(fsHelp){
+  fsHelp.addEventListener('pointerdown', e => e.stopPropagation());
+  fsHelp.addEventListener('touchstart', e => e.stopPropagation(), { passive:true });
+  fsHelp.addEventListener('click', e => e.stopPropagation());
+  fsHelpPlay.addEventListener('click', e => {
+    ensureAudio();
+    hideFullscreenHelp();
+    e.preventDefault();
+  });
+}
+
 addEventListener('keydown', e => {
+  if(fsHelpOpen){
+    if(e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') hideFullscreenHelp();
+    if(e.key !== 'Tab') e.preventDefault();
+    return;
+  }
   if(bootActive){
     ensureAudio();
     if(bootWaiting) startBootFromGesture();
@@ -1110,6 +1181,7 @@ async function playLevels(){
         else if((E===80&&F===75)||(E===77&&F===72)) poke(T[BTEL],201);
         else if((E===72&&F===75)||(E===77&&F===80)) poke(T[BTEL],200);
         BTEL++; T[BTEL] = A; F = E; poke(T[BTEL],219);        // 980
+        if(clickTarget && A === clickTarget.off) clearClickTarget();
         if(BTEL === 15000) throw DEATH;                       // 990
         for(let I = BTEL; I >= ETEL; I -= 2){                 // 1000: shimmer
           poke(T[I]+1,15); poke(T[I-1]+1,7);
@@ -1295,8 +1367,12 @@ if(bezel.requestFullscreen){
     const fs = !!document.fullscreenElement;
     fsBtn.setAttribute('aria-pressed', String(fs));
     if(fs) lockLandscapeFullscreen();
-    else unlockFullscreenOrientation();
+    else {
+      hideFullscreenHelp();
+      unlockFullscreenOrientation();
+    }
     fit();
+    if(fs) showFullscreenHelp();
     /* In fullscreen the browser normally swallows <ESC> to leave fullscreen, so the
        game never sees it. The Keyboard Lock API (Chromium, secure context) routes
        <ESC> to the page instead; to leave fullscreen you then press & hold <ESC>
