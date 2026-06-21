@@ -55,11 +55,9 @@ const GAME_TEXT = {
     level: 'Level ',
     pressAny: 'Press any key',
     end: 'The End',
-    playAgain: 'Play again (y/n)',
-    thanks: 'Thanks for playing',
+    playAgain: 'Any key to start again',
     soundOn: 'Sound: on',
-    soundOff: 'Sound: off',
-    yesInput: 'y'
+    soundOff: 'Sound: off'
   },
   nl: {
     titleLine: "**** Sneekie ****         (c) juli '88 door HerbySoft",
@@ -70,11 +68,9 @@ const GAME_TEXT = {
     level: 'Level ',
     pressAny: 'Druk op een toets',
     end: 'Einde',
-    playAgain: 'Nog eens (j/n)',
-    thanks: 'Bedankt voor het spelen',
+    playAgain: 'Druk op een toets om opnieuw te starten',
     soundOn: 'Geluid: aan',
-    soundOff: 'Geluid: uit',
-    yesInput: 'j'
+    soundOff: 'Geluid: uit'
   }
 };
 
@@ -473,7 +469,7 @@ cv.addEventListener('pointerdown', e => {
 /* on-screen button -> the same INKEY$ strings the keyboard produces */
 const TOUCHKEYS = {
   esc:'\x1b', up:'\0H', down:'\0P', left:'\0K', right:'\0M',
-  f9:'\0C', f10:'\0D', y:() => gt('yesInput'), n:'n',          // F9/F10 = extra life / skip level
+  f9:'\0C', f10:'\0D',                                      // F9/F10 = extra life / skip level
 };
 document.querySelectorAll('#touchbar button, #fstouch button').forEach(b => {
   b.addEventListener('click', () => {
@@ -1231,15 +1227,8 @@ async function program(){
     popupText(11, gt('end'));
     popupText(12, gt('playAgain'));                           // 1100
     clearKbd();                                               // 1110
-    let A$;
-    do { A$ = await waitKey(); } while(!(A$.length === 1 && 'YyNnJj'.includes(A$))); // 1120
-    if(A$ === 'Y' || A$ === 'y' || A$ === 'J' || A$ === 'j') continue;                    // 1130
-    cls();
-    locate(1,1); ps(gt('thanks'));
-    break;
+    await waitKey();                                          // 1120-1130: modern any-key restart
   }
-  await waitKey();                                            // modern: any key reboots
-  location.reload();
 }
 
 /* ---------- PAGE SHELL ---------- */

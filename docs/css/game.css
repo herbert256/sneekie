@@ -328,18 +328,14 @@
 .page-index #bezel:fullscreen #fstouch button[data-key="left"],
 .page-index #bezel:fullscreen #fstouch button[data-key="down"],
 .page-index #bezel:fullscreen #fstouch button[data-key="right"]{ left:0; }
-.page-index #bezel:fullscreen #fstouch button[data-key="y"],
-.page-index #bezel:fullscreen #fstouch button[data-key="n"],
 .page-index #bezel:fullscreen #fstouch button[data-key="f9"],
 .page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ right:0; }
 .page-index #bezel:fullscreen #fstouch button[data-key="esc"],
-.page-index #bezel:fullscreen #fstouch button[data-key="y"]{ top:0; }
+.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ top:0; }
 .page-index #bezel:fullscreen #fstouch button[data-key="up"],
-.page-index #bezel:fullscreen #fstouch button[data-key="n"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 1); }
-.page-index #bezel:fullscreen #fstouch button[data-key="left"],
-.page-index #bezel:fullscreen #fstouch button[data-key="f9"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 2); }
-.page-index #bezel:fullscreen #fstouch button[data-key="down"],
-.page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 3); }
+.page-index #bezel:fullscreen #fstouch button[data-key="f10"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 1); }
+.page-index #bezel:fullscreen #fstouch button[data-key="left"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 2); }
+.page-index #bezel:fullscreen #fstouch button[data-key="down"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 3); }
 .page-index #bezel:fullscreen #fstouch button[data-key="right"]{ top:calc((var(--fs-key-h) + var(--fs-key-gap)) * 4); }
 .page-index #touchbar{
   display:none;
