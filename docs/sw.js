@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-static-js-1';
+const VERSION = '2026-06-21-static-migration-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -117,7 +117,6 @@ const CORE_ASSETS = [
   'js/i18n.js',
   'js/magazine.js',
   'js/manual.js',
-  'js/migration.js',
   'js/site.js',
   'js/source.js',
   'js/vram.js',

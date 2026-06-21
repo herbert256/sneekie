@@ -33,10 +33,10 @@ https://sneekie.xyz/.
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
-  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, and `404`) load
-  no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`, `../js/site.js`, and
-  the page script they need (`game`, `source`, `manual`, `bot`, `magazine`, `explained`,
-  `migration`, or `vram`).
+  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `migration`,
+  and `404`) load no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`,
+  `../js/site.js`, and the page script they need (`game`, `source`, `manual`, `bot`,
+  `magazine`, `explained`, or `vram`).
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -81,11 +81,10 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
   (`{at, t, h}`, keyed by GW-BASIC line) and the `NOTES` map; the BASIC is tokenized with the
   shared `tokenizeBasicLine` (`site.js`) and `SNEEKIE.BAS` is embedded as base64 (renders from
   `file://`).
-- `docs/<lang>/migration.html` + `docs/js/migration.js` - the 1988 BASIC and the 2026 JavaScript
-  side by side, rendered into `#pairs`/`#toc-list`. `migration.js` embeds BOTH `docs/SNEEKIE.BAS`
-  and `docs/js/game.js` as base64 and slices them by the line ranges in its `SECTIONS`. The
-  embeds are a frozen snapshot co-calibrated with those ranges (see Source Embeds); it carries
-  its own BASIC + JavaScript tokenizers.
+- `docs/<lang>/migration.html` - static 1988 BASIC and 2026 JavaScript side-by-side pages.
+  These pages do not load runtime JavaScript. The rendered code pairs were generated from the
+  frozen base64 snapshots in `docs/js/migration.js`, not from the current live source files, so
+  the hard-coded BASIC/JS line ranges remain co-calibrated.
 - `docs/<lang>/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
@@ -130,8 +129,8 @@ When changing page copy, static chrome, canonical links, hreflang alternates, or
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
 `docs/js/i18n.js` is only for runtime language metadata and dynamic JavaScript strings
-(game/source/manual/bot/magazine/explained/migration/vram text). Static chrome strings and
-static prose live in the HTML pages, not in runtime `docs/js/i18n.js`.
+(game/source/manual/bot/magazine/explained/vram text). Static chrome strings and static prose
+live in the HTML pages, not in runtime `docs/js/i18n.js`.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
@@ -147,13 +146,10 @@ behavior. The listing pages embed it as base64 (so every page also renders strai
   key off it directly. The display code drops the 10-line header with `slice(10)`, so keep that
   header intact. `SNEEKIE.BAS` is permanently frozen, so these embeds normally do not need
   refreshing.
-- `docs/js/migration.js` embeds **both** `docs/SNEEKIE.BAS` and `docs/js/game.js` as base64,
-  then slices them by line ranges in its `SECTIONS`. This is deliberate: the side-by-side view
-  pairs hard-coded BASIC and JS line ranges, so the embeds are a frozen snapshot co-calibrated
-  with those ranges — a live, changing `game.js` would silently misalign them. To refresh the
-  migration page against a newer `game.js`, regenerate the embedded JS base64
-  (`python3 -c "import base64; print(base64.b64encode(open('docs/js/game.js','rb').read()).decode())"`)
-  AND re-check the `SECTIONS` ranges together.
+- `docs/<lang>/migration.html` contains static rendered side-by-side code pairs. They were
+  generated from the frozen base64 snapshots in `docs/js/migration.js`, not from the current
+  live `docs/SNEEKIE.BAS` or `docs/js/game.js`. When changing those pages, keep using that
+  snapshot as the base unless deliberately recalibrating every BASIC/JS line range.
 
 ## Running & Verification
 
