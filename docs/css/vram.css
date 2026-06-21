@@ -40,6 +40,13 @@
   image-rendering:pixelated;
   touch-action:none;   /* swipe-to-steer instead of scrolling the page under the canvas */
 }
+.page-vram.vram-fail-flash canvas#screen{
+  box-shadow:0 0 0 2px #ff3b30, 0 0 28px rgba(255,59,48,.9);
+}
+.page-vram.vram-fail-flash .mem{
+  border-color:#ff3b30;
+  box-shadow:0 0 22px rgba(255,59,48,.55);
+}
 .page-vram .memwrap{ margin-top:14px; }
 .page-vram .mem{
   display:grid;
@@ -99,8 +106,8 @@
   width:0;
   min-width:100%;
 }
-.page-vram .sxo > .panel:first-child{ flex:0 0 auto; }
-.page-vram .sxo > .panel:last-child{
+.page-vram .sxo > .steer-panel{ flex:0 0 auto; }
+.page-vram .sxo > .ops-panel{
   flex:1 1 220px;
   min-width:0;
 }

@@ -9,7 +9,7 @@ const vram = new Uint8Array((H - 1) * STRIDE + (W - 1) * 2 + 2);
 const cellByOff = {};                                          // offset -> {c,r}
 for(let r = 1; r <= H; r++) for(let c = 1; c <= W; c++) cellByOff[off(c, r)] = {c, r};
 
-let flashSet = new Set();
+let flashSet = new Set(), screenFlashOn = false, restartTimer = null;
 function poke(o, v){ if(vram[o] !== v){ vram[o] = v; if(cellByOff[o]) flashSet.add(o); } }
 function peek(o){ return vram[o]; }
 
@@ -28,6 +28,35 @@ const AREV = { U:'D', D:'U', L:'R', R:'L' };                   // bounce: flip t
 const ACH  = { U:24, D:25, L:27, R:26 };                       // CP437 glyph per direction
 const roomCells = new Set();                                   // offsets that make up the little blue room
 let arrows = [], arrowTimer = null;
+
+function stopArrows(){
+  if(arrowTimer){ clearInterval(arrowTimer); arrowTimer = null; }
+}
+
+function startFailureFlash(){
+  if(restartTimer) return;
+  stopArrows();
+  let tick = 0;
+  const pulse = () => {
+    screenFlashOn = tick % 2 === 0;
+    render();
+    tick++;
+    if(tick < 10){
+      restartTimer = setTimeout(pulse, 250);
+    } else {
+      screenFlashOn = false;
+      restartTimer = null;
+      init();
+    }
+  };
+  pulse();
+}
+
+function failAndRestart(){
+  if(dead) return;
+  dead = true;
+  startFailureFlash();
+}
 
 function corner(E, F){                                         // BASIC 920-970, new dir E, old dir F
   if((E==='R'&&F==='R')||(E==='L'&&F==='L')) return BODY_H;
@@ -99,15 +128,15 @@ function stepArrows(){
   render();
   if(dead) log.insertAdjacentHTML('beforeend', '<div class="blk">' + vt('vramDead') + '</div>');
 }
-/* the snake hit (or was hit by) a moving arrow — game over until Reset */
+/* the snake hit (or was hit by) a moving arrow — flash, then restart the sandbox */
 function die(){
-  if(dead) return;
-  dead = true;
-  if(arrowTimer){ clearInterval(arrowTimer); arrowTimer = null; }
+  failAndRestart();
 }
 
 function init(){
-  if(arrowTimer){ clearInterval(arrowTimer); arrowTimer = null; }
+  if(restartTimer){ clearTimeout(restartTimer); restartTimer = null; }
+  stopArrows();
+  screenFlashOn = false;
   vram.fill(0); T.length = 0; flashSet.clear(); roomCells.clear(); arrows = [];
   for(let r = 1; r <= H; r++) for(let c = 1; c <= W; c++){ poke(off(c,r), 32); poke(off(c,r)+1, 7); }
   // border
@@ -143,7 +172,7 @@ function move(dir){
   ops.push(['peek', A, d, cdesc(d)]);
   if(ARROWSET.has(d)){                                          // a moving arrow ahead = instant death, like the game
     ops.push(['blk', vt('vramDead'), '', '']);
-    die(); render(); logMove({dir, grow:false}, ops); return;
+    render(); logMove({dir, grow:false}, ops); failAndRestart(); return;
   }
   let grow = false, moved = true;
   if(d === 32){ poke(T[ETEL], 32); poke(T[ETEL]+1, 7); ops.push(['poke', T[ETEL], 32, vt('vramEraseTail')]); ETEL++; }
@@ -171,6 +200,7 @@ function move(dir){
     DIR = E; FDIR = E;
   }
   render(); logMove({dir, grow}, ops);
+  if(!moved) failAndRestart();
   if(hearts === 0 && !heartsBannerShown){ heartsBannerShown = true; setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">' + vt('vramAllHearts') + '</div>') , 10); }
 }
 
@@ -199,6 +229,10 @@ function drawScreen(){
   }
   if(hover){ ctx.strokeStyle = getCss('--accent'); ctx.lineWidth = 2;
     ctx.strokeRect((hover.c-1)*CW+1, (hover.r-1)*CH+1, CW-2, CH-2); }
+  if(screenFlashOn){
+    ctx.fillStyle = 'rgba(255, 0, 0, .58)';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+  }
 }
 
 const memEl = document.getElementById('mem'), mcs = [];
@@ -224,7 +258,10 @@ function updateMemory(){
     const d = mcs[(cell.r-1)*W + (cell.c-1)]; d.classList.remove('flash'); void d.offsetWidth; d.classList.add('flash'); }
   flashSet.clear();
 }
-function render(){ drawScreen(); updateMemory(); }
+function render(){
+  document.body.classList.toggle('vram-fail-flash', screenFlashOn);
+  drawScreen(); updateMemory();
+}
 
 /* ---------- log + stats + inspector ---------- */
 const log = document.getElementById('log');

@@ -79,14 +79,14 @@
       "vramEatSmiley": "score -= 50 &mdash; ouch, a smiley!",
       "vramBehindStone": " (behind the stone)",
       "vramShoveStone": "shove the stone &#9689; along",
-      "vramStoneBlocked": "&#8594; blocked: stone has nowhere to go, stay put",
+      "vramStoneBlocked": "&#8594; stuck: stone has nowhere to go, restarting",
       "vramBlocked": "&#8594; blocked: ",
-      "vramStayPut": ", stay put",
+      "vramStayPut": ", restarting",
       "vramOldHeadBody": "old head &#8594; body",
       "vramDrawHead": "draw new head &#9608;",
       "vramGrow": "  (grow)",
       "vramAllHearts": "&#9733; all hearts collected!",
-      "vramDead": "&#10007; a moving arrow caught the snake &mdash; game over. Press Reset.",
+      "vramDead": "&#10007; a moving arrow caught the snake &mdash; restarting.",
       "vramMove": "move "
     },
     "nl": {
@@ -126,14 +126,14 @@
       "vramEatSmiley": "score -= 50 &mdash; au, een smiley!",
       "vramBehindStone": " (achter de steen)",
       "vramShoveStone": "duw de steen &#9689; door",
-      "vramStoneBlocked": "&#8594; geblokkeerd: de steen kan nergens heen, blijf staan",
+      "vramStoneBlocked": "&#8594; vastgelopen: de steen kan nergens heen, herstart",
       "vramBlocked": "&#8594; geblokkeerd: ",
-      "vramStayPut": ", blijf staan",
+      "vramStayPut": ", herstart",
       "vramOldHeadBody": "oude kop &#8594; lijf",
       "vramDrawHead": "teken nieuwe kop &#9608;",
       "vramGrow": "  (groei)",
       "vramAllHearts": "&#9733; alle harten verzameld!",
-      "vramDead": "&#10007; een bewegende pijl ving de slang &mdash; game over. Druk op Reset.",
+      "vramDead": "&#10007; een bewegende pijl ving de slang &mdash; herstart.",
       "vramMove": "zet "
     },
     "uk": {
@@ -173,14 +173,14 @@
       "vramEatSmiley": "рахунок -= 50 &mdash; ой, смайлик!",
       "vramBehindStone": " (за каменем)",
       "vramShoveStone": "посунути камінь &#9689;",
-      "vramStoneBlocked": "&#8594; заблоковано: каменю нікуди рухатися, стоїмо",
+      "vramStoneBlocked": "&#8594; застрягли: каменю нікуди рухатися, перезапуск",
       "vramBlocked": "&#8594; заблоковано: ",
-      "vramStayPut": ", стоїмо",
+      "vramStayPut": ", перезапуск",
       "vramOldHeadBody": "стара голова &#8594; тіло",
       "vramDrawHead": "намалювати нову голову &#9608;",
       "vramGrow": "  (ріст)",
       "vramAllHearts": "&#9733; усі серця зібрано!",
-      "vramDead": "&#10007; рухома стріла спіймала змію &mdash; гру завершено. Натисніть Скинути.",
+      "vramDead": "&#10007; рухома стріла спіймала змію &mdash; перезапуск.",
       "vramMove": "хід "
     }
   };
