@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The Bot page does not play a recording. It loads the real game in an &lt;iframe&gt;, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
     <title>Sneekie - How the bot thinks</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - How the bot thinks" />
-    <meta property="og:description" content="The Bot page does not play a recording. It loads the real game in an &lt;iframe&gt;, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press." />
+    <meta property="og:description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta property="og:url" content="https://sneekie.xyz/en/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -30,7 +30,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - How the bot thinks" />
-    <meta name="twitter:description" content="The Bot page does not play a recording. It loads the real game in an &lt;iframe&gt;, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="twitter:description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -59,11 +59,11 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for looped head positions, and gives up cleanly instead of orbiting its own tail.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a separate planner in <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press. Every move it snapshots the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for looped head positions, and gives up cleanly instead of orbiting its own tail.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
-      <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>bot.html</code>; it reads the port's live variables and presses keys like a player would. Beyond two bookkeeping writes &mdash; jumping to the selected <code>LEVEL</code> and zeroing the leftover <code>BONUS</code> near a clear (both described below) &mdash; it leaves the game's rules and engine untouched.</div>
+      <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>bot.html</code>; it reads the port's live variables and presses keys like a player would. Beyond one bookkeeping write &mdash; jumping to the selected <code>LEVEL</code> &mdash; it leaves the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">
         <h2>On this page</h2>
         <ol>
@@ -107,25 +107,26 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The bot page has one iframe whose source is <code>game.html</code>. On every iframe load, <code>bot.html</code> appends CSS that hides the surrounding game chrome, then runs the bot string with <code>eval()</code> inside the iframe:</p>
-        <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
-        <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to code evaluated in the same script realm, but they are not ordinary <code>window</code> properties. Injecting the bot into the iframe lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
+        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine snapshots the live VRAM and snake arrays; the driver handles tabs, restarts, speed, and key presses:</p>
+        <pre><code>const sc = planner.decide({ idle, looping, budgetMs: routeBudget() });
+if(sc !== null) pushKey(keyOf[sc]);</code></pre>
+        <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
         <div class="cards">
           <div class="card">
             <h3>Level jump</h3>
             <p>It dismisses level 1, sets <code>LEVEL = TARGET - 1</code>, presses F10 once, and lets the game's own loop enter the selected level.</p>
           </div>
           <div class="card">
-            <h3>Bonus reset</h3>
-            <p>Once two or fewer items remain it sets <code>BONUS = 0</code>, draining the leftover-bonus countdown before the final pickup so the level clears at once. Without it, at high speeds the &ldquo;stuck&rdquo; watchdog could trip and flash red on a genuine win.</p>
+            <h3>Snapshot planner</h3>
+            <p>Each decision copies the CP437 playfield into a compact array, then searches that snapshot instead of repeatedly reading the rendered game state.</p>
           </div>
           <div class="card">
             <h3>Real input</h3>
             <p>It sends DOS-style extended-key strings: up <code>' H'</code>, down <code>' P'</code>, left <code>' K'</code>, right <code>' M'</code>.</p>
           </div>
           <div class="card">
-            <h3>Live status</h3>
-            <p>It reports score and remaining items to the parent page with <code>parent.botStatus(...)</code>, and reports success or failure with <code>parent.botEnd(...)</code>.</p>
+            <h3>Restart handling</h3>
+            <p>If the snake dies, the driver detects the unwind or life drop, queues the next late level, and dismisses the restart prompt.</p>
           </div>
         </div>
       </section>
@@ -178,7 +179,7 @@
             </tr>
           </tbody>
         </table>
-        <p>For simulated routes, the bot keeps an overlay map called <code>cells</code>. This overlay records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell. If a cell is not in the overlay, the bot reads the real game screen with <code>peek()</code>. That keeps route simulation cheap without cloning the whole 4000-byte VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes into a compact <code>Uint16Array</code> and rebuilds the snake body from <code>T</code>. For simulated routes, the bot then keeps an overlay map called <code>cells</code>. This overlay records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell. If a cell is not in the overlay, the bot reads the per-tick snapshot. That keeps route simulation cheap without cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
@@ -213,10 +214,11 @@
             <p>Only give up when even the local survival fallback cannot find a survivable move.</p>
           </div>
         </div>
-        <pre><code>const decide = (idle, looping) =&gt; {
+        <pre><code>const decide = options =&gt; {
+  model = capture();
   resetDanger();
-  const urgent = idle &gt;= 18 || looping;
-  routeDeadline = now() + routeBudget();
+  const urgent = options.idle &gt;= 18 || options.looping;
+  routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
     proved = nearFood(false) ?? routeFood(false) ??

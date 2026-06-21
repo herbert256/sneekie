@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt;, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <title>Sneekie - Hoe de bot denkt</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:locale" content="nl_NL" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - Hoe de bot denkt" />
-    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt;, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta property="og:url" content="https://sneekie.xyz/nl/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -30,7 +30,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - Hoe de bot denkt" />
-    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij laadt het echte spel in een &lt;iframe&gt;, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -59,11 +59,11 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij laadt het echte spel in een <code>&lt;iframe&gt;</code>, injecteert een JavaScript-bot in dat draaiende spel, en laat de bot dezelfde pijltjesscancodes indrukken als een speler. De bot is een kleine planner: elke zet bouwt hij de slangtoestand opnieuw op, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op herhaalde kopposities, en geeft hij netjes op in plaats van rond zijn eigen staart te blijven draaien.</p>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een aparte planner in <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler. Elke zet maakt hij een snapshot van de slangtoestand, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op herhaalde kopposities, en geeft hij netjes op in plaats van rond zijn eigen staart te blijven draaien.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
-      <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve twee administratieve ingrepen &mdash; springen naar het gekozen <code>LEVEL</code> en de resterende <code>BONUS</code> vlak voor een clear op nul zetten &mdash; laat hij de regels en engine ongemoeid.</div>
+      <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve een administratieve ingreep &mdash; springen naar het gekozen <code>LEVEL</code> &mdash; laat hij de regels en engine ongemoeid.</div>
       <nav class="toc" aria-label="Op deze pagina">
         <h2>Op deze pagina</h2>
         <ol>
@@ -83,14 +83,15 @@
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De botpagina heeft een iframe met <code>game.html</code> als bron. Bij elke iframe-load voegt <code>bot.html</code> CSS toe die de gewone spelchrome verbergt, en voert daarna de botstring met <code>eval()</code> uit binnen dat iframe:</p>
-        <pre><code>cell.frame.contentWindow.eval('var IDX=0,TARGET=' + activeLevel + ';' + BOT);</code></pre>
-        <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Code die in dezelfde scriptomgeving wordt ge-evalueerd kan die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
+        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine maakt snapshots van de live VRAM- en slangarrays; de driver regelt tabs, herstarts, snelheid en toetsaanslagen:</p>
+        <pre><code>const sc = planner.decide({ idle, looping, budgetMs: routeBudget() });
+if(sc !== null) pushKey(keyOf[sc]);</code></pre>
+        <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Scripts in dezelfde pagina kunnen die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
         <div class="cards">
           <div class="card"><h3>Levelsprong</h3><p>Hij sluit level 1, zet <code>LEVEL = TARGET - 1</code>, drukt een keer F10, en laat de eigen gameloop het gekozen level openen.</p></div>
-          <div class="card"><h3>Bonusreset</h3><p>Wanneer er nog twee of minder items zijn zet hij <code>BONUS = 0</code>. Daardoor hoeft de botpagina niet lang te wachten terwijl de resterende bonus aftelt.</p></div>
+          <div class="card"><h3>Snapshotplanner</h3><p>Elke beslissing kopieert het CP437-speelveld naar een compacte array, waarna de zoekactie die snapshot gebruikt in plaats van steeds de gerenderde speltoestand te lezen.</p></div>
           <div class="card"><h3>Echte invoer</h3><p>Hij stuurt DOS-achtige uitgebreide toetsstrings: omhoog <code>' H'</code>, omlaag <code>' P'</code>, links <code>' K'</code>, rechts <code>' M'</code>.</p></div>
-          <div class="card"><h3>Live status</h3><p>Hij meldt score en resterende items aan de ouderpagina met <code>parent.botStatus(...)</code>, en succes of falen met <code>parent.botEnd(...)</code>.</p></div>
+          <div class="card"><h3>Herstartlogica</h3><p>Als de slang sterft, ziet de driver het afwikkelen of het lagere levenaantal, zet het volgende diepe level klaar, en sluit de herstartprompt.</p></div>
         </div>
       </section>
       <section id="data">
@@ -108,7 +109,7 @@
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>Voor denkbeeldige routes bewaart de bot alleen verschillen in een overlay-map <code>cells</code>. Daarin staan bijvoorbeeld een geduwde steen of een leeg geworden staartvak. Staat een vak niet in de overlay, dan leest hij het echte scherm met <code>peek()</code>. Zo hoeft niet voor elke tak de volledige 4000-byte VRAM-array te worden gekopieerd.</p>
+        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens naar een compacte <code>Uint16Array</code> en bouwt hij het slangenlijf opnieuw op uit <code>T</code>. Voor denkbeeldige routes bewaart de bot daarna alleen verschillen in een overlay-map <code>cells</code>. Daarin staan bijvoorbeeld een geduwde steen of een leeg geworden staartvak. Staat een vak niet in de overlay, dan leest hij de snapshot van deze tick. Zo hoeft niet voor elke tak de volledige VRAM-array te worden gekopieerd.</p>
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
@@ -122,10 +123,11 @@
           <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij een directe zet naar open ruimte; de staart najagen is geen eigen doel meer.</p></div>
           <div class="step"><b>7. Netjes opgeven</b><p>Alleen als zelfs de lokale overlevingsfallback geen overleefbare zet vindt, geeft de bot op.</p></div>
         </div>
-        <pre><code>const decide = (idle, looping) =&gt; {
+        <pre><code>const decide = options =&gt; {
+  model = capture();
   resetDanger();
-  const urgent = idle &gt;= 18 || looping;
-  routeDeadline = now() + routeBudget();
+  const urgent = options.idle &gt;= 18 || options.looping;
+  routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
     proved = nearFood(false) ?? routeFood(false) ??

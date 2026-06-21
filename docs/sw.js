@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-21-network-first-1';
+const VERSION = '2026-06-21-bot-engine-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -111,6 +111,7 @@ const CORE_ASSETS = [
   'index.html',
   'index_nl.html',
   'index_uk.html',
+  'js/bot-engine.js',
   'js/bot.js',
   'js/game.js',
   'js/i18n.js',
