@@ -8,7 +8,6 @@
   color:var(--muted);
   font-size:13px;
 }
-.page-magazine .intro-figure img,
 .page-magazine .closing-figure img{
   max-width:100%;
   height:auto;

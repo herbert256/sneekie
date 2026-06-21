@@ -277,6 +277,10 @@ footer a:hover{
   max-width:960px;
   margin:24px auto 32px;
 }
+.page-doc .intro-figure,
+.page-source .intro-figure{
+  width:100%;
+}
 .page-doc .closing-figure,
 .page-source .closing-figure,
 .page-index .closing-figure{
@@ -297,6 +301,23 @@ footer a:hover{
   background:#050607;
   box-shadow:0 20px 52px -32px rgba(0,0,0,.95);
 }
+.page-explained .intro-figure img,
+.page-magazine .intro-figure img,
+.page-source .intro-figure img,
+.page-manual .intro-figure img,
+.page-migration .intro-figure img,
+.page-vram .intro-figure img{
+  height:clamp(170px, 34vw, 390px);
+  aspect-ratio:auto;
+  object-position:center var(--intro-image-y, 50%);
+}
+.page-explained{ --intro-image-y:42%; }
+.page-magazine{ --intro-image-y:48%; }
+.page-source{ --intro-image-y:45%; }
+.page-manual{ --intro-image-y:50%; }
+.page-migration{ --intro-image-y:42%; }
+.page-vram{ --intro-image-y:44%; }
+.page-source .intro-figure img{ height:clamp(160px, 30vw, 360px); }
 .page-doc .intro-figure figcaption,
 .page-source .intro-figure figcaption,
 .page-doc .closing-figure figcaption,
