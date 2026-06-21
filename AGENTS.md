@@ -32,19 +32,19 @@ https://sneekie.xyz/.
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only; no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
-  `migration`, and `vram`. Each content page loads `../css/site.css`, page-specific CSS when
-  present (`game` uses `../css/game.css`), `../js/site.js`, and its own page JS.
-  `bot-thinking` has no page JS (only `site.js`); `bot-thinking` is reachable only via a link on
-  `bot.html`, not from the header nav.
+  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, and `404`) load
+  no runtime JavaScript. Interactive/generated pages load `../js/i18n.js`, `../js/site.js`, and
+  the page script they need (`game`, `source`, `manual`, `bot`, `magazine`, `explained`,
+  `migration`, or `vram`).
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
-- `docs/js/site.js` - shared site behavior: language helpers, clean-link normalization outside
-  the static chrome, service-worker registration for localized pages, and the shared BASIC
-  tokenizer used by the listing pages. It must not create `header.top` or `<footer>`. Download
-  and Print live on the Source page, not in the header.
+- `docs/js/site.js` - shared runtime behavior for JavaScript-backed pages: language helpers,
+  clean-link normalization outside the static chrome, service-worker registration, and the
+  shared BASIC tokenizer used by the listing pages. It must not create `header.top` or
+  `<footer>`. Download and Print live on the Source page, not in the header.
 - `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
   Static header/footer/nav strings do **not** live here; they are literal HTML in the localized
   pages under `docs/<lang>/`.
@@ -97,9 +97,9 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
   game styling comes from `.page-index`; `bot.css` only adds the lead/speed/tabs/note). The
   page links to `bot-thinking.html`. Keep the planner in `bot.js` in sync with
   `bot-thinking.html`.
-- `docs/<lang>/bot-thinking.html` - prose explaining how the bot plans (loads only `site.js`; no
-  page JS). It is linked only from `bot.html`, not from the nav. Keep it in sync with the
-  planner in `docs/js/bot.js` when planner behavior changes. CSS class is `.page-bot-thinking`.
+- `docs/<lang>/bot-thinking.html` - static prose explaining how the bot plans (no runtime JS).
+  It is linked only from `bot.html`, not from the nav. Keep it in sync with the planner in
+  `docs/js/bot.js` when planner behavior changes. CSS class is `.page-bot-thinking`.
 - `docs/<lang>/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.
 - `docs/<lang>/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
@@ -129,8 +129,8 @@ When changing page copy, static chrome, canonical links, hreflang alternates, or
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
 `docs/js/i18n.js` is only for runtime language metadata and dynamic JavaScript strings
-(game/source/manual/magazine/vram text). Static chrome strings live in the HTML pages, not in
-runtime `docs/js/i18n.js`.
+(game/source/manual/bot/magazine/explained/migration/vram text). Static chrome strings and
+static prose live in the HTML pages, not in runtime `docs/js/i18n.js`.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
