@@ -913,10 +913,10 @@ function popupText(row, text){
   locate(row, POPUP_LEFT + 1 + Math.max(0, Math.floor((POPUP_INNER - s.length) / 2)));
   ps(s);
 }
-async function restartPopup(title){
+async function restartPopup(title, restartText = gt('playAgain')){
   sub2280();
   popupText(11, title);
-  popupText(12, gt('playAgain'));
+  popupText(12, restartText);
   clearKbd();
   clearClickTarget();
   clickStartsLevel = true;
@@ -1234,7 +1234,7 @@ async function playLevels(){
           await flashStuckScreen();
           await deathSeq();
           died = true;
-          if(LIVE > 0) await restartPopup(gt('stuck'));
+          if(LIVE > 0) await restartPopup(gt('stuck'), ' ' + gt('playAgain'));
           break;
         }
         if(sig !== DEATH) throw sig;
