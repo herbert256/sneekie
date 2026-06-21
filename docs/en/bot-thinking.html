@@ -59,7 +59,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for tail-following loops, and falls back to pure survival when no safe food path exists.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It loads the real game in an <code>&lt;iframe&gt;</code>, injects a JavaScript bot into that running game, and lets the bot press the same arrow-key scancodes a player would press. The bot is a small planner: every move it rebuilds the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for looped head positions, and gives up cleanly instead of orbiting its own tail.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -205,24 +205,23 @@
             <p>If the head is repeating positions or the score has been idle, push toward food instead of circling the tail.</p>
           </div>
           <div class="step">
-            <b>6. Follow tail</b>
-            <p>Only when not under loop pressure, try to reach the moving tail and buy space.</p>
+            <b>6. Survive locally</b>
+            <p>Only before loop pressure, pick a one-step move into open space; do not chase the tail as its own goal.</p>
           </div>
           <div class="step">
-            <b>7. Survive locally</b>
-            <p>If all planners fail, pick the best legal one-step survival move.</p>
+            <b>7. Give up cleanly</b>
+            <p>If pressure cannot find food once the bot is idle or looping, stop circling and let the game advance to the next bot level.</p>
           </div>
         </div>
         <pre><code>const decide = (idle, looping) =&gt; {
   resetDanger();
-  const urgent = idle &gt;= 45 || looping;
+  const urgent = idle &gt;= 18 || looping;
   return nearFood(false) ?? routeFood(false) ?? nearFood(true) ?? routeFood(true) ??
     (urgent ? (pressureFood(false, true) ?? pressureFood(true, true)) : null) ??
-    (!urgent ? tailFirst() : null) ??
     pressureFood(false, urgent) ?? pressureFood(true, urgent) ??
-    survivalMove();
+    (!urgent ? survivalMove() : null);
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure before the red stuck timer has to fire.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If that pressure cannot find a food route, it returns no move instead of orbiting the tail.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -313,11 +312,11 @@
               <td><code>routeFood()</code></td>
               <td>The normal cautious route finder.</td>
               <td>Depth 78 normally, 115 when 6 or fewer items remain; at most 950 states; can stop after 28 food candidates once a good route exists.</td>
-              <td>Survival first: tail reach, future exits, and open space beat shortness.</td>
+              <td>Survival first: route-out proof, tail reach, future exits, and open space beat shortness.</td>
             </tr>
             <tr>
               <td><code>pressureFood()</code></td>
-              <td>When the bot is idle, looping, or when tail-following did not help.</td>
+              <td>When the bot is idle, looping, or when ordinary safe food searches did not help.</td>
               <td>Depth 70-125 depending on endgame and urgency; 720-1050 states; 22-38 checked food candidates.</td>
               <td>Looser survival gates and a smaller distance penalty, to break circles without grabbing obvious traps.</td>
             </tr>
@@ -327,7 +326,7 @@
       </section>
       <section id="safety">
         <h2>7. Trap checks</h2>
-        <p>Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with three different survival signals.</p>
+        <p>Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with four different survival signals.</p>
         <div class="cards">
           <div class="card">
             <h3>Exit count</h3>
@@ -345,12 +344,16 @@
             <h3>Survival depth</h3>
             <p><code>survivalDepth()</code> runs a small beam search to see how many future moves remain possible after the candidate is eaten.</p>
           </div>
+          <div class="card">
+            <h3>Route out</h3>
+            <p><code>escapeProof()</code> simulates extra post-pickup moves and requires a path into open space or back toward the moving tail before the food route can win.</p>
+          </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. In the final items, the bot demands more space and a deeper survival horizon.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. In the final items, the bot demands more space, a deeper survival horizon, and a proved route out after the pickup.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
-        <p>The bot has three fallback behaviors after the normal safe food planners. They keep it from freezing, but they are ordered carefully so it does not spend too long following its own tail while food is available.</p>
+        <p>The bot has two fallback behaviors after the normal safe food planners. They keep it from freezing without adding a standalone "follow the tail" mode.</p>
         <table>
           <thead>
             <tr>
@@ -363,21 +366,16 @@
             <tr>
               <td><code>pressureFood()</code></td>
               <td>Break loops</td>
-              <td>Runs when <code>idle &gt;= 45</code> or the recent head trail shows repeated positions. It searches for food with lighter survival gates, first without smileys, then with smileys.</td>
-            </tr>
-            <tr>
-              <td><code>tailFirst()</code></td>
-              <td>Buy time</td>
-              <td>Runs a BFS toward the current tail only while the bot is not under loop pressure. Following the tail is safe as a short bridge, but it is skipped once it starts looking like a circle.</td>
+              <td>Runs when <code>idle &gt;= 18</code> or the recent head trail shows repeated positions. It searches for food with lighter survival gates, first without smileys, then with smileys.</td>
             </tr>
             <tr>
               <td><code>survivalMove()</code></td>
-              <td>Last resort</td>
-              <td>Scores each immediately legal move by reachable space, tail reach, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
+              <td>Short bridge</td>
+              <td>Before loop pressure only, scores each immediately legal move by reachable space, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
-        <p>This gives the bot a survival instinct without letting that instinct become endless circling. If the map says "do not eat yet", it can follow the tail briefly or move into a larger open region, but repeated head positions make the next decisions prefer food pressure instead.</p>
+        <p>This gives the bot a survival instinct without letting that instinct become endless circling. If the map says "do not eat yet", it may move into a larger open region briefly, but repeated head positions make the next decisions prefer food pressure; if pressure still fails, the bot gives up and the live demo advances.</p>
       </section>
       <section id="score">
         <h2>9. Route scoring</h2>
@@ -387,13 +385,15 @@
           score += survivalDepth * 5600<br />
           score += exits * 2400<br />
           score += reachableSpace * 16<br />
+          score += escapeSpace * 8<br />
+          score += escapeTailReach ? +18000 : 0<br />
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
           score -= smileysEaten * 1200<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>The large tail-reach and survival-depth weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests.</p>
+        <p>The large tail-reach, survival-depth, and route-out weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests.</p>
         <p>The two newer food planners deliberately use different weights:</p>
         <table>
           <thead>
@@ -413,7 +413,7 @@
             </tr>
             <tr>
               <td><code>survivalMove()</code></td>
-              <td>Does not search for a full food route. It scores immediate legal moves by open space, tail reach, exits, direct food, smiley cost, stone cost, and straight-ahead preference.</td>
+              <td>Does not search for a full food route. It scores immediate legal moves by open space, exits, direct food, smiley cost, stone cost, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
@@ -427,6 +427,7 @@
           <li><code>routeFood()</code> stops at 950 dequeued search states and keeps only useful food candidates.</li>
           <li><code>pressureFood()</code> uses a separate cap: 720 states normally, 1050 when urgent.</li>
           <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
+          <li><code>escapeProof()</code> keeps the 48 best post-pickup states per depth while proving that a food route has a way out.</li>
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
           <li>The page speed slider changes the delay between key presses, not the search itself.</li>
         </ul>
@@ -478,7 +479,7 @@
           <li>It may choose a smiley only when clean food routes fail, because smileys cost points and grow the snake.</li>
           <li>The survival beam favors positions with many exits, so it can miss rare narrow routes that are technically safe but expensive to prove.</li>
         </ul>
-        <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values its tail, open space, and future exits more than the nearest unsafe points.</p>
+        <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values open space and future exits, but it no longer follows its own tail as a fallback strategy.</p>
       </section>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="A Sneekie maze exploding into glowing route choices, hazard zones, and bot decision paths." />
