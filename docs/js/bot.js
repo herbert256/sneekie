@@ -10,9 +10,15 @@
   const SPEED_CHOICES = [10,10,20,30,49,50,60,70,80,90,100];
   const speed = document.getElementById('speed');
   const speedout = document.getElementById('speedout');
-  let botSpeed = 50;
+  const configuredSpeed = Number(window.SNEEKIE_BOT_SPEED);
+  let botSpeed = SPEED_CHOICES.includes(configuredSpeed) ? configuredSpeed : 50;
+  const silentWake = window.SNEEKIE_BOT_SILENT === true;
   function speedToDelay(value){ return Math.round(45 + 375 * Math.pow((100 - value) / 100, 1.6)); }
   function speedIndex(){
+    if(!speed){
+      const index = SPEED_CHOICES.indexOf(botSpeed);
+      return index >= 0 ? index : SPEED_CHOICES.indexOf(50);
+    }
     const value = Number(speed.value);
     if(Number.isFinite(value)) return Math.max(0, Math.min(SPEED_CHOICES.length - 1, Math.round(value)));
     return SPEED_CHOICES.indexOf(50);
@@ -21,8 +27,10 @@
     const index = speedIndex();
     botSpeed = SPEED_CHOICES[index];
     speed.value = String(index);
-    speedout.value = String(botSpeed);
-    speedout.textContent = String(botSpeed);
+    if(speedout){
+      speedout.value = String(botSpeed);
+      speedout.textContent = String(botSpeed);
+    }
     speed.setAttribute('aria-valuetext', String(botSpeed));
   }
   if(speed){
@@ -62,7 +70,7 @@
     markTabs();
   }
   function queueNextLevel(){ queueLevel(nextBotLevel(activeLevel)); }
-  function wake(){ if(typeof ensureAudio === 'function') ensureAudio(); }   // audio needs a user gesture
+  function wake(){ if(!silentWake && typeof ensureAudio === 'function') ensureAudio(); }   // audio needs a user gesture
   if(tablist){
     for(const n of LEVELS){
       const b = document.createElement('button');
@@ -73,8 +81,10 @@
     }
     markTabs();
   }
-  addEventListener('pointerdown', wake);
-  addEventListener('keydown', wake);
+  if(!silentWake){
+    addEventListener('pointerdown', wake);
+    addEventListener('keydown', wake);
+  }
 
   /* ---- driver: drive game.js continuously, jumping to the selected level ----
      Each tick we press one key. The bot's own move keys dismiss the "Level n /
@@ -141,10 +151,17 @@
         target = LEVEL;
         markTabs();
       }
-      // jump to the selected level once the snake is safely in the move loop
-      if(pendingJump !== null && BTEL > 2 && ETEL <= BTEL){
+      // jump to the selected level once the game has built the current level.
+      // The request may be queued while the "Level n" popup is waiting; Enter
+      // dismisses that popup and game.js consumes the request at the move loop.
+      if(pendingJump !== null && ETEL <= BTEL &&
+          (typeof window.sneekieRequestLevel === 'function' || BTEL > 2)){
         jumpingTo = pendingJump;
-        LEVEL = pendingJump - 1; pushKey(' D');          // F10 skips straight into the target level
+        if(typeof window.sneekieRequestLevel === 'function'){
+          window.sneekieRequestLevel(pendingJump);
+          pushKey('\r');
+        }
+        else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
         pendingJump = null; escapeQueued = false; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }

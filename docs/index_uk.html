@@ -91,20 +91,31 @@
         <h2 class="visually-hidden">Sneekie - Текстова гра MS-DOS 1988 року</h2>
         <img class="home-title-image" loading="eager" width="1200" height="260" src="images/home-title-uk.webp" alt="" aria-hidden="true" />
         <p>Запустіть Sneekie у браузері й проведіть змію крізь усі 32 рівні лабіринту, не врізаючись у стріли, камені чи власний хвіст, що росте.</p>
-        <p class="play-note">Натисніть зображення нижче, щоб почати гру.</p>
-        <a class="play-link" href="uk/game.html" aria-label="Грати в Sneekie">
-          <span class="crt">
-            <span class="crt-tube">
-              <img class="play-image" loading="eager" width="640" height="384" src="images/index.webp" alt="" />
-              <span class="crt-glass" aria-hidden="true"></span>
+        <p class="play-note">Нижче живий бот проходить рівні 26-32; натисніть, щоб відкрити сторінку бота.</p>
+        <div class="play-link home-bot-preview" aria-label="Живий бот Sneekie проходить рівні 26-32">
+          <a class="home-bot-hit" href="uk/bot.html" aria-label="Відкрити живого бота, що проходить рівні 26-32"></a>
+          <span id="bezel" class="crt">
+            <span id="tube" class="crt-tube">
+              <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран бота Sneekie"></canvas>
+              <span id="glass" class="crt-glass" aria-hidden="true"></span>
+              <span id="power" aria-hidden="true"></span>
             </span>
-            <span class="crt-panel" aria-hidden="true">
+            <span id="panel" class="crt-panel" aria-hidden="true">
               <span class="crt-logo">Корпорація Acme</span>
               <span class="crt-led"></span>
               <span class="crt-knobs"><i></i><i></i></span>
             </span>
           </span>
-        </a>
+        </div>
+        <div class="home-bot-hidden" aria-hidden="true">
+          <div id="themes">
+            <button type="button" data-theme="hercules">Green</button>
+            <button type="button" data-theme="amber">Amber</button>
+            <button type="button" data-theme="cga">CGA</button>
+          </div>
+          <button type="button" id="mute">Sound: off</button>
+          <button type="button" id="fs">Fullscreen</button>
+        </div>
       </section>
       <section class="home-topics" id="explore" aria-labelledby="explore-title">
         <h2 id="explore-title">Перегляньте проєкт</h2>
@@ -151,6 +162,21 @@
     <footer>
       Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопам'ять.<br>Браузерна версія: червень 2026.
     </footer>
+    <script>
+      window.SNEEKIE_SKIPBOOT = true;
+      window.SNEEKIE_FORCE_THEME = 'cga';
+      window.SNEEKIE_BOT_SPEED = 90;
+      window.SNEEKIE_PREVIEW_MODE = true;
+      window.SNEEKIE_PASSIVE_PREVIEW = true;
+      window.SNEEKIE_BOT_SILENT = true;
+      window.SNEEKIE_MUTED = true;
+      window.sneekieLang = () => document.documentElement.lang || 'uk';
+      function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+      function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
+    </script>
+    <script src="js/game.js"></script>
+    <script src="js/bot-engine.js"></script>
+    <script src="js/bot.js"></script>
     <script>
       (() => {
         const canRegister = 'serviceWorker' in navigator &&

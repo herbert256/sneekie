@@ -91,20 +91,31 @@
         <h2 class="visually-hidden">Sneekie - Het MS-DOS-tekstspel uit 1988</h2>
         <img class="home-title-image" loading="eager" width="1200" height="260" src="images/home-title-nl.webp" alt="" aria-hidden="true" />
         <p>Start Sneekie in je browser en stuur de slang door alle 32 doolhoflevels zonder tegen pijlen, stenen of je eigen groeiende staart te botsen.</p>
-        <p class="play-note">Klik op de afbeelding hieronder om te spelen.</p>
-        <a class="play-link" href="nl/game.html" aria-label="Speel Sneekie">
-          <span class="crt">
-            <span class="crt-tube">
-              <img class="play-image" loading="eager" width="640" height="384" src="images/index.webp" alt="" />
-              <span class="crt-glass" aria-hidden="true"></span>
+        <p class="play-note">Bekijk hieronder hoe de live bot levels 26-32 speelt; klik om de botpagina te openen.</p>
+        <div class="play-link home-bot-preview" aria-label="Live Sneekie-bot speelt levels 26 tot en met 32">
+          <a class="home-bot-hit" href="nl/bot.html" aria-label="Open de live bot die levels 26 tot en met 32 speelt"></a>
+          <span id="bezel" class="crt">
+            <span id="tube" class="crt-tube">
+              <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie-bot spelscherm"></canvas>
+              <span id="glass" class="crt-glass" aria-hidden="true"></span>
+              <span id="power" aria-hidden="true"></span>
             </span>
-            <span class="crt-panel" aria-hidden="true">
+            <span id="panel" class="crt-panel" aria-hidden="true">
               <span class="crt-logo">Acme Corporation</span>
               <span class="crt-led"></span>
               <span class="crt-knobs"><i></i><i></i></span>
             </span>
           </span>
-        </a>
+        </div>
+        <div class="home-bot-hidden" aria-hidden="true">
+          <div id="themes">
+            <button type="button" data-theme="hercules">Green</button>
+            <button type="button" data-theme="amber">Amber</button>
+            <button type="button" data-theme="cga">CGA</button>
+          </div>
+          <button type="button" id="mute">Sound: off</button>
+          <button type="button" id="fs">Fullscreen</button>
+        </div>
       </section>
       <section class="home-topics" id="explore" aria-labelledby="explore-title">
         <h2 id="explore-title">Verken het project</h2>
@@ -151,6 +162,21 @@
     <footer>
       Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, POKEs rechtstreeks in videogeheugen.<br>Browserversie: juni 2026.
     </footer>
+    <script>
+      window.SNEEKIE_SKIPBOOT = true;
+      window.SNEEKIE_FORCE_THEME = 'cga';
+      window.SNEEKIE_BOT_SPEED = 90;
+      window.SNEEKIE_PREVIEW_MODE = true;
+      window.SNEEKIE_PASSIVE_PREVIEW = true;
+      window.SNEEKIE_BOT_SILENT = true;
+      window.SNEEKIE_MUTED = true;
+      window.sneekieLang = () => document.documentElement.lang || 'nl';
+      function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+      function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
+    </script>
+    <script src="js/game.js"></script>
+    <script src="js/bot-engine.js"></script>
+    <script src="js/bot.js"></script>
     <script>
       (() => {
         const canRegister = 'serviceWorker' in navigator &&

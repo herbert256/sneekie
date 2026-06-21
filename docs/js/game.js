@@ -107,7 +107,10 @@ const PLAYABLE_THEMES = new Set(['hercules', 'amber', 'cga']);
 function playableThemeName(name){
   return PLAYABLE_THEMES.has(name) ? name : 'cga';
 }
-let themeName = playableThemeName(lsGet('sneekie.theme'));
+const forceTheme = PLAYABLE_THEMES.has(window.SNEEKIE_FORCE_THEME) ? window.SNEEKIE_FORCE_THEME : null;
+const previewMode = window.SNEEKIE_PREVIEW_MODE === true;
+const passivePreview = window.SNEEKIE_PASSIVE_PREVIEW === true;
+let themeName = forceTheme || playableThemeName(lsGet('sneekie.theme'));
 let theme = THEMES[themeName] || THEMES.cga;
 
 /* ---------- VIDEO: 80x25 text VRAM, identical to B000/B800 layout ----------
@@ -419,100 +422,106 @@ if(fsHelp){
   });
 }
 
-addEventListener('keydown', e => {
-  if(fsHelpOpen){
-    if(e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') hideFullscreenHelp();
-    if(e.key !== 'Tab') e.preventDefault();
-    return;
-  }
-  if(bootActive){
+if(!passivePreview){
+  addEventListener('keydown', e => {
+    if(fsHelpOpen){
+      if(e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') hideFullscreenHelp();
+      if(e.key !== 'Tab') e.preventDefault();
+      return;
+    }
+    if(bootActive){
+      ensureAudio();
+      if(bootWaiting) startBootFromGesture();
+      else if(bootStarted) bootSkip = true;
+      if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
+      return;
+    }
     ensureAudio();
-    if(bootWaiting) startBootFromGesture();
-    else if(bootStarted) bootSkip = true;
-    if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
-    return;
-  }
-  ensureAudio();
-  let s = null;
-  switch(e.key){
-    case 'ArrowUp':    s = '\0H'; break;   // scan 72
-    case 'ArrowDown':  s = '\0P'; break;   // scan 80
-    case 'ArrowLeft':  s = '\0K'; break;   // scan 75
-    case 'ArrowRight': s = '\0M'; break;   // scan 77
-    case 'F9':         s = '\0C'; break;   // scan 67 (extra life — shh!)
-    case 'F10':        s = '\0D'; break;   // scan 68 (skip level — shh!)
-    case 'Escape':     s = '\x1b'; break;
-    case 'Enter':      s = '\r'; break;
-    default: if(e.key.length === 1) s = e.key;
-  }
-  if(s !== null){
-    clearClickTarget();
-    if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
-    pushKey(s);
-  }
-});
+    let s = null;
+    switch(e.key){
+      case 'ArrowUp':    s = '\0H'; break;   // scan 72
+      case 'ArrowDown':  s = '\0P'; break;   // scan 80
+      case 'ArrowLeft':  s = '\0K'; break;   // scan 75
+      case 'ArrowRight': s = '\0M'; break;   // scan 77
+      case 'F9':         s = '\0C'; break;   // scan 67 (extra life — shh!)
+      case 'F10':        s = '\0D'; break;   // scan 68 (skip level — shh!)
+      case 'Escape':     s = '\x1b'; break;
+      case 'Enter':      s = '\r'; break;
+      default: if(e.key.length === 1) s = e.key;
+    }
+    if(s !== null){
+      clearClickTarget();
+      if(e.key.startsWith('Arrow') || e.key === 'F9' || e.key === 'F10' || e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') e.preventDefault();
+      pushKey(s);
+    }
+  });
+}
 
 /* touch: swipe = direction, tap/click = route target */
 let tStart = null;
-cv.addEventListener('touchstart', e => {
-  if(bootActive){
-    ensureAudio();
-    if(bootWaiting) startBootFromGesture();
-    else if(bootStarted) bootSkip = true;
+if(!passivePreview){
+  cv.addEventListener('touchstart', e => {
+    if(bootActive){
+      ensureAudio();
+      if(bootWaiting) startBootFromGesture();
+      else if(bootStarted) bootSkip = true;
+      e.preventDefault();
+      return;
+    }
+    ensureAudio(); const t = e.changedTouches[0]; tStart = {x:t.clientX, y:t.clientY}; e.preventDefault();
+  }, {passive:false});
+  cv.addEventListener('touchend', e => {
+    if(bootActive){ e.preventDefault(); return; }
+    if(!tStart) return;
+    const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
+    tStart = null;
+    if(Math.hypot(dx, dy) < 24){ aimAtEventCell(t); }
+    else {
+      clearClickTarget();
+      if(Math.abs(dx) > Math.abs(dy)) pushKey(dx > 0 ? '\0M' : '\0K');
+      else pushKey(dy > 0 ? '\0P' : '\0H');
+    }
     e.preventDefault();
-    return;
-  }
-  ensureAudio(); const t = e.changedTouches[0]; tStart = {x:t.clientX, y:t.clientY}; e.preventDefault();
-}, {passive:false});
-cv.addEventListener('touchend', e => {
-  if(bootActive){ e.preventDefault(); return; }
-  if(!tStart) return;
-  const t = e.changedTouches[0], dx = t.clientX - tStart.x, dy = t.clientY - tStart.y;
-  tStart = null;
-  if(Math.hypot(dx, dy) < 24){ aimAtEventCell(t); }
-  else {
-    clearClickTarget();
-    if(Math.abs(dx) > Math.abs(dy)) pushKey(dx > 0 ? '\0M' : '\0K');
-    else pushKey(dy > 0 ? '\0P' : '\0H');
-  }
-  e.preventDefault();
-}, {passive:false});
-cv.addEventListener('pointerdown', e => {
-  if(e.pointerType === 'touch') return;
-  ensureAudio();
-  if(bootActive){
-    if(bootWaiting) startBootFromGesture();
-    else if(bootStarted) bootSkip = true;
-  } else if(e.button === 0) {
-    aimAtEventCell(e);
-  }
-  e.preventDefault();
-});
+  }, {passive:false});
+  cv.addEventListener('pointerdown', e => {
+    if(e.pointerType === 'touch') return;
+    ensureAudio();
+    if(bootActive){
+      if(bootWaiting) startBootFromGesture();
+      else if(bootStarted) bootSkip = true;
+    } else if(e.button === 0) {
+      aimAtEventCell(e);
+    }
+    e.preventDefault();
+  });
+}
 
 /* on-screen button -> the same INKEY$ strings the keyboard produces */
 const TOUCHKEYS = {
   up:'\0H', down:'\0P', left:'\0K', right:'\0M',
   f9:'\0C', f10:'\0D',                                      // F9/F10 = extra life / skip level
 };
-document.querySelectorAll('#fstouch button').forEach(b => {
-  b.addEventListener('click', () => {
-    if(bootActive){
+if(!passivePreview){
+  document.querySelectorAll('#fstouch button').forEach(b => {
+    b.addEventListener('click', () => {
+      if(bootActive){
+        ensureAudio();
+        if(bootWaiting) startBootFromGesture();
+        else if(bootStarted) bootSkip = true;
+        return;
+      }
       ensureAudio();
-      if(bootWaiting) startBootFromGesture();
-      else if(bootStarted) bootSkip = true;
-      return;
-    }
-    ensureAudio();
-    const k = b.dataset.key;
-    const value = TOUCHKEYS[k] || k;
-    clearClickTarget();
-    pushKey(typeof value === 'function' ? value() : value);
+      const k = b.dataset.key;
+      const value = TOUCHKEYS[k] || k;
+      clearClickTarget();
+      pushKey(typeof value === 'function' ? value() : value);
+    });
   });
-});
+}
 
 /* ---------- AUDIO: GW-BASIC SOUND f,d (d in 1/18.2s clock ticks) ---------- */
 let actx = null, qEnd = 0;
-let muted = false;
+let muted = window.SNEEKIE_MUTED === true;
 try { localStorage.removeItem('sneekie.muted'); } catch(_) {}
 function ensureAudio(){
   if(!actx){
@@ -865,6 +874,12 @@ const D = Array.from({length:81}, () => new Int32Array(4)); // DIM D(80,3) — a
 let ZORE = 0, ZCORE = 0;                    // highscore / score (the non-DEFINT names!)
 let LIVE = 0, LEVEL = 0, BTEL = 0, ETEL = 0, E = 0, F = 0;
 let HART = 0, KLAVER = 0, BONUS = 0, AANTAL = 0, BMIN = 0, Z = 0, K1 = 0;
+let botRequestedLevel = 0;
+
+window.sneekieRequestLevel = n => {
+  const level = Math.trunc(Number(n));
+  if(level >= 1 && level <= 32) botRequestedLevel = level;
+};
 
 /* 1150: drop item L on a random empty cell (rows 4-20) */
 function place(L){
@@ -880,11 +895,12 @@ function place(L){
    flushes a still-pending write so the latest value isn't lost on exit. */
 let hsTimer = 0;
 function saveHighscore(){
+  if(previewMode) return;
   if(hsTimer) clearTimeout(hsTimer);
   hsTimer = setTimeout(() => { hsTimer = 0; lsSet('sneekie.highscore', String(ZORE)); }, 500);
 }
 addEventListener('pagehide', () => {
-  if(hsTimer){ clearTimeout(hsTimer); hsTimer = 0; lsSet('sneekie.highscore', String(ZORE)); }
+  if(!previewMode && hsTimer){ clearTimeout(hsTimer); hsTimer = 0; lsSet('sneekie.highscore', String(ZORE)); }
 });
 
 /* 1190: score OP points, track highscore */
@@ -1168,6 +1184,12 @@ async function playLevels(){
     /* 420-1020: the move loop */
     let died = false, skip = false;
     while(HART + KLAVER > 0){
+      if(botRequestedLevel){
+        LEVEL = botRequestedLevel - 1;
+        botRequestedLevel = 0;
+        skip = true;
+        break;
+      }
       try{
         if(isSnakeStuck()) throw STUCK;
         const waitMs = clickTarget ? Math.min(Z * 1000, CLICK_ROUTE_MS) : Z * 1000;
@@ -1259,7 +1281,7 @@ async function playLevels(){
 
 /* 80-210 + 230 + 1090-1130: boot, frame, restart loop */
 async function program(){
-  ZORE = parseInt(lsGet('sneekie.highscore') || '0', 10) || 0;  // 80 (persisted)
+  ZORE = previewMode ? 0 : parseInt(lsGet('sneekie.highscore') || '0', 10) || 0;  // 80 (persisted)
   cls();                                                      // 100
   locate(1,1);  pc(218); pcn(196,78); pc(191);                // 110
   locate(2,1);  pc(179); sp(78); pc(179);                     // 120
@@ -1322,7 +1344,7 @@ function applyTheme(name){
   drawTitle();
   document.querySelectorAll('#themes button').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset.theme === themeName)));
-  lsSet('sneekie.theme', themeName);
+  if(!forceTheme) lsSet('sneekie.theme', themeName);
 
   const metaColor = theme.meta || '#0a0c0d';
   const metaTag = document.querySelector('meta[name="theme-color"]');
@@ -1349,6 +1371,12 @@ muteBtn.addEventListener('click', () => {
 paintMute();
 
 function fit(){
+  if(previewMode && !document.fullscreenElement){
+    bezel.style.removeProperty('--fs-touch-reserve');
+    cv.style.width = '100%';
+    cv.style.height = 'auto';
+    return;
+  }
   if(document.fullscreenElement){
     /* fill the screen like a real 1988 monitor (the game uses rows 1-24, so the canvas is 640x384).
        On touch, leave one right-side pad for the fullscreen buttons. */
