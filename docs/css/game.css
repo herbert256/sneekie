@@ -210,7 +210,6 @@
   border-radius:0;
   box-shadow:none;
   animation:none;
-  cursor:none;
 }
 .page-index #bezel:fullscreen #tube,
 .page-index #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
