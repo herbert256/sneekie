@@ -55,6 +55,7 @@ const GAME_TEXT = {
     level: 'Level ',
     pressAny: 'Press any key',
     end: 'The End',
+    stuck: 'Stuck !!!',
     playAgain: 'Any key to start again',
     soundOn: 'Sound: on',
     soundOff: 'Sound: off'
@@ -68,7 +69,8 @@ const GAME_TEXT = {
     level: 'Level ',
     pressAny: 'Druk op een toets',
     end: 'Einde',
-    playAgain: 'Druk op een toets om opnieuw te starten',
+    stuck: 'Vast !!!',
+    playAgain: 'Toets om opnieuw',
     soundOn: 'Geluid: aan',
     soundOff: 'Geluid: uit'
   }
@@ -114,6 +116,7 @@ let theme = THEMES[themeName] || THEMES.cga;
 const vram = new Uint8Array(4000);
 const dirty = new Set();
 const cv = document.getElementById('screen');
+const tube = document.getElementById('tube');
 const ctx = cv.getContext('2d');
 let atlasDim, atlasBright;
 const cgaAtlas = {};
@@ -290,6 +293,26 @@ function routeArrowNextUnsafe(idx){
     return col === rightNext || col === leftNext;
   }
   return false;
+}
+function moveOffsetFromCode(off, code){
+  if(code === 80) return off + 160;
+  if(code === 72) return off - 160;
+  if(code === 77) return off + 2;
+  if(code === 75) return off - 2;
+  return off;
+}
+function isSafeMove(code){
+  const A = moveOffsetFromCode(T[BTEL], code);
+  if(routeArrowNextUnsafe(A >> 1)) return false;
+  const d = peek(A);
+  if(d === 32 || d === 5 || d === 3 || d === 1) return true;
+  if(d !== 10) return false;
+  const TA = moveOffsetFromCode(A, code);
+  return peek(TA) === 32;
+}
+function isSnakeStuck(){
+  if(BTEL <= 0) return false;
+  return ![72, 77, 80, 75].some(isSafeMove);
 }
 function nextClickTargetKey(){
   if(!clickTarget || BTEL <= 0) return null;
@@ -524,6 +547,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const raf = () => new Promise(r => requestAnimationFrame(r));
 const rnd = Math.random;
 const DEATH = {sneekie:'crashed'};          // RETURN 510
+const STUCK = {sneekie:'stuck'};
+async function flashStuckScreen(){
+  for(let I = 1; I <= 5; I++){
+    tube.classList.add('stuck-red');
+    await sleep(250);
+    tube.classList.remove('stuck-red');
+    if(I < 5) await sleep(250);
+  }
+}
 
 /* ---------- BOOT SHOW: compressed PC DOS + GW-BASIC startup, before line 80 ---------- */
 const BOOT_TIME_SCALE = 2.15;
@@ -826,7 +858,8 @@ async function bootSequence(){
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
 const T = new Int32Array(15001);            // 100: DIM T(15000) — snake cell offsets
-const S = new Int32Array(169);              // DIM S(168) — popup backup
+const POPUP_LEFT = 28, POPUP_INNER = 23, POPUP_BYTES = (POPUP_INNER + 2) * 2;
+const S = new Int32Array(POPUP_BYTES * 4 + 1); // modern wider popup backup
 const B = new Int32Array(11);               // DIM B(10)  — gate positions
 const D = Array.from({length:81}, () => new Int32Array(4)); // DIM D(80,3) — arrows
 let ZORE = 0, ZCORE = 0;                    // highscore / score (the non-DEFINT names!)
@@ -868,17 +901,28 @@ function score(OP){
 /* 2260: eat-arpeggio (PLAY "mb" = background music mode) */
 function sub2260(){ sound(2500,0.1); sound(3500,0.1); sound(5000,0.1); }
 
-/* 2280: popup box rows 10-13, cols 30-50 */
+/* 2280: popup box rows 10-13, widened to fit the modern restart text */
 function sub2280(){
-  locate(10,30); pc(201); pcn(205,19); pc(187);
-  locate(11,30); pc(186); sp(19); pc(186);
-  locate(12,30); pc(186); sp(19); pc(186);
-  locate(13,30); pc(200); pcn(205,19); pc(188);
+  locate(10,POPUP_LEFT); pc(201); pcn(205,POPUP_INNER); pc(187);
+  locate(11,POPUP_LEFT); pc(186); sp(POPUP_INNER); pc(186);
+  locate(12,POPUP_LEFT); pc(186); sp(POPUP_INNER); pc(186);
+  locate(13,POPUP_LEFT); pc(200); pcn(205,POPUP_INNER); pc(188);
 }
 function popupText(row, text){
-  const s = String(text).slice(0, 19);
-  locate(row, 31 + Math.max(0, Math.floor((19 - s.length) / 2)));
+  const s = String(text).slice(0, POPUP_INNER);
+  locate(row, POPUP_LEFT + 1 + Math.max(0, Math.floor((POPUP_INNER - s.length) / 2)));
   ps(s);
+}
+async function restartPopup(title){
+  sub2280();
+  popupText(11, title);
+  popupText(12, gt('playAgain'));
+  clearKbd();
+  clearClickTarget();
+  clickStartsLevel = true;
+  await waitKey();
+  clickStartsLevel = false;
+  clearClickTarget();
 }
 
 /* 1480 */
@@ -1105,7 +1149,7 @@ async function playLevels(){
     }
     clearClickTarget();
     /* 370: save area behind popup */
-    for(let I = 1; I <= 42; I++) for(let I3 = 0; I3 <= 3; I3++) S[I+I3*42] = peek(1497+I+I3*160);
+    for(let I = 1; I <= POPUP_BYTES; I++) for(let I3 = 0; I3 <= 3; I3++) S[I+I3*POPUP_BYTES] = peek(1493+I+I3*160);
     /* 380-400: "Level n" popup */
     sub2280();
     popupText(11, gt('level') + ' ' + LEVEL + ' ');
@@ -1115,7 +1159,7 @@ async function playLevels(){
     await waitKey();
     clickStartsLevel = false;
     /* 410: restore */
-    for(let I = 1; I <= 42; I++) for(let I3 = 0; I3 <= 3; I3++) poke(1497+I+I3*160, S[I+I3*42]);
+    for(let I = 1; I <= POPUP_BYTES; I++) for(let I3 = 0; I3 <= 3; I3++) poke(1493+I+I3*160, S[I+I3*POPUP_BYTES]);
     {
       const key = nextClickTargetKey();
       if(key) pushKey(key);
@@ -1125,6 +1169,7 @@ async function playLevels(){
     let died = false, skip = false;
     while(HART + KLAVER > 0){
       try{
+        if(isSnakeStuck()) throw STUCK;
         const waitMs = clickTarget ? Math.min(Z * 1000, CLICK_ROUTE_MS) : Z * 1000;
         let A$ = await keyOrTimeout(waitMs);                  // 430-460
         if(!A$.length){
@@ -1185,6 +1230,13 @@ async function playLevels(){
         }
         ENEMY[(LEVEL-1) % 16]();                              // 1010
       } catch(sig){
+        if(sig === STUCK){
+          await flashStuckScreen();
+          await deathSeq();
+          died = true;
+          if(LIVE > 0) await restartPopup(gt('stuck'));
+          break;
+        }
         if(sig !== DEATH) throw sig;
         await deathSeq();
         died = true;
@@ -1224,11 +1276,7 @@ async function program(){
   while(true){
     ZCORE = 0; LIVE = 3;                                      // 230
     await playLevels();                                       // 240-1080
-    sub2280();                                                // 1090
-    popupText(11, gt('end'));
-    popupText(12, gt('playAgain'));                           // 1100
-    clearKbd();                                               // 1110
-    await waitKey();                                          // 1120-1130: modern any-key restart
+    await restartPopup(gt('end'));                            // 1090-1130: modern any-key restart
   }
 }
 
