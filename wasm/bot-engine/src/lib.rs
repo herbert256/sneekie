@@ -242,7 +242,7 @@ pub extern "C" fn decide(
 
     let urgent = idle >= 18 || looping != 0;
     let deadline = host_now_ms() + budget_ms.max(1.0);
-    let mut planner = Planner::new(board, body, enemy, level, items, urgent, deadline);
+    let mut planner = Planner::new(board, body, enemy, level, items, idle, urgent, deadline);
     planner.decide()
 }
 
@@ -252,7 +252,7 @@ struct State {
     body: BodyTrace,
     body_bits: BoardBits,
     dir: i32,
-    cells: Vec<(i32, u16)>,
+    overlay: CellOverlay,
     first: i32,
     dist: i32,
     ate: i32,
@@ -260,6 +260,34 @@ struct State {
     smiles: i32,
     stones: i32,
     chokes: i32,
+}
+
+#[derive(Clone, Copy, Default)]
+struct CellOverlay {
+    empty: BoardBits,
+    stones: BoardBits,
+}
+
+impl CellOverlay {
+    fn set_empty(&mut self, off: i32) {
+        self.stones.remove(off);
+        self.empty.insert(off);
+    }
+
+    fn set_stone(&mut self, off: i32) {
+        self.empty.remove(off);
+        self.stones.insert(off);
+    }
+
+    fn get(&self, off: i32) -> Option<u16> {
+        if self.stones.contains(off) {
+            Some(10)
+        } else if self.empty.contains(off) {
+            Some(32)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default)]
@@ -307,6 +335,7 @@ struct Planner {
     enemy: [i32; ENEMY_LEN],
     level: i32,
     items: i32,
+    idle: i32,
     dir: i32,
     urgent: bool,
     deadline: f64,
@@ -324,6 +353,7 @@ impl Planner {
         enemy: [i32; ENEMY_LEN],
         level: i32,
         items: i32,
+        idle: i32,
         urgent: bool,
         deadline: f64,
     ) -> Self {
@@ -350,6 +380,7 @@ impl Planner {
             enemy,
             level,
             items,
+            idle,
             dir,
             urgent,
             deadline,
@@ -691,13 +722,17 @@ impl Planner {
         matches!((self.level - 1).rem_euclid(16), 5 | 6 | 13 | 14)
     }
 
+    fn stone_maze_level(&self) -> bool {
+        matches!((self.level - 1).rem_euclid(16), 3 | 11)
+    }
+
     fn start_state(&self) -> State {
         State {
             head: *self.body.last().unwrap_or(&0),
             body: BodyTrace::new(self.body.clone()),
             body_bits: self.body_bits,
             dir: self.dir,
-            cells: Vec::new(),
+            overlay: CellOverlay::default(),
             first: 0,
             dist: 0,
             ate: 0,
@@ -717,11 +752,7 @@ impl Planner {
     }
 
     fn cell(&self, st: &State, o: i32) -> u16 {
-        st.cells
-            .iter()
-            .rev()
-            .find_map(|&(off, val)| if off == o { Some(val) } else { None })
-            .unwrap_or_else(|| self.base_cell(o))
+        st.overlay.get(o).unwrap_or_else(|| self.base_cell(o))
     }
 
     fn danger(&self, o: i32, dist: i32) -> bool {
@@ -825,23 +856,29 @@ impl Planner {
             return None;
         }
         let mut c = self.cell(st, n);
-        let mut cells = st.cells.clone();
-        let mut stones = st.stones;
 
         if c == 1 && !allow_smile {
             return None;
         }
-        if c == 10 {
+        let pushed_stone = if c == 10 {
             let nn = n + d;
             if st.body_bits.contains(nn) || self.cell(st, nn) != 32 {
                 return None;
             }
-            cells.push((n, 32));
-            cells.push((nn, 10));
-            stones += 1;
-            c = 32;
+            Some(nn)
         } else if !open(c) {
             return None;
+        } else {
+            None
+        };
+
+        let mut overlay = st.overlay;
+        let mut stones = st.stones;
+        if c == 10 {
+            overlay.set_empty(n);
+            overlay.set_stone(pushed_stone.unwrap());
+            stones += 1;
+            c = 32;
         }
 
         let grow = c == 1 || is_food(c);
@@ -850,20 +887,20 @@ impl Planner {
         if !grow {
             if let Some(old) = body.pop_tail() {
                 body_bits.remove(old);
-                cells.push((old, 32));
+                overlay.set_empty(old);
             }
         }
         body.push(n);
         body_bits.insert(n);
         if grow {
-            cells.push((n, 32));
+            overlay.set_empty(n);
         }
         Some(State {
             head: n,
             body,
             body_bits,
             dir: sc,
-            cells,
+            overlay,
             first: if st.first == 0 { sc } else { st.first },
             dist: st.dist + 1,
             ate: st.ate + if is_food(c) { 1 } else { 0 },
@@ -882,9 +919,18 @@ impl Planner {
     }
 
     fn legal(&self, st: &State, allow_smile: bool) -> Vec<State> {
-        DIRS.iter()
-            .filter_map(|&(sc, _)| self.move_state(st, sc, allow_smile))
-            .collect()
+        let mut out = Vec::with_capacity(4);
+        self.legal_into(st, allow_smile, &mut out);
+        out
+    }
+
+    fn legal_into(&self, st: &State, allow_smile: bool, out: &mut Vec<State>) {
+        out.clear();
+        for &(sc, _) in &DIRS {
+            if let Some(ns) = self.move_state(st, sc, allow_smile) {
+                out.push(ns);
+            }
+        }
     }
 
     fn can_move(&self, st: &State, sc: i32, allow_smile: bool) -> bool {
@@ -913,13 +959,31 @@ impl Planner {
             .count() as i32
     }
 
+    fn single_legal_next(&self, st: &State, allow_smile: bool) -> (i32, Option<State>) {
+        let mut exits = 0;
+        let mut only_sc = 0;
+        for &(sc, _) in &DIRS {
+            if self.can_move(st, sc, allow_smile) {
+                exits += 1;
+                if exits > 1 {
+                    return (exits, None);
+                }
+                only_sc = sc;
+            }
+        }
+        if exits == 1 {
+            (exits, self.move_state(st, only_sc, allow_smile))
+        } else {
+            (exits, None)
+        }
+    }
+
     fn forced_path(&self, start: &State, allow_smile: bool, limit: i32) -> ForcedInfo {
         let mut st = start.clone();
         let mut steps = 0;
         let mut ate = 0;
         loop {
-            let legal = self.legal(&st, allow_smile);
-            let exits = legal.len() as i32;
+            let (exits, next) = self.single_legal_next(&st, allow_smile);
             if exits != 1 || steps >= limit {
                 return ForcedInfo {
                     steps,
@@ -928,7 +992,14 @@ impl Planner {
                     ate,
                 };
             }
-            let ns = legal.into_iter().next().unwrap();
+            let Some(ns) = next else {
+                return ForcedInfo {
+                    steps,
+                    end_exits: 0,
+                    dead: true,
+                    ate,
+                };
+            };
             ate += ns.ate - st.ate;
             steps += 1;
             st = ns;
@@ -985,16 +1056,19 @@ impl Planner {
         let mut seen = SeenKeys::with_capacity((keep * limit.max(1) as usize).saturating_mul(4));
         seen.insert(state_key(start));
         let mut best = 0;
+        let mut legal_moves = Vec::with_capacity(4);
+        let mut next = Vec::new();
         for depth in 1..=limit {
             if self.time_up() {
                 return best;
             }
-            let mut next = Vec::new();
+            next.clear();
             for st in &frontier {
                 if self.time_up() {
                     return best;
                 }
-                for ns in self.legal(st, true) {
+                self.legal_into(st, true, &mut legal_moves);
+                for ns in legal_moves.drain(..) {
                     let key = state_key(&ns);
                     if seen.insert(key) {
                         let exits = self.legal_count(&ns, true);
@@ -1006,8 +1080,9 @@ impl Planner {
                 return best;
             }
             best = depth;
-            next.sort_by(|a, b| b.1.cmp(&a.1));
-            frontier = next.into_iter().take(keep).map(|x| x.0).collect();
+            keep_best_i32(&mut next, keep);
+            frontier.clear();
+            frontier.extend(next.drain(..).map(|x| x.0));
         }
         best
     }
@@ -1024,16 +1099,19 @@ impl Planner {
         let mut seen = SeenKeys::with_capacity((keep * limit.max(1) as usize).saturating_mul(4));
         seen.insert(state_key(start));
         let mut best = EscapeInfo::default();
+        let mut legal_moves = Vec::with_capacity(4);
+        let mut next = Vec::new();
         for depth in 1..=limit {
             if self.time_up() {
                 return best;
             }
-            let mut next = Vec::new();
+            next.clear();
             for st in &frontier {
                 if self.time_up() {
                     return best;
                 }
-                for ns in self.legal(st, allow_smile) {
+                self.legal_into(st, allow_smile, &mut legal_moves);
+                for ns in legal_moves.drain(..) {
                     let key = state_key(&ns);
                     if !seen.insert(key) {
                         continue;
@@ -1078,8 +1156,9 @@ impl Planner {
             if next.is_empty() {
                 return best;
             }
-            next.sort_by(|a, b| b.1.cmp(&a.1));
-            frontier = next.into_iter().take(keep).map(|x| x.0).collect();
+            keep_best_i32(&mut next, keep);
+            frontier.clear();
+            frontier.extend(next.drain(..).map(|x| x.0));
         }
         best
     }
@@ -1105,15 +1184,40 @@ impl Planner {
         let few = self.few();
         let arrow_level = self.arrow_level();
         let start = self.start_state();
+        let stone_maze = self.stone_maze_level();
         self.food_search(FoodSearch {
             start,
             allow_smile,
-            max_depth: if few { 145 } else { 98 },
-            scan_limit: if few || self.urgent { 7000 } else { 3500 },
-            check_limit: if few { 72 } else { 46 },
+            max_depth: if few {
+                145
+            } else if stone_maze && self.urgent {
+                122
+            } else if stone_maze {
+                108
+            } else {
+                98
+            },
+            scan_limit: if stone_maze && (few || self.urgent) {
+                9000
+            } else if few || self.urgent {
+                7000
+            } else if stone_maze {
+                4600
+            } else {
+                3500
+            },
+            check_limit: if stone_maze && (few || self.urgent) {
+                92
+            } else if few {
+                72
+            } else if stone_maze {
+                58
+            } else {
+                46
+            },
             route_kind: RouteKind::Route,
             arrow_level,
-            urgent: false,
+            urgent: self.urgent,
         })
     }
 
@@ -1121,6 +1225,8 @@ impl Planner {
         let few = self.few();
         let arrow_level = self.arrow_level();
         let start = self.start_state();
+        let stone_maze = self.stone_maze_level();
+        let deep_stall = stone_maze && self.idle >= 140;
         self.food_search(FoodSearch {
             start,
             allow_smile,
@@ -1130,13 +1236,39 @@ impl Planner {
                 } else {
                     125
                 }
+            } else if deep_stall {
+                148
+            } else if stone_maze && urgent {
+                132
+            } else if stone_maze {
+                104
             } else if urgent {
                 110
             } else {
                 85
             },
-            scan_limit: if urgent || few { 9000 } else { 5000 },
-            check_limit: if urgent { 70 } else { 44 },
+            scan_limit: if deep_stall {
+                13000
+            } else if stone_maze && (urgent || few) {
+                11000
+            } else if urgent || few {
+                9000
+            } else if stone_maze {
+                6500
+            } else {
+                5000
+            },
+            check_limit: if deep_stall {
+                120
+            } else if stone_maze && urgent {
+                96
+            } else if urgent {
+                70
+            } else if stone_maze {
+                58
+            } else {
+                44
+            },
             route_kind: RouteKind::Pressure,
             arrow_level,
             urgent,
@@ -1907,6 +2039,22 @@ impl Planner {
     fn pressure_step(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
+        let stone_maze = self.stone_maze_level();
+        let deep_stall = stone_maze && self.idle >= 140;
+        let dist_limit = if stone_maze {
+            if deep_stall {
+                1600
+            } else if self.urgent || few {
+                1200
+            } else {
+                900
+            }
+        } else if self.urgent || few {
+            620
+        } else {
+            420
+        };
+        let current_dist = self.food_distance(&st, dist_limit);
         for allow_smile in [false] {
             let mut best = None;
             let mut best_score = i64::MIN;
@@ -1924,7 +2072,7 @@ impl Planner {
                 let dist = if is_food(c) {
                     0
                 } else {
-                    self.food_distance(&ns, 420)
+                    self.food_distance(&ns, dist_limit)
                 };
                 if dist >= INF {
                     continue;
@@ -1938,16 +2086,80 @@ impl Planner {
                 );
                 let return_room = self.return_path_room(info, exits, body_len, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let roomy_pressure = exits >= 3
+                    && info.space
+                        >= body_len
+                            + self.return_buffer(body_len, few)
+                            + if deep_stall {
+                                18
+                            } else if self.urgent {
+                                42
+                            } else {
+                                72
+                            };
+                if stone_maze
+                    && !escape.ok
+                    && !escape.tail_reach
+                    && !info.tail_reach
+                    && !roomy_pressure
+                {
+                    continue;
+                }
+                if stone_maze && return_risk && !escape.tail_reach && !roomy_pressure {
+                    continue;
+                }
                 let door = self.door_exit_info(&ns);
                 let door_debt = self.door_exit_debt(door, body_len, exits);
-                let score = -(dist as i64) * 1_700
-                    + info.space as i64 * 10
-                    + exits as i64 * 1_650
+                let progress = if current_dist < INF {
+                    (current_dist - dist).clamp(-12, 12) as i64
+                } else {
+                    0
+                };
+                let dist_weight = if stone_maze {
+                    if deep_stall {
+                        6_200
+                    } else if self.urgent {
+                        4_600
+                    } else {
+                        2_800
+                    }
+                } else if self.urgent {
+                    3_400
+                } else {
+                    2_200
+                };
+                let progress_weight = if stone_maze {
+                    if deep_stall {
+                        8_800
+                    } else if self.urgent {
+                        5_800
+                    } else {
+                        3_000
+                    }
+                } else if self.urgent {
+                    4_800
+                } else {
+                    2_600
+                };
+                let score = -(dist as i64) * dist_weight
+                    + progress * progress_weight
+                    + info.space as i64 * if stone_maze { 5 } else { 8 }
+                    + exits as i64 * if stone_maze { 1_250 } else { 1_650 }
                     + if info.tail_reach { 8_000 } else { 0 }
                     + if escape.tail_reach { 15_000 } else { 0 }
                     + if escape.ok { 4_000 } else { 0 }
                     + escape.space as i64 * 4
-                    + if is_food(c) { 26_000 } else { 0 }
+                    + if is_food(c) {
+                        if deep_stall {
+                            44_000
+                        } else if stone_maze || self.urgent {
+                            34_000
+                        } else {
+                            26_000
+                        }
+                    } else {
+                        0
+                    }
                     + forced.end_exits as i64 * 1_100
                     + self.door_exit_credit(door)
                     - if exits <= 1 {
@@ -1964,7 +2176,14 @@ impl Planner {
                     } else {
                         0
                     }
-                    - ns.stones as i64 * 75
+                    - ns.stones as i64
+                        * if deep_stall {
+                            22
+                        } else if stone_maze {
+                            34
+                        } else {
+                            75
+                        }
                     + if ns.first == st.dir { 80 } else { 0 }
                     - if self.enclosure_risk(&ns, info, exits, 1) {
                         9_000
@@ -2061,6 +2280,14 @@ enum RouteKind {
     Near,
     Route,
     Pressure,
+}
+
+fn keep_best_i32(items: &mut Vec<(State, i32)>, keep: usize) {
+    if items.len() > keep {
+        items.select_nth_unstable_by(keep, |a, b| b.1.cmp(&a.1));
+        items.truncate(keep);
+    }
+    items.sort_unstable_by(|a, b| b.1.cmp(&a.1));
 }
 
 fn offset(row: i32, col: i32) -> i32 {
@@ -2215,11 +2442,20 @@ mod tests {
     }
 
     fn planner(board: [u16; BOARD_LEN], body: Vec<i32>) -> Planner {
-        Planner::new(board, body, [0; ENEMY_LEN], 26, 12, false, 1_000_000.0)
+        Planner::new(board, body, [0; ENEMY_LEN], 26, 12, 0, false, 1_000_000.0)
     }
 
     fn planner_level(board: [u16; BOARD_LEN], body: Vec<i32>, level: i32) -> Planner {
-        Planner::new(board, body, [0; ENEMY_LEN], level, 12, false, 1_000_000.0)
+        Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            level,
+            12,
+            0,
+            false,
+            1_000_000.0,
+        )
     }
 
     fn vertical_door_board() -> [u16; BOARD_LEN] {
@@ -2293,7 +2529,7 @@ mod tests {
         enemy[(col * 4 + 1) as usize] = 8;
         board[offset(8, col) as usize] = 24;
         let body = vec![offset(10, 10), offset(10, 11)];
-        let p = Planner::new(board, body, enemy, 30, 20, false, 1_000_000.0);
+        let p = Planner::new(board, body, enemy, 30, 20, 0, false, 1_000_000.0);
         assert!(p.danger(offset(7, col), 0));
         assert!(p.danger(offset(6, col), 1));
     }
@@ -2495,6 +2731,19 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
         assert_ne!(p.survival_move(), Some(77));
+    }
+
+    #[test]
+    fn stone_maze_pressure_chases_reachable_food() {
+        let mut board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        board[offset(10, 13) as usize] = 3;
+        for row in 7..=13 {
+            board[offset(row, 9) as usize] = 10;
+        }
+        let mut p = planner_level(board, body, 28);
+        p.urgent = true;
+        assert_eq!(p.pressure_step(), Some(77));
     }
 
     #[test]

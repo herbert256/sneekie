@@ -104,5 +104,5 @@ the browser pages:
 ```sh
 cargo test --manifest-path wasm/bot-engine/Cargo.toml
 cargo build --manifest-path wasm/bot-engine/Cargo.toml --release --target wasm32-unknown-unknown
-wasm-opt -Oz wasm/bot-engine/target/wasm32-unknown-unknown/release/bot_engine.wasm -o docs/js/bot-engine.wasm
+wasm-opt -O3 wasm/bot-engine/target/wasm32-unknown-unknown/release/bot_engine.wasm -o docs/js/bot-engine.wasm
 ```
