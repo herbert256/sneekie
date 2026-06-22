@@ -176,27 +176,16 @@ impl Planner {
 
     fn decide(&mut self) -> i32 {
         let breathe_first = self.needs_breathing();
-        let proved = self
-            .near_food(false)
-            .or_else(|| {
-                if breathe_first {
-                    self.breathing_move()
-                } else {
-                    None
-                }
-            })
-            .or_else(|| self.route_food(false))
-            .or_else(|| self.near_food(true))
-            .or_else(|| {
-                if breathe_first {
-                    self.breathing_move()
-                } else {
-                    None
-                }
-            })
-            .or_else(|| self.route_food(true))
-            .or_else(|| self.pressure_food(false, self.urgent))
-            .or_else(|| self.pressure_food(true, self.urgent));
+        let proved = if breathe_first {
+            self.near_food(false)
+                .or_else(|| self.breathing_move())
+                .or_else(|| self.route_food(false))
+                .or_else(|| self.pressure_food(false, self.urgent))
+        } else {
+            self.near_food(false)
+                .or_else(|| self.route_food(false))
+                .or_else(|| self.pressure_food(false, self.urgent))
+        };
         proved
             .or_else(|| {
                 if self.urgent {
@@ -233,6 +222,91 @@ impl Planner {
         (!info.tail_reach && info.space < body_len + if self.few() { 132 } else { 96 })
             || (body_len >= 58 && (exits <= 2 || info.space < body_len + 150))
             || (body_len >= 96 && exits <= 3)
+    }
+
+    fn return_buffer(&self, body_len: i32, few: bool) -> i32 {
+        let base = if body_len >= 120 {
+            190
+        } else if body_len >= 80 {
+            155
+        } else if body_len >= 45 {
+            124
+        } else {
+            96
+        };
+        base + if few { 32 } else { 0 }
+    }
+
+    fn return_path_room(&self, info: SpaceInfo, exits: i32, body_len: i32, few: bool) -> bool {
+        info.tail_reach
+            || (exits >= 3 && info.space >= body_len + self.return_buffer(body_len, few) + 72)
+    }
+
+    fn return_path_risk(
+        &self,
+        st: &State,
+        info: SpaceInfo,
+        exits: i32,
+        expected_growth: i32,
+    ) -> bool {
+        if info.tail_reach {
+            return false;
+        }
+        let body_len = st.body.len() as i32;
+        let need = body_len + expected_growth + self.return_buffer(body_len, self.few());
+        info.space < need || (exits <= 2 && info.space < need + 34)
+    }
+
+    fn smile_limit(&self, kind: RouteKind, urgent: bool) -> i32 {
+        match kind {
+            RouteKind::Near | RouteKind::Route => 1,
+            RouteKind::Pressure => {
+                if urgent || self.few() {
+                    2
+                } else {
+                    1
+                }
+            }
+        }
+    }
+
+    fn smile_cost(&self, kind: RouteKind, urgent: bool) -> i64 {
+        match kind {
+            RouteKind::Near => 8_500,
+            RouteKind::Route => 11_500,
+            RouteKind::Pressure => {
+                if urgent {
+                    5_800
+                } else {
+                    8_000
+                }
+            }
+        }
+    }
+
+    fn smile_escape_credit(
+        &self,
+        smiles: i32,
+        kind: RouteKind,
+        urgent: bool,
+        info: SpaceInfo,
+        escape: EscapeInfo,
+    ) -> i64 {
+        if smiles <= 0 || info.tail_reach || !escape.tail_reach {
+            return 0;
+        }
+        smiles as i64
+            * match kind {
+                RouteKind::Near => 1_500,
+                RouteKind::Route => 2_600,
+                RouteKind::Pressure => {
+                    if urgent {
+                        3_200
+                    } else {
+                        2_200
+                    }
+                }
+            }
     }
 
     fn arrow_level(&self) -> bool {
@@ -741,8 +815,11 @@ impl Planner {
         if exits == 0 {
             return None;
         }
+        if cfg.allow_smile && ns.smiles > self.smile_limit(cfg.route_kind, cfg.urgent) {
+            return None;
+        }
+        let few = self.few();
         if exits <= 1 {
-            let few = self.few();
             let forced = self.forced_path(
                 &ns,
                 true,
@@ -797,6 +874,33 @@ impl Planner {
             }
         } else {
             ns.chokes = (ns.chokes - 3).max(0);
+        }
+
+        if ns.dist >= 4 && (exits <= 2 || ns.dist % 5 == 0 || ns.chokes >= 4) {
+            let info = self.space_info(&ns, true);
+            if self.return_path_risk(&ns, info, exits, ns.ate + 1) {
+                match cfg.route_kind {
+                    RouteKind::Near => return None,
+                    RouteKind::Route => {
+                        if !cfg.urgent || exits <= 2 {
+                            return None;
+                        }
+                        ns.chokes += 5;
+                    }
+                    RouteKind::Pressure => ns.chokes += if cfg.urgent { 3 } else { 5 },
+                }
+            } else if !info.tail_reach && exits <= 2 {
+                match cfg.route_kind {
+                    RouteKind::Near => return None,
+                    RouteKind::Route => {
+                        if !cfg.urgent {
+                            return None;
+                        }
+                        ns.chokes += 4;
+                    }
+                    RouteKind::Pressure => ns.chokes += 2,
+                }
+            }
         }
 
         let cap = match cfg.route_kind {
@@ -905,8 +1009,35 @@ impl Planner {
         if !escape.ok {
             return None;
         }
+        let return_open = info.tail_reach || escape.tail_reach;
+        let roomy_no_tail = !return_open
+            && exits >= 3
+            && info.space
+                >= body_len
+                    + self.return_buffer(body_len, few)
+                    + match cfg.route_kind {
+                        RouteKind::Near => 88,
+                        RouteKind::Route => 128,
+                        RouteKind::Pressure => {
+                            if cfg.urgent {
+                                54
+                            } else {
+                                86
+                            }
+                        }
+                    };
+        if !return_open {
+            match cfg.route_kind {
+                RouteKind::Near | RouteKind::Route => return None,
+                RouteKind::Pressure => {
+                    if !cfg.urgent || body_len >= 58 || !roomy_no_tail {
+                        return None;
+                    }
+                }
+            }
+        }
         if live < self.required_live(cfg.route_kind, cfg.arrow_level, few, cfg.urgent)
-            && !(info.tail_reach && exits > 1)
+            && !(return_open && exits > 1)
         {
             return None;
         }
@@ -929,41 +1060,59 @@ impl Planner {
         } else {
             0
         };
+        let return_debt = if return_open {
+            0
+        } else {
+            match cfg.route_kind {
+                RouteKind::Near => 38_000,
+                RouteKind::Route => 86_000,
+                RouteKind::Pressure => {
+                    if cfg.urgent {
+                        20_000
+                    } else {
+                        44_000
+                    }
+                }
+            }
+        };
+        let smile_return_credit =
+            self.smile_escape_credit(ns.smiles, cfg.route_kind, cfg.urgent, info, escape);
         let base = match cfg.route_kind {
             RouteKind::Near => {
                 -ns.dist as i64 * 6_400
-                    + if info.tail_reach { 36_000 } else { 0 }
+                    + if info.tail_reach { 46_000 } else { 0 }
                     + live as i64 * 3_100
                     + exits as i64 * 1_800
                     + info.space as i64 * 9
                     + escape.space as i64 * 5
-                    + if escape.tail_reach { 9_500 } else { 0 }
+                    + if escape.tail_reach { 17_500 } else { 0 }
                     + ns.points as i64 * 130
             }
             RouteKind::Route => {
-                (if info.tail_reach { 110_000 } else { 0 })
+                (if info.tail_reach { 145_000 } else { 0 })
                     + live as i64 * 6_100
                     + exits as i64 * 2_700
                     + info.space as i64 * 18
                     + escape.space as i64 * 9
-                    + if escape.tail_reach { 21_000 } else { 0 }
+                    + if escape.tail_reach { 44_000 } else { 0 }
                     + ns.points as i64 * 170
                     - ns.dist as i64 * 230
             }
             RouteKind::Pressure => {
-                (if info.tail_reach { 42_000 } else { 0 })
+                (if info.tail_reach { 58_000 } else { 0 })
                     + live as i64 * 4_000
                     + exits as i64 * 2_300
                     + info.space as i64 * 14
                     + escape.space as i64 * 7
-                    + if escape.tail_reach { 11_000 } else { 0 }
+                    + if escape.tail_reach { 21_000 } else { 0 }
                     + ns.points as i64 * 250
                     - ns.dist as i64 * if cfg.urgent { 95 } else { 170 }
             }
         };
         Some(
-            base + rollout
-                - ns.smiles as i64 * if cfg.urgent { 520 } else { 1_050 }
+            base + rollout + smile_return_credit
+                - return_debt
+                - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent)
                 - ns.stones as i64 * 52
                 - ns.chokes as i64
                     * match cfg.route_kind {
@@ -1022,64 +1171,78 @@ impl Planner {
         let live_limit = if few || self.urgent { 32 } else { 24 };
         let escape_limit = if few || self.urgent { 20 } else { 16 };
         let min_space = (body_len + if few { 34 } else { 22 }).min(240);
-        let mut best = None;
-        let mut best_score = i64::MIN;
 
-        for ns in self.legal(&st, true) {
-            if self.time_up() {
-                return best;
-            }
-            let c = self.cell(&st, st.head + step(ns.first));
-            let exits = self.legal_count(&ns, true);
-            if exits == 0 {
-                continue;
-            }
-            let forced = self.forced_path(&ns, true, if few || self.urgent { 28 } else { 22 });
-            if exits <= 1 && forced.dead {
-                continue;
-            }
-            let info = self.space_info(&ns, false);
-            if self.enclosure_risk(&ns, info, exits, 2) && !(info.tail_reach && exits >= 2) {
-                continue;
-            }
-            let live = self.survival_depth(&ns, live_limit);
-            let escape = self.escape_proof(&ns, min_space, escape_limit, true);
-            if live < 9 && !escape.ok && !(info.tail_reach && exits >= 2) {
-                continue;
-            }
-            let food_dist = if is_food(c) {
-                0
-            } else {
-                self.food_distance(&ns, 360)
-            };
-            let food_pull = if food_dist < INF {
-                (30 - food_dist).max(0) as i64 * 260
-            } else {
-                0
-            };
-            let score = live as i64 * 8_400
-                + info.space as i64 * 28
-                + exits as i64 * 4_200
-                + escape.space as i64 * 10
-                + forced.end_exits as i64 * 2_200
-                + food_pull
-                + if info.tail_reach { 46_000 } else { 0 }
-                + if escape.tail_reach { 18_000 } else { 0 }
-                + if is_food(c) { 3_000 } else { 0 }
-                - if exits <= 1 {
-                    13_000 + forced.steps as i64 * 650
+        for allow_smile in [false] {
+            let mut best = None;
+            let mut best_score = i64::MIN;
+            for ns in self.legal(&st, allow_smile) {
+                if self.time_up() {
+                    return best;
+                }
+                let c = self.cell(&st, st.head + step(ns.first));
+                let exits = self.legal_count(&ns, true);
+                if exits == 0 {
+                    continue;
+                }
+                let forced = self.forced_path(&ns, true, if few || self.urgent { 28 } else { 22 });
+                if exits <= 1 && forced.dead {
+                    continue;
+                }
+                let info = self.space_info(&ns, false);
+                if self.enclosure_risk(&ns, info, exits, 2) && !(info.tail_reach && exits >= 2) {
+                    continue;
+                }
+                let live = self.survival_depth(&ns, live_limit);
+                let escape = self.escape_proof(&ns, min_space, escape_limit, true);
+                if live < 9 && !escape.ok && !(info.tail_reach && exits >= 2) {
+                    continue;
+                }
+                let return_room = self.return_path_room(info, exits, ns.body.len() as i32, few);
+                let food_dist = if is_food(c) {
+                    0
+                } else {
+                    self.food_distance(&ns, 360)
+                };
+                let food_pull = if food_dist < INF {
+                    (30 - food_dist).max(0) as i64 * 260
                 } else {
                     0
+                };
+                let score = live as i64 * 8_400
+                    + info.space as i64 * 28
+                    + exits as i64 * 4_200
+                    + escape.space as i64 * 10
+                    + forced.end_exits as i64 * 2_200
+                    + food_pull
+                    + if info.tail_reach { 46_000 } else { 0 }
+                    + if escape.tail_reach { 18_000 } else { 0 }
+                    + if is_food(c) { 3_000 } else { 0 }
+                    - if exits <= 1 {
+                        13_000 + forced.steps as i64 * 650
+                    } else {
+                        0
+                    }
+                    - if c == 1 {
+                        if return_room {
+                            3_500
+                        } else {
+                            9_500
+                        }
+                    } else {
+                        0
+                    }
+                    - ns.stones as i64 * 62
+                    + if ns.first == st.dir { 90 } else { 0 };
+                if score > best_score {
+                    best_score = score;
+                    best = Some(ns.first);
                 }
-                - if c == 1 { 2_200 } else { 0 }
-                - ns.stones as i64 * 62
-                + if ns.first == st.dir { 90 } else { 0 };
-            if score > best_score {
-                best_score = score;
-                best = Some(ns.first);
+            }
+            if best.is_some() {
+                return best;
             }
         }
-        best
+        None
     }
 
     fn pickup_rollout(
@@ -1136,10 +1299,38 @@ impl Planner {
                     if !escape.ok {
                         continue;
                     }
+                    let return_open = info.tail_reach || escape.tail_reach;
+                    if !return_open
+                        && !(urgent
+                            && exits >= 3
+                            && info.space
+                                >= ns.body.len() as i32
+                                    + self.return_buffer(ns.body.len() as i32, self.few())
+                                    + 70)
+                    {
+                        continue;
+                    }
+                    let return_debt = if return_open { 0 } else { 20_000 };
+                    let new_smiles = ns.smiles - start.smiles;
+                    let smile_return_credit =
+                        if new_smiles > 0 && !info.tail_reach && escape.tail_reach {
+                            new_smiles as i64 * if urgent { 2_800 } else { 1_900 }
+                        } else {
+                            0
+                        };
+                    let smile_growth_cost = if new_smiles > 0 {
+                        new_smiles as i64 * if urgent { 5_200 } else { 8_500 }
+                    } else {
+                        0
+                    };
                     let gain = ns.points as i64 * 180 - (ns.dist - start.dist) as i64 * 360
                         + info.space as i64 * 8
                         + exits as i64 * 1_500
                         + if info.tail_reach { 12_000 } else { 0 }
+                        + if escape.tail_reach { 10_000 } else { 0 }
+                        + smile_return_credit
+                        - return_debt
+                        - smile_growth_cost
                         - if exits <= 1 {
                             10_000 + forced.steps as i64 * 520
                         } else {
@@ -1163,6 +1354,8 @@ impl Planner {
         expected_growth: i32,
     ) -> bool {
         let body_need = st.body.len() as i32 + expected_growth + if self.few() { 24 } else { 14 };
+        let body_len = st.body.len() as i32;
+        let return_need = body_len + expected_growth + self.return_buffer(body_len, self.few());
         if info.space < st.body.len() as i32 + expected_growth + 6 {
             return true;
         }
@@ -1172,51 +1365,85 @@ impl Planner {
         if exits <= 1 && info.space < body_need + if info.tail_reach { 70 } else { 96 } {
             return true;
         }
-        if exits <= 1 && !info.tail_reach && info.space < body_need + 44 {
+        if exits <= 1 && !info.tail_reach && info.space < return_need + 52 {
             return true;
         }
-        !info.tail_reach && info.space < st.body.len() as i32 + expected_growth + 78
+        if exits <= 2 && !info.tail_reach && info.space < return_need + 34 {
+            return true;
+        }
+        !info.tail_reach && info.space < return_need
     }
 
     fn survival_move(&mut self) -> Option<i32> {
         let st = self.start_state();
-        let mut best = None;
-        let mut best_score = i64::MIN;
-        for ns in self.legal(&st, true) {
-            let c = self.cell(&st, st.head + step(ns.first));
-            let exits = self.legal_count(&ns, true);
-            if exits == 0 {
-                continue;
-            }
-            let info = self.space_info(&ns, false);
-            let forced = self.forced_path(&ns, true, 18);
-            if exits <= 1 && forced.dead {
-                continue;
-            }
-            let score = info.space as i64 * 26
-                + exits as i64 * 1_000
-                + if is_food(c) { 2_500 } else { 0 }
-                + if info.tail_reach { 5_000 } else { 0 }
-                + forced.end_exits as i64 * 900
-                - if exits <= 1 {
-                    7_000 + forced.steps as i64 * 420
-                } else {
-                    0
+        let few = self.few();
+        for allow_smile in [false] {
+            let mut best = None;
+            let mut best_score = i64::MIN;
+            for ns in self.legal(&st, allow_smile) {
+                let c = self.cell(&st, st.head + step(ns.first));
+                let exits = self.legal_count(&ns, true);
+                if exits == 0 {
+                    continue;
                 }
-                - if c == 1 { 2_000 } else { 0 }
-                - ns.stones as i64 * 38
-                + if ns.first == st.dir { 60 } else { 0 }
-                - if self.enclosure_risk(&ns, info, exits, 1) {
-                    10_000
-                } else {
-                    0
-                };
-            if score > best_score {
-                best_score = score;
-                best = Some(ns.first);
+                let info = self.space_info(&ns, false);
+                let forced = self.forced_path(&ns, true, 18);
+                if exits <= 1 && forced.dead {
+                    continue;
+                }
+                let body_len = ns.body.len() as i32;
+                let escape = self.escape_proof(
+                    &ns,
+                    (body_len + if few { 32 } else { 20 }).min(220),
+                    if few || self.urgent { 16 } else { 11 },
+                    true,
+                );
+                let return_room = self.return_path_room(info, exits, body_len, few);
+                let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let score = info.space as i64 * 26
+                    + exits as i64 * 1_000
+                    + if is_food(c) { 2_500 } else { 0 }
+                    + if info.tail_reach { 5_000 } else { 0 }
+                    + if escape.tail_reach { 18_000 } else { 0 }
+                    + if escape.ok { 4_500 } else { 0 }
+                    + escape.space as i64 * 5
+                    + forced.end_exits as i64 * 900
+                    - if exits <= 1 {
+                        7_000 + forced.steps as i64 * 420
+                    } else {
+                        0
+                    }
+                    - if c == 1 {
+                        if return_room {
+                            4_500
+                        } else {
+                            10_500
+                        }
+                    } else {
+                        0
+                    }
+                    - ns.stones as i64 * 38
+                    + if ns.first == st.dir { 60 } else { 0 }
+                    - if self.enclosure_risk(&ns, info, exits, 1) {
+                        10_000
+                    } else {
+                        0
+                    }
+                    - if return_risk && !escape.tail_reach {
+                        28_000
+                    } else {
+                        0
+                    };
+                if score > best_score {
+                    best_score = score;
+                    best = Some(ns.first);
+                }
+            }
+            if best.is_some() {
+                return best;
             }
         }
-        best
+        None
     }
 
     fn food_distance(&mut self, st: &State, limit: usize) -> i32 {
@@ -1252,85 +1479,134 @@ impl Planner {
 
     fn pressure_step(&mut self) -> Option<i32> {
         let st = self.start_state();
-        let mut best = None;
-        let mut best_score = i64::MIN;
-        for ns in self.legal(&st, true) {
-            let c = self.cell(&st, st.head + step(ns.first));
-            let exits = self.legal_count(&ns, true);
-            if exits == 0 {
-                continue;
-            }
-            let info = self.space_info(&ns, false);
-            let forced = self.forced_path(&ns, true, 16);
-            if exits <= 1 && forced.dead {
-                continue;
-            }
-            let dist = if is_food(c) {
-                0
-            } else {
-                self.food_distance(&ns, 420)
-            };
-            if dist >= INF {
-                continue;
-            }
-            let score = -(dist as i64) * 1_700
-                + info.space as i64 * 10
-                + exits as i64 * 1_650
-                + if info.tail_reach { 8_000 } else { 0 }
-                + if is_food(c) { 26_000 } else { 0 }
-                + forced.end_exits as i64 * 1_100
-                - if exits <= 1 {
-                    8_000 + forced.steps as i64 * 540
-                } else {
-                    0
+        let few = self.few();
+        for allow_smile in [false] {
+            let mut best = None;
+            let mut best_score = i64::MIN;
+            for ns in self.legal(&st, allow_smile) {
+                let c = self.cell(&st, st.head + step(ns.first));
+                let exits = self.legal_count(&ns, true);
+                if exits == 0 {
+                    continue;
                 }
-                - if c == 1 { 1_500 } else { 0 }
-                - ns.stones as i64 * 75
-                + if ns.first == st.dir { 80 } else { 0 }
-                - if self.enclosure_risk(&ns, info, exits, 1) {
-                    9_000
-                } else {
+                let info = self.space_info(&ns, false);
+                let forced = self.forced_path(&ns, true, 16);
+                if exits <= 1 && forced.dead {
+                    continue;
+                }
+                let dist = if is_food(c) {
                     0
+                } else {
+                    self.food_distance(&ns, 420)
                 };
-            if score > best_score {
-                best_score = score;
-                best = Some(ns.first);
+                if dist >= INF {
+                    continue;
+                }
+                let body_len = ns.body.len() as i32;
+                let escape = self.escape_proof(
+                    &ns,
+                    (body_len + if few { 28 } else { 18 }).min(200),
+                    if self.urgent || few { 14 } else { 10 },
+                    true,
+                );
+                let return_room = self.return_path_room(info, exits, body_len, few);
+                let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let score = -(dist as i64) * 1_700
+                    + info.space as i64 * 10
+                    + exits as i64 * 1_650
+                    + if info.tail_reach { 8_000 } else { 0 }
+                    + if escape.tail_reach { 15_000 } else { 0 }
+                    + if escape.ok { 4_000 } else { 0 }
+                    + escape.space as i64 * 4
+                    + if is_food(c) { 26_000 } else { 0 }
+                    + forced.end_exits as i64 * 1_100
+                    - if exits <= 1 {
+                        8_000 + forced.steps as i64 * 540
+                    } else {
+                        0
+                    }
+                    - if c == 1 {
+                        if return_room {
+                            3_000
+                        } else {
+                            8_000
+                        }
+                    } else {
+                        0
+                    }
+                    - ns.stones as i64 * 75
+                    + if ns.first == st.dir { 80 } else { 0 }
+                    - if self.enclosure_risk(&ns, info, exits, 1) {
+                        9_000
+                    } else {
+                        0
+                    }
+                    - if return_risk && !escape.tail_reach {
+                        24_000
+                    } else {
+                        0
+                    };
+                if score > best_score {
+                    best_score = score;
+                    best = Some(ns.first);
+                }
+            }
+            if best.is_some() {
+                return best;
             }
         }
-        best
+        None
     }
 
     fn last_chance_move(&mut self) -> Option<i32> {
         let st = self.start_state();
-        let mut best = None;
-        let mut best_score = i64::MIN;
-        for ns in self.legal(&st, true) {
-            let c = self.cell(&st, st.head + step(ns.first));
-            let exits = self.legal_count(&ns, true);
-            let info = self.space_info(&ns, false);
-            let dist = if is_food(c) {
-                0
-            } else {
-                self.food_distance(&ns, 180)
-            };
-            let score = info.space as i64 * 14
-                + exits as i64 * 2_400
-                + if info.tail_reach { 9_000 } else { 0 }
-                + if dist < INF {
-                    (20 - dist).max(0) as i64 * 180
-                } else {
+        let few = self.few();
+        for allow_smile in [false, true] {
+            let mut best = None;
+            let mut best_score = i64::MIN;
+            for ns in self.legal(&st, allow_smile) {
+                let c = self.cell(&st, st.head + step(ns.first));
+                let exits = self.legal_count(&ns, true);
+                let info = self.space_info(&ns, false);
+                let body_len = ns.body.len() as i32;
+                let return_room = self.return_path_room(info, exits, body_len, few);
+                let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let dist = if is_food(c) {
                     0
+                } else {
+                    self.food_distance(&ns, 180)
+                };
+                let score = info.space as i64 * 14
+                    + exits as i64 * 2_400
+                    + if info.tail_reach { 9_000 } else { 0 }
+                    + if dist < INF {
+                        (20 - dist).max(0) as i64 * 180
+                    } else {
+                        0
+                    }
+                    + if is_food(c) { 6_000 } else { 0 }
+                    - if c == 1 {
+                        if return_room {
+                            1_500
+                        } else {
+                            6_000
+                        }
+                    } else {
+                        0
+                    }
+                    - ns.stones as i64 * 45
+                    - if return_risk { 12_000 } else { 0 }
+                    + if ns.first == st.dir { 80 } else { 0 };
+                if score > best_score {
+                    best_score = score;
+                    best = Some(ns.first);
                 }
-                + if is_food(c) { 6_000 } else { 0 }
-                - if c == 1 { 1_600 } else { 0 }
-                - ns.stones as i64 * 45
-                + if ns.first == st.dir { 80 } else { 0 };
-            if score > best_score {
-                best_score = score;
-                best = Some(ns.first);
+            }
+            if best.is_some() {
+                return best;
             }
         }
-        best
+        None
     }
 }
 
@@ -1530,6 +1806,87 @@ mod tests {
         let st = p.start_state();
         let info = p.space_info(&st, false);
         assert!(p.enclosure_risk(&st, info, 1, 2));
+    }
+
+    #[test]
+    fn return_path_risk_flags_region_cut_off_from_tail() {
+        let mut board = empty_board();
+        for row in 8..=12 {
+            board[offset(row, 12) as usize] = 179;
+            board[offset(row, 16) as usize] = 179;
+        }
+        for col in 12..=16 {
+            board[offset(8, col) as usize] = 196;
+            board[offset(12, col) as usize] = 196;
+        }
+        let body = vec![offset(10, 10), offset(10, 13), offset(10, 14)];
+        let mut p = planner(board, body);
+        let st = p.start_state();
+        let info = p.space_info(&st, false);
+        assert!(!info.tail_reach);
+        assert!(p.return_path_risk(&st, info, 2, 1));
+    }
+
+    #[test]
+    fn normal_food_route_rejects_cut_off_tail_return() {
+        let mut board = empty_board();
+        for row in 8..=12 {
+            board[offset(row, 12) as usize] = 179;
+            board[offset(row, 16) as usize] = 179;
+        }
+        for col in 12..=16 {
+            board[offset(8, col) as usize] = 196;
+            board[offset(12, col) as usize] = 196;
+        }
+        board[offset(10, 15) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 13), offset(10, 14)];
+        let mut p = planner(board, body);
+        let st = p.start_state();
+        let ns = p
+            .move_state(&st, 77, false)
+            .expect("food inside the room is reachable");
+        let cfg = FoodSearch {
+            start: st,
+            allow_smile: false,
+            max_depth: 10,
+            scan_limit: 50,
+            check_limit: 10,
+            route_kind: RouteKind::Route,
+            arrow_level: false,
+            urgent: false,
+        };
+        assert!(p.score_food_candidate(&ns, &cfg).is_none());
+    }
+
+    #[test]
+    fn normal_food_route_rejects_second_smiley() {
+        let mut board = empty_board();
+        board[offset(10, 12) as usize] = 1;
+        board[offset(10, 13) as usize] = 1;
+        board[offset(10, 14) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        let st = p.start_state();
+        let cfg = FoodSearch {
+            start: st.clone(),
+            allow_smile: true,
+            max_depth: 10,
+            scan_limit: 50,
+            check_limit: 10,
+            route_kind: RouteKind::Route,
+            arrow_level: false,
+            urgent: false,
+        };
+        let ns = p
+            .move_state(&st, 77, true)
+            .expect("first smiley remains available as a tactical option");
+        let ns = p
+            .route_prefix_state(ns, &cfg)
+            .expect("one smiley is still permitted on a normal route");
+        let ns = p
+            .move_state(&ns, 77, true)
+            .expect("second smiley is physically reachable");
+        assert!(p.route_prefix_state(ns, &cfg).is_none());
     }
 
     #[test]

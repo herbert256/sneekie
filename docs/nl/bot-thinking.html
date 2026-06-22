@@ -103,7 +103,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>32</code></td><td>Leeg vak</td><td>Vrij betreedbaar.</td></tr>
             <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Hart</td><td>Voedsel van 10 punten; laat de slang groeien.</td></tr>
             <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Klaver</td><td>Voedsel van 25 punten; laat de slang groeien.</td></tr>
-            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Normaal vermijden; alleen toegestaan in ontsnappingsmodus.</td></tr>
+            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Kost punten; toegestaan wanneer hij de terugweg open houdt.</td></tr>
             <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Steen</td><td>Duwbaar als het vak erachter leeg is.</td></tr>
             <tr><td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Bewegende pijlen</td><td>Altijd fataal, inclusief vakken waar ze zo naartoe gaan.</td></tr>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
@@ -118,7 +118,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
           <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
           <div class="step"><b>3. Ademruimte</b><p>Als het veld krap is of de slang lang is, kiest de planner eerst een bewezen zet naar open ruimte voordat hij ver voedsel najagt.</p></div>
-          <div class="step"><b>4. Bredere routes</b><p>Als dichtbij niets veilig is en ademruimte niet wint, zoekt de planner verder, eerst schoon en daarna met smileys toegestaan.</p></div>
+          <div class="step"><b>4. Bredere routes</b><p>Als dichtbij niets veilig is en ademruimte niet wint, zoekt de planner verder. Een krappe slang mag een smileyroute eerder nemen dan een verre schone route wanneer die de terugweg open houdt.</p></div>
           <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen. Als er niet op tijd een volledig bewezen route is, kiest hij een directe drukzet richting bereikbaar voedsel.</p></div>
           <div class="step"><b>6. Lokaal overleven</b><p>Als laatste veiligheidsfallback kiest hij een directe zet die nog door de lokale controles komt.</p></div>
           <div class="step"><b>7. Minst slechte zet</b><p>Als geen route bewezen kan worden, geeft de planner toch de beste direct legale zet terug. De bot drukt nooit zelf Escape.</p></div>
@@ -130,23 +130,28 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
-    const breatheFirst = needsBreathing();
-    proved = nearFood(false) ??
-      (breatheFirst ? breathingMove() : null) ??
-      routeFood(false) ??
-      nearFood(true) ??
-      (breatheFirst ? breathingMove() : null) ??
-      routeFood(true) ??
-      (urgent
-        ? pressureFood(false, true) ?? pressureFood(true, true)
-        : pressureFood(false, false) ?? pressureFood(true, false));
+    const constrained = needsBreathing();
+    proved = constrained
+      ? nearFood(false) ??
+        breathingMove() ??
+        nearFood(true) ??
+        routeFood(false) ??
+        routeFood(true) ??
+        pressureFood(true, urgent) ??
+        pressureFood(false, urgent)
+      : nearFood(false) ??
+        routeFood(false) ??
+        nearFood(true) ??
+        routeFood(true) ??
+        pressureFood(false, urgent) ??
+        pressureFood(true, urgent);
   } finally {
     routeDeadline = 0;
   }
   return proved ?? (urgent ? pressureStep() : null) ??
     survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; alleen het echte spel kan de slang doden of vast verklaren.</p>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. In die krappe stand kan een smiley beter zijn dan een verre schone pickup als de smileyroute een pad terug naar de bewegende staart houdt. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; alleen het echte spel kan de slang doden of vast verklaren.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>
@@ -169,7 +174,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td>Niet direct omkeren</td><td>De tegenovergestelde richting van de huidige richting wordt geweigerd.</td></tr>
             <tr><td>Geen gevaar</td><td>Als <code>danger(next)</code> waar is, valt de zet af.</td></tr>
             <tr><td>Geen zelfbotsing</td><td>Een vak in <code>bodySet</code> is verboden.</td></tr>
-            <tr><td>Smileys optioneel</td><td>Tijdens normale zoekactie verboden; tijdens ontsnappen toegestaan.</td></tr>
+            <tr><td>Smileys optioneel</td><td>Verboden tijdens schone zoekactie; toegestaan in krappe of ontsnappende zoekacties wanneer de route nog een uitweg bewijst.</td></tr>
             <tr><td>Stenen duwen</td><td>Een steen kan alleen een vak vooruit als dat vak leeg is.</td></tr>
             <tr><td>Groei</td><td>Harten, klavers en smileys laten het lijf groeien; lege zetten verwijderen eerst de staart.</td></tr>
             <tr><td>Eerste zet bewaren</td><td>Elke tak onthoudt alleen de eerste echte toets die straks gedrukt moet worden.</td></tr>
@@ -182,12 +187,12 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <table>
           <thead><tr><th>Planner</th><th>Wanneer</th><th>Limieten</th><th>Voorkeur</th></tr></thead>
           <tbody>
-            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie.</td><td>Diepte 10, of 14 met weinig items.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
+            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie; in krappe posities kan de smileypass vóór een verre schone route komen.</td><td>Diepte 10, of 14 met weinig items.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
             <tr><td><code>routeFood()</code></td><td>De normale voorzichtige routezoeker.</td><td>Diepte 98, of 145 in de eindfase; tot 3500-7000 toestanden.</td><td>Overleving eerst: bewezen uitweg, staartbereik, uitgangen en ruimte.</td></tr>
             <tr><td><code>pressureFood()</code></td><td>Bij stilstand, lussen of wanneer gewone veilige voedselzoekers niets vinden.</td><td>Diepte 85-155; tot 5000-9000 toestanden.</td><td>Meer druk richting voedsel, maar nog steeds zonder duidelijke vallen.</td></tr>
           </tbody>
         </table>
-        <p>In de eindfase zoekt de bot dieper, omdat de laatste harten en klavers vaak precies in lastige hoeken liggen. Smileys blijven tweede keus: ze worden alleen toegestaan als schone routes mislukken.</p>
+        <p>In de eindfase zoekt de bot dieper, omdat de laatste harten en klavers vaak precies in lastige hoeken liggen. Smileys blijven tweede keus: de bot wil schoon voedsel, maar een krappe slang mag er een eten als dat de terugweg open houdt.</p>
       </section>
       <section id="safety">
         <h2>7. Valcontroles</h2>
@@ -199,6 +204,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <div class="card"><h3>Overlevingsdiepte</h3><p><code>survivalDepth()</code> kijkt met een kleine beam search hoeveel toekomstige zetten mogelijk blijven.</p></div>
           <div class="card"><h3>Uitweg</h3><p><code>escapeProof()</code> simuleert extra zetten na het oppakken en vereist een pad naar open ruimte of terug richting de bewegende staart.</p></div>
         </div>
+        <p>Normale voedselroutes moeten na het oppakken een bewezen terugweg naar de bewegende staart houden. Urgente druk mag alleen als fallback een zeer ruime losgeraakte regio gebruiken. Kleine regio's, eenvaks-flessenhalzen en vroege staartafsnijdingen worden gefilterd voordat hun korte-termijnbeloning kan winnen.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Noodzetten</h2>
@@ -208,7 +214,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <tbody>
             <tr><td><code>breathingMove()</code></td><td>Vakken vermijden</td><td>Loopt vóór verre voedselroutes wanneer het veld krap is of de slang lang is. Hij verkiest staartbereik, toekomstige uitgangen en open ruimte.</td></tr>
             <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of herhaalde kopposities.</td></tr>
-            <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Als laatste fallback scoort hij directe zetten op ruimte, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
+            <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Als laatste fallback scoort hij directe zetten op ruimte, uitgangen, voedsel, terugwegruimte, smileykosten of -bonus, stenen en rechtdoor gaan.</td></tr>
           </tbody>
         </table>
       </section>
@@ -216,19 +222,20 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <h2>9. Routes scoren</h2>
         <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De WebAssembly-planner rolt veelbelovende kandidaten ook door tot maximaal drie pickups, met lagere waarde voor later voedsel maar met opnieuw een bewezen uitweg. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
         <div class="formula">
-          score = tailReach ? +100000 : 0<br />
+          score = tailReach ? +145000 : 0<br />
           score += survivalDepth * 5600<br />
           score += exits * 2400<br />
           score += reachableSpace * 16<br />
           score += escapeSpace * 8<br />
-          score += escapeTailReach ? +18000 : 0<br />
+          score += escapeTailReach ? +44000 : 0<br />
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
-          score -= smileysEaten * 1200<br />
+          score += returnPreservingSmileys * 8800<br />
+          score -= smileysEaten * 1050<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>De grote gewichten voor staartbereik, overlevingsdiepte en bewezen uitweg zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in.</p>
+        <p>De grote gewichten voor staartbereik, overlevingsdiepte en bewezen uitweg zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in. Smileys blijven duur, maar een smiley die de terugweg open houdt kan beter scoren dan schoon voedsel dat de slang insluit.</p>
       </section>
       <section id="speed">
         <h2>10. Snelheidslimieten</h2>
@@ -267,7 +274,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <li>Hij simuleert het lijf en geduwde stenen, maar niet een volledige meer-tick-toekomst van alle vijanden.</li>
           <li>Hij behandelt huidig en volgend pijlengevaar voorzichtig en rekent na de echte game-update opnieuw.</li>
           <li>Zijn state-hash is compact en bedoeld om te snoeien, niet om elk borddetail te bewaren.</li>
-          <li>Hij kiest alleen een smiley wanneer schone voedselroutes falen.</li>
+          <li>Hij kan een smiley kiezen wanneer schone voedselroutes falen, of wanneer het bord krap is en de smiley de terugweg open houdt.</li>
           <li>De survival-beam bevoordeelt veel uitgangen en kan smalle maar technisch veilige routes missen.</li>
         </ul>
         <p>Kort gezegd: de bot denkt als een voorzichtige slangen-speler. Hij wil dichtbij voedsel, maar alleen als dat voedsel ademruimte overlaat. Wordt het krap, dan zijn open ruimte en toekomstige uitgangen belangrijk, maar hij volgt zijn eigen staart niet meer als noodstrategie.</p>

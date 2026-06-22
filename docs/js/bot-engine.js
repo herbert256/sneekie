@@ -195,6 +195,17 @@
       }
       return best;
     };
+    const returnBuffer = (len, few) => (len >= 120 ? 190 : len >= 80 ? 155 : len >= 45 ? 124 : 96) + (few ? 32 : 0);
+    const returnRoom = (info, exits, len, few) =>
+      info.tailReach || (exits >= 3 && info.space >= len + returnBuffer(len, few) + 72);
+    const needsBreathing = () => {
+      const st = makeState(), few = model.items <= 6, exits = legalCount(st, true);
+      if(exits <= 1) return true;
+      const info = spaceInfo(st, true), len = st.body.length;
+      return (!info.tailReach && info.space < len + (few ? 132 : 96)) ||
+        (len >= 58 && (exits <= 2 || info.space < len + 150)) ||
+        (len >= 96 && exits <= 3);
+    };
     const nearFood = allowSmile => {
       const start = makeState(), q = [start], seen = new Set([stateKey(start)]), few = model.items<=6;
       const cycle = (model.level-1) % 16, arrowLevel = cycle===5 || cycle===6 || cycle===13 || cycle===14;
@@ -206,6 +217,7 @@
         for(const [sc] of DIRS){
           if(routeTimeUp()) return best;
           const ns = move(st, sc, allowSmile); if(!ns) continue;
+          if(allowSmile && ns.smiles > 1) continue;
           const key = stateKey(ns);
           if(seen.has(key)) continue; seen.add(key);
           if(ns.ate){
@@ -218,10 +230,13 @@
             const live = survivalDepth(ns, horizon);
             const escape = escapeProof(ns, minSpace, few ? 10 : (arrowLevel ? 5 : 7), allowSmile);
             if(!escape.ok) continue;
-            if(live < (few ? 8 : (arrowLevel ? 4 : 6)) && !(rt && exits > 1)) continue;
+            const returnOpen = rt || escape.tailReach;
+            if(!returnOpen) continue;
+            if(live < (few ? 8 : (arrowLevel ? 4 : 6)) && !(returnOpen && exits > 1)) continue;
+            const smileCredit = ns.smiles && !rt && escape.tailReach ? ns.smiles*1500 : 0;
             const score = -ns.dist*6200 + (rt?32000:0) + live*2600 + exits*1600 +
               sp*8 + escape.space*4 + (escape.tailReach?8000:0) + ns.points*120 -
-              ns.smiles*900 - ns.stones*45 - (exits===1?9000:0);
+              ns.smiles*8500 + smileCredit - ns.stones*45 - (exits===1?9000:0);
             if(score > bs){ bs = score; best = ns.first; }
           } else q.push(ns);
         }
@@ -239,6 +254,7 @@
         for(const [sc] of DIRS){
           if(routeTimeUp()) return best;
           const ns = move(st, sc, allowSmile); if(!ns) continue;
+          if(allowSmile && ns.smiles > 1) continue;
           const key = stateKey(ns);
           if(seen.has(key)) continue; seen.add(key);
           if(ns.ate){
@@ -252,11 +268,14 @@
             const horizon = few ? 22 : (arrowLevel ? 12 : 16), live = survivalDepth(ns, horizon);
             const escape = escapeProof(ns, minSpace, few ? 16 : (arrowLevel ? 8 : 12), allowSmile);
             if(!escape.ok) continue;
+            const returnOpen = rt || escape.tailReach;
+            if(!returnOpen) continue;
             const corridorOk = exits > 1 || arrowLevel || (live >= horizon && rt && sp >= minSpace + 50);
             if(corridorOk && live >= (few ? 14 : (arrowLevel ? 7 : 10)) && ((rt && sp >= minSpace) || sp >= minSpace + 42)){
-              const score = (rt?100000:0) + live*5600 + exits*2400 + sp*16 +
-                escape.space*8 + (escape.tailReach?18000:0) + ns.points*150 -
-                ns.dist*260 - ns.smiles*1200 - ns.stones*55 - (exits===1?18000:0);
+              const smileCredit = ns.smiles && !rt && escape.tailReach ? ns.smiles*2600 : 0;
+              const score = (rt?140000:0) + live*5600 + exits*2400 + sp*16 +
+                escape.space*8 + (escape.tailReach?42000:0) + ns.points*150 -
+                ns.dist*260 - ns.smiles*11500 + smileCredit - ns.stones*55 - (exits===1?18000:0);
               if(score > bs){ bs = score; best = ns.first; }
             }
             if(checked >= 28 && best !== null) return best;
@@ -277,6 +296,7 @@
         for(const [sc] of DIRS){
           if(routeTimeUp()) return best;
           const ns = move(st, sc, allowSmile); if(!ns) continue;
+          if(allowSmile && ns.smiles > (urgent || few ? 2 : 1)) continue;
           const key = stateKey(ns);
           if(seen.has(key)) continue; seen.add(key);
           if(ns.ate){
@@ -290,12 +310,16 @@
             const live = survivalDepth(ns, horizon);
             const escape = escapeProof(ns, minSpace, urgent ? (arrowLevel ? 5 : 7) : (arrowLevel ? 7 : 9), allowSmile);
             if(!escape.ok) continue;
-            if(live < (urgent ? 3 : 5) && exits < 2 && !rt) continue;
+            const returnOpen = rt || escape.tailReach;
+            const roomyNoTail = !returnOpen && exits >= 3 && sp >= ns.body.length + returnBuffer(ns.body.length, few) + (urgent ? 54 : 86);
+            if(!returnOpen && !roomyNoTail && (!urgent || ns.body.length >= 58)) continue;
+            if(live < (urgent ? 3 : 5) && exits < 2 && !returnOpen) continue;
             const trapCost = exits===1 ? (urgent ? 3800 : 9000) : 0;
-            const smileCost = urgent ? 450 : 900;
+            const smileCost = urgent ? 5800 : 8000;
+            const smileCredit = ns.smiles && !rt && escape.tailReach ? ns.smiles*(urgent ? 3200 : 2200) : 0;
             const score = (rt?36000:0) + live*3600 + exits*2100 + sp*13 +
               escape.space*6 + (escape.tailReach?9000:0) + ns.points*230 -
-              ns.dist*(urgent?110:190) - ns.smiles*smileCost - ns.stones*40 - trapCost;
+              ns.dist*(urgent?110:190) - ns.smiles*smileCost + smileCredit - ns.stones*40 - trapCost;
             if(score > bs){ bs = score; best = ns.first; }
             if(checked >= checkLimit && best !== null) return best;
           } else q.push(ns);
@@ -304,16 +328,23 @@
       return best;
     };
     const survivalMove = () => {
-      const st = makeState(); let best = null, bs = -1e18;
-      for(const ns of legal(st, true)){
-        const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
-        if(!exits) continue;
-        const info = spaceInfo(ns, false);
-        const sp = info.space;
-        const score = sp*24 + exits*900 + (isFood(c)?2200:0) - (c===1?1800:0) - ns.stones*35 + (ns.first===st.dir?40:0);
-        if(score > bs){ bs = score; best = ns.first; }
+      const st = makeState();
+      for(const allowSmile of [false]){
+        let best = null, bs = -1e18;
+        for(const ns of legal(st, allowSmile)){
+          const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+          if(!exits) continue;
+          const info = spaceInfo(ns, false);
+          const sp = info.space;
+          const room = returnRoom(info, exits, ns.body.length, model.items <= 6);
+          const smilePenalty = c===1 ? (room ? 4500 : 10500) : 0;
+          const score = sp*24 + exits*900 + (isFood(c)?2200:0) + (info.tailReach?6500:0) -
+            smilePenalty - ns.stones*35 + (ns.first===st.dir?40:0);
+          if(score > bs){ bs = score; best = ns.first; }
+        }
+        if(best !== null) return best;
       }
-      return best;
+      return null;
     };
     const foodDistance = (st, limit) => {
       const seen = new Set([visitKey(st.head, st.dir)]), qo = [st.head], qd = [st.dir], dist = [0];
@@ -336,31 +367,44 @@
       return Infinity;
     };
     const pressureStep = () => {
-      const st = makeState(); let best = null, bs = -1e18;
-      for(const ns of legal(st, true)){
-        const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
-        if(!exits) continue;
-        const info = spaceInfo(ns, false), dist = isFood(c) ? 0 : foodDistance(ns, 260);
-        if(!Number.isFinite(dist)) continue;
-        const score = -dist*1700 + info.space*9 + exits*1500 + (info.tailReach?7000:0) +
-          (isFood(c)?24000:0) - (c===1?1300:0) - ns.stones*70 + (ns.first===st.dir?60:0);
-        if(score > bs){ bs = score; best = ns.first; }
+      const st = makeState();
+      for(const allowSmile of [false]){
+        let best = null, bs = -1e18;
+        for(const ns of legal(st, allowSmile)){
+          const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+          if(!exits) continue;
+          const info = spaceInfo(ns, false), dist = isFood(c) ? 0 : foodDistance(ns, 260);
+          if(!Number.isFinite(dist)) continue;
+          const room = returnRoom(info, exits, ns.body.length, model.items <= 6);
+          const smilePenalty = c===1 ? (room ? 3000 : 8000) : 0;
+          const score = -dist*1700 + info.space*9 + exits*1500 + (info.tailReach?7000:0) +
+            (isFood(c)?24000:0) - smilePenalty -
+            ns.stones*70 + (ns.first===st.dir?60:0);
+          if(score > bs){ bs = score; best = ns.first; }
+        }
+        if(best !== null) return best;
       }
-      return best;
+      return null;
     };
     const lastChanceMove = () => {
-      const st = makeState(); let best = null, bs = -1e18;
-      for(const ns of legal(st, true)){
-        const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
-        const info = spaceInfo(ns, false);
-        const dist = isFood(c) ? 0 : foodDistance(ns, 180);
-        const score = info.space*14 + exits*2200 + (info.tailReach?9000:0) +
-          (Number.isFinite(dist) ? Math.max(0, 20 - dist)*180 : 0) +
-          (isFood(c)?6000:0) - (c===1?1600:0) - ns.stones*45 +
-          (ns.first===st.dir?80:0);
-        if(score > bs){ bs = score; best = ns.first; }
+      const st = makeState();
+      for(const allowSmile of [false, true]){
+        let best = null, bs = -1e18;
+        for(const ns of legal(st, allowSmile)){
+          const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+          const info = spaceInfo(ns, false);
+          const dist = isFood(c) ? 0 : foodDistance(ns, 180);
+          const room = returnRoom(info, exits, ns.body.length, model.items <= 6);
+          const smilePenalty = c===1 ? (room ? 1500 : 6000) : 0;
+          const score = info.space*14 + exits*2200 + (info.tailReach?9000:0) +
+            (Number.isFinite(dist) ? Math.max(0, 20 - dist)*180 : 0) +
+            (isFood(c)?6000:0) - smilePenalty - ns.stones*45 +
+            (ns.first===st.dir?80:0);
+          if(score > bs){ bs = score; best = ns.first; }
+        }
+        if(best !== null) return best;
       }
-      return best;
+      return null;
     };
     const decide = options => {
       model = capture();
@@ -370,15 +414,14 @@
       routeDeadline = now() + options.budgetMs;
       let proved = null;
       try {
-        proved = tryPlan(() => nearFood(false)) ??
-          tryPlan(() => routeFood(false)) ??
-          tryPlan(() => nearFood(true)) ??
-          tryPlan(() => routeFood(true)) ??
-          (urgent
-            ? tryPlan(() => pressureFood(false, true)) ??
-              tryPlan(() => pressureFood(true, true))
-            : tryPlan(() => pressureFood(false, false)) ??
-              tryPlan(() => pressureFood(true, false)));
+        const constrained = needsBreathing();
+        proved = constrained
+          ? tryPlan(() => nearFood(false)) ??
+            tryPlan(() => routeFood(false)) ??
+            tryPlan(() => pressureFood(false, urgent))
+          : tryPlan(() => nearFood(false)) ??
+            tryPlan(() => routeFood(false)) ??
+            tryPlan(() => pressureFood(false, urgent));
       } finally {
         routeDeadline = 0;
       }

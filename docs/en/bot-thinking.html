@@ -160,7 +160,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr>
               <td><code>1</code> <span class="ico s">&#9786;</span></td>
               <td>Smiley</td>
-              <td>Normally avoided; allowed only in escape mode.</td>
+              <td>Point-costly pickup; allowed when it helps preserve a return path.</td>
             </tr>
             <tr>
               <td><code>10</code> <span class="ico t">&#9689;</span></td>
@@ -199,7 +199,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           </div>
           <div class="step">
             <b>4. Wider routes</b>
-            <p>If no nearby pickup or breathing move wins, run the deeper food planner, first clean and then with smileys allowed.</p>
+            <p>If no nearby pickup or breathing move wins, run the deeper food planner. A cramped snake may consider a smiley route before a distant clean route when that keeps the return path open.</p>
           </div>
           <div class="step">
             <b>5. Loop pressure</b>
@@ -221,23 +221,28 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
-    const breatheFirst = needsBreathing();
-    proved = nearFood(false) ??
-      (breatheFirst ? breathingMove() : null) ??
-      routeFood(false) ??
-      nearFood(true) ??
-      (breatheFirst ? breathingMove() : null) ??
-      routeFood(true) ??
-      (urgent
-        ? pressureFood(false, true) ?? pressureFood(true, true)
-        : pressureFood(false, false) ?? pressureFood(true, false));
+    const constrained = needsBreathing();
+    proved = constrained
+      ? nearFood(false) ??
+        breathingMove() ??
+        nearFood(true) ??
+        routeFood(false) ??
+        routeFood(true) ??
+        pressureFood(true, urgent) ??
+        pressureFood(false, urgent)
+      : nearFood(false) ??
+        routeFood(false) ??
+        nearFood(true) ??
+        routeFood(true) ??
+        pressureFood(false, urgent) ??
+        pressureFood(true, urgent);
   } finally {
     routeDeadline = 0;
   }
   return proved ?? (urgent ? pressureStep() : null) ??
     survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; only the real game can kill or mark the snake stuck.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; only the real game can kill or mark the snake stuck.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -287,7 +292,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td>Smileys optional</td>
-              <td>Reject smileys during normal search; allow them during escape search.</td>
+              <td>Reject smileys during clean search; allow them in constrained or escape searches only when the route still proves a way back out.</td>
             </tr>
             <tr>
               <td>Stones push</td>
@@ -320,7 +325,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <tbody>
             <tr>
               <td><code>nearFood()</code></td>
-              <td>Before every wider search, first without smileys and then with smileys if needed.</td>
+              <td>Before every wider search. In cramped positions, the smiley pass can run before a distant clean route.</td>
               <td>Depth 10 normally, 14 when 6 or fewer items remain; a shallow first pass before wider planning.</td>
               <td>Very strong distance penalty, so safe nearby food wins.</td>
             </tr>
@@ -338,7 +343,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot only allows them after clean heart/club searches fail.</p>
+        <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot prefers clean food, but a cramped snake may eat one if that keeps the return route open.</p>
       </section>
       <section id="safety">
         <h2>7. Trap checks</h2>
@@ -365,7 +370,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <p><code>escapeProof()</code> simulates extra post-pickup moves and requires a path into open space or back toward the moving tail before the food route can win.</p>
           </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. The WebAssembly planner also rejects early self-enclosures: tiny regions, one-cell chokepoints, and routes that lose tail reach without enough open space are filtered before their short-term reward can win.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, and early tail cutoffs are filtered before their short-term reward can win.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
@@ -392,7 +397,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr>
               <td><code>survivalMove()</code></td>
               <td>Short bridge</td>
-              <td>As the final fallback, scores each immediately legal move by reachable space, exits, food, smiley penalty, stone penalty, and straight-ahead preference.</td>
+              <td>As the final fallback, scores each immediately legal move by reachable space, exits, food, tail-return room, smiley cost or credit, stone penalty, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
@@ -402,19 +407,20 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <h2>9. Route scoring</h2>
         <p>Once a food candidate passes the safety gates, it gets a score. The WebAssembly planner also rolls promising candidates forward for up to three pickups, discounting later food but requiring each pickup to keep an escape proof. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
         <div class="formula">
-          score = tailReach ? +100000 : 0<br />
+          score = tailReach ? +145000 : 0<br />
           score += survivalDepth * 5600<br />
           score += exits * 2400<br />
           score += reachableSpace * 16<br />
           score += escapeSpace * 8<br />
-          score += escapeTailReach ? +18000 : 0<br />
+          score += escapeTailReach ? +44000 : 0<br />
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
-          score -= smileysEaten * 1200<br />
+          score += returnPreservingSmileys * 8800<br />
+          score -= smileysEaten * 1050<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>The large tail-reach, survival-depth, and route-out weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests.</p>
+        <p>The large tail-reach, survival-depth, and route-out weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. Smileys still carry a cost, but a smiley that preserves the return path can score better than a clean pickup that would seal the snake in.</p>
         <p>The two newer food planners deliberately use different weights:</p>
         <table>
           <thead>
@@ -497,7 +503,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <li>It simulates the snake body and pushed stones, but not a full multi-tick future of every enemy routine.</li>
           <li>It treats current and next-tick arrow danger conservatively, then recalculates after the real game advances.</li>
           <li>Its state hash is compact and meant for pruning, not for preserving every possible board detail.</li>
-          <li>It may choose a smiley only when clean food routes fail, because smileys cost points and grow the snake.</li>
+          <li>It may choose a smiley when clean food routes fail or when the board is cramped and the smiley keeps the return path open.</li>
           <li>The survival beam favors positions with many exits, so it can miss rare narrow routes that are technically safe but expensive to prove.</li>
         </ul>
         <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values open space and future exits, but it no longer follows its own tail as a fallback strategy.</p>
