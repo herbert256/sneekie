@@ -567,7 +567,9 @@ impl Planner {
     }
 
     fn avoid_extra_smile(&self, body_len: i32) -> bool {
-        body_len >= 115 && !self.few()
+        // Long bodies normally never bridge a smiley, but when starving (food walled
+        // off behind smileys) allow it -- otherwise the snake just orbits to a restart.
+        body_len >= 115 && !self.few() && !(self.urgent && self.idle >= 60)
     }
 
     fn smile_cost(&self, kind: RouteKind, urgent: bool, body_len: i32) -> i64 {
@@ -2114,7 +2116,10 @@ impl Planner {
             match cfg.route_kind {
                 RouteKind::Near | RouteKind::Route => return None,
                 RouteKind::Pressure => {
-                    if !cfg.urgent || body_len >= 58 || !roomy_no_tail {
+                    // Long bodies normally refuse a pickup without a guaranteed tail
+                    // return; when starving, accept it if the landing room is genuinely
+                    // roomy (exits >= 3 + ample space, the roomy_no_tail floor).
+                    if !cfg.urgent || !roomy_no_tail || (body_len >= 58 && self.idle < 50) {
                         return None;
                     }
                 }
@@ -2840,7 +2845,11 @@ impl Planner {
             420
         };
         let current_dist = self.food_distance(&st, dist_limit);
-        for allow_smile in [false, true] {
+        // When starving, skip the smiley-free pass so a one-smiley bridge into
+        // walled-off food can win below; -50 points beats orbiting to a restart.
+        let desperate = self.urgent && self.idle >= 60;
+        let passes: &[bool] = if desperate { &[true] } else { &[false, true] };
+        for &allow_smile in passes {
             let mut best = None;
             let mut best_score = i64::MIN;
             for ns in self.legal(&st, allow_smile) {
@@ -2993,11 +3002,9 @@ impl Planner {
                         0
                     }
                     - if c == 1 {
-                        if return_room {
-                            3_000
-                        } else {
-                            8_000
-                        }
+                        let smile_pen = if return_room { 3_000 } else { 8_000 };
+                        // starving: a smiley step toward food is worth -50 to keep moving
+                        if desperate { smile_pen / 8 } else { smile_pen }
                     } else {
                         0
                     }
