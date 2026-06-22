@@ -2706,6 +2706,7 @@ impl Planner {
     fn survival_move(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
+        let current_goal = self.goal_distance(&st, 1600);
         for allow_smile in [false, true] {
             let mut best = None;
             let mut best_score = i64::MIN;
@@ -2770,8 +2771,24 @@ impl Planner {
                     self.urgent,
                     if is_food(c) { 1 } else { 0 },
                 );
+                let goal = if is_food(c) {
+                    0
+                } else {
+                    self.goal_distance(&ns, 1600)
+                };
+                let goal_pull = if goal < INF {
+                    let progress = if current_goal < INF {
+                        (current_goal - goal).clamp(-12, 12) as i64
+                    } else {
+                        0
+                    };
+                    6_000 - goal.min(180) as i64 * 45 + progress * 500
+                } else {
+                    0
+                };
                 let score = info.space as i64 * 26
                     + exits as i64 * 1_000
+                    + goal_pull
                     + if is_food(c) { 2_500 } else { 0 }
                     + if info.tail_reach { 5_000 } else { 0 }
                     + if escape.tail_reach { 18_000 } else { 0 }
@@ -2852,6 +2869,22 @@ impl Planner {
             }
         }
         INF
+    }
+
+    fn goal_distance(&mut self, st: &State, limit: usize) -> i32 {
+        // Global heading toward the nearest gettable food, with the stone "dig"
+        // distance as a fallback so walled-off food still gives a direction.
+        // The space-maximizing fallbacks use this so they are never aimless
+        // while items remain somewhere on the board.
+        let d = self.food_distance(st, limit);
+        if d < INF {
+            return d;
+        }
+        if self.stone_maze_level() {
+            self.dig_distance(st, limit)
+        } else {
+            d
+        }
     }
 
     fn dig_distance(&self, st: &State, limit: usize) -> i32 {
@@ -3951,6 +3984,19 @@ mod tests {
             dig > 0 && dig < INF,
             "dig distance tunnels through the pushable stone: {dig}"
         );
+        // goal_distance falls back to the dig heading in a stone maze.
+        assert!(p.goal_distance(&st, 2000) < INF);
+    }
+
+    #[test]
+    fn survival_move_heads_toward_distant_food() {
+        // On an open board the space-maximizing fallback should still drift
+        // toward the only food instead of wandering away from it.
+        let mut board = empty_board();
+        board[offset(10, 40) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        assert_eq!(p.survival_move(), Some(77));
     }
 
     #[test]
