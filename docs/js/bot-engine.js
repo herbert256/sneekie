@@ -14,8 +14,11 @@
   const dirIdx = sc => sc===72?0:sc===80?1:sc===75?2:3;
   const stateKey = st => (((((st.head>>1)*4 + dirIdx(st.dir))*2000 + (st.body[0]>>1))*2000 + (st.body[st.body.length-2]>>1))*16000 + st.body.length);
   const defaultNow = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const scriptSrc = document.currentScript && document.currentScript.src;
+  const wasmUrl = scriptSrc ? new URL('bot-engine.wasm', scriptSrc).href : 'bot-engine.wasm';
+  const isArrowKey = sc => sc===72 || sc===80 || sc===75 || sc===77;
 
-  function create(access){
+  function createJs(access){
     const board = new Uint16Array(4000);
     const dangerSeen = new Uint16Array(4000);
     const dangerVals = new Uint8Array(4000);
@@ -369,6 +372,94 @@
     };
 
     return { decide };
+  }
+
+  function createWasm(access){
+    const now = access.now || defaultNow;
+    let exports = null, board = null, body = null, enemy = null, disabled = false;
+    const canLoad = typeof WebAssembly !== 'undefined' &&
+      typeof WebAssembly.instantiate === 'function' &&
+      typeof fetch === 'function' &&
+      window.SNEEKIE_BOT_FORCE_JS !== true &&
+      location.protocol !== 'file:';
+
+    const bindMemory = () => {
+      const memory = exports && exports.memory;
+      if(!memory || typeof exports.board_ptr !== 'function' ||
+          typeof exports.body_ptr !== 'function' ||
+          typeof exports.enemy_ptr !== 'function' ||
+          typeof exports.decide !== 'function') throw new Error('missing wasm bot exports');
+      board = new Uint16Array(memory.buffer, exports.board_ptr(), 4000);
+      body = new Int32Array(memory.buffer, exports.body_ptr(), 15001);
+      enemy = new Int32Array(memory.buffer, exports.enemy_ptr(), 81 * 4);
+    };
+
+    const init = canLoad ? (async () => {
+      try {
+        const response = await fetch(wasmUrl, { credentials:'same-origin' });
+        if(!response.ok) throw new Error(`HTTP ${response.status}`);
+        const bytes = await response.arrayBuffer();
+        const result = await WebAssembly.instantiate(bytes, { env:{ now_ms:now } });
+        exports = result.instance.exports;
+        bindMemory();
+      } catch(err) {
+        disabled = true;
+        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot unavailable; using JavaScript planner.', err);
+      }
+    })() : Promise.resolve();
+
+    const copySnapshot = () => {
+      if(!exports) return null;
+      if(board.buffer !== exports.memory.buffer) bindMemory();
+      const g = access.state();
+      for(let o=0; o<4000; o+=2) board[o] = access.peek(o);
+      const len = Math.max(2, Math.min(15001, (g.BTEL|0) - (g.ETEL|0) + 1));
+      for(let i=0; i<len; i++) body[i] = g.T[(g.ETEL|0) + i] | 0;
+      if(g.D){
+        for(let i=0; i<=80; i++){
+          const row = g.D[i];
+          for(let j=0; j<4; j++) enemy[i*4 + j] = row ? (row[j] | 0) : 0;
+        }
+      } else enemy.fill(0);
+      return { level:g.LEVEL|0, items:((g.HART|0) + (g.KLAVER|0))|0, len };
+    };
+
+    const decide = options => {
+      if(disabled || !exports) return null;
+      try {
+        const snapshot = copySnapshot();
+        if(!snapshot) return null;
+        const sc = exports.decide(
+          snapshot.level,
+          snapshot.items,
+          snapshot.len,
+          options && Number.isFinite(options.idle) ? options.idle|0 : 0,
+          options && options.looping ? 1 : 0,
+          options && Number.isFinite(options.budgetMs) ? Math.max(1, options.budgetMs) : 35
+        );
+        if(sc === 0) return null;
+        if(isArrowKey(sc)) return sc;
+        disabled = true;
+        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot returned invalid scancode:', sc);
+      } catch(err) {
+        disabled = true;
+        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot failed; using JavaScript planner.', err);
+      }
+      return null;
+    };
+
+    return { decide, ready:() => !!exports && !disabled, init };
+  }
+
+  function create(access){
+    const js = createJs(access);
+    const wasm = createWasm(access);
+    return {
+      decide(options){
+        const sc = wasm.decide(options);
+        return isArrowKey(sc) ? sc : js.decide(options);
+      }
+    };
   }
 
   window.SneekieBotEngine = { create };

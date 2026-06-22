@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-22-flag-images-1';
+const VERSION = '2026-06-22-wasm-bot-1';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
@@ -115,6 +115,7 @@ const CORE_ASSETS = [
   'index_nl.html',
   'index_uk.html',
   'js/bot-engine.js',
+  'js/bot-engine.wasm',
   'js/bot.js',
   'js/game.js',
   'js/i18n.js',
@@ -181,7 +182,7 @@ function isFreshenedAsset(request){
   return isHtmlLike(request) ||
     request.destination === 'script' ||
     request.destination === 'style' ||
-    /\.(?:css|js|webmanifest|json|xml|txt|bas)$/i.test(url.pathname);
+    /\.(?:css|js|wasm|webmanifest|json|xml|txt|bas)$/i.test(url.pathname);
 }
 
 function isImageAsset(request){

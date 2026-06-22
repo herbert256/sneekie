@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
     <title>Sneekie - How the bot thinks</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - How the bot thinks" />
-    <meta property="og:description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta property="og:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta property="og:url" content="https://sneekie.xyz/en/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -30,7 +30,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - How the bot thinks" />
-    <meta name="twitter:description" content="The Bot page does not play a recording. It runs the real game and a separate JavaScript planner in the same page, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="twitter:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -59,7 +59,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a separate planner in <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press. Every move it snapshots the snake state, prioritizes nearby food, rejects tempting routes that become traps, watches for looped head positions, and gives up cleanly instead of orbiting its own tail.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. If WebAssembly is unavailable, the same JavaScript planner remains as a backup. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -107,7 +107,7 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine snapshots the live VRAM and snake arrays; the driver handles tabs, restarts, speed, and key presses:</p>
+        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
         <pre><code>const sc = planner.decide({ idle, looping, budgetMs: routeBudget() });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
@@ -179,7 +179,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes into a compact <code>Uint16Array</code> and rebuilds the snake body from <code>T</code>. For simulated routes, the bot then keeps an overlay map called <code>cells</code>. This overlay records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell. If a cell is not in the overlay, the bot reads the per-tick snapshot. That keeps route simulation cheap without cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, and the arrow enemy table <code>D</code> into fixed WebAssembly memory buffers. The JavaScript fallback keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
@@ -236,8 +236,8 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
         <p>
-          The bot treats arrow levels differently because a square can be empty now and fatal one tick later. The
-          <code>danger(offset)</code> function marks a destination unsafe if an arrow is already there, if an arrow will step into it on the next enemy update, or if a wrapping arrow will reappear there.
+          The bot treats arrow levels differently because a square can be empty now and fatal a few ticks later. The
+          <code>danger(offset)</code> function marks a destination unsafe if an arrow is already there, if a projected future arrow will step into it, or if a wrapping arrow will reappear there.
         </p>
         <div class="flow">
           <div>
@@ -254,7 +254,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           </div>
           <div><b>Wrap edges</b><span>Special checks cover arrows that jump from the far edge back to the start.</span></div>
         </div>
-        <p>This is a one-tick hazard model, not a full future enemy simulation. That is intentional: the bot moves, the real game advances, and the next decision recalculates danger from the fresh screen. That gives good arrow avoidance without making every search branch simulate all enemy routines.</p>
+        <p>The WebAssembly planner projects arrow masks 4 future ticks on normal arrow levels and 6 ticks in urgent or endgame searches. Each simulated branch checks the mask for its own future step, so a route can reject squares that look empty now but will be crossed by an arrow before the snake can safely use them.</p>
       </section>
       <section id="simulation">
         <h2>5. Move simulation</h2>
@@ -315,19 +315,19 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr>
               <td><code>nearFood()</code></td>
               <td>Before every wider search, first without smileys and then with smileys if needed.</td>
-              <td>Depth 9 normally, 12 when 6 or fewer items remain; at most 260 states.</td>
+              <td>Depth 10 normally, 14 when 6 or fewer items remain; a shallow first pass before wider planning.</td>
               <td>Very strong distance penalty, so safe nearby food wins.</td>
             </tr>
             <tr>
               <td><code>routeFood()</code></td>
               <td>The normal cautious route finder.</td>
-              <td>Depth 78 normally, 115 when 6 or fewer items remain; at most 950 states; can stop after 28 food candidates once a good route exists.</td>
+              <td>Depth 98 normally, 145 when 6 or fewer items remain; up to 3500 states normally and 7000 in endgame or urgent searches.</td>
               <td>Survival first: route-out proof, tail reach, future exits, and open space beat shortness.</td>
             </tr>
             <tr>
               <td><code>pressureFood()</code></td>
               <td>When the bot is idle, looping, or when ordinary safe food searches did not help.</td>
-              <td>Depth 70-125 depending on endgame and urgency; 720-1050 states; 22-38 checked food candidates.</td>
+              <td>Depth 85-155 depending on endgame and urgency; up to 5000 states normally and 9000 when urgent.</td>
               <td>Looser survival gates and a smaller distance penalty, to break circles without grabbing obvious traps.</td>
             </tr>
           </tbody>
@@ -359,7 +359,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <p><code>escapeProof()</code> simulates extra post-pickup moves and requires a path into open space or back toward the moving tail before the food route can win.</p>
           </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. In the final items, the bot demands more space, a deeper survival horizon, and a proved route out after the pickup.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. The WebAssembly planner also rejects early self-enclosures: tiny regions, one-cell chokepoints, and routes that lose tail reach without enough open space are filtered before their short-term reward can win.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
@@ -389,7 +389,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="score">
         <h2>9. Route scoring</h2>
-        <p>Once a food candidate passes the safety gates, it gets a score. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
+        <p>Once a food candidate passes the safety gates, it gets a score. The WebAssembly planner also rolls promising candidates forward for up to three pickups, discounting later food but requiring each pickup to keep an escape proof. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
         <div class="formula">
           score = tailReach ? +100000 : 0<br />
           score += survivalDepth * 5600<br />
@@ -433,11 +433,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>The bot has to think between visible game moves. Several caps keep that work bounded:</p>
         <ul>
           <li><code>danger()</code> uses a generation-stamped cache so repeated hazard checks in one decision are cheap.</li>
-          <li><code>nearFood()</code> is deliberately shallow: 260 states and only 9-12 moves deep.</li>
-          <li><code>routeFood()</code> stops at 950 dequeued search states and keeps only useful food candidates.</li>
-          <li><code>pressureFood()</code> uses a separate cap: 720 states normally, 1050 when urgent.</li>
-          <li><code>survivalDepth()</code> is a beam search: after each depth, it keeps the 40 states with the most immediate exits.</li>
-          <li><code>escapeProof()</code> keeps the 48 best post-pickup states per depth while proving that a food route has a way out.</li>
+          <li><code>nearFood()</code> is deliberately shallow and runs before the wider searches.</li>
+          <li><code>routeFood()</code> can scan up to 3500 states normally and 7000 in endgame or urgent searches.</li>
+          <li><code>pressureFood()</code> can scan up to 5000 states normally and 9000 when urgent.</li>
+          <li><code>survivalDepth()</code> is a beam search: after each depth, WebAssembly keeps up to 128 states with the most immediate exits.</li>
+          <li><code>escapeProof()</code> keeps up to 160 post-pickup states per depth while proving that a food route has a way out.</li>
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
           <li>The page speed slider sets the target cadence between key presses; planner time is counted inside that cadence when it fits.</li>
         </ul>

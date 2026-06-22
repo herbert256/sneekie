@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <title>Sneekie - Hoe de bot denkt</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -22,7 +22,7 @@
     <meta property="og:locale" content="nl_NL" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - Hoe de bot denkt" />
-    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta property="og:url" content="https://sneekie.xyz/nl/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -30,7 +30,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - Hoe de bot denkt" />
-    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel en een aparte JavaScript-planner in dezelfde pagina, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -59,7 +59,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een aparte planner in <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler. Elke zet maakt hij een snapshot van de slangtoestand, zoekt hij veilig voedsel, weigert hij routes die vallen worden, let hij op herhaalde kopposities, en geeft hij netjes op in plaats van rond zijn eigen staart te blijven draaien.</p>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. Als WebAssembly niet beschikbaar is, blijft dezelfde JavaScript-planner de backup. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
@@ -83,7 +83,7 @@
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine maakt snapshots van de live VRAM- en slangarrays; de driver regelt tabs, herstarts, snelheid en toetsaanslagen:</p>
+        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine start meteen met de JavaScript-planner, laadt <code>bot-engine.wasm</code> op de achtergrond, en schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
         <pre><code>const sc = planner.decide({ idle, looping, budgetMs: routeBudget() });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Scripts in dezelfde pagina kunnen die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
@@ -109,7 +109,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens naar een compacte <code>Uint16Array</code> en bouwt hij het slangenlijf opnieuw op uit <code>T</code>. Voor denkbeeldige routes bewaart de bot daarna alleen verschillen in een overlay-map <code>cells</code>. Daarin staan bijvoorbeeld een geduwde steen of een leeg geworden staartvak. Staat een vak niet in de overlay, dan leest hij de snapshot van deze tick. Zo hoeft niet voor elke tak de volledige VRAM-array te worden gekopieerd.</p>
+        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code> en de pijlentabel <code>D</code> naar vaste WebAssembly-buffers. De JavaScript-backup gebruikt dezelfde snapshotvorm. Voor denkbeeldige routes bewaart de planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
@@ -144,7 +144,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>
-        <p>Een leeg vak kan in het volgende tick fataal zijn. <code>danger(offset)</code> markeert een doel onveilig als er al een pijl staat, als een pijl er straks in stapt, of als een pijl via de rand terugkomt.</p>
+        <p>Een leeg vak kan een paar ticks later fataal zijn. <code>danger(offset)</code> markeert een doel onveilig als er al een pijl staat, als een voorspelde toekomstige pijl er straks in stapt, of als een pijl via de rand terugkomt.</p>
         <div class="flow">
           <div><b>Huidig vak</b><span><code>peek(o)</code> is <code>24</code>, <code>26</code> of <code>27</code>.</span></div>
           <div><b>Omhoogpijlen</b><span>Een <span class="ico a">&uarr;</span> onder het vak stapt erin.</span></div>
@@ -152,7 +152,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <div><b>Linkspijlen</b><span>Een <span class="ico a">&larr;</span> rechts van het vak stapt erin.</span></div>
           <div><b>Randen</b><span>Extra controles dekken pijlen die vanaf de rand terug naar het begin springen.</span></div>
         </div>
-        <p>Dit model kijkt een tick vooruit, niet naar de hele vijandentoekomst. Dat is genoeg: na elke echte game-update rekent de bot opnieuw met het verse scherm.</p>
+        <p>De WebAssembly-planner projecteert pijlen 4 ticks vooruit op gewone pijllevels en 6 ticks in urgente of late zoekacties. Elke gesimuleerde tak kijkt naar het gevaarmasker dat bij zijn toekomstige stap hoort.</p>
       </section>
       <section id="simulation">
         <h2>5. Zetten simuleren</h2>
@@ -176,16 +176,16 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <table>
           <thead><tr><th>Planner</th><th>Wanneer</th><th>Limieten</th><th>Voorkeur</th></tr></thead>
           <tbody>
-            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie.</td><td>Diepte 9, of 12 met weinig items; maximaal 260 toestanden.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
-            <tr><td><code>routeFood()</code></td><td>De normale voorzichtige routezoeker.</td><td>Diepte 78, of 115 in de eindfase; maximaal 950 toestanden.</td><td>Overleving eerst: bewezen uitweg, staartbereik, uitgangen en ruimte.</td></tr>
-            <tr><td><code>pressureFood()</code></td><td>Bij stilstand, lussen of wanneer gewone veilige voedselzoekers niets vinden.</td><td>Diepte 70-125; 720-1050 toestanden.</td><td>Meer druk richting voedsel, maar nog steeds zonder duidelijke vallen.</td></tr>
+            <tr><td><code>nearFood()</code></td><td>Voor elke brede zoekactie.</td><td>Diepte 10, of 14 met weinig items.</td><td>Zeer hoge afstandsstraf: veilig dichtbij voedsel wint.</td></tr>
+            <tr><td><code>routeFood()</code></td><td>De normale voorzichtige routezoeker.</td><td>Diepte 98, of 145 in de eindfase; tot 3500-7000 toestanden.</td><td>Overleving eerst: bewezen uitweg, staartbereik, uitgangen en ruimte.</td></tr>
+            <tr><td><code>pressureFood()</code></td><td>Bij stilstand, lussen of wanneer gewone veilige voedselzoekers niets vinden.</td><td>Diepte 85-155; tot 5000-9000 toestanden.</td><td>Meer druk richting voedsel, maar nog steeds zonder duidelijke vallen.</td></tr>
           </tbody>
         </table>
         <p>In de eindfase zoekt de bot dieper, omdat de laatste harten en klavers vaak precies in lastige hoeken liggen. Smileys blijven tweede keus: ze worden alleen toegestaan als schone routes mislukken.</p>
       </section>
       <section id="safety">
         <h2>7. Valcontroles</h2>
-        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen, inclusief een bewezen uitweg na het oppakken.</p>
+        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen, inclusief een bewezen uitweg na het oppakken en vroegere detectie van zelfinsluiting in kleine kamers of smalle doorgangen.</p>
         <div class="cards">
           <div class="card"><h3>Uitgangen</h3><p><code>legalCount()</code> telt hoeveel zetten direct na het eten nog mogelijk zijn. Nul wordt geweigerd; een uitgang krijgt een zware straf.</p></div>
           <div class="card"><h3>Bereikbare ruimte</h3><p><code>spaceInfo()</code> vult vanaf de gesimuleerde kop en respecteert richting, muren, lijf, stenen, voedsel en gevaar.</p></div>
@@ -207,7 +207,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="score">
         <h2>9. Routes scoren</h2>
-        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
+        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De WebAssembly-planner rolt veelbelovende kandidaten ook door tot maximaal drie pickups, met lagere waarde voor later voedsel maar met opnieuw een bewezen uitweg. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
         <div class="formula">
           score = tailReach ? +100000 : 0<br />
           score += survivalDepth * 5600<br />
@@ -228,11 +228,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>De bot moet tussen zichtbare zetten kunnen denken. Daarom zijn er harde caps:</p>
         <ul>
           <li><code>danger()</code> gebruikt een generatiecache.</li>
-          <li><code>nearFood()</code> is ondiep: 260 toestanden en 9-12 stappen.</li>
-          <li><code>routeFood()</code> stopt bij 950 zoektoestanden.</li>
-          <li><code>pressureFood()</code> gebruikt 720 toestanden normaal en 1050 wanneer urgent.</li>
-          <li><code>survivalDepth()</code> is een beam search en bewaart per diepte de 40 toestanden met de meeste uitgangen.</li>
-          <li><code>escapeProof()</code> bewaart per diepte de 48 beste toestanden na het oppakken terwijl hij bewijst dat de voedselroute een uitweg heeft.</li>
+          <li><code>nearFood()</code> blijft de ondiepe eerste pass.</li>
+          <li><code>routeFood()</code> kan 3500 toestanden scannen, of 7000 in eindfase of urgentie.</li>
+          <li><code>pressureFood()</code> kan 5000 toestanden scannen, of 9000 wanneer urgent.</li>
+          <li><code>survivalDepth()</code> is een beam search en bewaart in WebAssembly tot 128 toestanden per diepte.</li>
+          <li><code>escapeProof()</code> bewaart tot 160 beste toestanden per diepte na het oppakken terwijl hij bewijst dat de voedselroute een uitweg heeft.</li>
           <li>De schuifregelaar zet het doeltempo tussen toetsaanslagen; plannertijd telt mee binnen dat tempo wanneer dat past.</li>
         </ul>
         <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet. Normale plannertijd wordt van die wachttijd afgetrokken; als een zoekactie langer duurt dan het doeltempo, gaat de volgende toets meteen door.</p>

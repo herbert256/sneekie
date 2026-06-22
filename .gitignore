@@ -6,3 +6,7 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# Rust/Wasm build output
+target/
+wasm/*/target/

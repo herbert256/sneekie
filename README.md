@@ -15,6 +15,9 @@ There is no framework, build step, package dependency, or dedicated automated
 test suite. The published site lives in `docs/` and is served by GitHub Pages.
 All site source editing now happens directly under `docs/`, including the
 localized pages in `docs/en/`, `docs/nl/`, and `docs/uk/`.
+The Live bot is the one exception with source outside `docs/`: its Rust planner
+lives under `wasm/bot-engine/` and is checked in as `docs/js/bot-engine.wasm`,
+with `docs/js/bot-engine.js` falling back to JavaScript when Wasm is unavailable.
 
 ## Controls
 
@@ -59,6 +62,8 @@ docs/
   favicon.png
   site.webmanifest
   sw.js                # PWA service worker for offline play
+wasm/
+  bot-engine/          # Rust source for the Live bot WebAssembly planner
 AGENTS.md             # guidance for Codex
 CLAUDE.md             # guidance for Claude Code
 ```
@@ -92,4 +97,13 @@ Useful checks after edits:
 
 ```sh
 node --check docs/js/*.js docs/sw.js
+```
+
+When changing the Rust bot planner, rebuild the checked-in Wasm before testing
+the browser pages:
+
+```sh
+cargo test --manifest-path wasm/bot-engine/Cargo.toml
+cargo build --manifest-path wasm/bot-engine/Cargo.toml --release --target wasm32-unknown-unknown
+wasm-opt -Oz wasm/bot-engine/target/wasm32-unknown-unknown/release/bot_engine.wasm -o docs/js/bot-engine.wasm
 ```

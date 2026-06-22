@@ -1,8 +1,9 @@
 'use strict';
 /* bot.js — the Live bot driver, running in THIS page (no iframe, so it works from
    file:// too). game.js renders the real game into #screen; bot-engine.js plans
-   one scancode from a compact live snapshot; this script handles tabs, restarts,
-   speed, and pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
+   one scancode from a compact live snapshot, using WebAssembly when available
+   and JavaScript otherwise; this script handles tabs, restarts, speed, and
+   pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
 (function(){
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -48,7 +49,7 @@
   const planner = window.SneekieBotEngine && window.SneekieBotEngine.create({
     now,
     peek: o => peek(o),
-    state: () => ({ T, ETEL, BTEL, LEVEL, HART, KLAVER })
+    state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER })
   });
 
   /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
