@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-22-wasm-bot-6';
+const VERSION = '2026-06-22-bot-progress';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);

@@ -42,7 +42,7 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const passivePreview = window.SNEEKIE_PASSIVE_PREVIEW === true;
-  const STARTUP_DELAY_MS = passivePreview ? 0 : 10000;
+  const STARTUP_DELAY_MS = passivePreview ? 0 : 7000;
   const startupAt = now();
   const driveStartAt = startupAt + STARTUP_DELAY_MS;
   const startupGraceUntil = driveStartAt + 4000;
@@ -56,10 +56,7 @@
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
   const botText = key =>
     typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
-  function countdownText(seconds){
-    return botText('botLoadingCountdown').replace('{seconds}', String(seconds));
-  }
-  function showStartupCountdown(){
+  function showStartupProgress(){
     if(STARTUP_DELAY_MS <= 0) return null;
     const overlay = document.createElement('div');
     overlay.className = 'bot-startup';
@@ -70,17 +67,26 @@
     panel.className = 'bot-startup-panel';
     const text = document.createElement('p');
     text.className = 'bot-startup-text';
+    text.textContent = botText('botLoading');
+    const progress = document.createElement('div');
+    progress.className = 'bot-startup-progress';
+    progress.setAttribute('role', 'progressbar');
+    progress.setAttribute('aria-label', botText('botLoading'));
+    progress.setAttribute('aria-valuemin', '0');
+    progress.setAttribute('aria-valuemax', '100');
+    progress.setAttribute('aria-valuenow', '0');
+    const fill = document.createElement('div');
+    fill.className = 'bot-startup-progress-fill';
+    progress.appendChild(fill);
     panel.appendChild(text);
+    panel.appendChild(progress);
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
-    let lastSeconds = -1;
     const tick = () => {
-      const left = Math.max(0, Math.ceil((driveStartAt - now()) / 1000));
-      if(left !== lastSeconds){
-        text.textContent = countdownText(left);
-        lastSeconds = left;
-      }
-      if(left > 0) setTimeout(tick, 200);
+      const progressValue = Math.max(0, Math.min(1, (now() - startupAt) / STARTUP_DELAY_MS));
+      fill.style.transform = 'scaleX(' + progressValue.toFixed(3) + ')';
+      progress.setAttribute('aria-valuenow', String(Math.round(progressValue * 100)));
+      if(progressValue < 1) setTimeout(tick, 100);
       else {
         overlay.classList.add('is-done');
         setTimeout(() => overlay.remove(), 260);
@@ -94,7 +100,7 @@
     peek: o => peek(o),
     state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER })
   });
-  showStartupCountdown();
+  showStartupProgress();
 
   /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
   const LEVELS = [26,27,28,29,30,31,32];
