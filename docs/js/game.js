@@ -559,12 +559,14 @@ const raf = () => new Promise(r => requestAnimationFrame(r));
 const rnd = Math.random;
 const DEATH = {sneekie:'crashed'};          // RETURN 510
 const STUCK = {sneekie:'stuck'};
+const STUCK_FLASH_COUNT = 4;
+const STUCK_FLASH_MS = 250;
 async function flashStuckScreen(){
-  for(let I = 1; I <= 5; I++){
+  for(let I = 1; I <= STUCK_FLASH_COUNT; I++){
     tube.classList.add('stuck-red');
-    await sleep(250);
+    await sleep(STUCK_FLASH_MS);
     tube.classList.remove('stuck-red');
-    if(I < 5) await sleep(250);
+    if(I < STUCK_FLASH_COUNT) await sleep(STUCK_FLASH_MS);
   }
 }
 

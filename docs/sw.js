@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '2026-06-22-bot-room-door-strategy';
+const VERSION = '2026-06-22-stuck-flash-four';
 const PRECACHE = `sneekie-precache-${VERSION}`;
 const RUNTIME = `sneekie-runtime-${VERSION}`;
 const KEEP_CACHES = new Set([PRECACHE, RUNTIME]);
