@@ -148,7 +148,7 @@
      key off LEVEL > 32, not the snake state, or a clean win would freeze here. */
   const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
   (async () => {
-    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false;
+    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, stuckQueued = false;
     let observedLive = null;
     const headTrail = [];
     while(true){
@@ -159,6 +159,7 @@
       if(LEVEL > 32){
         if(++over >= 4){
           if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
+          stuckQueued = false;
           pushKey('\r'); pushKey(yesKey()); over = 0;
         }
         observedLive = LIVE;
@@ -172,6 +173,7 @@
           queueNextLevel();
           gameEndQueued = true;
           deathQueued = true;
+          stuckQueued = false;
           idle = 0; headTrail.length = 0;
           observedLive = LIVE;
           pushKey('\r');
@@ -182,6 +184,7 @@
       // The lower life count is the stable signal that the previous level failed.
       if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
         queueNextLevel();
+        stuckQueued = false;
         idle = 0; headTrail.length = 0;
       }
       observedLive = LIVE;
@@ -192,6 +195,7 @@
           activeLevel = LEVEL;
           target = LEVEL;
           jumpingTo = null;
+          stuckQueued = false;
           markTabs();
         } else {
           await sleep(botDelay()); continue;
@@ -212,11 +216,12 @@
           pushKey('\r');
         }
         else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
-        pendingJump = null; idle = 0; headTrail.length = 0;
+        pendingJump = null; stuckQueued = false; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }
       const tickStarted = now();
       if(waitingForKey()){
+        stuckQueued = false;
         pushKey('\r');                                 // under the level popup -> any key dismisses it
         await sleepForTick(tickStarted); continue;
       }
@@ -227,9 +232,17 @@
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
-      const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() }) : null;
+      const stalled = idle > 180 || (idle > 96 && repeats >= 4);
+      const sc = stalled ? null : (planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() }) : null);
       if(sc !== null){
+        stuckQueued = false;
         pushKey(keyOf[sc]);                            // a safe move
+      }
+      else if(!stuckQueued){
+        stuckQueued = true;
+        idle = 0; headTrail.length = 0;
+        if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
+        else pushKey('\r');
       }
       await sleepForTick(tickStarted);
     }

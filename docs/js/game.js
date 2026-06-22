@@ -879,11 +879,24 @@ let ZORE = 0, ZCORE = 0;                    // highscore / score (the non-DEFINT
 let LIVE = 0, LEVEL = 0, BTEL = 0, ETEL = 0, E = 0, F = 0;
 let HART = 0, KLAVER = 0, BONUS = 0, AANTAL = 0, BMIN = 0, Z = 0, K1 = 0;
 let botRequestedLevel = 0;
+let botRequestedStuck = false;
 
 window.sneekieRequestLevel = n => {
   const level = Math.trunc(Number(n));
-  if(level >= 1 && level <= 32) botRequestedLevel = level;
+  if(level >= 1 && level <= 32){
+    botRequestedLevel = level;
+    botRequestedStuck = false;
+  }
 };
+window.sneekieRequestStuck = () => {
+  botRequestedStuck = true;
+  pushKey('\r');
+};
+function consumeBotStuckRequest(){
+  if(!botRequestedStuck) return false;
+  botRequestedStuck = false;
+  return true;
+}
 
 /* 1150: drop item L on a random empty cell (rows 4-20) */
 function place(L){
@@ -1178,6 +1191,7 @@ async function playLevels(){
     clickStartsLevel = true;
     await waitKey();
     clickStartsLevel = false;
+    botRequestedStuck = false;
     /* 410: restore */
     for(let I = 1; I <= POPUP_BYTES; I++) for(let I3 = 0; I3 <= 3; I3++) poke(1493+I+I3*160, S[I+I3*POPUP_BYTES]);
     {
@@ -1191,13 +1205,15 @@ async function playLevels(){
       if(botRequestedLevel){
         LEVEL = botRequestedLevel - 1;
         botRequestedLevel = 0;
+        botRequestedStuck = false;
         skip = true;
         break;
       }
       try{
-        if(isSnakeStuck()) throw STUCK;
+        if(consumeBotStuckRequest() || isSnakeStuck()) throw STUCK;
         const waitMs = clickTarget ? Math.min(Z * 1000, CLICK_ROUTE_MS) : Z * 1000;
         let A$ = await keyOrTimeout(waitMs);                  // 430-460
+        if(consumeBotStuckRequest()) throw STUCK;
         if(!A$.length){
           const key = nextClickTargetKey();
           if(key) A$ = key;
