@@ -384,6 +384,7 @@ impl Planner {
         urgent: bool,
         deadline: f64,
     ) -> Self {
+        let urgent = urgent || idle >= 18;
         let mut body_bits = BoardBits::default();
         for off in body.iter().copied() {
             body_bits.insert(off);
@@ -434,6 +435,14 @@ impl Planner {
                 .or_else(|| self.route_food(true))
                 .or_else(|| self.pressure_food(true, self.urgent))
                 .or_else(|| self.pressure_food(false, self.urgent))
+        } else if self.urgent && self.idle >= 36 {
+            self.pressure_food(false, true)
+                .or_else(|| self.pressure_food(true, true))
+                .or_else(|| self.pressure_step())
+                .or_else(|| self.near_food(false))
+                .or_else(|| self.route_food(false))
+                .or_else(|| self.route_food(true))
+                .or_else(|| self.near_food(true))
         } else {
             self.near_food(false)
                 .or_else(|| self.route_food(false))
@@ -540,8 +549,29 @@ impl Planner {
         }
     }
 
-    fn smile_cost(&self, kind: RouteKind, urgent: bool) -> i64 {
-        match kind {
+    fn smile_growth_debt(&self, body_len: i32, urgent: bool) -> i64 {
+        let long_body = (body_len - 96).max(0) as i64;
+        let very_long_body = (body_len - 118).max(0) as i64;
+        let huge_body = (body_len - 150).max(0) as i64;
+        let food_pressure = if self.items > 58 {
+            900
+        } else if self.items > 40 {
+            400
+        } else {
+            0
+        };
+        food_pressure
+            + long_body * if urgent { 75 } else { 115 }
+            + very_long_body * if urgent { 180 } else { 260 }
+            + huge_body * if urgent { 350 } else { 520 }
+    }
+
+    fn avoid_extra_smile(&self, body_len: i32) -> bool {
+        body_len >= 115 && !self.few()
+    }
+
+    fn smile_cost(&self, kind: RouteKind, urgent: bool, body_len: i32) -> i64 {
+        let base = match kind {
             RouteKind::Near => 8_500,
             RouteKind::Route => 10_500,
             RouteKind::Pressure => {
@@ -551,7 +581,8 @@ impl Planner {
                     8_000
                 }
             }
-        }
+        };
+        base + self.smile_growth_debt(body_len, urgent)
     }
 
     fn smile_escape_credit(
@@ -1155,6 +1186,10 @@ impl Planner {
 
     fn stone_maze_level(&self) -> bool {
         matches!((self.level - 1).rem_euclid(16), 3 | 11)
+    }
+
+    fn line_maze_level(&self) -> bool {
+        matches!((self.level - 1).rem_euclid(16), 1 | 9)
     }
 
     fn start_state(&self) -> State {
@@ -1766,6 +1801,9 @@ impl Planner {
         if cfg.allow_smile && ns.smiles > self.smile_limit(cfg.route_kind, cfg.urgent) {
             return None;
         }
+        if cfg.allow_smile && ns.smiles > 0 && self.avoid_extra_smile(ns.body.len() as i32) {
+            return None;
+        }
         let few = self.few();
         if exits <= 1 {
             let forced = self.forced_path(
@@ -1912,6 +1950,41 @@ impl Planner {
                 return None;
             }
             ns.chokes += (recent_debt / 18_000).min(4) as i32;
+        }
+        if self.stone_maze_level()
+            && self.idle >= 36
+            && ns.dist >= 4
+            && ns.ate == 0
+            && exits <= 2
+        {
+            let food_dist = self.food_distance(&ns, 320);
+            if food_dist > 24 {
+                match cfg.route_kind {
+                    RouteKind::Near | RouteKind::Route => return None,
+                    RouteKind::Pressure => {
+                        if ns.dist >= 8 || food_dist >= INF {
+                            return None;
+                        }
+                        ns.chokes += 6;
+                    }
+                }
+            }
+        }
+        if (self.line_maze_level() || self.stone_maze_level())
+            && ns.dist >= 3
+            && ns.ate == 0
+            && ns.repeats >= 28
+            && exits <= 2
+        {
+            match cfg.route_kind {
+                RouteKind::Near | RouteKind::Route => return None,
+                RouteKind::Pressure => {
+                    if !cfg.urgent && ns.repeats >= 36 {
+                        return None;
+                    }
+                    ns.chokes += 5;
+                }
+            }
         }
 
         let cap = match cfg.route_kind {
@@ -2218,7 +2291,7 @@ impl Planner {
                 - door_regression
                 - gate_debt
                 - recent_debt
-                - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent)
+                - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent, body_len)
                 - ns.stones as i64 * 52
                 - ns.chokes as i64
                     * match cfg.route_kind {
@@ -2353,6 +2426,11 @@ impl Planner {
                     self.urgent,
                     if is_food(c) || food_pull > 0 { 1 } else { 0 },
                 );
+                let smile_growth_debt = if c == 1 {
+                    self.smile_growth_debt(ns.body.len() as i32, self.urgent)
+                } else {
+                    0
+                };
                 let score = live as i64 * 8_400
                     + info.space as i64 * 28
                     + exits as i64 * 4_200
@@ -2388,6 +2466,7 @@ impl Planner {
                     } else {
                         0
                     }
+                    - smile_growth_debt
                     - if return_risk && !escape.tail_reach {
                         16_000
                     } else {
@@ -2508,7 +2587,9 @@ impl Planner {
                             0
                         };
                     let smile_growth_cost = if new_smiles > 0 {
-                        new_smiles as i64 * if urgent { 5_200 } else { 8_500 }
+                        new_smiles as i64
+                            * (if urgent { 5_200 } else { 8_500 }
+                                + self.smile_growth_debt(ns.body.len() as i32, urgent))
                     } else {
                         0
                     };
@@ -2597,6 +2678,9 @@ impl Planner {
             let mut best_score = i64::MIN;
             for ns in self.legal(&st, allow_smile) {
                 let c = self.cell(&st, st.head + step(ns.first));
+                if c == 1 && self.avoid_extra_smile(st.body.len() as i32) {
+                    continue;
+                }
                 let exits = self.legal_count(&ns, true);
                 if exits == 0 {
                     continue;
@@ -3508,6 +3592,43 @@ mod tests {
         assert!(ns.repeats > 0);
         assert!(debt > 0);
         assert!(progress_debt < debt);
+    }
+
+    #[test]
+    fn idle_ticks_make_planner_urgent() {
+        let board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let p = Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            Vec::new(),
+            26,
+            40,
+            18,
+            false,
+            1_000_000.0,
+        );
+        assert!(p.urgent);
+    }
+
+    #[test]
+    fn long_body_blocks_extra_smileys_before_endgame() {
+        let board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let p = Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            Vec::new(),
+            26,
+            12,
+            0,
+            false,
+            1_000_000.0,
+        );
+        assert!(!p.avoid_extra_smile(114));
+        assert!(p.avoid_extra_smile(115));
     }
 
     #[test]
