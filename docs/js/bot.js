@@ -158,7 +158,10 @@
     const step = stepOf[sc];
     return step === undefined ? 0 : peek(T[BTEL] + step);
   };
-  const isPickupCell = ch => ch === 1 || ch === 3 || ch === 5;
+  // Only real food (heart/club) counts as progress for the stuck safeguard.
+  // A smiley (1) is worth -50, so letting it reset the counter let the bot
+  // orbit forever nibbling smileys without ever tripping the restart.
+  const isFoodCell = ch => ch === 3 || ch === 5;
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, forcedDeathQueued = false;
     let movesSincePickup = 0, safeguardStuckQueued = false, safeguardStuckWaitTicks = 0;
@@ -277,7 +280,7 @@
       const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled }) : null;
       if(sc !== null){
         forcedDeathQueued = false;
-        if(isPickupCell(targetCellFor(sc))){
+        if(isFoodCell(targetCellFor(sc))){
           movesSincePickup = 0;
           safeguardStuckQueued = false;
           safeguardStuckWaitTicks = 0;

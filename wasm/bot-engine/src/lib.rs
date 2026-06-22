@@ -594,7 +594,7 @@ impl Planner {
     fn avoid_extra_smile(&self, body_len: i32) -> bool {
         // Long bodies normally never bridge a smiley, but when starving (food walled
         // off behind smileys) allow it -- otherwise the snake just orbits to a restart.
-        body_len >= 115 && !self.few() && !(self.urgent && self.idle >= 60)
+        body_len >= 115 && !self.few() && !(self.urgent && self.idle >= 45)
     }
 
     fn smile_cost(&self, kind: RouteKind, urgent: bool, body_len: i32) -> i64 {
@@ -3045,7 +3045,7 @@ impl Planner {
         };
         // When starving, skip the smiley-free pass so a one-smiley bridge into
         // walled-off food can win below; -50 points beats orbiting to a restart.
-        let desperate = self.urgent && self.idle >= 60;
+        let desperate = self.urgent && self.idle >= 45;
         let passes: &[bool] = if desperate { &[true] } else { &[false, true] };
         for &allow_smile in passes {
             let mut best = None;
@@ -3218,8 +3218,18 @@ impl Planner {
                     }
                     - if c == 1 {
                         let smile_pen = if return_room { 3_000 } else { 8_000 };
-                        // starving: a smiley step toward food is worth -50 to keep moving
-                        if desperate { smile_pen / 8 } else { smile_pen }
+                        // A smiley costs -50. Discount it only when it actually
+                        // bridges toward reachable food (a productive -50); keep
+                        // the full penalty when it leads nowhere so the bot does
+                        // not panic-eat smileys. Starving widens "close enough".
+                        let bridge_reach = if desperate { 24 } else { 14 };
+                        if dist <= bridge_reach {
+                            smile_pen / 6
+                        } else if desperate {
+                            smile_pen / 3
+                        } else {
+                            smile_pen
+                        }
                     } else {
                         0
                     }
