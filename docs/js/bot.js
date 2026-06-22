@@ -42,7 +42,7 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const passivePreview = window.SNEEKIE_PASSIVE_PREVIEW === true;
-  const STARTUP_DELAY_MS = passivePreview ? 0 : 7000;
+  const STARTUP_DELAY_MS = passivePreview ? 0 : 5000;
   const startupAt = now();
   const driveStartAt = startupAt + STARTUP_DELAY_MS;
   const startupGraceUntil = driveStartAt + 4000;

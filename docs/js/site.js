@@ -151,42 +151,42 @@ function normalizeCleanLinks(){
   });
 }
 
-function canUseServiceWorker(){
-  return 'serviceWorker' in navigator &&
-    (location.protocol === 'https:' || ['localhost', '127.0.0.1', '::1'].includes(location.hostname));
+const OFFLINE_CLEANUP_RELOAD_KEY = 'sneekie.offlineCleanupReloaded';
+
+function offlineCleanupReloaded(){
+  try { return sessionStorage.getItem(OFFLINE_CLEANUP_RELOAD_KEY) === '1'; }
+  catch(_) { return true; }
 }
 
-function registerOfflineSupport(){
-  if(!canUseServiceWorker()) return;
-  const siteRoot = new URL(pageRoot(), location.href);
-  const hadController = !!navigator.serviceWorker.controller;
-  const botPage = document.body && document.body.classList.contains('page-bot');
-  const registerDelay = botPage ? 15000 : 0;
-  let refreshing = false;
-  if(hadController){
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if(refreshing) return;
-      refreshing = true;
-      location.reload();
-    });
-  }
-  const register = () => {
-    navigator.serviceWorker.register(new URL('sw.js', siteRoot).href, { scope:siteRoot.href, updateViaCache:'none' })
-      .then(registration => registration.update())
+function markOfflineCleanupReloaded(){
+  try { sessionStorage.setItem(OFFLINE_CLEANUP_RELOAD_KEY, '1'); }
+  catch(_) { }
+}
+
+function removeOfflineSupport(){
+  const hadController = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  if('caches' in window){
+    caches.keys()
+      .then(keys => Promise.all(keys
+        .filter(key => key.startsWith('sneekie-'))
+        .map(key => caches.delete(key))))
       .catch(() => {});
-  };
-  const scheduleRegister = () => {
-    if(registerDelay > 0) setTimeout(register, registerDelay);
-    else register();
-  };
-  if(document.readyState === 'complete') scheduleRegister();
-  else addEventListener('load', scheduleRegister, { once:true });
+  }
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations()
+    .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+    .then(() => {
+      if(!hadController || offlineCleanupReloaded()) return;
+      markOfflineCleanupReloaded();
+      location.reload();
+    })
+    .catch(() => {});
 }
 
 redirectLegacyLanguageQuery();
 setSiteLanguage(siteLang, { silent: true });
 normalizeCleanLinks();
-registerOfflineSupport();
+removeOfflineSupport();
 
 /* ---------- GW-BASIC token classification ---------- */
 const KW = new Set(('REM DEFINT DEFSNG DEFDBL DEFSTR SCREEN WIDTH CLS RANDOMIZE DEF SEG ' +

@@ -60,8 +60,7 @@ docs/
   images/             # logo, social images, manual WebP clips, magazine scans, page art
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
   favicon.png
-  site.webmanifest
-  sw.js                # PWA service worker for offline play
+  sw.js                # cleanup shim for old service-worker installs
 wasm/
   bot-engine/          # Rust source for the Live bot WebAssembly planner
 AGENTS.md             # guidance for Codex
@@ -71,8 +70,8 @@ CLAUDE.md             # guidance for Claude Code
 The faithful game logic lives in `docs/js/game.js`. `docs/<lang>/game.html`
 provides the game page markup. The root `docs/index*.html` files are localized
 home pages that link to the matching game page; they use `docs/css/site.css` and
-`docs/css/index.css` and do not use page JavaScript beyond inline service-worker
-registration. Static prose/error pages (`history`, `bot-thinking`, `explained`,
+`docs/css/index.css` and only use inline JavaScript for the live home-page bot preview
+and cleanup of old service-worker installs. Static prose/error pages (`history`, `bot-thinking`, `explained`,
 `migration`, `404`) load no runtime JavaScript. Generated or interactive pages
 keep the scripts they need (`game`, `source`, `manual`, `bot`, `magazine`,
 `vram`).
@@ -87,11 +86,11 @@ only for pages that still need translated runtime text (`game`, `source`, `bot`,
 `vram`). Edit localized pages directly under `docs/<lang>/` and keep the English,
 Dutch, and Ukrainian versions aligned by hand.
 
-`docs/sw.js` is a versioned PWA service worker. It precaches the static site for
-offline play, serves images cache-first, serves HTML/CSS/JS with stale-while-
-revalidate, and deletes obsolete `sneekie-*` caches when a new version activates.
-Bump its `VERSION` and update `CORE_ASSETS` when changing existing precached files
-or adding new offline-critical assets.
+Sneekie intentionally has no offline/PWA cache. `docs/sw.js` is only a cleanup shim:
+it lets browsers with an older installed service worker delete `sneekie-*` caches,
+unregister the worker, and reload back to normal network loading. Do not add precaching,
+runtime caching, or service-worker registration back unless offline support is explicitly
+restored.
 
 Useful checks after edits:
 

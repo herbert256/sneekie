@@ -43,7 +43,7 @@ https://sneekie.xyz/.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
 - `docs/js/site.js` - shared runtime behavior for JavaScript-backed pages: language helpers,
-  clean-link normalization outside the static chrome, service-worker registration, and the
+  clean-link normalization outside the static chrome, old service-worker cleanup, and the
   shared BASIC tokenizer used by the listing pages. It must not create `header.top` or
   `<footer>`. (Download + Print live on the Source page, not the header.)
 - `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
@@ -54,13 +54,10 @@ https://sneekie.xyz/.
 - `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
   WebP). `favicon.png` stays
   at `docs/favicon.png`.
-- `docs/sw.js` - versioned PWA service worker. It precaches the static site for offline play,
-  deletes obsolete `sneekie-*` caches during activation, serves images cache-first, and serves
-  HTML/CSS/JS with stale-while-revalidate. Bump `VERSION` and keep `CORE_ASSETS` in sync when
-  changing existing precached files or adding new offline-critical assets. Cached responses are
-  passed through `flatten()` to drop the `redirected` flag — without it, precaching a page that
-  Cloudflare 307-redirects (`.html` -> clean URL) stores a redirected response, which the browser
-  refuses to return to a navigation, breaking every `.html` URL. Keep that when touching caching.
+- `docs/sw.js` - cleanup shim for visitors who still have an older Sneekie service worker
+  installed. It deletes `sneekie-*` caches, unregisters itself, and does not intercept fetches.
+  The site intentionally has no offline/PWA cache; do not add service-worker registration,
+  precaching, or runtime caching back unless offline support is explicitly restored.
 
 The three localized landing pages (`docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html`)
 are the only HTML at the site root. Content pages live under `docs/en/`, `docs/nl/`, and
@@ -212,8 +209,8 @@ high score (`sneekie.theme`, `sneekie.highscore`), theme switching and CGA color
 fullscreen, touch controls, click/tap route targeting, stuck detection with a red flash and
 restart popup, responsive scaling, the on-page error banner, the CRT monitor shell, the short
 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs, localized
-runtime UI strings, and PWA offline support. Sound starts on at page load; mute is a session-only
-button state and `sneekie.muted` is cleared for old visitors.
+runtime UI strings, and old service-worker/cache cleanup. Sound starts on at page load; mute is
+a session-only button state and `sneekie.muted` is cleared for old visitors.
 
 When changing behavior, decide whether you are fixing the faithful port or extending the modern
 shell, and keep the BASIC line-number comments intact either way.
