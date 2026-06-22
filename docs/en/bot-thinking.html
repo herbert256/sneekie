@@ -108,6 +108,7 @@
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
         <pre><code>const stalled = idle &gt; 160 || (idle &gt; 100 &amp;&amp; repeats &gt;= 3);
+if(movesSincePickup &gt;= 500) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
@@ -503,9 +504,13 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
               <td>No score gain for 160 decisions, or 100 with repeated head positions</td>
               <td>Bypass WebAssembly, use JavaScript forced-risk mode, and allow riskier smiley or danger moves. No stuck request is sent.</td>
             </tr>
+            <tr>
+              <td>500 moves without eating a heart, club, or smiley</td>
+              <td>Trigger the explicit stuck sequence. This is the hard safeguard against endless forced-risk play.</td>
+            </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure instead of treating a long stall as a reason to give up.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure. The separate 500-move pickup cap is intentionally larger and exists only to stop an endless live demo.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>

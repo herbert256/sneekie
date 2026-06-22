@@ -84,6 +84,7 @@
         <h2>1. Waar de bot draait</h2>
         <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine start meteen met de JavaScript-planner, laadt <code>bot-engine.wasm</code> op de achtergrond, en schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
         <pre><code>const stalled = idle &gt; 160 || (idle &gt; 100 &amp;&amp; repeats &gt;= 3);
+if(movesSincePickup &gt;= 500) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Scripts in dezelfde pagina kunnen die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
@@ -265,9 +266,10 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang is ingesloten, sterft of beweegt niet. Blijf zetten forceren tot de run eindigt in dood of een leeg level.</td></tr>
             <tr><td>Geen overleefbare zet</td><td>Probeer een riskante begaanbare zet; als er geen speelbare zet bestaat, gebruik dan de normale sterfsequentie in plaats van vast-afhandeling.</td></tr>
             <tr><td>Geen scorewinst gedurende 160 beslissingen, of 100 met herhaalde kopposities</td><td>Omzeil WebAssembly, gebruik geforceerde-risico modus in JavaScript en sta riskantere smiley- of gevaarzetten toe. Er wordt geen vast-verzoek verstuurd.</td></tr>
+            <tr><td>500 zetten zonder hart, klaver of smiley te eten</td><td>Start de expliciete vast-sequentie. Dit is de harde beveiliging tegen eindeloos geforceerd-risico spel.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft geforceerde druk zetten in plaats van een lange stall als reden te gebruiken om op te geven.</p>
+        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft geforceerde druk zetten. De aparte pickup-limiet van 500 zetten is bewust groter en bestaat alleen om een eindeloze live demo te stoppen.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>

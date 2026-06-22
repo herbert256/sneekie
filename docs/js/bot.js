@@ -152,10 +152,25 @@
   window.SNEEKIE_BOT_DRIVES_GAME = true;
   const STALL_IDLE_LIMIT = 160;
   const STALL_LOOP_IDLE_LIMIT = 100;
+  const PICKUP_STUCK_LIMIT = 500;
+  const stepOf = {72:-160, 80:160, 75:-2, 77:2};
+  const targetCellFor = sc => {
+    const step = stepOf[sc];
+    return step === undefined ? 0 : peek(T[BTEL] + step);
+  };
+  const isPickupCell = ch => ch === 1 || ch === 3 || ch === 5;
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, forcedDeathQueued = false;
+    let movesSincePickup = 0, safeguardStuckQueued = false, safeguardStuckWaitTicks = 0;
     let observedLive = null;
     const headTrail = [];
+    const resetMoveCounters = () => {
+      idle = 0;
+      movesSincePickup = 0;
+      safeguardStuckQueued = false;
+      safeguardStuckWaitTicks = 0;
+      headTrail.length = 0;
+    };
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
       if(now() < driveStartAt){ await sleep(80); continue; } // let first paint/input settle before planning
@@ -165,6 +180,7 @@
         if(++over >= 4){
           if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
           forcedDeathQueued = false;
+          resetMoveCounters();
           pushKey('\r'); pushKey(yesKey()); over = 0;
         }
         observedLive = LIVE;
@@ -179,7 +195,7 @@
           gameEndQueued = true;
           deathQueued = true;
           forcedDeathQueued = false;
-          idle = 0; headTrail.length = 0;
+          resetMoveCounters();
           observedLive = LIVE;
           pushKey('\r');
         }
@@ -190,7 +206,7 @@
       if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
         queueNextLevel();
         forcedDeathQueued = false;
-        idle = 0; headTrail.length = 0;
+        resetMoveCounters();
       }
       observedLive = LIVE;
       deathQueued = false;
@@ -201,6 +217,7 @@
           target = LEVEL;
           jumpingTo = null;
           forcedDeathQueued = false;
+          resetMoveCounters();
           markTabs();
         } else {
           await sleep(botDelay()); continue;
@@ -221,22 +238,38 @@
           pushKey('\r');
         }
         else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
-        pendingJump = null; forcedDeathQueued = false; idle = 0; headTrail.length = 0;
+        pendingJump = null; forcedDeathQueued = false; resetMoveCounters();
         await sleep(botDelay()); continue;
       }
       const tickStarted = now();
       if(waitingForKey()){
         forcedDeathQueued = false;
+        safeguardStuckQueued = false;
+        safeguardStuckWaitTicks = 0;
         pushKey('\r');                                 // under the level popup -> any key dismisses it
         await sleepForTick(tickStarted); continue;
       }
-      if(ZCORE > prevScore) idle = 0; else idle++;
+      if(ZCORE > prevScore){
+        idle = 0;
+        movesSincePickup = 0;
+        safeguardStuckQueued = false;
+        safeguardStuckWaitTicks = 0;
+      } else idle++;
       prevScore = ZCORE;
       headTrail.push(T[BTEL]);
       if(headTrail.length > 96) headTrail.shift();
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
+      if(movesSincePickup >= PICKUP_STUCK_LIMIT){
+        if(!safeguardStuckQueued || ++safeguardStuckWaitTicks > 12){
+          safeguardStuckQueued = true;
+          safeguardStuckWaitTicks = 0;
+          if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
+          else pushKey('\r');
+        }
+        await sleepForTick(tickStarted); continue;
+      }
       // Stop orbiting forever with no progress. A short looping run (revisiting
       // the same cell) trips earlier than a plain no-score stall and switches to
       // riskier forced moves instead of the stuck/restart path.
@@ -244,6 +277,11 @@
       const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled }) : null;
       if(sc !== null){
         forcedDeathQueued = false;
+        if(isPickupCell(targetCellFor(sc))){
+          movesSincePickup = 0;
+          safeguardStuckQueued = false;
+          safeguardStuckWaitTicks = 0;
+        } else movesSincePickup++;
         pushKey(keyOf[sc]);                            // a planned move; forced mode may accept risk
       }
       // No playable move remains. On the bot page this uses the normal snake
