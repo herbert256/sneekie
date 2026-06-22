@@ -474,6 +474,7 @@ impl Planner {
                     None
                 }
             })
+            .or_else(|| self.tail_chase_move())
             .or_else(|| self.survival_move())
             .or_else(|| self.last_chance_move())
             .unwrap_or(0)
@@ -490,6 +491,7 @@ impl Planner {
             .or_else(|| self.near_food(true))
             .or_else(|| self.route_food(true))
             .or_else(|| self.pressure_step())
+            .or_else(|| self.tail_chase_move())
             .or_else(|| self.survival_move())
             .or_else(|| self.last_chance_move())
             .unwrap_or(0)
@@ -2703,6 +2705,90 @@ impl Planner {
         !info.tail_reach && info.space < return_need
     }
 
+    fn tail_chase_move(&mut self) -> Option<i32> {
+        // Long-snake endgame discipline. A long body can entomb itself by
+        // greedily grabbing whatever space is nearest. When no food grab proved
+        // safe, follow the path with the deepest guaranteed survival while
+        // keeping the tail reachable -- in practice this trails the tail and
+        // fills space safely instead of sealing the body in. Short snakes skip
+        // this and use the lighter survival fallback.
+        if self.body.len() < 80 {
+            return None;
+        }
+        let st = self.start_state();
+        let few = self.few();
+        let live_limit = if few || self.urgent { 30 } else { 24 };
+        for allow_smile in [false, true] {
+            let mut best = None;
+            let mut best_score = i64::MIN;
+            for ns in self.legal(&st, allow_smile) {
+                let c = self.cell(&st, st.head + step(ns.first));
+                if c == 1 && self.avoid_extra_smile(st.body.len() as i32) {
+                    continue;
+                }
+                let exits = self.legal_count(&ns, true);
+                if exits == 0 {
+                    continue;
+                }
+                let forced = self.forced_path(&ns, true, 20);
+                if exits <= 1 && forced.dead {
+                    continue;
+                }
+                let info = self.space_info(&ns, false);
+                if self.enclosure_risk(&ns, info, exits, 1) && !(info.tail_reach && exits >= 2) {
+                    continue;
+                }
+                let live = self.survival_depth(&ns, live_limit);
+                let goal = if is_food(c) {
+                    0
+                } else {
+                    self.goal_distance(&ns, 1600)
+                };
+                let goal_pull = if goal < INF {
+                    3_000 - goal.min(180) as i64 * 25
+                } else {
+                    0
+                };
+                let recent_debt = self.recent_memory_debt(
+                    &ns,
+                    info,
+                    info.tail_reach,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                    if is_food(c) { 1 } else { 0 },
+                );
+                let score = live as i64 * 9_000
+                    + if info.tail_reach { 30_000 } else { 0 }
+                    + info.space as i64 * 14
+                    + exits as i64 * 2_000
+                    + forced.end_exits as i64 * 1_200
+                    + goal_pull
+                    + if is_food(c) { 8_000 } else { 0 }
+                    - if c == 1 {
+                        if self.return_path_room(info, exits, ns.body.len() as i32, few) {
+                            4_000
+                        } else {
+                            9_000
+                        }
+                    } else {
+                        0
+                    }
+                    - ns.stones as i64 * 30
+                    - recent_debt
+                    + if ns.first == st.dir { 80 } else { 0 };
+                if score > best_score {
+                    best_score = score;
+                    best = Some(ns.first);
+                }
+            }
+            if best.is_some() {
+                return best;
+            }
+        }
+        None
+    }
+
     fn survival_move(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
@@ -3997,6 +4083,32 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
         assert_eq!(p.survival_move(), Some(77));
+    }
+
+    #[test]
+    fn tail_chase_engages_only_for_long_snakes() {
+        // A short snake leaves the long-game discipline out of the way.
+        let short = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(empty_board(), short);
+        assert_eq!(p.tail_chase_move(), None);
+
+        // A long body (folded boustrophedon block) gets a real, legal move.
+        let mut body = Vec::new();
+        for r in 0..5 {
+            let row = 5 + r;
+            if r % 2 == 0 {
+                for col in 5..=22 {
+                    body.push(offset(row, col));
+                }
+            } else {
+                for col in (5..=22).rev() {
+                    body.push(offset(row, col));
+                }
+            }
+        }
+        assert!(body.len() >= 80);
+        let mut p2 = planner(empty_board(), body);
+        assert!(matches!(p2.tail_chase_move(), Some(72 | 80 | 75 | 77)));
     }
 
     #[test]
