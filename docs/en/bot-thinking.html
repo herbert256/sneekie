@@ -107,7 +107,7 @@
       <section id="where">
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
-        <pre><code>const sc = planner.decide({ idle, looping, budgetMs: routeBudget() });
+        <pre><code>const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
         <div class="cards">
@@ -178,7 +178,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, and the arrow enemy table <code>D</code> into fixed WebAssembly memory buffers. The JavaScript fallback keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript fallback keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
@@ -198,7 +198,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           </div>
           <div class="step">
             <b>4. Wider routes</b>
-            <p>If no nearby pickup or breathing move wins, run the deeper food planner. A cramped snake may consider a smiley route before a distant clean route when that keeps the return path open.</p>
+            <p>If no nearby pickup or breathing move wins, run the deeper food planner. A smiley route can be tried after clean routes fail, but it scores well only when it keeps return access open or unlocks clustered food.</p>
           </div>
           <div class="step">
             <b>5. Loop pressure</b>
@@ -232,6 +232,8 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       : nearFood(false) ??
         routeFood(false) ??
         pressureFood(false, urgent) ??
+        routeFood(true) ??
+        pressureFood(true, urgent) ??
         (urgent
           ? nearFood(true) ??
             routeFood(true) ??
@@ -243,7 +245,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   return proved ?? (urgent ? pressureStep() : null) ??
     survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; only the real game can kill or mark the snake stuck.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; only the real game can kill or mark the snake stuck.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -293,7 +295,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td>Smileys optional</td>
-              <td>Reject smileys during clean search; allow them in constrained or escape searches only when the route still proves a way back out.</td>
+              <td>Reject smileys during clean search; allow them later only when the growth is offset by return safety, room access, or several reachable pickups.</td>
             </tr>
             <tr>
               <td>Stones push</td>
@@ -344,7 +346,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot prefers clean food, but a cramped snake may eat one if that keeps the return route open.</p>
+        <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot prefers clean food, but it may eat one if that keeps the return route open or opens a useful cluster of future pickups.</p>
       </section>
       <section id="safety">
         <h2>7. Trap checks</h2>
@@ -374,8 +376,16 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <h3>Room doors</h3>
             <p>On the room-grid layouts, the planner detects two-cell doors and checks that at least one door lane plus the cells immediately before and after it remain clear.</p>
           </div>
+          <div class="card">
+            <h3>Return gates</h3>
+            <p>Outside room levels, narrow passages are scored like fragile gates: a route that leaves only one thin way back to the tail pays a strategic debt.</p>
+          </div>
+          <div class="card">
+            <h3>Recent trail</h3>
+            <p>Routes that revisit the same recent cells are penalized, with smaller penalties when that revisit opens tail reach or actually moves closer to food.</p>
+          </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, blocked room exits, and early tail cutoffs are filtered before their short-term reward can win.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, blocked room exits, degraded door lanes, fragile return gates, and early tail cutoffs are filtered before their short-term reward can win.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
@@ -428,7 +438,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>The large tail-reach, survival-depth, route-out, and room-door weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. Smileys still carry a cost, but a smiley that preserves the return path can score better than a clean pickup that would seal the snake in.</p>
+        <p>The large tail-reach, survival-depth, route-out, room-door, return-gate, and recent-trail weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket or another lap through the same stale cells. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. The route scorer also looks beyond the first pickup: reachable food clusters add value, while smileys still carry a cost unless they preserve access or open that cluster safely.</p>
         <p>The two newer food planners deliberately use different weights:</p>
         <table>
           <thead>

@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 const BOARD_LEN: usize = 4000;
 const BODY_CAP: usize = 15001;
 const ENEMY_LEN: usize = 81 * 4;
+const TRAIL_CAP: usize = 128;
 const DIRS: [(i32, i32); 4] = [(72, -160), (80, 160), (75, -2), (77, 2)];
 const MAX_DANGER_TICKS: usize = 7;
 const BIT_WORDS: usize = (BOARD_LEN + 63) / 64;
@@ -11,6 +12,7 @@ const INF: i32 = 1_000_000;
 static mut BOARD: [u16; BOARD_LEN] = [0; BOARD_LEN];
 static mut BODY: [i32; BODY_CAP] = [0; BODY_CAP];
 static mut ENEMY: [i32; ENEMY_LEN] = [0; ENEMY_LEN];
+static mut TRAIL: [i32; TRAIL_CAP] = [0; TRAIL_CAP];
 
 #[derive(Clone, Copy)]
 struct BoardBits {
@@ -212,23 +214,32 @@ pub extern "C" fn enemy_ptr() -> *mut i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn trail_ptr() -> *mut i32 {
+    core::ptr::addr_of_mut!(TRAIL).cast::<i32>()
+}
+
+#[no_mangle]
 pub extern "C" fn decide(
     level: i32,
     items: i32,
     body_len: i32,
     idle: i32,
     looping: i32,
+    trail_len: i32,
     budget_ms: f64,
 ) -> i32 {
     let body_len = body_len.clamp(2, BODY_CAP as i32) as usize;
+    let trail_len = trail_len.clamp(0, TRAIL_CAP as i32) as usize;
     let mut board = [0u16; BOARD_LEN];
     let mut body = Vec::with_capacity(body_len);
     let mut enemy = [0i32; ENEMY_LEN];
+    let mut trail = Vec::with_capacity(trail_len);
 
     unsafe {
         let board_src = core::ptr::addr_of!(BOARD).cast::<u16>();
         let body_src = core::ptr::addr_of!(BODY).cast::<i32>();
         let enemy_src = core::ptr::addr_of!(ENEMY).cast::<i32>();
+        let trail_src = core::ptr::addr_of!(TRAIL).cast::<i32>();
         for (i, dest) in board.iter_mut().enumerate() {
             *dest = *board_src.add(i);
         }
@@ -238,11 +249,16 @@ pub extern "C" fn decide(
         for (i, dest) in enemy.iter_mut().enumerate() {
             *dest = *enemy_src.add(i);
         }
+        for i in 0..trail_len {
+            trail.push(*trail_src.add(i));
+        }
     }
 
     let urgent = idle >= 18 || looping != 0;
     let deadline = host_now_ms() + budget_ms.max(1.0);
-    let mut planner = Planner::new(board, body, enemy, level, items, idle, urgent, deadline);
+    let mut planner = Planner::new(
+        board, body, enemy, trail, level, items, idle, urgent, deadline,
+    );
     planner.decide()
 }
 
@@ -260,6 +276,7 @@ struct State {
     smiles: i32,
     stones: i32,
     chokes: i32,
+    repeats: i32,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -328,11 +345,20 @@ struct DoorInfo {
     single_lane: i32,
 }
 
+#[derive(Clone, Copy, Default)]
+struct ClusterInfo {
+    foods: i32,
+    smiles: i32,
+    score: i64,
+    nearest: i32,
+}
+
 struct Planner {
     board: [u16; BOARD_LEN],
     body: Vec<i32>,
     body_bits: BoardBits,
     enemy: [i32; ENEMY_LEN],
+    trail: Vec<i32>,
     level: i32,
     items: i32,
     idle: i32,
@@ -351,6 +377,7 @@ impl Planner {
         board: [u16; BOARD_LEN],
         body: Vec<i32>,
         enemy: [i32; ENEMY_LEN],
+        trail: Vec<i32>,
         level: i32,
         items: i32,
         idle: i32,
@@ -378,6 +405,7 @@ impl Planner {
             body,
             body_bits,
             enemy,
+            trail,
             level,
             items,
             idle,
@@ -410,6 +438,8 @@ impl Planner {
             self.near_food(false)
                 .or_else(|| self.route_food(false))
                 .or_else(|| self.pressure_food(false, self.urgent))
+                .or_else(|| self.route_food(true))
+                .or_else(|| self.pressure_food(true, self.urgent))
                 .or_else(|| {
                     if self.urgent {
                         self.near_food(true)
@@ -718,6 +748,407 @@ impl Planner {
         }
     }
 
+    fn door_regression_debt(
+        &self,
+        before: DoorInfo,
+        after: DoorInfo,
+        body_len: i32,
+        exits: i32,
+        kind: RouteKind,
+        urgent: bool,
+    ) -> i64 {
+        if before.total == 0 || after.total == 0 {
+            return 0;
+        }
+        let size = if body_len >= 90 {
+            2
+        } else if body_len >= 50 {
+            1
+        } else {
+            0
+        };
+        let mut debt = 0;
+        if before.usable > 0 && after.usable == 0 {
+            debt += 118_000 + body_len as i64 * 720 + if exits <= 2 { 34_000 } else { 0 };
+        } else if before.usable >= 2 && after.usable == 1 {
+            debt += 14_000 + size as i64 * 8_000 + if exits <= 2 { 7_000 } else { 0 };
+        }
+        if after.blocked > before.blocked {
+            debt += (after.blocked - before.blocked) as i64 * (24_000 + size as i64 * 8_000);
+        }
+        if after.single_lane > before.single_lane {
+            debt += (after.single_lane - before.single_lane) as i64 * (5_000 + size as i64 * 2_000);
+        }
+        match kind {
+            RouteKind::Near => debt + debt / 3,
+            RouteKind::Route => debt,
+            RouteKind::Pressure => {
+                if urgent {
+                    debt * 2 / 3
+                } else {
+                    debt * 4 / 5
+                }
+            }
+        }
+    }
+
+    fn return_cell_open(&self, st: &State, o: i32, tail: i32, allow_smile: bool) -> bool {
+        if !(0..BOARD_LEN as i32).contains(&o) {
+            return false;
+        }
+        if o != tail && st.body_bits.contains(o) {
+            return false;
+        }
+        let c = self.cell(st, o);
+        if c == 1 && !allow_smile {
+            return false;
+        }
+        open(c)
+    }
+
+    fn open_degree(&self, st: &State, o: i32, tail: i32, allow_smile: bool) -> i32 {
+        DIRS.iter()
+            .filter(|&&(_, d)| {
+                let n = o + d;
+                !self.danger(n, st.dist) && self.return_cell_open(st, n, tail, allow_smile)
+            })
+            .count() as i32
+    }
+
+    fn reaches_tail_from(
+        &self,
+        st: &State,
+        start: i32,
+        tail: i32,
+        allow_smile: bool,
+        limit: usize,
+    ) -> bool {
+        if start == tail {
+            return true;
+        }
+        if !self.return_cell_open(st, start, tail, allow_smile) {
+            return false;
+        }
+        let mut seen = BoardBits::default();
+        let mut q = VecDeque::from([start]);
+        seen.insert(start);
+        let mut scanned = 0usize;
+        while let Some(o) = q.pop_front() {
+            scanned += 1;
+            if scanned >= limit {
+                break;
+            }
+            for &(_, d) in &DIRS {
+                let n = o + d;
+                if n == tail {
+                    return true;
+                }
+                if self.danger(n, 0) || !self.return_cell_open(st, n, tail, allow_smile) {
+                    continue;
+                }
+                if seen.insert(n) {
+                    q.push_back(n);
+                }
+            }
+        }
+        false
+    }
+
+    fn tail_route_count(
+        &self,
+        st: &State,
+        allow_smile: bool,
+        max_routes: i32,
+        limit: usize,
+    ) -> i32 {
+        let tail = st.body.tail().unwrap_or(st.head);
+        let mut routes = 0;
+        for &(sc, d) in &DIRS {
+            if sc == opp(st.dir) {
+                continue;
+            }
+            let n = st.head + d;
+            if self.danger(n, st.dist) || !self.return_cell_open(st, n, tail, allow_smile) {
+                continue;
+            }
+            if self.reaches_tail_from(st, n, tail, allow_smile, limit) {
+                routes += 1;
+                if routes >= max_routes {
+                    return routes;
+                }
+            }
+        }
+        routes
+    }
+
+    fn return_gate_debt(
+        &self,
+        st: &State,
+        info: SpaceInfo,
+        exits: i32,
+        expected_growth: i32,
+        kind: RouteKind,
+        urgent: bool,
+    ) -> i64 {
+        let body_len = st.body.len() as i32;
+        let tail = st.body.tail().unwrap_or(st.head);
+        let head_degree = self.open_degree(st, st.head, tail, true);
+        let prev_degree = st
+            .body
+            .prev_head()
+            .map(|p| self.open_degree(st, p, tail, true))
+            .unwrap_or(head_degree);
+        let narrow = exits <= 2 || head_degree <= 2 || prev_degree <= 2;
+        let need = body_len + expected_growth + self.return_buffer(body_len, self.few());
+        let mut debt = 0;
+
+        if info.tail_reach {
+            let tail_routes = self.tail_route_count(st, true, 2, 900);
+            if tail_routes == 0 {
+                debt += 46_000;
+            } else if tail_routes == 1 && narrow {
+                debt += 9_000 + body_len as i64 * 115 + if exits <= 2 { 10_000 } else { 0 };
+            }
+            if tail_routes <= 1 && info.space < need + 72 {
+                debt += 12_000;
+            }
+        } else if narrow {
+            debt += 14_000 + body_len as i64 * 140;
+        }
+
+        if head_degree <= 1 {
+            debt += 18_000;
+        }
+        if exits <= 1 {
+            debt += 11_000;
+        }
+        if exits <= 2 && info.space < need + if info.tail_reach { 44 } else { 82 } {
+            debt += 16_000;
+        }
+
+        match kind {
+            RouteKind::Near => debt + debt / 4,
+            RouteKind::Route => debt,
+            RouteKind::Pressure => {
+                if urgent {
+                    debt * 3 / 5
+                } else {
+                    debt * 3 / 4
+                }
+            }
+        }
+    }
+
+    fn recent_step_heat(&self, o: i32) -> i32 {
+        if self.trail.len() < 16 {
+            return 0;
+        }
+        let len = self.trail.len();
+        let mut heat = 0;
+        for (i, &p) in self.trail.iter().enumerate() {
+            if p != o {
+                continue;
+            }
+            let age = len.saturating_sub(1 + i);
+            heat += if age <= 8 {
+                10
+            } else if age <= 20 {
+                7
+            } else if age <= 42 {
+                4
+            } else if age <= 72 {
+                2
+            } else {
+                1
+            };
+        }
+        heat
+    }
+
+    fn recent_memory_debt(
+        &self,
+        st: &State,
+        info: SpaceInfo,
+        escape_tail: bool,
+        exits: i32,
+        kind: RouteKind,
+        urgent: bool,
+        progress: i32,
+    ) -> i64 {
+        if st.repeats <= 0 || self.trail.len() < 24 {
+            return 0;
+        }
+        let weight = match kind {
+            RouteKind::Near => 1_050,
+            RouteKind::Route => 760,
+            RouteKind::Pressure => {
+                if urgent {
+                    420
+                } else {
+                    560
+                }
+            }
+        };
+        let mut debt = st.repeats as i64 * weight;
+        if progress > 0 {
+            debt = debt * 3 / 5;
+        }
+        if info.tail_reach {
+            debt = debt * 2 / 3;
+        }
+        if escape_tail {
+            debt = debt * 2 / 3;
+        }
+        if exits >= 3 {
+            debt = debt * 4 / 5;
+        }
+        let body_len = st.body.len() as i32;
+        if info.space >= body_len + self.return_buffer(body_len, self.few()) + 120 {
+            debt = debt * 4 / 5;
+        }
+        debt.min(match kind {
+            RouteKind::Near => 72_000,
+            RouteKind::Route => 58_000,
+            RouteKind::Pressure => {
+                if urgent {
+                    34_000
+                } else {
+                    46_000
+                }
+            }
+        })
+    }
+
+    fn food_cluster(
+        &self,
+        st: &State,
+        max_depth: i32,
+        scan_limit: usize,
+        allow_smile: bool,
+    ) -> ClusterInfo {
+        let mut info = ClusterInfo {
+            nearest: INF,
+            ..ClusterInfo::default()
+        };
+        let tail = st.body.tail().unwrap_or(st.head);
+        let mut seen = VisitBits::default();
+        let mut counted = BoardBits::default();
+        let mut q = VecDeque::from([(st.head, st.dir, 0i32)]);
+        seen.insert(st.head, st.dir);
+        let mut scanned = 0usize;
+        while let Some((o, dir, dist)) = q.pop_front() {
+            scanned += 1;
+            if scanned >= scan_limit || dist >= max_depth {
+                break;
+            }
+            for &(sc, d) in &DIRS {
+                if sc == opp(dir) {
+                    continue;
+                }
+                let n = o + d;
+                let nd = dist + 1;
+                if self.danger(n, nd) || !self.return_cell_open(st, n, tail, allow_smile) {
+                    continue;
+                }
+                let c = self.cell(st, n);
+                if is_food(c) && counted.insert(n) {
+                    info.foods += 1;
+                    info.nearest = info.nearest.min(nd);
+                    let value = if c == 5 { 230 } else { 145 };
+                    info.score += (max_depth + 1 - nd).max(0) as i64 * value
+                        + if nd <= 12 { 2_600 } else { 0 };
+                } else if c == 1 && counted.insert(n) {
+                    info.smiles += 1;
+                    if allow_smile {
+                        info.score += (max_depth + 1 - nd).max(0) as i64 * 45;
+                    }
+                }
+                if seen.insert(n, sc) {
+                    q.push_back((n, sc, nd));
+                }
+            }
+        }
+        info
+    }
+
+    fn cluster_credit(&self, cluster: ClusterInfo, kind: RouteKind, urgent: bool) -> i64 {
+        if cluster.foods <= 0 {
+            return 0;
+        }
+        let base = match kind {
+            RouteKind::Near => cluster.score / 6 + cluster.foods as i64 * 900,
+            RouteKind::Route => cluster.score / 4 + cluster.foods as i64 * 1_900,
+            RouteKind::Pressure => {
+                cluster.score / if urgent { 3 } else { 4 }
+                    + cluster.foods as i64 * if urgent { 2_400 } else { 1_600 }
+            }
+        };
+        base.min(match kind {
+            RouteKind::Near => 18_000,
+            RouteKind::Route => 34_000,
+            RouteKind::Pressure => {
+                if urgent {
+                    42_000
+                } else {
+                    30_000
+                }
+            }
+        })
+    }
+
+    fn strategic_smile_credit(
+        &self,
+        smiles: i32,
+        cluster: ClusterInfo,
+        info: SpaceInfo,
+        escape: EscapeInfo,
+        return_open: bool,
+        door: DoorInfo,
+        gate_debt: i64,
+        kind: RouteKind,
+        urgent: bool,
+    ) -> i64 {
+        if smiles <= 0 {
+            return 0;
+        }
+        let mut credit = 0;
+        if return_open {
+            credit += 2_600;
+        }
+        if info.tail_reach {
+            credit += 2_400;
+        }
+        if escape.tail_reach {
+            credit += 3_800;
+        }
+        if door.usable > 0 {
+            credit += 1_800;
+        }
+        if gate_debt < 18_000 && (return_open || cluster.foods > 0) {
+            credit += 2_400;
+        }
+        if cluster.foods >= 2 {
+            credit += (cluster.foods as i64 * 2_300 + cluster.score / 18).min(13_000);
+        } else if cluster.foods == 1 && urgent {
+            credit += 2_000;
+        }
+        if urgent {
+            credit += 1_600;
+        }
+        let cap = match kind {
+            RouteKind::Near => 9_000,
+            RouteKind::Route => 13_500,
+            RouteKind::Pressure => {
+                if urgent {
+                    15_500
+                } else {
+                    12_000
+                }
+            }
+        };
+        (smiles as i64 * credit).min(smiles as i64 * cap)
+    }
+
     fn arrow_level(&self) -> bool {
         matches!((self.level - 1).rem_euclid(16), 5 | 6 | 13 | 14)
     }
@@ -740,6 +1171,7 @@ impl Planner {
             smiles: 0,
             stones: 0,
             chokes: 0,
+            repeats: 0,
         }
     }
 
@@ -915,6 +1347,7 @@ impl Planner {
             smiles: st.smiles + if c == 1 { 1 } else { 0 },
             stones,
             chokes: st.chokes,
+            repeats: st.repeats + self.recent_step_heat(n),
         })
     }
 
@@ -1418,6 +1851,69 @@ impl Planner {
             }
         }
 
+        if ns.dist >= 2 && !self.doors.is_empty() {
+            let start_door = self.door_exit_info(&cfg.start);
+            let door = self.door_exit_info(&ns);
+            let door_debt = self.door_regression_debt(
+                start_door,
+                door,
+                ns.body.len() as i32,
+                exits,
+                cfg.route_kind,
+                cfg.urgent,
+            );
+            if start_door.usable > 0 && door.total > 0 && door.usable == 0 {
+                match cfg.route_kind {
+                    RouteKind::Near | RouteKind::Route => return None,
+                    RouteKind::Pressure => {
+                        if !cfg.urgent {
+                            return None;
+                        }
+                    }
+                }
+            }
+            ns.chokes += (door_debt / 22_000).min(6) as i32;
+        }
+
+        if ns.dist >= 5 && (exits <= 2 || ns.dist % 6 == 0 || ns.chokes >= 4) {
+            let info = self.space_info(&ns, true);
+            let gate_debt =
+                self.return_gate_debt(&ns, info, exits, ns.ate + 1, cfg.route_kind, cfg.urgent);
+            let reject = match cfg.route_kind {
+                RouteKind::Near => gate_debt > 58_000,
+                RouteKind::Route => !cfg.urgent && gate_debt > 74_000,
+                RouteKind::Pressure => !cfg.urgent && gate_debt > 112_000,
+            };
+            if reject {
+                return None;
+            }
+            ns.chokes += (gate_debt / 24_000).min(5) as i32;
+        }
+
+        if ns.dist >= 4 && ns.repeats > 0 && (ns.dist % 4 == 0 || ns.repeats >= 22) {
+            let info = self.space_info(&ns, true);
+            let recent_debt = self.recent_memory_debt(
+                &ns,
+                info,
+                info.tail_reach,
+                exits,
+                cfg.route_kind,
+                cfg.urgent,
+                ns.ate,
+            );
+            let reject = match cfg.route_kind {
+                RouteKind::Near => recent_debt > 48_000 && ns.ate == 0 && !info.tail_reach,
+                RouteKind::Route => {
+                    recent_debt > 56_000 && ns.ate == 0 && !cfg.urgent && !info.tail_reach
+                }
+                RouteKind::Pressure => false,
+            };
+            if reject {
+                return None;
+            }
+            ns.chokes += (recent_debt / 18_000).min(4) as i32;
+        }
+
         let cap = match cfg.route_kind {
             RouteKind::Near => 9,
             RouteKind::Route => 18,
@@ -1569,6 +2065,70 @@ impl Planner {
             }
         }
         let door_debt = self.door_exit_debt(door, body_len, exits);
+        let start_door = self.door_exit_info(&cfg.start);
+        let door_regression = self.door_regression_debt(
+            start_door,
+            door,
+            body_len,
+            exits,
+            cfg.route_kind,
+            cfg.urgent,
+        );
+        if start_door.usable > 0 && door.total > 0 && door.usable == 0 {
+            match cfg.route_kind {
+                RouteKind::Near | RouteKind::Route => return None,
+                RouteKind::Pressure => {
+                    if !cfg.urgent {
+                        return None;
+                    }
+                }
+            }
+        }
+        let gate_debt =
+            self.return_gate_debt(ns, info, exits, ns.ate + 2, cfg.route_kind, cfg.urgent);
+        if gate_debt
+            > match cfg.route_kind {
+                RouteKind::Near => 64_000,
+                RouteKind::Route => {
+                    if cfg.urgent {
+                        112_000
+                    } else {
+                        82_000
+                    }
+                }
+                RouteKind::Pressure => {
+                    if cfg.urgent {
+                        150_000
+                    } else {
+                        118_000
+                    }
+                }
+            }
+        {
+            return None;
+        }
+        let recent_debt = self.recent_memory_debt(
+            ns,
+            info,
+            escape.tail_reach,
+            exits,
+            cfg.route_kind,
+            cfg.urgent,
+            ns.ate,
+        );
+        let cluster = self.food_cluster(
+            ns,
+            if self.stone_maze_level() {
+                58
+            } else if few {
+                52
+            } else {
+                42
+            },
+            if cfg.urgent || few { 1400 } else { 900 },
+            cfg.allow_smile,
+        );
+        let cluster_credit = self.cluster_credit(cluster, cfg.route_kind, cfg.urgent);
         let rollout = self.pickup_rollout(ns, 2, cfg.allow_smile, cfg.urgent);
         let one_exit_cost = if exits == 1 {
             (match cfg.route_kind {
@@ -1604,6 +2164,17 @@ impl Planner {
         };
         let smile_return_credit =
             self.smile_escape_credit(ns.smiles, cfg.route_kind, cfg.urgent, info, escape);
+        let smile_strategy_credit = self.strategic_smile_credit(
+            ns.smiles,
+            cluster,
+            info,
+            escape,
+            return_open,
+            door,
+            gate_debt,
+            cfg.route_kind,
+            cfg.urgent,
+        );
         let base = match cfg.route_kind {
             RouteKind::Near => {
                 -ns.dist as i64 * 6_400
@@ -1637,9 +2208,16 @@ impl Planner {
             }
         };
         Some(
-            base + rollout + smile_return_credit + self.door_exit_credit(door)
+            base + rollout
+                + cluster_credit
+                + smile_return_credit
+                + smile_strategy_credit
+                + self.door_exit_credit(door)
                 - return_debt
                 - door_debt
+                - door_regression
+                - gate_debt
+                - recent_debt
                 - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent)
                 - ns.stones as i64 * 52
                 - ns.chokes as i64
@@ -1729,6 +2307,33 @@ impl Planner {
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
                 let door = self.door_exit_info(&ns);
                 let door_debt = self.door_exit_debt(door, ns.body.len() as i32, exits);
+                let start_door = self.door_exit_info(&st);
+                let door_regression = self.door_regression_debt(
+                    start_door,
+                    door,
+                    ns.body.len() as i32,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                let gate_debt =
+                    self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let cluster = if c == 1 {
+                    self.food_cluster(&ns, 42, 700, true)
+                } else {
+                    ClusterInfo::default()
+                };
+                let smile_strategy_credit = self.strategic_smile_credit(
+                    ns.smiles,
+                    cluster,
+                    info,
+                    escape,
+                    info.tail_reach || escape.tail_reach,
+                    door,
+                    gate_debt,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
                 let food_dist = if is_food(c) {
                     0
                 } else {
@@ -1739,6 +2344,15 @@ impl Planner {
                 } else {
                     0
                 };
+                let recent_debt = self.recent_memory_debt(
+                    &ns,
+                    info,
+                    escape.tail_reach,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                    if is_food(c) || food_pull > 0 { 1 } else { 0 },
+                );
                 let score = live as i64 * 8_400
                     + info.space as i64 * 28
                     + exits as i64 * 4_200
@@ -1748,6 +2362,8 @@ impl Planner {
                     + if info.tail_reach { 46_000 } else { 0 }
                     + if escape.tail_reach { 18_000 } else { 0 }
                     + if is_food(c) { 3_000 } else { 0 }
+                    + self.cluster_credit(cluster, RouteKind::Pressure, self.urgent)
+                    + smile_strategy_credit
                     + self.door_exit_credit(door)
                     + self.smile_step_credit(
                         c,
@@ -1778,6 +2394,9 @@ impl Planner {
                         0
                     }
                     - door_debt
+                    - door_regression
+                    - gate_debt
+                    - recent_debt
                     - ns.stones as i64 * 62
                     + if ns.first == st.dir { 90 } else { 0 };
                 if score > best_score {
@@ -1863,6 +2482,23 @@ impl Planner {
                         continue;
                     }
                     let door_debt = self.door_exit_debt(door, ns.body.len() as i32, exits);
+                    let gate_debt = self.return_gate_debt(
+                        &ns,
+                        info,
+                        exits,
+                        pickups_left,
+                        RouteKind::Pressure,
+                        urgent,
+                    );
+                    if !urgent && gate_debt > 118_000 {
+                        continue;
+                    }
+                    let cluster = self.food_cluster(
+                        &ns,
+                        if urgent || self.few() { 44 } else { 34 },
+                        if urgent || self.few() { 900 } else { 620 },
+                        allow_smile,
+                    );
                     let return_debt = if return_open { 0 } else { 20_000 };
                     let new_smiles = ns.smiles - start.smiles;
                     let smile_return_credit =
@@ -1876,15 +2512,39 @@ impl Planner {
                     } else {
                         0
                     };
+                    let smile_strategy_credit = self.strategic_smile_credit(
+                        new_smiles,
+                        cluster,
+                        info,
+                        escape,
+                        return_open,
+                        door,
+                        gate_debt,
+                        RouteKind::Pressure,
+                        urgent,
+                    );
+                    let recent_debt = self.recent_memory_debt(
+                        &ns,
+                        info,
+                        escape.tail_reach,
+                        exits,
+                        RouteKind::Pressure,
+                        urgent,
+                        ns.ate - start.ate,
+                    );
                     let gain = ns.points as i64 * 180 - (ns.dist - start.dist) as i64 * 360
                         + info.space as i64 * 8
                         + exits as i64 * 1_500
                         + if info.tail_reach { 12_000 } else { 0 }
                         + if escape.tail_reach { 10_000 } else { 0 }
+                        + self.cluster_credit(cluster, RouteKind::Pressure, urgent) / 2
                         + smile_return_credit
+                        + smile_strategy_credit
                         + self.door_exit_credit(door)
                         - return_debt
                         - door_debt / 2
+                        - gate_debt / 2
+                        - recent_debt / 2
                         - smile_growth_cost
                         - if exits <= 1 {
                             10_000 + forced.steps as i64 * 520
@@ -1932,7 +2592,7 @@ impl Planner {
     fn survival_move(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
-        for allow_smile in [false] {
+        for allow_smile in [false, true] {
             let mut best = None;
             let mut best_score = i64::MIN;
             for ns in self.legal(&st, allow_smile) {
@@ -1957,6 +2617,42 @@ impl Planner {
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
                 let door = self.door_exit_info(&ns);
                 let door_debt = self.door_exit_debt(door, body_len, exits);
+                let start_door = self.door_exit_info(&st);
+                let door_regression = self.door_regression_debt(
+                    start_door,
+                    door,
+                    body_len,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                let gate_debt =
+                    self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let cluster = if c == 1 {
+                    self.food_cluster(&ns, 36, 520, true)
+                } else {
+                    ClusterInfo::default()
+                };
+                let smile_strategy_credit = self.strategic_smile_credit(
+                    ns.smiles,
+                    cluster,
+                    info,
+                    escape,
+                    info.tail_reach || escape.tail_reach,
+                    door,
+                    gate_debt,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                let recent_debt = self.recent_memory_debt(
+                    &ns,
+                    info,
+                    escape.tail_reach,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                    if is_food(c) { 1 } else { 0 },
+                );
                 let score = info.space as i64 * 26
                     + exits as i64 * 1_000
                     + if is_food(c) { 2_500 } else { 0 }
@@ -1966,6 +2662,8 @@ impl Planner {
                     + escape.space as i64 * 5
                     + forced.end_exits as i64 * 900
                     + self.door_exit_credit(door)
+                    + self.cluster_credit(cluster, RouteKind::Pressure, self.urgent) / 2
+                    + smile_strategy_credit
                     - if exits <= 1 {
                         7_000 + forced.steps as i64 * 420
                     } else {
@@ -1992,7 +2690,10 @@ impl Planner {
                     } else {
                         0
                     }
-                    - door_debt;
+                    - door_debt
+                    - door_regression
+                    - gate_debt
+                    - recent_debt;
                 if score > best_score {
                     best_score = score;
                     best = Some(ns.first);
@@ -2055,7 +2756,7 @@ impl Planner {
             420
         };
         let current_dist = self.food_distance(&st, dist_limit);
-        for allow_smile in [false] {
+        for allow_smile in [false, true] {
             let mut best = None;
             let mut best_score = i64::MIN;
             for ns in self.legal(&st, allow_smile) {
@@ -2110,11 +2811,49 @@ impl Planner {
                 }
                 let door = self.door_exit_info(&ns);
                 let door_debt = self.door_exit_debt(door, body_len, exits);
+                let start_door = self.door_exit_info(&st);
+                let door_regression = self.door_regression_debt(
+                    start_door,
+                    door,
+                    body_len,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                let gate_debt =
+                    self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let cluster = self.food_cluster(
+                    &ns,
+                    if stone_maze { 48 } else { 36 },
+                    if stone_maze { 900 } else { 560 },
+                    allow_smile,
+                );
+                let return_open = info.tail_reach || escape.tail_reach;
+                let smile_strategy_credit = self.strategic_smile_credit(
+                    ns.smiles,
+                    cluster,
+                    info,
+                    escape,
+                    return_open,
+                    door,
+                    gate_debt,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
                 let progress = if current_dist < INF {
                     (current_dist - dist).clamp(-12, 12) as i64
                 } else {
                     0
                 };
+                let recent_debt = self.recent_memory_debt(
+                    &ns,
+                    info,
+                    escape.tail_reach,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                    if is_food(c) || progress > 0 { 1 } else { 0 },
+                );
                 let dist_weight = if stone_maze {
                     if deep_stall {
                         6_200
@@ -2149,6 +2888,8 @@ impl Planner {
                     + if escape.tail_reach { 15_000 } else { 0 }
                     + if escape.ok { 4_000 } else { 0 }
                     + escape.space as i64 * 4
+                    + self.cluster_credit(cluster, RouteKind::Pressure, self.urgent) / 2
+                    + smile_strategy_credit
                     + if is_food(c) {
                         if deep_stall {
                             44_000
@@ -2195,7 +2936,10 @@ impl Planner {
                     } else {
                         0
                     }
-                    - door_debt;
+                    - door_debt
+                    - door_regression
+                    - gate_debt
+                    - recent_debt;
                 if score > best_score {
                     best_score = score;
                     best = Some(ns.first);
@@ -2223,11 +2967,50 @@ impl Planner {
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
                 let door = self.door_exit_info(&ns);
                 let door_debt = self.door_exit_debt(door, body_len, exits);
+                let start_door = self.door_exit_info(&st);
+                let door_regression = self.door_regression_debt(
+                    start_door,
+                    door,
+                    body_len,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                let gate_debt =
+                    self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let cluster = self.food_cluster(&ns, 28, 360, allow_smile);
+                let escape = EscapeInfo {
+                    ok: false,
+                    depth: 0,
+                    space: info.space,
+                    tail_reach: info.tail_reach,
+                    exits,
+                };
+                let smile_strategy_credit = self.strategic_smile_credit(
+                    ns.smiles,
+                    cluster,
+                    info,
+                    escape,
+                    info.tail_reach,
+                    door,
+                    gate_debt,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
                 let dist = if is_food(c) {
                     0
                 } else {
                     self.food_distance(&ns, 180)
                 };
+                let recent_debt = self.recent_memory_debt(
+                    &ns,
+                    info,
+                    info.tail_reach,
+                    exits,
+                    RouteKind::Pressure,
+                    self.urgent,
+                    if is_food(c) || dist < 20 { 1 } else { 0 },
+                );
                 let score = info.space as i64 * 14
                     + exits as i64 * 2_400
                     + if info.tail_reach { 9_000 } else { 0 }
@@ -2237,6 +3020,8 @@ impl Planner {
                         0
                     }
                     + if is_food(c) { 6_000 } else { 0 }
+                    + self.cluster_credit(cluster, RouteKind::Pressure, self.urgent) / 3
+                    + smile_strategy_credit
                     + self.door_exit_credit(door)
                     - if c == 1 {
                         if return_room {
@@ -2250,6 +3035,9 @@ impl Planner {
                     - ns.stones as i64 * 45
                     - if return_risk { 12_000 } else { 0 }
                     - door_debt
+                    - door_regression
+                    - gate_debt
+                    - recent_debt
                     + if ns.first == st.dir { 80 } else { 0 };
                 if score > best_score {
                     best_score = score;
@@ -2442,7 +3230,17 @@ mod tests {
     }
 
     fn planner(board: [u16; BOARD_LEN], body: Vec<i32>) -> Planner {
-        Planner::new(board, body, [0; ENEMY_LEN], 26, 12, 0, false, 1_000_000.0)
+        Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            Vec::new(),
+            26,
+            12,
+            0,
+            false,
+            1_000_000.0,
+        )
     }
 
     fn planner_level(board: [u16; BOARD_LEN], body: Vec<i32>, level: i32) -> Planner {
@@ -2450,6 +3248,7 @@ mod tests {
             board,
             body,
             [0; ENEMY_LEN],
+            Vec::new(),
             level,
             12,
             0,
@@ -2529,7 +3328,17 @@ mod tests {
         enemy[(col * 4 + 1) as usize] = 8;
         board[offset(8, col) as usize] = 24;
         let body = vec![offset(10, 10), offset(10, 11)];
-        let p = Planner::new(board, body, enemy, 30, 20, 0, false, 1_000_000.0);
+        let p = Planner::new(
+            board,
+            body,
+            enemy,
+            Vec::new(),
+            30,
+            20,
+            0,
+            false,
+            1_000_000.0,
+        );
         assert!(p.danger(offset(7, col), 0));
         assert!(p.danger(offset(6, col), 1));
     }
@@ -2616,6 +3425,92 @@ mod tests {
     }
 
     #[test]
+    fn door_regression_debt_protects_reserved_return_lane() {
+        let board = vertical_door_board();
+        let open_body = vec![offset(10, 13), offset(10, 14)];
+        let blocked_body = vec![
+            offset(9, 14),
+            offset(10, 13),
+            offset(11, 13),
+            offset(10, 14),
+        ];
+        let p = planner_level(board, open_body, 27);
+        let before = p.door_exit_info(&p.start_state());
+        let mut bits = BoardBits::default();
+        for off in &blocked_body {
+            bits.insert(*off);
+        }
+        let after_state = State {
+            head: offset(10, 14),
+            body: BodyTrace::new(blocked_body),
+            body_bits: bits,
+            dir: 77,
+            overlay: CellOverlay::default(),
+            first: 77,
+            dist: 1,
+            ate: 0,
+            points: 0,
+            smiles: 0,
+            stones: 0,
+            chokes: 0,
+            repeats: 0,
+        };
+        let after = p.door_exit_info(&after_state);
+        assert_eq!(before.usable, 1);
+        assert_eq!(after.usable, 0);
+        assert!(p.door_regression_debt(before, after, 64, 2, RouteKind::Route, false) > 100_000);
+    }
+
+    #[test]
+    fn return_gate_debt_penalizes_single_narrow_tail_route() {
+        let mut board = empty_board();
+        for col in 11..=15 {
+            board[offset(9, col) as usize] = 196;
+            board[offset(11, col) as usize] = 196;
+        }
+        board[offset(10, 16) as usize] = 196;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        let st = p.start_state();
+        let ns = p.move_state(&st, 77, true).unwrap();
+        let info = p.space_info(&ns, false);
+        let exits = p.legal_count(&ns, true);
+        assert!(p.return_gate_debt(&ns, info, exits, 1, RouteKind::Route, false) > 20_000);
+    }
+
+    #[test]
+    fn recent_memory_debt_penalizes_looping_without_progress() {
+        let board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut trail = Vec::new();
+        for col in 20..=48 {
+            trail.push(offset(5, col));
+        }
+        trail.push(offset(10, 12));
+        let mut p = Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            trail,
+            26,
+            12,
+            0,
+            false,
+            1_000_000.0,
+        );
+        let st = p.start_state();
+        let ns = p.move_state(&st, 77, true).unwrap();
+        let info = p.space_info(&ns, false);
+        let exits = p.legal_count(&ns, true);
+        let debt = p.recent_memory_debt(&ns, info, false, exits, RouteKind::Route, false, 0);
+        let progress_debt =
+            p.recent_memory_debt(&ns, info, false, exits, RouteKind::Route, false, 1);
+        assert!(ns.repeats > 0);
+        assert!(debt > 0);
+        assert!(progress_debt < debt);
+    }
+
+    #[test]
     fn normal_food_route_rejects_cut_off_tail_return() {
         let mut board = empty_board();
         for row in 8..=12 {
@@ -2644,6 +3539,36 @@ mod tests {
             urgent: false,
         };
         assert!(p.score_food_candidate(&ns, &cfg).is_none());
+    }
+
+    #[test]
+    fn strategic_smiley_bridge_can_unlock_clustered_food() {
+        let mut board = empty_board();
+        board[offset(10, 12) as usize] = 1;
+        board[offset(10, 13) as usize] = 3;
+        board[offset(9, 13) as usize] = 5;
+        board[offset(11, 13) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        let st = p.start_state();
+        let cfg = FoodSearch {
+            start: st.clone(),
+            allow_smile: true,
+            max_depth: 12,
+            scan_limit: 80,
+            check_limit: 10,
+            route_kind: RouteKind::Route,
+            arrow_level: false,
+            urgent: false,
+        };
+        let ns = p.move_state(&st, 77, true).unwrap();
+        let ns = p.route_prefix_state(ns, &cfg).unwrap();
+        let ns = p.move_state(&ns, 77, true).unwrap();
+        let score = p.score_food_candidate(&ns, &cfg);
+        assert!(score.is_some());
+        let cluster = p.food_cluster(&ns, 16, 120, true);
+        assert!(cluster.foods >= 2);
+        assert!(p.cluster_credit(cluster, RouteKind::Route, false) > 0);
     }
 
     #[test]
@@ -2765,6 +3690,21 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
         assert_eq!(p.last_chance_move(), Some(77));
+    }
+
+    #[test]
+    fn food_cluster_scores_multiple_future_pickups() {
+        let mut board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        board[offset(10, 13) as usize] = 3;
+        board[offset(9, 13) as usize] = 5;
+        board[offset(11, 13) as usize] = 3;
+        let p = planner(board, body);
+        let st = p.start_state();
+        let cluster = p.food_cluster(&st, 12, 120, false);
+        assert_eq!(cluster.foods, 3);
+        assert!(cluster.score > 0);
+        assert!(p.cluster_credit(cluster, RouteKind::Route, false) > 0);
     }
 
     #[test]

@@ -433,7 +433,7 @@
 
   function createWasm(access){
     const now = access.now || defaultNow;
-    let exports = null, board = null, body = null, enemy = null, disabled = false;
+    let exports = null, board = null, body = null, enemy = null, trail = null, disabled = false;
     const canLoad = typeof WebAssembly !== 'undefined' &&
       typeof WebAssembly.instantiate === 'function' &&
       typeof fetch === 'function' &&
@@ -446,10 +446,12 @@
       if(!memory || typeof exports.board_ptr !== 'function' ||
           typeof exports.body_ptr !== 'function' ||
           typeof exports.enemy_ptr !== 'function' ||
+          typeof exports.trail_ptr !== 'function' ||
           typeof exports.decide !== 'function') throw new Error('missing wasm bot exports');
       board = new Uint16Array(memory.buffer, exports.board_ptr(), 4000);
       body = new Int32Array(memory.buffer, exports.body_ptr(), 15001);
       enemy = new Int32Array(memory.buffer, exports.enemy_ptr(), 81 * 4);
+      trail = new Int32Array(memory.buffer, exports.trail_ptr(), 128);
     };
 
     const init = canLoad ? (async () => {
@@ -466,7 +468,7 @@
       }
     })() : Promise.resolve();
 
-    const copySnapshot = () => {
+    const copySnapshot = options => {
       if(!exports) return null;
       if(board.buffer !== exports.memory.buffer) bindMemory();
       const g = access.state();
@@ -479,13 +481,19 @@
           for(let j=0; j<4; j++) enemy[i*4 + j] = row ? (row[j] | 0) : 0;
         }
       } else enemy.fill(0);
-      return { level:g.LEVEL|0, items:((g.HART|0) + (g.KLAVER|0))|0, len };
+      const sourceTrail = options && Array.isArray(options.headTrail) ? options.headTrail : [];
+      const start = Math.max(0, sourceTrail.length - trail.length);
+      let trailLen = 0;
+      for(let i=start; i<sourceTrail.length && trailLen<trail.length; i++, trailLen++){
+        trail[trailLen] = sourceTrail[i] | 0;
+      }
+      return { level:g.LEVEL|0, items:((g.HART|0) + (g.KLAVER|0))|0, len, trailLen };
     };
 
     const decide = options => {
       if(disabled || !exports) return null;
       try {
-        const snapshot = copySnapshot();
+        const snapshot = copySnapshot(options);
         if(!snapshot) return null;
         const sc = exports.decide(
           snapshot.level,
@@ -493,6 +501,7 @@
           snapshot.len,
           options && Number.isFinite(options.idle) ? options.idle|0 : 0,
           options && options.looping ? 1 : 0,
+          snapshot.trailLen,
           options && Number.isFinite(options.budgetMs) ? Math.max(1, options.budgetMs) : 35
         );
         if(sc === 0) return null;

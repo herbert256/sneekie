@@ -227,7 +227,7 @@
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
-      const sc = planner ? planner.decide({ idle, looping, budgetMs:routeBudget() }) : null;
+      const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() }) : null;
       if(sc !== null){
         pushKey(keyOf[sc]);                            // a safe move
       }
