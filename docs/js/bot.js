@@ -150,7 +150,7 @@
     return key && key !== 'yesInput' ? key : 'y';
   };
   (async () => {
-    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, stuckQueued = false;
+    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, stuckQueued = false, stuckWaitTicks = 0;
     let observedLive = null;
     const headTrail = [];
     while(true){
@@ -234,14 +234,20 @@
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
-      const stalled = idle > 180 || (idle > 96 && repeats >= 4);
+      // Give up and flash/restart well before the old idle>180 ceiling so the bot
+      // can't orbit ~50+ moves making no progress. A short looping run (revisiting
+      // the same cell) trips earlier than a plain no-score stall.
+      const stalled = idle > 80 || (idle > 50 && repeats >= 3);
       const sc = stalled ? null : (planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() }) : null);
       if(sc !== null){
-        stuckQueued = false;
+        stuckQueued = false; stuckWaitTicks = 0;
         pushKey(keyOf[sc]);                            // a safe move
       }
-      else if(!stuckQueued){
-        stuckQueued = true;
+      // No safe move: ask the game to flash + restart. Re-issue periodically so a
+      // request that didn't take (e.g. dropped while the game was mid-animation)
+      // can never leave the bot wedged feeding a buffer nobody drains.
+      else if(!stuckQueued || ++stuckWaitTicks > 12){
+        stuckQueued = true; stuckWaitTicks = 0;
         idle = 0; headTrail.length = 0;
         if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
         else pushKey('\r');

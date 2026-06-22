@@ -534,7 +534,7 @@ function ensureAudio(){
   if(actx && actx.state === 'suspended') actx.resume()?.catch(() => {});
 }
 function sound(freq, ticks){
-  if(!actx) return;
+  if(!actx || actx.state !== 'running') return;   // suspended clock is frozen: don't queue into it
   const dur = ticks / 18.2;
   const t0 = Math.max(actx.currentTime, qEnd);
   if(t0 - actx.currentTime > 3) return;     // cap the backlog
@@ -552,7 +552,15 @@ function sound(freq, ticks){
 }
 async function playDrained(){               // 540: IF PLAY(0)<>0 GOTO 540
   if(!actx) return;
-  while(qEnd > actx.currentTime) await sleep(25);
+  // A suspended AudioContext freezes currentTime, so `qEnd > currentTime` would
+  // stay true forever and hang deathSeq() before it unwinds the snake. Only wait
+  // while the clock is actually running, and cap the wait at the max backlog so
+  // a stalled clock can never spin us forever.
+  const deadline = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 3500;
+  while(actx.state === 'running' && qEnd > actx.currentTime){
+    if((typeof performance !== 'undefined' ? performance.now() : Date.now()) > deadline) break;
+    await sleep(25);
+  }
 }
 
 /* ---------- helpers ---------- */
