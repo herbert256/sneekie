@@ -120,8 +120,8 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <div class="step"><b>3. Ademruimte</b><p>Als het veld krap is of de slang lang is, kiest de planner eerst een bewezen zet naar open ruimte voordat hij ver voedsel najagt.</p></div>
           <div class="step"><b>4. Bredere routes</b><p>Als dichtbij niets veilig is en ademruimte niet wint, zoekt de planner verder, eerst schoon en daarna met smileys toegestaan.</p></div>
           <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen. Als er niet op tijd een volledig bewezen route is, kiest hij een directe drukzet richting bereikbaar voedsel.</p></div>
-          <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij alleen een directe zet als die geen doodlopende gang of vroege zelfinsluiting forceert.</p></div>
-          <div class="step"><b>7. Netjes opgeven</b><p>Alleen als zelfs de lokale overlevingsfallback geen overleefbare zet vindt, geeft de bot op.</p></div>
+          <div class="step"><b>6. Lokaal overleven</b><p>Als laatste veiligheidsfallback kiest hij een directe zet die nog door de lokale controles komt.</p></div>
+          <div class="step"><b>7. Minst slechte zet</b><p>Als geen route bewezen kan worden, geeft de planner toch de beste direct legale zet terug. De bot drukt nooit zelf Escape.</p></div>
         </div>
         <pre><code>const decide = options =&gt; {
   model = capture();
@@ -146,7 +146,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   return proved ?? (urgent ? pressureStep() : null) ??
     survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Escape wordt gebruikt wanneer er geen overleefbare zet meer is, wanneer de strenge laatste-kanspoort een onbewezen zelfval weigert, en ook na een aanhoudende scoreloze stall zodat de live demo niet eindeloos blijft rondgaan.</p>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; alleen het echte spel kan de slang doden of vast verklaren.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>
@@ -254,11 +254,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Schoon gehaald. Groen flitsen en door naar het volgende gekozen level.</td></tr>
             <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
             <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang zit vast, sterft of beweegt niet. Rood na de stall-drempel.</td></tr>
-            <tr><td>Geen overleefbare zet</td><td>Voedselplanners en lokale overlevingsfallback faalden. Rood.</td></tr>
-            <tr><td>Geen scorewinst of herhaalde kopposities</td><td>Schakel naar urgente voedseldruk; geef na een aanhoudende stall netjes op en ga door.</td></tr>
+            <tr><td>Geen overleefbare zet</td><td>Gebruik de minst slechte direct legale zet; als die niet bestaat, handelt het echte spel vastzitten af.</td></tr>
+            <tr><td>Geen scorewinst of herhaalde kopposities</td><td>Schakel naar urgente voedseldruk en blijf zetten teruggeven. Er wordt geen vrijwillige Escape verstuurd.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert, dus de bot blijft eerst veilig bewegen en geeft pas op wanneer het stall-venster duidelijk te lang wordt.</p>
+        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange veilige route vragen zonder dat de score meteen verandert, dus de bot blijft urgente druk zetten in plaats van een lange stall als reden te gebruiken om Escape te drukken.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>

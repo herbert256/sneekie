@@ -1307,24 +1307,23 @@ impl Planner {
         for ns in self.legal(&st, true) {
             let c = self.cell(&st, st.head + step(ns.first));
             let exits = self.legal_count(&ns, true);
-            if exits == 0 {
-                continue;
-            }
             let info = self.space_info(&ns, false);
-            let forced = self.forced_path(&ns, true, 24);
-            if forced.dead || self.enclosure_risk(&ns, info, exits, 1) {
-                continue;
-            }
-            if exits <= 1 && forced.end_exits <= 1 {
-                continue;
-            }
+            let dist = if is_food(c) {
+                0
+            } else {
+                self.food_distance(&ns, 180)
+            };
             let score = info.space as i64 * 14
                 + exits as i64 * 2_400
-                + forced.steps as i64 * 650
-                + forced.end_exits as i64 * 4_000
                 + if info.tail_reach { 9_000 } else { 0 }
+                + if dist < INF {
+                    (20 - dist).max(0) as i64 * 180
+                } else {
+                    0
+                }
                 + if is_food(c) { 6_000 } else { 0 }
                 - if c == 1 { 1_600 } else { 0 }
+                - ns.stones as i64 * 45
                 + if ns.first == st.dir { 80 } else { 0 };
             if score > best_score {
                 best_score = score;
@@ -1574,7 +1573,7 @@ mod tests {
     }
 
     #[test]
-    fn last_chance_rejects_dead_corridor() {
+    fn last_chance_returns_dead_corridor_when_it_is_the_only_move() {
         let mut board = empty_board();
         for col in 11..=14 {
             board[offset(9, col) as usize] = 196;
@@ -1583,7 +1582,7 @@ mod tests {
         board[offset(10, 15) as usize] = 196;
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
-        assert_eq!(p.last_chance_move(), None);
+        assert_eq!(p.last_chance_move(), Some(77));
     }
 
     #[test]
@@ -1604,7 +1603,7 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         board[offset(10, 13) as usize] = 3;
         let mut p = planner(board, body);
-        assert!(matches!(p.decide(), 72 | 80 | 75 | 77 | 0));
+        assert!(matches!(p.decide(), 72 | 80 | 75 | 77));
     }
 
     #[test]

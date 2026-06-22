@@ -348,6 +348,20 @@
       }
       return best;
     };
+    const lastChanceMove = () => {
+      const st = makeState(); let best = null, bs = -1e18;
+      for(const ns of legal(st, true)){
+        const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
+        const info = spaceInfo(ns, false);
+        const dist = isFood(c) ? 0 : foodDistance(ns, 180);
+        const score = info.space*14 + exits*2200 + (info.tailReach?9000:0) +
+          (Number.isFinite(dist) ? Math.max(0, 20 - dist)*180 : 0) +
+          (isFood(c)?6000:0) - (c===1?1600:0) - ns.stones*45 +
+          (ns.first===st.dir?80:0);
+        if(score > bs){ bs = score; best = ns.first; }
+      }
+      return best;
+    };
     const decide = options => {
       model = capture();
       resetDanger();
@@ -368,7 +382,7 @@
       } finally {
         routeDeadline = 0;
       }
-      return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
+      return proved ?? (urgent ? pressureStep() : null) ?? survivalMove() ?? lastChanceMove();
     };
 
     return { decide };
