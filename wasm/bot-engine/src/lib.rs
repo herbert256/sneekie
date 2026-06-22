@@ -1,15 +1,179 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::VecDeque;
 
 const BOARD_LEN: usize = 4000;
 const BODY_CAP: usize = 15001;
 const ENEMY_LEN: usize = 81 * 4;
 const DIRS: [(i32, i32); 4] = [(72, -160), (80, 160), (75, -2), (77, 2)];
 const MAX_DANGER_TICKS: usize = 7;
+const BIT_WORDS: usize = (BOARD_LEN + 63) / 64;
 const INF: i32 = 1_000_000;
 
 static mut BOARD: [u16; BOARD_LEN] = [0; BOARD_LEN];
 static mut BODY: [i32; BODY_CAP] = [0; BODY_CAP];
 static mut ENEMY: [i32; ENEMY_LEN] = [0; ENEMY_LEN];
+
+#[derive(Clone, Copy)]
+struct BoardBits {
+    words: [u64; BIT_WORDS],
+}
+
+impl Default for BoardBits {
+    fn default() -> Self {
+        Self {
+            words: [0; BIT_WORDS],
+        }
+    }
+}
+
+impl BoardBits {
+    fn insert(&mut self, off: i32) -> bool {
+        let Some((word, mask)) = bit_pos(off) else {
+            return false;
+        };
+        let was_clear = self.words[word] & mask == 0;
+        self.words[word] |= mask;
+        was_clear
+    }
+
+    fn remove(&mut self, off: i32) {
+        if let Some((word, mask)) = bit_pos(off) {
+            self.words[word] &= !mask;
+        }
+    }
+
+    fn contains(&self, off: i32) -> bool {
+        bit_pos(off)
+            .map(|(word, mask)| self.words[word] & mask != 0)
+            .unwrap_or(false)
+    }
+}
+
+#[derive(Clone, Copy, Default)]
+struct VisitBits {
+    dirs: [BoardBits; 4],
+}
+
+impl VisitBits {
+    fn insert(&mut self, off: i32, sc: i32) -> bool {
+        self.dirs[dir_slot(sc)].insert(off)
+    }
+}
+
+fn bit_pos(off: i32) -> Option<(usize, u64)> {
+    if !(0..BOARD_LEN as i32).contains(&off) {
+        return None;
+    }
+    let bit = off as usize;
+    Some((bit / 64, 1u64 << (bit % 64)))
+}
+
+struct BodyTrace {
+    cells: Vec<i32>,
+    start: usize,
+}
+
+impl Clone for BodyTrace {
+    fn clone(&self) -> Self {
+        Self {
+            cells: self.cells[self.start..].to_vec(),
+            start: 0,
+        }
+    }
+}
+
+impl BodyTrace {
+    fn new(cells: Vec<i32>) -> Self {
+        Self { cells, start: 0 }
+    }
+
+    fn len(&self) -> usize {
+        self.cells.len().saturating_sub(self.start)
+    }
+
+    fn tail(&self) -> Option<i32> {
+        self.cells.get(self.start).copied()
+    }
+
+    fn prev_head(&self) -> Option<i32> {
+        if self.len() >= 2 {
+            self.cells.get(self.cells.len().saturating_sub(2)).copied()
+        } else {
+            self.tail()
+        }
+    }
+
+    fn push(&mut self, off: i32) {
+        self.cells.push(off);
+    }
+
+    fn pop_tail(&mut self) -> Option<i32> {
+        let old = self.tail()?;
+        self.start += 1;
+        if self.start > 64 && self.start * 2 > self.cells.len() {
+            self.cells.drain(0..self.start);
+            self.start = 0;
+        }
+        Some(old)
+    }
+}
+
+struct SeenKeys {
+    slots: Vec<u64>,
+    filled: usize,
+}
+
+impl SeenKeys {
+    fn with_capacity(capacity: usize) -> Self {
+        let size = capacity.saturating_mul(2).next_power_of_two().max(16);
+        Self {
+            slots: vec![0; size],
+            filled: 0,
+        }
+    }
+
+    fn insert(&mut self, key: u64) -> bool {
+        if self.filled * 3 >= self.slots.len() * 2 {
+            self.grow();
+        }
+        self.insert_stored(key.wrapping_add(1))
+    }
+
+    fn insert_stored(&mut self, stored: u64) -> bool {
+        let mask = self.slots.len() - 1;
+        let mut idx = hash_key(stored) & mask;
+        loop {
+            let slot = self.slots[idx];
+            if slot == stored {
+                return false;
+            }
+            if slot == 0 {
+                self.slots[idx] = stored;
+                self.filled += 1;
+                return true;
+            }
+            idx = (idx + 1) & mask;
+        }
+    }
+
+    fn grow(&mut self) {
+        let new_len = self.slots.len() * 2;
+        let old = core::mem::replace(&mut self.slots, vec![0; new_len]);
+        self.filled = 0;
+        for stored in old {
+            if stored != 0 {
+                self.insert_stored(stored);
+            }
+        }
+    }
+}
+
+fn hash_key(mut key: u64) -> usize {
+    key ^= key >> 33;
+    key = key.wrapping_mul(0xff51afd7ed558ccd);
+    key ^= key >> 33;
+    key = key.wrapping_mul(0xc4ceb9fe1a85ec53);
+    (key ^ (key >> 33)) as usize
+}
 
 #[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "env")]
@@ -57,9 +221,9 @@ pub extern "C" fn decide(
     budget_ms: f64,
 ) -> i32 {
     let body_len = body_len.clamp(2, BODY_CAP as i32) as usize;
-    let mut board = vec![0u16; BOARD_LEN];
+    let mut board = [0u16; BOARD_LEN];
     let mut body = Vec::with_capacity(body_len);
-    let mut enemy = vec![0i32; ENEMY_LEN];
+    let mut enemy = [0i32; ENEMY_LEN];
 
     unsafe {
         let board_src = core::ptr::addr_of!(BOARD).cast::<u16>();
@@ -85,10 +249,10 @@ pub extern "C" fn decide(
 #[derive(Clone)]
 struct State {
     head: i32,
-    body: Vec<i32>,
-    body_set: HashSet<i32>,
+    body: BodyTrace,
+    body_bits: BoardBits,
     dir: i32,
-    cells: HashMap<i32, u16>,
+    cells: Vec<(i32, u16)>,
     first: i32,
     dist: i32,
     ate: i32,
@@ -122,30 +286,34 @@ struct ForcedInfo {
 }
 
 struct Planner {
-    board: Vec<u16>,
+    board: [u16; BOARD_LEN],
     body: Vec<i32>,
-    body_set: HashSet<i32>,
-    enemy: Vec<i32>,
+    body_bits: BoardBits,
+    enemy: [i32; ENEMY_LEN],
     level: i32,
     items: i32,
     dir: i32,
     urgent: bool,
     deadline: f64,
     clock_checks: u32,
-    danger_masks: Vec<HashSet<i32>>,
+    danger_masks: [BoardBits; MAX_DANGER_TICKS + 1],
+    danger_len: usize,
 }
 
 impl Planner {
     fn new(
-        board: Vec<u16>,
+        board: [u16; BOARD_LEN],
         body: Vec<i32>,
-        enemy: Vec<i32>,
+        enemy: [i32; ENEMY_LEN],
         level: i32,
         items: i32,
         urgent: bool,
         deadline: f64,
     ) -> Self {
-        let body_set = body.iter().copied().collect::<HashSet<_>>();
+        let mut body_bits = BoardBits::default();
+        for off in body.iter().copied() {
+            body_bits.insert(off);
+        }
         let dir = if body.len() >= 2 {
             match body[body.len() - 1] - body[body.len() - 2] {
                 -160 => 72,
@@ -160,7 +328,7 @@ impl Planner {
         let mut planner = Self {
             board,
             body,
-            body_set,
+            body_bits,
             enemy,
             level,
             items,
@@ -168,9 +336,12 @@ impl Planner {
             urgent,
             deadline,
             clock_checks: 0,
-            danger_masks: Vec::new(),
+            danger_masks: [BoardBits::default(); MAX_DANGER_TICKS + 1],
+            danger_len: 1,
         };
-        planner.danger_masks = planner.build_danger_masks();
+        let (danger_masks, danger_len) = planner.build_danger_masks();
+        planner.danger_masks = danger_masks;
+        planner.danger_len = danger_len;
         planner
     }
 
@@ -316,10 +487,10 @@ impl Planner {
     fn start_state(&self) -> State {
         State {
             head: *self.body.last().unwrap_or(&0),
-            body: self.body.clone(),
-            body_set: self.body_set.clone(),
+            body: BodyTrace::new(self.body.clone()),
+            body_bits: self.body_bits,
             dir: self.dir,
-            cells: HashMap::new(),
+            cells: Vec::new(),
             first: 0,
             dist: 0,
             ate: 0,
@@ -340,8 +511,9 @@ impl Planner {
 
     fn cell(&self, st: &State, o: i32) -> u16 {
         st.cells
-            .get(&o)
-            .copied()
+            .iter()
+            .rev()
+            .find_map(|&(off, val)| if off == o { Some(val) } else { None })
             .unwrap_or_else(|| self.base_cell(o))
     }
 
@@ -349,12 +521,13 @@ impl Planner {
         if !(0..BOARD_LEN as i32).contains(&o) {
             return true;
         }
-        let a = (dist.max(0) as usize).min(self.danger_masks.len().saturating_sub(1));
-        let b = (a + 1).min(self.danger_masks.len().saturating_sub(1));
-        self.danger_masks[a].contains(&o) || self.danger_masks[b].contains(&o)
+        let max = self.danger_len.saturating_sub(1);
+        let a = (dist.max(0) as usize).min(max);
+        let b = (a + 1).min(max);
+        self.danger_masks[a].contains(o) || self.danger_masks[b].contains(o)
     }
 
-    fn build_danger_masks(&self) -> Vec<HashSet<i32>> {
+    fn build_danger_masks(&self) -> ([BoardBits; MAX_DANGER_TICKS + 1], usize) {
         let horizon = if self.arrow_level() {
             if self.urgent || self.few() {
                 6
@@ -364,9 +537,8 @@ impl Planner {
         } else {
             1
         };
-        let mut masks = (0..=horizon.min(MAX_DANGER_TICKS))
-            .map(|_| HashSet::new())
-            .collect::<Vec<_>>();
+        let len = horizon.min(MAX_DANGER_TICKS) + 1;
+        let mut masks = [BoardBits::default(); MAX_DANGER_TICKS + 1];
         for o in (0..BOARD_LEN as i32).step_by(2) {
             if is_arrow(self.base_cell(o)) {
                 masks[0].insert(o);
@@ -377,10 +549,10 @@ impl Planner {
             6 | 14 => self.project_horizontal_arrows(&mut masks),
             _ => {}
         }
-        masks
+        (masks, len)
     }
 
-    fn project_up_arrows(&self, masks: &mut [HashSet<i32>]) {
+    fn project_up_arrows(&self, masks: &mut [BoardBits]) {
         for col in (2..=78).step_by(2) {
             let mut row = self.enemy_value(col, 1);
             if !(4..=21).contains(&row) {
@@ -396,7 +568,7 @@ impl Planner {
         }
     }
 
-    fn project_horizontal_arrows(&self, masks: &mut [HashSet<i32>]) {
+    fn project_horizontal_arrows(&self, masks: &mut [BoardBits]) {
         for row in 4..=20 {
             let mut right = self.enemy_value(row, 1);
             if !(2..=79).contains(&right) {
@@ -442,7 +614,7 @@ impl Planner {
         }
         let d = step(sc);
         let n = st.head + d;
-        if self.danger(n, st.dist) || st.body_set.contains(&n) {
+        if self.danger(n, st.dist) || st.body_bits.contains(n) {
             return None;
         }
         let mut c = self.cell(st, n);
@@ -454,11 +626,11 @@ impl Planner {
         }
         if c == 10 {
             let nn = n + d;
-            if st.body_set.contains(&nn) || self.cell(st, nn) != 32 {
+            if st.body_bits.contains(nn) || self.cell(st, nn) != 32 {
                 return None;
             }
-            cells.insert(n, 32);
-            cells.insert(nn, 10);
+            cells.push((n, 32));
+            cells.push((nn, 10));
             stones += 1;
             c = 32;
         } else if !open(c) {
@@ -467,23 +639,22 @@ impl Planner {
 
         let grow = c == 1 || is_food(c);
         let mut body = st.body.clone();
-        let mut body_set = st.body_set.clone();
+        let mut body_bits = st.body_bits;
         if !grow {
-            if let Some(old) = body.first().copied() {
-                body.remove(0);
-                body_set.remove(&old);
-                cells.insert(old, 32);
+            if let Some(old) = body.pop_tail() {
+                body_bits.remove(old);
+                cells.push((old, 32));
             }
         }
         body.push(n);
-        body_set.insert(n);
+        body_bits.insert(n);
         if grow {
-            cells.insert(n, 32);
+            cells.push((n, 32));
         }
         Some(State {
             head: n,
             body,
-            body_set,
+            body_bits,
             dir: sc,
             cells,
             first: if st.first == 0 { sc } else { st.first },
@@ -515,7 +686,7 @@ impl Planner {
         }
         let d = step(sc);
         let n = st.head + d;
-        if self.danger(n, st.dist) || st.body_set.contains(&n) {
+        if self.danger(n, st.dist) || st.body_bits.contains(n) {
             return false;
         }
         let c = self.cell(st, n);
@@ -524,7 +695,7 @@ impl Planner {
         }
         if c == 10 {
             let nn = n + d;
-            return !st.body_set.contains(&nn) && self.cell(st, nn) == 32;
+            return !st.body_bits.contains(nn) && self.cell(st, nn) == 32;
         }
         open(c)
     }
@@ -558,9 +729,12 @@ impl Planner {
     }
 
     fn space_info(&mut self, st: &State, limited: bool) -> SpaceInfo {
-        let tail = st.body.first().copied().unwrap_or(st.head);
-        let mut seen = HashSet::from([visit_key(st.head, st.dir)]);
-        let mut cells = HashSet::from([st.head]);
+        let tail = st.body.tail().unwrap_or(st.head);
+        let mut seen = VisitBits::default();
+        seen.insert(st.head, st.dir);
+        let mut cells = BoardBits::default();
+        cells.insert(st.head);
+        let mut cell_count = 1;
         let mut q = VecDeque::from([(st.head, st.dir)]);
         let mut tail_reach = st.head == tail;
         while let Some((o, dir)) = q.pop_front() {
@@ -578,23 +752,22 @@ impl Planner {
                 if self.danger(n, 0) {
                     continue;
                 }
-                if n != tail && (st.body_set.contains(&n) || !open(self.cell(st, n))) {
+                if n != tail && (st.body_bits.contains(n) || !open(self.cell(st, n))) {
                     continue;
                 }
-                let key = visit_key(n, sc);
-                if seen.insert(key) {
-                    if cells.len() < 1800 {
-                        cells.insert(n);
+                if seen.insert(n, sc) {
+                    if cell_count < 1800 && cells.insert(n) {
+                        cell_count += 1;
                     }
                     q.push_back((n, sc));
                 }
             }
-            if tail_reach && cells.len() >= 1800 {
+            if tail_reach && cell_count >= 1800 {
                 break;
             }
         }
         SpaceInfo {
-            space: cells.len() as i32,
+            space: cell_count,
             tail_reach,
         }
     }
@@ -602,7 +775,8 @@ impl Planner {
     fn survival_depth(&mut self, start: &State, limit: i32) -> i32 {
         let keep = if self.urgent || self.few() { 128 } else { 96 };
         let mut frontier = vec![start.clone()];
-        let mut seen = HashSet::from([state_key(start)]);
+        let mut seen = SeenKeys::with_capacity((keep * limit.max(1) as usize).saturating_mul(4));
+        seen.insert(state_key(start));
         let mut best = 0;
         for depth in 1..=limit {
             if self.time_up() {
@@ -640,7 +814,8 @@ impl Planner {
     ) -> EscapeInfo {
         let keep = if self.urgent || self.few() { 160 } else { 128 };
         let mut frontier = vec![start.clone()];
-        let mut seen = HashSet::from([state_key(start)]);
+        let mut seen = SeenKeys::with_capacity((keep * limit.max(1) as usize).saturating_mul(4));
+        seen.insert(state_key(start));
         let mut best = EscapeInfo::default();
         for depth in 1..=limit {
             if self.time_up() {
@@ -763,7 +938,8 @@ impl Planner {
 
     fn food_search(&mut self, cfg: FoodSearch) -> Option<i32> {
         let mut q = VecDeque::from([cfg.start.clone()]);
-        let mut seen = HashSet::from([state_key(&cfg.start)]);
+        let mut seen = SeenKeys::with_capacity(cfg.scan_limit.max(1) as usize);
+        seen.insert(state_key(&cfg.start));
         let mut scanned = 0;
         let mut checked = 0;
         let mut best = None;
@@ -1256,8 +1432,9 @@ impl Planner {
             return 0;
         }
         let mut q = VecDeque::from([start.clone()]);
-        let mut seen = HashSet::from([state_key(start)]);
         let scan_limit = if urgent || self.few() { 1400 } else { 900 };
+        let mut seen = SeenKeys::with_capacity(scan_limit);
+        seen.insert(state_key(start));
         let max_depth = if self.few() { 52 } else { 38 };
         let mut scanned = 0;
         let mut best = 0i64;
@@ -1447,7 +1624,8 @@ impl Planner {
     }
 
     fn food_distance(&mut self, st: &State, limit: usize) -> i32 {
-        let mut seen = HashSet::from([visit_key(st.head, st.dir)]);
+        let mut seen = VisitBits::default();
+        seen.insert(st.head, st.dir);
         let mut q = VecDeque::from([(st.head, st.dir, 0i32)]);
         while let Some((o, dir, dist)) = q.pop_front() {
             if q.len() >= limit {
@@ -1458,7 +1636,7 @@ impl Planner {
                     continue;
                 }
                 let n = o + d;
-                if self.danger(n, dist) || st.body_set.contains(&n) {
+                if self.danger(n, dist) || st.body_bits.contains(n) {
                     continue;
                 }
                 let c = self.cell(st, n);
@@ -1468,8 +1646,7 @@ impl Planner {
                 if !open(c) {
                     continue;
                 }
-                let key = visit_key(n, sc);
-                if seen.insert(key) {
+                if seen.insert(n, sc) {
                     q.push_back((n, sc, dist + 1));
                 }
             }
@@ -1674,18 +1851,14 @@ fn dir_idx(sc: i32) -> u64 {
     }
 }
 
-fn visit_key(o: i32, sc: i32) -> i64 {
-    o as i64 * 100 + sc as i64
+fn dir_slot(sc: i32) -> usize {
+    dir_idx(sc) as usize
 }
 
 fn state_key(st: &State) -> u64 {
     let head = (st.head.max(0) as u64) >> 1;
-    let first = (st.body.first().copied().unwrap_or(0).max(0) as u64) >> 1;
-    let near_tail = if st.body.len() >= 2 {
-        (st.body[st.body.len() - 2].max(0) as u64) >> 1
-    } else {
-        first
-    };
+    let first = (st.body.tail().unwrap_or(0).max(0) as u64) >> 1;
+    let near_tail = (st.body.prev_head().unwrap_or(0).max(0) as u64) >> 1;
     ((((head * 4 + dir_idx(st.dir)) * 2000 + first) * 2000 + near_tail) * 16000)
         + st.body.len() as u64
 }
@@ -1699,8 +1872,8 @@ fn cmp_i64_desc(a: i64, b: i64) -> std::cmp::Ordering {
 mod tests {
     use super::*;
 
-    fn empty_board() -> Vec<u16> {
-        let mut board = vec![0u16; BOARD_LEN];
+    fn empty_board() -> [u16; BOARD_LEN] {
+        let mut board = [0u16; BOARD_LEN];
         for row in 1..=25 {
             for col in 1..=80 {
                 board[offset(row, col) as usize] = 32;
@@ -1709,8 +1882,8 @@ mod tests {
         board
     }
 
-    fn planner(board: Vec<u16>, body: Vec<i32>) -> Planner {
-        Planner::new(board, body, vec![0; ENEMY_LEN], 26, 12, false, 1_000_000.0)
+    fn planner(board: [u16; BOARD_LEN], body: Vec<i32>) -> Planner {
+        Planner::new(board, body, [0; ENEMY_LEN], 26, 12, false, 1_000_000.0)
     }
 
     #[test]
@@ -1748,7 +1921,7 @@ mod tests {
         let st = p.start_state();
         let ns = p.move_state(&st, 77, false).expect("food should be legal");
         assert_eq!(ns.body.len(), 3);
-        assert!(ns.body_set.contains(&offset(10, 10)));
+        assert!(ns.body_bits.contains(offset(10, 10)));
         assert_eq!(ns.points, 10);
     }
 
@@ -1762,14 +1935,14 @@ mod tests {
             .move_state(&st, 77, true)
             .expect("empty move should be legal");
         assert_eq!(ns.body.len(), 2);
-        assert!(!ns.body_set.contains(&offset(10, 10)));
+        assert!(!ns.body_bits.contains(offset(10, 10)));
         assert_eq!(p.cell(&ns, offset(10, 10)), 32);
     }
 
     #[test]
     fn projects_future_up_arrow_danger() {
         let mut board = empty_board();
-        let mut enemy = vec![0; ENEMY_LEN];
+        let mut enemy = [0; ENEMY_LEN];
         let col = 10;
         enemy[(col * 4 + 1) as usize] = 8;
         board[offset(8, col) as usize] = 24;
