@@ -150,9 +150,9 @@
     return key && key !== 'yesInput' ? key : 'y';
   };
   window.SNEEKIE_BOT_DRIVES_GAME = true;
-  const STALL_IDLE_LIMIT = 160;
-  const STALL_LOOP_IDLE_LIMIT = 100;
-  const PICKUP_STUCK_LIMIT = 500;
+  const STALL_IDLE_LIMIT = 70;
+  const STALL_LOOP_IDLE_LIMIT = 40;
+  const PICKUP_STUCK_LIMIT = 320;
   const stepOf = {72:-160, 80:160, 75:-2, 77:2};
   const targetCellFor = sc => {
     const step = stepOf[sc];

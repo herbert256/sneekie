@@ -1045,6 +1045,10 @@ impl Planner {
                 }
             }
         };
+        // When the driver has flagged a stall, lean much harder on the loop
+        // breaker so every forced mover walks into fresh cells instead of
+        // re-circling the same pocket.
+        let weight = if self.force_risk { weight * 4 } else { weight };
         let mut debt = st.repeats as i64 * weight;
         if progress > 0 {
             debt = debt * 3 / 5;
@@ -1062,7 +1066,7 @@ impl Planner {
         if info.space >= body_len + self.return_buffer(body_len, self.few()) + 120 {
             debt = debt * 4 / 5;
         }
-        debt.min(match kind {
+        let cap = match kind {
             RouteKind::Near => 72_000,
             RouteKind::Route => 58_000,
             RouteKind::Pressure => {
@@ -1072,7 +1076,8 @@ impl Planner {
                     46_000
                 }
             }
-        })
+        };
+        debt.min(if self.force_risk { cap.max(160_000) } else { cap })
     }
 
     fn food_cluster(
@@ -1719,7 +1724,7 @@ impl Planner {
         let arrow_level = self.arrow_level();
         let start = self.start_state();
         let stone_maze = self.stone_maze_level();
-        let deep_stall = stone_maze && self.idle >= 140;
+        let deep_stall = stone_maze && self.idle >= 70;
         self.food_search(FoodSearch {
             start,
             allow_smile,
@@ -2899,7 +2904,7 @@ impl Planner {
         let st = self.start_state();
         let few = self.few();
         let stone_maze = self.stone_maze_level();
-        let deep_stall = stone_maze && self.idle >= 140;
+        let deep_stall = stone_maze && self.idle >= 70;
         let dist_limit = if stone_maze {
             if deep_stall {
                 1600
@@ -3690,6 +3695,37 @@ mod tests {
         assert!(ns.repeats > 0);
         assert!(debt > 0);
         assert!(progress_debt < debt);
+    }
+
+    #[test]
+    fn force_risk_amplifies_loop_breaker() {
+        let board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut trail = Vec::new();
+        for col in 20..=48 {
+            trail.push(offset(5, col));
+        }
+        trail.push(offset(10, 12));
+        let mut p = Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            trail,
+            26,
+            12,
+            0,
+            false,
+            1_000_000.0,
+        );
+        let st = p.start_state();
+        let ns = p.move_state(&st, 77, true).unwrap();
+        let info = p.space_info(&ns, false);
+        let exits = p.legal_count(&ns, true);
+        let normal = p.recent_memory_debt(&ns, info, false, exits, RouteKind::Pressure, true, 0);
+        p.force_risk = true;
+        let forced = p.recent_memory_debt(&ns, info, false, exits, RouteKind::Pressure, true, 0);
+        assert!(ns.repeats > 0);
+        assert!(forced > normal, "force_risk should amplify the loop-breaking debt");
     }
 
     #[test]
