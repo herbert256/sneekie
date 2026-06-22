@@ -97,7 +97,7 @@
             <a href="#speed"><span class="n">10.</span>Speed limits</a>
           </li>
           <li>
-            <a href="#restart"><span class="n">11.</span>Win, stuck, restart</a>
+            <a href="#restart"><span class="n">11.</span>Win, death, restart</a>
           </li>
           <li>
             <a href="#limits"><span class="n">12.</span>Limits and tradeoffs</a>
@@ -107,7 +107,8 @@
       <section id="where">
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
-        <pre><code>const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
+        <pre><code>const stalled = idle &gt; 160 || (idle &gt; 100 &amp;&amp; repeats &gt;= 3);
+const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
         <div class="cards">
@@ -217,35 +218,27 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   model = capture();
   resetDanger();
   const urgent = options.idle &gt;= 18 || options.looping;
+  const forceRisk = options.forceRisk === true;
   routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
-    const constrained = needsBreathing();
-    proved = constrained
-      ? nearFood(false) ??
-        breathingMove() ??
+    proved = forceRisk
+      ? pressureFood(true, true) ??
         nearFood(true) ??
-        routeFood(false) ??
-        routeFood(true) ??
-        pressureFood(true, urgent) ??
-        pressureFood(false, urgent)
+        routeFood(true)
       : nearFood(false) ??
         routeFood(false) ??
-        pressureFood(false, urgent) ??
-        routeFood(true) ??
-        pressureFood(true, urgent) ??
-        (urgent
-          ? nearFood(true) ??
-            routeFood(true) ??
-            pressureFood(true, urgent)
-          : null);
+        pressureFood(false, urgent);
   } finally {
     routeDeadline = 0;
   }
-  return proved ?? (urgent ? pressureStep() : null) ??
-    survivalMove() ?? lastChanceMove();
+  return forceRisk
+    ? proved ?? pressureStep([false, true]) ?? riskyMove() ??
+      survivalMove([false, true]) ?? lastChanceMove()
+    : proved ?? (urgent ? pressureStep() : null) ??
+      survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; only the real game can kill or mark the snake stuck.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -480,7 +473,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
       </section>
       <section id="restart">
-        <h2>11. Win, stuck, restart</h2>
+        <h2>11. Win, death, restart</h2>
         <p>The bot page has seven selectable tabs: levels 26-32. A win flashes green, a failure flashes red, and both outcomes advance to the next tab. After level 32 it wraps back to level 26. The flash pulses five times, one second apart, before the next level loads &mdash; or, if you ask for reduced motion, it shows a single steady tint for about a second and a half instead.</p>
         <table>
           <thead>
@@ -500,19 +493,19 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td><code>BTEL</code> stops advancing</td>
-              <td>The snake is boxed, dying, or not moving. Flash red after the stall threshold.</td>
+              <td>The snake is boxed, dying, or not moving. Keep forcing moves until the run ends in death or a clear.</td>
             </tr>
             <tr>
               <td>No survivable move</td>
-              <td>Use the least-bad immediately legal move; if none exists, the real game triggers stuck handling.</td>
+              <td>Try a risky passable move; if no playable move exists, use the normal snake death sequence instead of stuck handling.</td>
             </tr>
             <tr>
-              <td>No score gain or repeated head positions</td>
-              <td>Switch to urgent food pressure and keep returning moves. No voluntary Escape is sent.</td>
+              <td>No score gain for 160 decisions, or 100 with repeated head positions</td>
+              <td>Bypass WebAssembly, use JavaScript forced-risk mode, and allow riskier smiley or danger moves. No stuck request is sent.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long safe path without changing the score, so the bot keeps applying urgent pressure instead of treating a long stall as a reason to press Escape.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure instead of treating a long stall as a reason to give up.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>

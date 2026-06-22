@@ -327,9 +327,9 @@
       }
       return best;
     };
-    const survivalMove = () => {
+    const survivalMove = (smileChoices = [false]) => {
       const st = makeState();
-      for(const allowSmile of [false]){
+      for(const allowSmile of smileChoices){
         let best = null, bs = -1e18;
         for(const ns of legal(st, allowSmile)){
           const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
@@ -366,9 +366,9 @@
       }
       return Infinity;
     };
-    const pressureStep = () => {
+    const pressureStep = (smileChoices = [false]) => {
       const st = makeState();
-      for(const allowSmile of [false]){
+      for(const allowSmile of smileChoices){
         let best = null, bs = -1e18;
         for(const ns of legal(st, allowSmile)){
           const c = cell(st, st.head + STEP[ns.first]), exits = legalCount(ns, true);
@@ -381,6 +381,44 @@
             (isFood(c)?24000:0) - smilePenalty -
             ns.stones*70 + (ns.first===st.dir?60:0);
           if(score > bs){ bs = score; best = ns.first; }
+        }
+        if(best !== null) return best;
+      }
+      return null;
+    };
+    const riskyMove = () => {
+      const st = makeState();
+      let best = null, bs = -1e18;
+      for(const allowReverse of [false, true]){
+        for(const [sc,d] of DIRS){
+          if(!allowReverse && sc===opp[st.dir]) continue;
+          const n = st.head + d, c = cell(st,n);
+          const targetArrow = c===24 || c===26 || c===27;
+          let viable = false, pushed = false;
+          if(c===10){
+            const nn = n + d;
+            viable = !st.bodySet.has(nn) && cell(st,nn)===32;
+            pushed = viable;
+          } else viable = open(c) || targetArrow;
+          if(!viable) continue;
+          const targetDanger = targetArrow || danger(n);
+          const ns = targetDanger ? null : move(st, sc, true);
+          let score = 0;
+          if(isFood(c)) score += 90000;
+          else if(c===1) score += 18000;
+          else if(c===32) score += 4000;
+          else if(targetArrow) score += 1000;
+          if(ns){
+            const exits = legalCount(ns, true), info = spaceInfo(ns, false);
+            const dist = isFood(c) ? 0 : foodDistance(ns, 160);
+            score += info.space*6 + exits*1200 + (info.tailReach?3000:0);
+            if(Number.isFinite(dist)) score += Math.max(0, 18 - dist)*220;
+          }
+          if(targetDanger) score -= isFood(c) ? 2500 : 8500;
+          if(pushed) score -= 1200;
+          if(sc===st.dir) score += 350;
+          if(allowReverse) score -= 20000;
+          if(score > bs){ bs = score; best = sc; }
         }
         if(best !== null) return best;
       }
@@ -410,21 +448,29 @@
       model = capture();
       resetDanger();
       const urgent = options.idle >= 18 || options.looping;
+      const forceRisk = options && options.forceRisk === true;
       const tryPlan = fn => routeTimeUp() ? null : fn();
       routeDeadline = now() + options.budgetMs;
       let proved = null;
       try {
-        const constrained = needsBreathing();
-        proved = constrained
-          ? tryPlan(() => nearFood(false)) ??
-            tryPlan(() => routeFood(false)) ??
-            tryPlan(() => pressureFood(false, urgent))
-          : tryPlan(() => nearFood(false)) ??
-            tryPlan(() => routeFood(false)) ??
-            tryPlan(() => pressureFood(false, urgent));
+        if(forceRisk){
+          proved = tryPlan(() => pressureFood(true, true)) ??
+            tryPlan(() => nearFood(true)) ??
+            tryPlan(() => routeFood(true));
+        } else {
+          const constrained = needsBreathing();
+          proved = constrained
+            ? tryPlan(() => nearFood(false)) ??
+              tryPlan(() => routeFood(false)) ??
+              tryPlan(() => pressureFood(false, urgent))
+            : tryPlan(() => nearFood(false)) ??
+              tryPlan(() => routeFood(false)) ??
+              tryPlan(() => pressureFood(false, urgent));
+        }
       } finally {
         routeDeadline = 0;
       }
+      if(forceRisk) return proved ?? pressureStep([false, true]) ?? riskyMove() ?? survivalMove([false, true]) ?? lastChanceMove();
       return proved ?? (urgent ? pressureStep() : null) ?? survivalMove() ?? lastChanceMove();
     };
 
@@ -523,7 +569,7 @@
     const wasm = createWasm(access);
     return {
       decide(options){
-        const sc = wasm.decide(options);
+        const sc = options && options.forceRisk === true ? null : wasm.decide(options);
         return isArrowKey(sc) ? sc : js.decide(options);
       }
     };

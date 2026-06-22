@@ -890,21 +890,39 @@ let LIVE = 0, LEVEL = 0, BTEL = 0, ETEL = 0, E = 0, F = 0;
 let HART = 0, KLAVER = 0, BONUS = 0, AANTAL = 0, BMIN = 0, Z = 0, K1 = 0;
 let botRequestedLevel = 0;
 let botRequestedStuck = false;
+let botRequestedDeath = false;
+
+function botDrivesGame(){
+  return window.SNEEKIE_BOT_DRIVES_GAME === true || window.SNEEKIE_PASSIVE_PREVIEW === true ||
+    !!(document.body && document.body.classList.contains('page-bot'));
+}
 
 window.sneekieRequestLevel = n => {
   const level = Math.trunc(Number(n));
   if(level >= 1 && level <= 32){
     botRequestedLevel = level;
     botRequestedStuck = false;
+    botRequestedDeath = false;
   }
 };
 window.sneekieRequestStuck = () => {
   botRequestedStuck = true;
+  botRequestedDeath = false;
+  pushKey('\r');
+};
+window.sneekieRequestBotDeath = () => {
+  botRequestedDeath = true;
+  botRequestedStuck = false;
   pushKey('\r');
 };
 function consumeBotStuckRequest(){
   if(!botRequestedStuck) return false;
   botRequestedStuck = false;
+  return true;
+}
+function consumeBotDeathRequest(){
+  if(!botRequestedDeath) return false;
+  botRequestedDeath = false;
   return true;
 }
 
@@ -1202,6 +1220,7 @@ async function playLevels(){
     await waitKey();
     clickStartsLevel = false;
     botRequestedStuck = false;
+    botRequestedDeath = false;
     /* 410: restore */
     for(let I = 1; I <= POPUP_BYTES; I++) for(let I3 = 0; I3 <= 3; I3++) poke(1493+I+I3*160, S[I+I3*POPUP_BYTES]);
     {
@@ -1216,13 +1235,16 @@ async function playLevels(){
         LEVEL = botRequestedLevel - 1;
         botRequestedLevel = 0;
         botRequestedStuck = false;
+        botRequestedDeath = false;
         skip = true;
         break;
       }
       try{
-        if(consumeBotStuckRequest() || isSnakeStuck()) throw STUCK;
+        if(consumeBotDeathRequest()) throw DEATH;
+        if(consumeBotStuckRequest() || (!botDrivesGame() && isSnakeStuck())) throw STUCK;
         const waitMs = clickTarget ? Math.min(Z * 1000, CLICK_ROUTE_MS) : Z * 1000;
         let A$ = await keyOrTimeout(waitMs);                  // 430-460
+        if(consumeBotDeathRequest()) throw DEATH;
         if(consumeBotStuckRequest()) throw STUCK;
         if(!A$.length){
           const key = nextClickTargetKey();

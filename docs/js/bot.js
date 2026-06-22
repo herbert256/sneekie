@@ -149,8 +149,11 @@
     const key = typeof gt === 'function' ? gt('yesInput') : 'y';
     return key && key !== 'yesInput' ? key : 'y';
   };
+  window.SNEEKIE_BOT_DRIVES_GAME = true;
+  const STALL_IDLE_LIMIT = 160;
+  const STALL_LOOP_IDLE_LIMIT = 100;
   (async () => {
-    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, stuckQueued = false, stuckWaitTicks = 0;
+    let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, forcedDeathQueued = false;
     let observedLive = null;
     const headTrail = [];
     while(true){
@@ -161,7 +164,7 @@
       if(LEVEL > 32){
         if(++over >= 4){
           if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
-          stuckQueued = false;
+          forcedDeathQueued = false;
           pushKey('\r'); pushKey(yesKey()); over = 0;
         }
         observedLive = LIVE;
@@ -175,7 +178,7 @@
           queueNextLevel();
           gameEndQueued = true;
           deathQueued = true;
-          stuckQueued = false;
+          forcedDeathQueued = false;
           idle = 0; headTrail.length = 0;
           observedLive = LIVE;
           pushKey('\r');
@@ -186,7 +189,7 @@
       // The lower life count is the stable signal that the previous level failed.
       if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
         queueNextLevel();
-        stuckQueued = false;
+        forcedDeathQueued = false;
         idle = 0; headTrail.length = 0;
       }
       observedLive = LIVE;
@@ -197,7 +200,7 @@
           activeLevel = LEVEL;
           target = LEVEL;
           jumpingTo = null;
-          stuckQueued = false;
+          forcedDeathQueued = false;
           markTabs();
         } else {
           await sleep(botDelay()); continue;
@@ -218,12 +221,12 @@
           pushKey('\r');
         }
         else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
-        pendingJump = null; stuckQueued = false; idle = 0; headTrail.length = 0;
+        pendingJump = null; forcedDeathQueued = false; idle = 0; headTrail.length = 0;
         await sleep(botDelay()); continue;
       }
       const tickStarted = now();
       if(waitingForKey()){
-        stuckQueued = false;
+        forcedDeathQueued = false;
         pushKey('\r');                                 // under the level popup -> any key dismisses it
         await sleepForTick(tickStarted); continue;
       }
@@ -234,23 +237,21 @@
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
-      // Give up and flash/restart well before the old idle>180 ceiling so the bot
-      // can't orbit ~50+ moves making no progress. A short looping run (revisiting
-      // the same cell) trips earlier than a plain no-score stall.
-      const stalled = idle > 80 || (idle > 50 && repeats >= 3);
-      const sc = stalled ? null : (planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() }) : null);
+      // Stop orbiting forever with no progress. A short looping run (revisiting
+      // the same cell) trips earlier than a plain no-score stall and switches to
+      // riskier forced moves instead of the stuck/restart path.
+      const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
+      const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled }) : null;
       if(sc !== null){
-        stuckQueued = false; stuckWaitTicks = 0;
-        pushKey(keyOf[sc]);                            // a safe move
+        forcedDeathQueued = false;
+        pushKey(keyOf[sc]);                            // a planned move; forced mode may accept risk
       }
-      // No safe move: ask the game to flash + restart. Re-issue periodically so a
-      // request that didn't take (e.g. dropped while the game was mid-animation)
-      // can never leave the bot wedged feeding a buffer nobody drains.
-      else if(!stuckQueued || ++stuckWaitTicks > 12){
-        stuckQueued = true; stuckWaitTicks = 0;
-        idle = 0; headTrail.length = 0;
-        if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
-        else pushKey('\r');
+      // No playable move remains. On the bot page this uses the normal snake
+      // death sequence, not the modern stuck popup.
+      else if(!forcedDeathQueued){
+        forcedDeathQueued = true;
+        if(typeof window.sneekieRequestBotDeath === 'function') window.sneekieRequestBotDeath();
+        else pushKey('\x1b');
       }
       await sleepForTick(tickStarted);
     }
