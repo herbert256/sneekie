@@ -2826,6 +2826,52 @@ impl Planner {
         INF
     }
 
+    fn dig_distance(&self, st: &State, limit: usize) -> i32 {
+        // Heading toward the nearest food when stones wall it off: a step-count
+        // BFS that may pass through a stone cell when that stone is pushable
+        // (the cell just beyond it, in the travel direction, is empty). This
+        // turns "all food unreachable" into a gradient the bot can dig along
+        // instead of orbiting an open pocket. It is an approximation -- it
+        // reads the static board and does not replay each pushed stone -- but
+        // it is a sound pull toward walled-off food.
+        let mut seen = VisitBits::default();
+        seen.insert(st.head, st.dir);
+        let mut q = VecDeque::from([(st.head, st.dir, 0i32)]);
+        while let Some((o, dir, dist)) = q.pop_front() {
+            if q.len() >= limit {
+                break;
+            }
+            for &(sc, d) in &DIRS {
+                if sc == opp(dir) {
+                    continue;
+                }
+                let n = o + d;
+                if !(0..BOARD_LEN as i32).contains(&n)
+                    || self.danger(n, dist)
+                    || st.body_bits.contains(n)
+                {
+                    continue;
+                }
+                let c = self.cell(st, n);
+                if is_food(c) {
+                    return dist + 1;
+                }
+                if c == 10 {
+                    let beyond = n + d;
+                    if st.body_bits.contains(beyond) || self.cell(st, beyond) != 32 {
+                        continue;
+                    }
+                } else if !open(c) {
+                    continue;
+                }
+                if seen.insert(n, sc) {
+                    q.push_back((n, sc, dist + 1));
+                }
+            }
+        }
+        INF
+    }
+
     fn pressure_step(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
@@ -2844,7 +2890,12 @@ impl Planner {
         } else {
             420
         };
-        let current_dist = self.food_distance(&st, dist_limit);
+        let current_food = self.food_distance(&st, dist_limit);
+        let current_dist = if current_food >= INF && stone_maze {
+            self.dig_distance(&st, dist_limit)
+        } else {
+            current_food
+        };
         // When starving, skip the smiley-free pass so a one-smiley bridge into
         // walled-off food can win below; -50 points beats orbiting to a restart.
         let desperate = self.urgent && self.idle >= 60;
@@ -2863,10 +2914,19 @@ impl Planner {
                 if exits <= 1 && forced.dead {
                     continue;
                 }
-                let dist = if is_food(c) {
+                let food_dist = if is_food(c) {
                     0
                 } else {
                     self.food_distance(&ns, dist_limit)
+                };
+                // In a stone maze, fall back to a "dig" heading (through pushable
+                // stones) so walled-off food still gives a gradient to follow
+                // rather than leaving the bot to orbit an open pocket.
+                let (dist, via_dig) = if food_dist >= INF && stone_maze {
+                    let dig = self.dig_distance(&ns, dist_limit);
+                    (dig, dig < INF)
+                } else {
+                    (food_dist, false)
                 };
                 if dist >= INF {
                     continue;
@@ -2938,6 +2998,13 @@ impl Planner {
                 } else {
                     0
                 };
+                // Prefer being on a dig heading at all, and reward the actual
+                // stone push that gets us closer to walled food.
+                let dig_credit = if via_dig {
+                    2_600 + if ns.stones > 0 && progress > 0 { 4_000 } else { 0 }
+                } else {
+                    0
+                };
                 let recent_debt = self.recent_memory_debt(
                     &ns,
                     info,
@@ -2975,6 +3042,7 @@ impl Planner {
                 };
                 let score = -(dist as i64) * dist_weight
                     + progress * progress_weight
+                    + dig_credit
                     + info.space as i64 * if stone_maze { 5 } else { 8 }
                     + exits as i64 * if stone_maze { 1_250 } else { 1_650 }
                     + if info.tail_reach { 8_000 } else { 0 }
@@ -3797,6 +3865,33 @@ mod tests {
         let mut p = planner_level(board, body, 28);
         p.urgent = true;
         assert_eq!(p.pressure_step(), Some(77));
+    }
+
+    #[test]
+    fn dig_distance_tunnels_through_pushable_stone() {
+        let mut board = empty_board();
+        // A one-wide corridor on row 10: walls seal rows 9 and 11 over the food
+        // region and cap the far end, so the only way in is through the stone.
+        for col in 12..=16 {
+            board[offset(9, col) as usize] = 196;
+            board[offset(11, col) as usize] = 196;
+        }
+        board[offset(10, 16) as usize] = 196;
+        board[offset(10, 13) as usize] = 10; // stone
+        board[offset(10, 14) as usize] = 32; // empty behind it -> pushable
+        board[offset(10, 15) as usize] = 3; // walled-off heart
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner_level(board, body, 28);
+        let st = p.start_state();
+        assert!(
+            p.food_distance(&st, 2000) >= INF,
+            "plain distance treats stones as walls and cannot reach the food"
+        );
+        let dig = p.dig_distance(&st, 2000);
+        assert!(
+            dig > 0 && dig < INF,
+            "dig distance tunnels through the pushable stone: {dig}"
+        );
     }
 
     #[test]
