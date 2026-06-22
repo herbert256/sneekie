@@ -160,6 +160,8 @@ function registerOfflineSupport(){
   if(!canUseServiceWorker()) return;
   const siteRoot = new URL(pageRoot(), location.href);
   const hadController = !!navigator.serviceWorker.controller;
+  const botPage = document.body && document.body.classList.contains('page-bot');
+  const registerDelay = botPage ? 8000 : 0;
   let refreshing = false;
   if(hadController){
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -173,8 +175,12 @@ function registerOfflineSupport(){
       .then(registration => registration.update())
       .catch(() => {});
   };
-  if(document.readyState === 'complete') register();
-  else addEventListener('load', register, { once:true });
+  const scheduleRegister = () => {
+    if(registerDelay > 0) setTimeout(register, registerDelay);
+    else register();
+  };
+  if(document.readyState === 'complete') scheduleRegister();
+  else addEventListener('load', scheduleRegister, { once:true });
 }
 
 redirectLegacyLanguageQuery();

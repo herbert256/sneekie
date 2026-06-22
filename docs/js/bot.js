@@ -41,8 +41,14 @@
   }
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const startupAt = now();
+  const driveStartAt = startupAt + 4000;
+  const startupGraceUntil = startupAt + 8000;
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
-  const routeBudget = () => Math.max(14, Math.min(32, botDelay() * 0.25));
+  const routeBudget = () => {
+    const cap = now() < startupGraceUntil ? 10 : 28;
+    return Math.max(8, Math.min(cap, botDelay() * 0.22));
+  };
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const waitingForKey = () =>
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
@@ -103,6 +109,7 @@
     const headTrail = [];
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
+      if(now() < driveStartAt){ await sleep(80); continue; } // let first paint/input settle before planning
       // game finished (final death or clean win) -> answer "play again", re-target.
       // Checked before the jump below so a tab click can't overwrite LEVEL first.
       if(LEVEL > 32){
