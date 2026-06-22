@@ -227,6 +227,7 @@ pub extern "C" fn decide(
     looping: i32,
     trail_len: i32,
     budget_ms: f64,
+    force_risk: i32,
 ) -> i32 {
     let body_len = body_len.clamp(2, BODY_CAP as i32) as usize;
     let trail_len = trail_len.clamp(0, TRAIL_CAP as i32) as usize;
@@ -259,6 +260,7 @@ pub extern "C" fn decide(
     let mut planner = Planner::new(
         board, body, enemy, trail, level, items, idle, urgent, deadline,
     );
+    planner.force_risk = force_risk != 0;
     planner.decide()
 }
 
@@ -364,6 +366,7 @@ struct Planner {
     idle: i32,
     dir: i32,
     urgent: bool,
+    force_risk: bool,
     deadline: f64,
     clock_checks: u32,
     danger_masks: [BoardBits; MAX_DANGER_TICKS + 1],
@@ -412,6 +415,7 @@ impl Planner {
             idle,
             dir,
             urgent,
+            force_risk: false,
             deadline,
             clock_checks: 0,
             danger_masks: [BoardBits::default(); MAX_DANGER_TICKS + 1],
@@ -426,6 +430,9 @@ impl Planner {
     }
 
     fn decide(&mut self) -> i32 {
+        if self.force_risk {
+            return self.decide_forced();
+        }
         let breathe_first = self.needs_breathing();
         let proved = if breathe_first {
             self.near_food(false)
@@ -467,6 +474,22 @@ impl Planner {
                     None
                 }
             })
+            .or_else(|| self.survival_move())
+            .or_else(|| self.last_chance_move())
+            .unwrap_or(0)
+    }
+
+    fn decide_forced(&mut self) -> i32 {
+        // Break a stall. The driver flips this on after an orbit, and it used to
+        // hand control to the weaker JavaScript planner -- so the bot switched to
+        // its least capable brain exactly when it was stuck. Keep the full
+        // engine: lead with the most aggressive food grab (smileys allowed) and
+        // the dig-aware pressure step, then fall back through survival moves.
+        // recent-memory penalties (the loop breaker) stay active throughout.
+        self.pressure_food(true, true)
+            .or_else(|| self.near_food(true))
+            .or_else(|| self.route_food(true))
+            .or_else(|| self.pressure_step())
             .or_else(|| self.survival_move())
             .or_else(|| self.last_chance_move())
             .unwrap_or(0)
@@ -3948,6 +3971,18 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         board[offset(10, 13) as usize] = 3;
         let mut p = planner(board, body);
+        assert!(matches!(p.decide(), 72 | 80 | 75 | 77));
+    }
+
+    #[test]
+    fn force_risk_keeps_the_wasm_engine_in_charge() {
+        // forceRisk must still produce a real move from the engine (it no longer
+        // falls back to the weaker JS planner when the bot is stuck).
+        let mut board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        board[offset(10, 13) as usize] = 3;
+        let mut p = planner(board, body);
+        p.force_risk = true;
         assert!(matches!(p.decide(), 72 | 80 | 75 | 77));
     }
 

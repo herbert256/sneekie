@@ -548,7 +548,8 @@
           options && Number.isFinite(options.idle) ? options.idle|0 : 0,
           options && options.looping ? 1 : 0,
           snapshot.trailLen,
-          options && Number.isFinite(options.budgetMs) ? Math.max(1, options.budgetMs) : 35
+          options && Number.isFinite(options.budgetMs) ? Math.max(1, options.budgetMs) : 35,
+          options && options.forceRisk === true ? 1 : 0
         );
         if(sc === 0) return null;
         if(isArrowKey(sc)) return sc;
@@ -569,7 +570,10 @@
     const wasm = createWasm(access);
     return {
       decide(options){
-        const sc = options && options.forceRisk === true ? null : wasm.decide(options);
+        // The Wasm engine handles forceRisk too now (it has its own escape
+        // ladder), so it stays in charge when stuck instead of dropping to the
+        // weaker JS planner. JS remains the fallback when Wasm is unavailable.
+        const sc = wasm.decide(options);
         return isArrowKey(sc) ? sc : js.decide(options);
       }
     };
