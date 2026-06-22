@@ -533,7 +533,7 @@
       for(let i=start; i<sourceTrail.length && trailLen<trail.length; i++, trailLen++){
         trail[trailLen] = sourceTrail[i] | 0;
       }
-      return { level:g.LEVEL|0, items:((g.HART|0) + (g.KLAVER|0))|0, len, trailLen };
+      return { level:g.LEVEL|0, items:((g.HART|0) + (g.KLAVER|0))|0, len, trailLen, bonus:g.BONUS|0 };
     };
 
     const decide = options => {
@@ -549,7 +549,8 @@
           options && options.looping ? 1 : 0,
           snapshot.trailLen,
           options && Number.isFinite(options.budgetMs) ? Math.max(1, options.budgetMs) : 35,
-          options && options.forceRisk === true ? 1 : 0
+          options && options.forceRisk === true ? 1 : 0,
+          snapshot.bonus
         );
         if(sc === 0) return null;
         if(isArrowKey(sc)) return sc;

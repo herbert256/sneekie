@@ -97,7 +97,7 @@
   const planner = window.SneekieBotEngine && window.SneekieBotEngine.create({
     now,
     peek: o => peek(o),
-    state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER })
+    state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER, BONUS })
   });
   showStartupProgress();
 

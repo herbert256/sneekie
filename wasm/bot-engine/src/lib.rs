@@ -228,6 +228,7 @@ pub extern "C" fn decide(
     trail_len: i32,
     budget_ms: f64,
     force_risk: i32,
+    bonus: i32,
 ) -> i32 {
     let body_len = body_len.clamp(2, BODY_CAP as i32) as usize;
     let trail_len = trail_len.clamp(0, TRAIL_CAP as i32) as usize;
@@ -261,6 +262,7 @@ pub extern "C" fn decide(
         board, body, enemy, trail, level, items, idle, urgent, deadline,
     );
     planner.force_risk = force_risk != 0;
+    planner.bonus = bonus.max(0);
     planner.decide()
 }
 
@@ -367,6 +369,7 @@ struct Planner {
     dir: i32,
     urgent: bool,
     force_risk: bool,
+    bonus: i32,
     deadline: f64,
     clock_checks: u32,
     danger_masks: [BoardBits; MAX_DANGER_TICKS + 1],
@@ -416,6 +419,7 @@ impl Planner {
             dir,
             urgent,
             force_risk: false,
+            bonus: 0,
             deadline,
             clock_checks: 0,
             danger_masks: [BoardBits::default(); MAX_DANGER_TICKS + 1],
@@ -507,6 +511,21 @@ impl Planner {
 
     fn few(&self) -> bool {
         self.items <= 6
+    }
+
+    fn finish_dist_penalty(&self) -> i64 {
+        // The bonus drains every move and banks into the score when the level
+        // is cleared, so when only a few items remain it pays to take the
+        // shortest finishing route rather than dawdle. Add a small per-distance
+        // penalty scaled by how much bonus is still on the clock and how close
+        // the level is to finishing. Pure tie-break weight -- it never overrides
+        // the safety terms, it just stops the bot from banking less bonus by
+        // wandering on the last few pickups.
+        if !self.few() || self.bonus <= 0 {
+            return 0;
+        }
+        let item_factor = (7 - self.items.clamp(1, 6)) as i64; // 1 (6 left) .. 6 (1 left)
+        self.bonus as i64 / 100 * item_factor / 6
     }
 
     fn needs_breathing(&mut self) -> bool {
@@ -2342,7 +2361,8 @@ impl Planner {
                     }
                 - one_exit_cost
                 - if escape.depth <= 1 { 3_500 } else { 0 }
-                + escape.exits as i64 * 280,
+                + escape.exits as i64 * 280
+                - ns.dist as i64 * self.finish_dist_penalty(),
         )
     }
 
@@ -3187,7 +3207,7 @@ impl Planner {
                 } else {
                     2_600
                 };
-                let score = -(dist as i64) * dist_weight
+                let score = -(dist as i64) * (dist_weight + self.finish_dist_penalty())
                     + progress * progress_weight
                     + dig_credit
                     + info.space as i64 * if stone_maze { 5 } else { 8 }
@@ -4093,6 +4113,21 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
         assert_eq!(p.survival_move(), Some(77));
+    }
+
+    #[test]
+    fn finish_pressure_only_applies_when_few_items_remain_with_bonus() {
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(empty_board(), body);
+        p.bonus = 9000;
+        assert_eq!(p.finish_dist_penalty(), 0, "many items: no finish pressure");
+        p.items = 2;
+        assert!(
+            p.finish_dist_penalty() > 0,
+            "few items + bonus on the clock: finish pressure kicks in"
+        );
+        p.bonus = 0;
+        assert_eq!(p.finish_dist_penalty(), 0, "no bonus left: no finish pressure");
     }
 
     #[test]
