@@ -95,6 +95,7 @@ struct State {
     points: i32,
     smiles: i32,
     stones: i32,
+    chokes: i32,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -110,6 +111,14 @@ struct EscapeInfo {
     space: i32,
     tail_reach: bool,
     exits: i32,
+}
+
+#[derive(Clone, Copy, Default)]
+struct ForcedInfo {
+    steps: i32,
+    end_exits: i32,
+    dead: bool,
+    ate: i32,
 }
 
 struct Planner {
@@ -166,10 +175,25 @@ impl Planner {
     }
 
     fn decide(&mut self) -> i32 {
+        let breathe_first = self.needs_breathing();
         let proved = self
             .near_food(false)
+            .or_else(|| {
+                if breathe_first {
+                    self.breathing_move()
+                } else {
+                    None
+                }
+            })
             .or_else(|| self.route_food(false))
             .or_else(|| self.near_food(true))
+            .or_else(|| {
+                if breathe_first {
+                    self.breathing_move()
+                } else {
+                    None
+                }
+            })
             .or_else(|| self.route_food(true))
             .or_else(|| self.pressure_food(false, self.urgent))
             .or_else(|| self.pressure_food(true, self.urgent));
@@ -182,6 +206,7 @@ impl Planner {
                 }
             })
             .or_else(|| self.survival_move())
+            .or_else(|| self.last_chance_move())
             .unwrap_or(0)
     }
 
@@ -195,6 +220,19 @@ impl Planner {
 
     fn few(&self) -> bool {
         self.items <= 6
+    }
+
+    fn needs_breathing(&mut self) -> bool {
+        let st = self.start_state();
+        let body_len = st.body.len() as i32;
+        let exits = self.legal_count(&st, true);
+        if exits <= 1 {
+            return true;
+        }
+        let info = self.space_info(&st, true);
+        (!info.tail_reach && info.space < body_len + if self.few() { 132 } else { 96 })
+            || (body_len >= 58 && (exits <= 2 || info.space < body_len + 150))
+            || (body_len >= 96 && exits <= 3)
     }
 
     fn arrow_level(&self) -> bool {
@@ -214,6 +252,7 @@ impl Planner {
             points: 0,
             smiles: 0,
             stones: 0,
+            chokes: 0,
         }
     }
 
@@ -386,6 +425,7 @@ impl Planner {
                 },
             smiles: st.smiles + if c == 1 { 1 } else { 0 },
             stones,
+            chokes: st.chokes,
         })
     }
 
@@ -419,6 +459,28 @@ impl Planner {
         DIRS.iter()
             .filter(|&&(sc, _)| self.can_move(st, sc, allow_smile))
             .count() as i32
+    }
+
+    fn forced_path(&self, start: &State, allow_smile: bool, limit: i32) -> ForcedInfo {
+        let mut st = start.clone();
+        let mut steps = 0;
+        let mut ate = 0;
+        loop {
+            let legal = self.legal(&st, allow_smile);
+            let exits = legal.len() as i32;
+            if exits != 1 || steps >= limit {
+                return ForcedInfo {
+                    steps,
+                    end_exits: exits,
+                    dead: exits == 0,
+                    ate,
+                };
+            }
+            let ns = legal.into_iter().next().unwrap();
+            ate += ns.ate - st.ate;
+            steps += 1;
+            st = ns;
+        }
     }
 
     fn space_info(&mut self, st: &State, limited: bool) -> SpaceInfo {
@@ -648,6 +710,9 @@ impl Planner {
                 let Some(ns) = self.move_state(&st, sc, cfg.allow_smile) else {
                     continue;
                 };
+                let Some(ns) = self.route_prefix_state(ns, &cfg) else {
+                    continue;
+                };
                 let key = state_key(&ns);
                 if !seen.insert(key) {
                     continue;
@@ -671,6 +736,80 @@ impl Planner {
         best
     }
 
+    fn route_prefix_state(&mut self, mut ns: State, cfg: &FoodSearch) -> Option<State> {
+        let exits = self.legal_count(&ns, true);
+        if exits == 0 {
+            return None;
+        }
+        if exits <= 1 {
+            let few = self.few();
+            let forced = self.forced_path(
+                &ns,
+                true,
+                match cfg.route_kind {
+                    RouteKind::Near => {
+                        if few || cfg.urgent {
+                            16
+                        } else {
+                            12
+                        }
+                    }
+                    RouteKind::Route => {
+                        if few || cfg.urgent {
+                            24
+                        } else {
+                            18
+                        }
+                    }
+                    RouteKind::Pressure => {
+                        if few || cfg.urgent {
+                            28
+                        } else {
+                            20
+                        }
+                    }
+                },
+            );
+            if forced.dead {
+                return None;
+            }
+            ns.chokes += 1
+                + if forced.steps >= 8 { 1 } else { 0 }
+                + if forced.end_exits <= 1 { 2 } else { 0 };
+
+            if ns.chokes >= 3 || forced.steps >= 6 {
+                let info = self.space_info(&ns, true);
+                if self.enclosure_risk(&ns, info, exits, ns.ate + 1) {
+                    return None;
+                }
+                let body_need = ns.body.len() as i32 + ns.ate + if few { 28 } else { 18 };
+                if exits <= 1 && info.space < body_need + if info.tail_reach { 86 } else { 118 } {
+                    ns.chokes += 4;
+                }
+            }
+        } else if exits == 2 {
+            ns.chokes = (ns.chokes - 1).max(0);
+            if ns.chokes >= 8 && ns.dist % 4 == 0 {
+                let info = self.space_info(&ns, true);
+                if self.enclosure_risk(&ns, info, exits, ns.ate + 1) {
+                    return None;
+                }
+            }
+        } else {
+            ns.chokes = (ns.chokes - 3).max(0);
+        }
+
+        let cap = match cfg.route_kind {
+            RouteKind::Near => 9,
+            RouteKind::Route => 18,
+            RouteKind::Pressure => 24,
+        } + if cfg.urgent || self.few() { 5 } else { 0 };
+        if ns.chokes > cap {
+            return None;
+        }
+        Some(ns)
+    }
+
     fn score_food_candidate(&mut self, ns: &State, cfg: &FoodSearch) -> Option<i64> {
         let exits = self.legal_count(ns, true);
         if exits == 0 {
@@ -685,6 +824,10 @@ impl Planner {
             RouteKind::Pressure => 165.min(body_len + if few { 14 } else { 8 }),
         };
         if self.enclosure_risk(ns, info, exits, ns.ate + 2) {
+            return None;
+        }
+        let forced = self.forced_path(ns, true, if cfg.urgent || few { 30 } else { 22 });
+        if exits <= 1 && forced.dead {
             return None;
         }
         let spacious = (info.tail_reach && info.space >= min_space)
@@ -770,17 +913,19 @@ impl Planner {
 
         let rollout = self.pickup_rollout(ns, 2, cfg.allow_smile, cfg.urgent);
         let one_exit_cost = if exits == 1 {
-            match cfg.route_kind {
-                RouteKind::Near => 10_000,
-                RouteKind::Route => 20_000,
+            (match cfg.route_kind {
+                RouteKind::Near => 22_000,
+                RouteKind::Route => 42_000,
                 RouteKind::Pressure => {
                     if cfg.urgent {
-                        4_500
+                        12_000
                     } else {
-                        10_000
+                        24_000
                     }
                 }
-            }
+            }) + forced.steps as i64 * 950
+                + if forced.end_exits <= 1 { 18_000 } else { 0 }
+                - forced.ate as i64 * 2_400
         } else {
             0
         };
@@ -820,6 +965,18 @@ impl Planner {
             base + rollout
                 - ns.smiles as i64 * if cfg.urgent { 520 } else { 1_050 }
                 - ns.stones as i64 * 52
+                - ns.chokes as i64
+                    * match cfg.route_kind {
+                        RouteKind::Near => 3_400,
+                        RouteKind::Route => 2_200,
+                        RouteKind::Pressure => {
+                            if cfg.urgent {
+                                850
+                            } else {
+                                1_400
+                            }
+                        }
+                    }
                 - one_exit_cost
                 - if escape.depth <= 1 { 3_500 } else { 0 }
                 + escape.exits as i64 * 280,
@@ -856,6 +1013,73 @@ impl Planner {
                 }
             }
         }
+    }
+
+    fn breathing_move(&mut self) -> Option<i32> {
+        let st = self.start_state();
+        let body_len = st.body.len() as i32;
+        let few = self.few();
+        let live_limit = if few || self.urgent { 32 } else { 24 };
+        let escape_limit = if few || self.urgent { 20 } else { 16 };
+        let min_space = (body_len + if few { 34 } else { 22 }).min(240);
+        let mut best = None;
+        let mut best_score = i64::MIN;
+
+        for ns in self.legal(&st, true) {
+            if self.time_up() {
+                return best;
+            }
+            let c = self.cell(&st, st.head + step(ns.first));
+            let exits = self.legal_count(&ns, true);
+            if exits == 0 {
+                continue;
+            }
+            let forced = self.forced_path(&ns, true, if few || self.urgent { 28 } else { 22 });
+            if exits <= 1 && forced.dead {
+                continue;
+            }
+            let info = self.space_info(&ns, false);
+            if self.enclosure_risk(&ns, info, exits, 2) && !(info.tail_reach && exits >= 2) {
+                continue;
+            }
+            let live = self.survival_depth(&ns, live_limit);
+            let escape = self.escape_proof(&ns, min_space, escape_limit, true);
+            if live < 9 && !escape.ok && !(info.tail_reach && exits >= 2) {
+                continue;
+            }
+            let food_dist = if is_food(c) {
+                0
+            } else {
+                self.food_distance(&ns, 360)
+            };
+            let food_pull = if food_dist < INF {
+                (30 - food_dist).max(0) as i64 * 260
+            } else {
+                0
+            };
+            let score = live as i64 * 8_400
+                + info.space as i64 * 28
+                + exits as i64 * 4_200
+                + escape.space as i64 * 10
+                + forced.end_exits as i64 * 2_200
+                + food_pull
+                + if info.tail_reach { 46_000 } else { 0 }
+                + if escape.tail_reach { 18_000 } else { 0 }
+                + if is_food(c) { 3_000 } else { 0 }
+                - if exits <= 1 {
+                    13_000 + forced.steps as i64 * 650
+                } else {
+                    0
+                }
+                - if c == 1 { 2_200 } else { 0 }
+                - ns.stones as i64 * 62
+                + if ns.first == st.dir { 90 } else { 0 };
+            if score > best_score {
+                best_score = score;
+                best = Some(ns.first);
+            }
+        }
+        best
     }
 
     fn pickup_rollout(
@@ -895,6 +1119,10 @@ impl Planner {
                         continue;
                     }
                     let info = self.space_info(&ns, true);
+                    let forced = self.forced_path(&ns, true, if urgent { 22 } else { 16 });
+                    if exits <= 1 && forced.dead {
+                        continue;
+                    }
                     if self.enclosure_risk(&ns, info, exits, pickups_left) {
                         continue;
                     }
@@ -912,6 +1140,11 @@ impl Planner {
                         + info.space as i64 * 8
                         + exits as i64 * 1_500
                         + if info.tail_reach { 12_000 } else { 0 }
+                        - if exits <= 1 {
+                            10_000 + forced.steps as i64 * 520
+                        } else {
+                            0
+                        }
                         + self.pickup_rollout(&ns, pickups_left - 1, allow_smile, urgent) / 2;
                     best = best.max(gain);
                 } else {
@@ -936,6 +1169,9 @@ impl Planner {
         if info.space < body_need && !info.tail_reach {
             return true;
         }
+        if exits <= 1 && info.space < body_need + if info.tail_reach { 70 } else { 96 } {
+            return true;
+        }
         if exits <= 1 && !info.tail_reach && info.space < body_need + 44 {
             return true;
         }
@@ -953,10 +1189,20 @@ impl Planner {
                 continue;
             }
             let info = self.space_info(&ns, false);
+            let forced = self.forced_path(&ns, true, 18);
+            if exits <= 1 && forced.dead {
+                continue;
+            }
             let score = info.space as i64 * 26
                 + exits as i64 * 1_000
                 + if is_food(c) { 2_500 } else { 0 }
                 + if info.tail_reach { 5_000 } else { 0 }
+                + forced.end_exits as i64 * 900
+                - if exits <= 1 {
+                    7_000 + forced.steps as i64 * 420
+                } else {
+                    0
+                }
                 - if c == 1 { 2_000 } else { 0 }
                 - ns.stones as i64 * 38
                 + if ns.first == st.dir { 60 } else { 0 }
@@ -1015,6 +1261,10 @@ impl Planner {
                 continue;
             }
             let info = self.space_info(&ns, false);
+            let forced = self.forced_path(&ns, true, 16);
+            if exits <= 1 && forced.dead {
+                continue;
+            }
             let dist = if is_food(c) {
                 0
             } else {
@@ -1028,6 +1278,12 @@ impl Planner {
                 + exits as i64 * 1_650
                 + if info.tail_reach { 8_000 } else { 0 }
                 + if is_food(c) { 26_000 } else { 0 }
+                + forced.end_exits as i64 * 1_100
+                - if exits <= 1 {
+                    8_000 + forced.steps as i64 * 540
+                } else {
+                    0
+                }
                 - if c == 1 { 1_500 } else { 0 }
                 - ns.stones as i64 * 75
                 + if ns.first == st.dir { 80 } else { 0 }
@@ -1036,6 +1292,40 @@ impl Planner {
                 } else {
                     0
                 };
+            if score > best_score {
+                best_score = score;
+                best = Some(ns.first);
+            }
+        }
+        best
+    }
+
+    fn last_chance_move(&mut self) -> Option<i32> {
+        let st = self.start_state();
+        let mut best = None;
+        let mut best_score = i64::MIN;
+        for ns in self.legal(&st, true) {
+            let c = self.cell(&st, st.head + step(ns.first));
+            let exits = self.legal_count(&ns, true);
+            if exits == 0 {
+                continue;
+            }
+            let info = self.space_info(&ns, false);
+            let forced = self.forced_path(&ns, true, 24);
+            if forced.dead || self.enclosure_risk(&ns, info, exits, 1) {
+                continue;
+            }
+            if exits <= 1 && forced.end_exits <= 1 {
+                continue;
+            }
+            let score = info.space as i64 * 14
+                + exits as i64 * 2_400
+                + forced.steps as i64 * 650
+                + forced.end_exits as i64 * 4_000
+                + if info.tail_reach { 9_000 } else { 0 }
+                + if is_food(c) { 6_000 } else { 0 }
+                - if c == 1 { 1_600 } else { 0 }
+                + if ns.first == st.dir { 80 } else { 0 };
             if score > best_score {
                 best_score = score;
                 best = Some(ns.first);
@@ -1241,6 +1531,59 @@ mod tests {
         let st = p.start_state();
         let info = p.space_info(&st, false);
         assert!(p.enclosure_risk(&st, info, 1, 2));
+    }
+
+    #[test]
+    fn forced_path_detects_one_way_dead_end() {
+        let mut board = empty_board();
+        for col in 11..=14 {
+            board[offset(9, col) as usize] = 196;
+            board[offset(11, col) as usize] = 196;
+        }
+        board[offset(10, 15) as usize] = 196;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let p = planner(board, body);
+        let st = p.start_state();
+        let ns = p.move_state(&st, 77, true).unwrap();
+        let forced = p.forced_path(&ns, true, 8);
+        assert!(forced.dead);
+        assert_eq!(forced.end_exits, 0);
+        assert!(forced.steps > 0);
+    }
+
+    #[test]
+    fn survival_move_avoids_dead_corridor_when_branch_exists() {
+        let mut board = empty_board();
+        for col in 11..=14 {
+            board[offset(9, col) as usize] = 196;
+            board[offset(11, col) as usize] = 196;
+        }
+        board[offset(10, 15) as usize] = 196;
+        board[offset(9, 11) as usize] = 32;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        assert_ne!(p.survival_move(), Some(77));
+    }
+
+    #[test]
+    fn last_chance_returns_legal_move_instead_of_zero() {
+        let board = empty_board();
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        assert_eq!(p.last_chance_move(), Some(77));
+    }
+
+    #[test]
+    fn last_chance_rejects_dead_corridor() {
+        let mut board = empty_board();
+        for col in 11..=14 {
+            board[offset(9, col) as usize] = 196;
+            board[offset(11, col) as usize] = 196;
+        }
+        board[offset(10, 15) as usize] = 196;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner(board, body);
+        assert_eq!(p.last_chance_move(), None);
     }
 
     #[test]

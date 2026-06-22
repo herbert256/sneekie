@@ -117,10 +117,10 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <div class="ladder">
           <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
           <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
-          <div class="step"><b>3. Bredere schone route</b><p>Als dichtbij niets veilig is, zoekt de voorzichtige planner verder.</p></div>
-          <div class="step"><b>4. Smileys als ontsnapping</b><p>Pas als schone routes falen, worden dezelfde zoekacties met smileys toegestaan.</p></div>
+          <div class="step"><b>3. Ademruimte</b><p>Als het veld krap is of de slang lang is, kiest de planner eerst een bewezen zet naar open ruimte voordat hij ver voedsel najagt.</p></div>
+          <div class="step"><b>4. Bredere routes</b><p>Als dichtbij niets veilig is en ademruimte niet wint, zoekt de planner verder, eerst schoon en daarna met smileys toegestaan.</p></div>
           <div class="step"><b>5. Druk bij lussen</b><p>Als de kop posities herhaalt of de score lang stil staat, gaat de bot voedsel afdwingen. Als er niet op tijd een volledig bewezen route is, kiest hij een directe drukzet richting bereikbaar voedsel.</p></div>
-          <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij een directe zet naar open ruimte; de staart najagen is geen eigen doel meer.</p></div>
+          <div class="step"><b>6. Lokaal overleven</b><p>Als laatste fallback kiest hij alleen een directe zet als die geen doodlopende gang of vroege zelfinsluiting forceert.</p></div>
           <div class="step"><b>7. Netjes opgeven</b><p>Alleen als zelfs de lokale overlevingsfallback geen overleefbare zet vindt, geeft de bot op.</p></div>
         </div>
         <pre><code>const decide = options =&gt; {
@@ -130,17 +130,23 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
-    proved = nearFood(false) ?? routeFood(false) ??
-      nearFood(true) ?? routeFood(true) ??
+    const breatheFirst = needsBreathing();
+    proved = nearFood(false) ??
+      (breatheFirst ? breathingMove() : null) ??
+      routeFood(false) ??
+      nearFood(true) ??
+      (breatheFirst ? breathingMove() : null) ??
+      routeFood(true) ??
       (urgent
         ? pressureFood(false, true) ?? pressureFood(true, true)
         : pressureFood(false, false) ?? pressureFood(true, false));
   } finally {
     routeDeadline = 0;
   }
-  return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
+  return proved ?? (urgent ? pressureStep() : null) ??
+    survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Escape wordt gebruikt wanneer er geen overleefbare zet meer is, en ook na een aanhoudende scoreloze stall zodat de live demo niet eindeloos blijft rondgaan.</p>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Escape wordt gebruikt wanneer er geen overleefbare zet meer is, wanneer de strenge laatste-kanspoort een onbewezen zelfval weigert, en ook na een aanhoudende scoreloze stall zodat de live demo niet eindeloos blijft rondgaan.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>
@@ -196,10 +202,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="fallbacks">
         <h2>8. Noodzetten</h2>
-        <p>Na de normale veilige voedselplanners heeft de bot twee noodgedragingen. Ze voorkomen bevriezen zonder een aparte stand die de eigen staart blijft volgen.</p>
+        <p>Rond de normale veilige voedselplanners heeft de bot drie noodgedragingen. Ze voorkomen bevriezen zonder een aparte stand die de eigen staart blijft volgen.</p>
         <table>
           <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
           <tbody>
+            <tr><td><code>breathingMove()</code></td><td>Vakken vermijden</td><td>Loopt vóór verre voedselroutes wanneer het veld krap is of de slang lang is. Hij verkiest staartbereik, toekomstige uitgangen en open ruimte.</td></tr>
             <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of herhaalde kopposities.</td></tr>
             <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Als laatste fallback scoort hij directe zetten op ruimte, uitgangen, voedsel, smileykosten, stenen en rechtdoor gaan.</td></tr>
           </tbody>

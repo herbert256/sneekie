@@ -194,12 +194,12 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <p>First try a shallow search for close hearts or clubs, without eating smileys.</p>
           </div>
           <div class="step">
-            <b>3. Wider clean route</b>
-            <p>If no nearby pickup is safe, run the deeper food planner without smileys.</p>
+            <b>3. Breathing room</b>
+            <p>If the board is cramped or the snake is long, choose a proved open-space move before chasing distant food.</p>
           </div>
           <div class="step">
-            <b>4. Smiley escape routes</b>
-            <p>If clean routes fail, repeat nearby and wider food searches with smileys allowed.</p>
+            <b>4. Wider routes</b>
+            <p>If no nearby pickup or breathing move wins, run the deeper food planner, first clean and then with smileys allowed.</p>
           </div>
           <div class="step">
             <b>5. Loop pressure</b>
@@ -207,7 +207,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           </div>
           <div class="step">
             <b>6. Survive locally</b>
-            <p>As the final fallback, pick a one-step move into open space; do not chase the tail as its own goal.</p>
+            <p>As the final fallback, pick a one-step move only if it does not force a dead corridor or early self-enclosure.</p>
           </div>
           <div class="step">
             <b>7. Give up cleanly</b>
@@ -221,17 +221,23 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
   routeDeadline = now() + options.budgetMs;
   let proved = null;
   try {
-    proved = nearFood(false) ?? routeFood(false) ??
-      nearFood(true) ?? routeFood(true) ??
+    const breatheFirst = needsBreathing();
+    proved = nearFood(false) ??
+      (breatheFirst ? breathingMove() : null) ??
+      routeFood(false) ??
+      nearFood(true) ??
+      (breatheFirst ? breathingMove() : null) ??
+      routeFood(true) ??
       (urgent
         ? pressureFood(false, true) ?? pressureFood(true, true)
         : pressureFood(false, false) ?? pressureFood(true, false));
   } finally {
     routeDeadline = 0;
   }
-  return proved ?? (urgent ? pressureStep() : null) ?? survivalMove();
+  return proved ?? (urgent ? pressureStep() : null) ??
+    survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. Escape is used when no survivable move remains, and also after a sustained no-score stall so the live demo does not orbit indefinitely.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. Escape is used when no survivable move remains, when the strict last-chance gate refuses an unproved self-trap, and after a sustained no-score stall so the live demo does not orbit indefinitely.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -363,7 +369,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
-        <p>The bot has two fallback behaviors after the normal safe food planners. They keep it from freezing without adding a standalone "follow the tail" mode.</p>
+        <p>The bot has three fallback behaviors around the normal safe food planners. They keep it from freezing without adding a standalone "follow the tail" mode.</p>
         <table>
           <thead>
             <tr>
@@ -373,6 +379,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><code>breathingMove()</code></td>
+              <td>Avoid pockets</td>
+              <td>Runs before distant food routes when the board is cramped or the snake is long. It prefers moves that preserve tail reach, future exits, and open space.</td>
+            </tr>
             <tr>
               <td><code>pressureFood()</code></td>
               <td>Break loops</td>
