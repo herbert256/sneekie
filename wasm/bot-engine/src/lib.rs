@@ -187,7 +187,7 @@ impl Planner {
 
     fn time_up(&mut self) -> bool {
         self.clock_checks = self.clock_checks.wrapping_add(1);
-        if self.clock_checks & 0x7f != 0 {
+        if self.clock_checks & 0x1f != 0 {
             return false;
         }
         host_now_ms() >= self.deadline

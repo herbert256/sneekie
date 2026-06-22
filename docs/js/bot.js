@@ -42,7 +42,7 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
-  const routeBudget = () => Math.max(35, Math.min(70, botDelay() * 0.8));
+  const routeBudget = () => Math.max(14, Math.min(32, botDelay() * 0.25));
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const waitingForKey = () =>
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
