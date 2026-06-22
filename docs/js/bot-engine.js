@@ -381,6 +381,7 @@
       typeof WebAssembly.instantiate === 'function' &&
       typeof fetch === 'function' &&
       window.SNEEKIE_BOT_FORCE_JS !== true &&
+      window.SNEEKIE_PASSIVE_PREVIEW !== true &&
       location.protocol !== 'file:';
 
     const bindMemory = () => {
