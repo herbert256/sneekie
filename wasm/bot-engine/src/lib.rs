@@ -285,6 +285,21 @@ struct ForcedInfo {
     ate: i32,
 }
 
+#[derive(Clone, Copy)]
+struct Door {
+    cells: [i32; 2],
+    before: [i32; 2],
+    after: [i32; 2],
+}
+
+#[derive(Clone, Copy, Default)]
+struct DoorInfo {
+    total: i32,
+    usable: i32,
+    blocked: i32,
+    single_lane: i32,
+}
+
 struct Planner {
     board: [u16; BOARD_LEN],
     body: Vec<i32>,
@@ -298,6 +313,8 @@ struct Planner {
     clock_checks: u32,
     danger_masks: [BoardBits; MAX_DANGER_TICKS + 1],
     danger_len: usize,
+    doors: Vec<Door>,
+    door_bits: BoardBits,
 }
 
 impl Planner {
@@ -325,6 +342,7 @@ impl Planner {
         } else {
             77
         };
+        let (doors, door_bits) = detect_doors(&board, body_bits, level);
         let mut planner = Self {
             board,
             body,
@@ -338,6 +356,8 @@ impl Planner {
             clock_checks: 0,
             danger_masks: [BoardBits::default(); MAX_DANGER_TICKS + 1],
             danger_len: 1,
+            doors,
+            door_bits,
         };
         let (danger_masks, danger_len) = planner.build_danger_masks();
         planner.danger_masks = danger_masks;
@@ -399,6 +419,12 @@ impl Planner {
         let body_len = st.body.len() as i32;
         let exits = self.legal_count(&st, true);
         if exits <= 1 {
+            return true;
+        }
+        let door = self.door_exit_info(&st);
+        if self.door_exit_closed(door)
+            || (door.total > 0 && door.usable <= 1 && body_len >= 58 && exits <= 2)
+        {
             return true;
         }
         let info = self.space_info(&st, true);
@@ -546,6 +572,119 @@ impl Planner {
             credit -= 12_000;
         }
         credit
+    }
+
+    fn door_path_clear(&self, st: &State, o: i32, tail: i32) -> bool {
+        (0..BOARD_LEN as i32).contains(&o)
+            && (o == tail || (!st.body_bits.contains(o) && open(self.cell(st, o))))
+    }
+
+    fn static_room_cell(&self, st: &State, o: i32) -> bool {
+        (0..BOARD_LEN as i32).contains(&o)
+            && !self.door_bits.contains(o)
+            && (st.body_bits.contains(o) || open(self.cell(st, o)))
+    }
+
+    fn current_room_cells(&self, st: &State) -> BoardBits {
+        let mut room = BoardBits::default();
+        if self.doors.is_empty() {
+            return room;
+        }
+        let mut q = VecDeque::new();
+        let push_seed = |room: &mut BoardBits, q: &mut VecDeque<i32>, o: i32| {
+            if self.static_room_cell(st, o) && room.insert(o) {
+                q.push_back(o);
+            }
+        };
+        if self.door_bits.contains(st.head) {
+            for &(_, d) in &DIRS {
+                push_seed(&mut room, &mut q, st.head + d);
+            }
+        } else {
+            push_seed(&mut room, &mut q, st.head);
+        }
+        while let Some(o) = q.pop_front() {
+            for &(_, d) in &DIRS {
+                let n = o + d;
+                if self.static_room_cell(st, n) && room.insert(n) {
+                    q.push_back(n);
+                }
+            }
+        }
+        room
+    }
+
+    fn door_lane_clear(&self, st: &State, door: Door, lane: usize, tail: i32) -> bool {
+        self.door_path_clear(st, door.cells[lane], tail)
+            && self.door_path_clear(st, door.before[lane], tail)
+            && self.door_path_clear(st, door.after[lane], tail)
+    }
+
+    fn door_exit_info(&self, st: &State) -> DoorInfo {
+        if self.doors.is_empty() {
+            return DoorInfo::default();
+        }
+        let room = self.current_room_cells(st);
+        let tail = st.body.tail().unwrap_or(st.head);
+        let mut info = DoorInfo::default();
+        for &door in &self.doors {
+            let touches_room = door.cells.contains(&st.head)
+                || door.before.iter().any(|&o| room.contains(o))
+                || door.after.iter().any(|&o| room.contains(o));
+            if !touches_room {
+                continue;
+            }
+            info.total += 1;
+            let lanes = (0..2)
+                .filter(|&lane| self.door_lane_clear(st, door, lane, tail))
+                .count() as i32;
+            if lanes == 0 {
+                info.blocked += 1;
+            } else {
+                info.usable += 1;
+                if lanes == 1 {
+                    info.single_lane += 1;
+                }
+            }
+        }
+        info
+    }
+
+    fn door_exit_closed(&self, info: DoorInfo) -> bool {
+        info.total > 0 && info.usable == 0
+    }
+
+    fn door_exit_debt(&self, info: DoorInfo, body_len: i32, exits: i32) -> i64 {
+        if info.total == 0 {
+            return 0;
+        }
+        let size = if body_len >= 90 {
+            2
+        } else if body_len >= 50 {
+            1
+        } else {
+            0
+        };
+        let mut debt = info.blocked as i64 * (28_000 + size as i64 * 9_000)
+            + info.single_lane as i64 * (4_500 + size as i64 * 2_500);
+        if info.usable == 0 {
+            debt += 92_000 + body_len as i64 * 620 + if exits <= 2 { 36_000 } else { 0 };
+        } else if info.usable == 1 {
+            debt += 8_500 + if exits <= 2 { 8_000 } else { 0 };
+        }
+        debt
+    }
+
+    fn door_exit_credit(&self, info: DoorInfo) -> i64 {
+        if info.total == 0 {
+            0
+        } else if info.usable >= 2 {
+            12_000 + (info.usable - 2) as i64 * 2_000
+        } else if info.usable == 1 {
+            3_000
+        } else {
+            0
+        }
     }
 
     fn arrow_level(&self) -> bool {
@@ -1286,6 +1425,18 @@ impl Planner {
             return None;
         }
 
+        let door = self.door_exit_info(ns);
+        if self.door_exit_closed(door) {
+            match cfg.route_kind {
+                RouteKind::Near | RouteKind::Route => return None,
+                RouteKind::Pressure => {
+                    if !cfg.urgent {
+                        return None;
+                    }
+                }
+            }
+        }
+        let door_debt = self.door_exit_debt(door, body_len, exits);
         let rollout = self.pickup_rollout(ns, 2, cfg.allow_smile, cfg.urgent);
         let one_exit_cost = if exits == 1 {
             (match cfg.route_kind {
@@ -1354,8 +1505,9 @@ impl Planner {
             }
         };
         Some(
-            base + rollout + smile_return_credit
+            base + rollout + smile_return_credit + self.door_exit_credit(door)
                 - return_debt
+                - door_debt
                 - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent)
                 - ns.stones as i64 * 52
                 - ns.chokes as i64
@@ -1443,6 +1595,8 @@ impl Planner {
                 }
                 let return_room = self.return_path_room(info, exits, ns.body.len() as i32, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let door = self.door_exit_info(&ns);
+                let door_debt = self.door_exit_debt(door, ns.body.len() as i32, exits);
                 let food_dist = if is_food(c) {
                     0
                 } else {
@@ -1462,6 +1616,7 @@ impl Planner {
                     + if info.tail_reach { 46_000 } else { 0 }
                     + if escape.tail_reach { 18_000 } else { 0 }
                     + if is_food(c) { 3_000 } else { 0 }
+                    + self.door_exit_credit(door)
                     + self.smile_step_credit(
                         c,
                         info,
@@ -1490,6 +1645,7 @@ impl Planner {
                     } else {
                         0
                     }
+                    - door_debt
                     - ns.stones as i64 * 62
                     + if ns.first == st.dir { 90 } else { 0 };
                 if score > best_score {
@@ -1570,6 +1726,11 @@ impl Planner {
                     {
                         continue;
                     }
+                    let door = self.door_exit_info(&ns);
+                    if self.door_exit_closed(door) {
+                        continue;
+                    }
+                    let door_debt = self.door_exit_debt(door, ns.body.len() as i32, exits);
                     let return_debt = if return_open { 0 } else { 20_000 };
                     let new_smiles = ns.smiles - start.smiles;
                     let smile_return_credit =
@@ -1589,7 +1750,9 @@ impl Planner {
                         + if info.tail_reach { 12_000 } else { 0 }
                         + if escape.tail_reach { 10_000 } else { 0 }
                         + smile_return_credit
+                        + self.door_exit_credit(door)
                         - return_debt
+                        - door_debt / 2
                         - smile_growth_cost
                         - if exits <= 1 {
                             10_000 + forced.steps as i64 * 520
@@ -1660,6 +1823,8 @@ impl Planner {
                 );
                 let return_room = self.return_path_room(info, exits, body_len, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let door = self.door_exit_info(&ns);
+                let door_debt = self.door_exit_debt(door, body_len, exits);
                 let score = info.space as i64 * 26
                     + exits as i64 * 1_000
                     + if is_food(c) { 2_500 } else { 0 }
@@ -1668,6 +1833,7 @@ impl Planner {
                     + if escape.ok { 4_500 } else { 0 }
                     + escape.space as i64 * 5
                     + forced.end_exits as i64 * 900
+                    + self.door_exit_credit(door)
                     - if exits <= 1 {
                         7_000 + forced.steps as i64 * 420
                     } else {
@@ -1693,7 +1859,8 @@ impl Planner {
                         28_000
                     } else {
                         0
-                    };
+                    }
+                    - door_debt;
                 if score > best_score {
                     best_score = score;
                     best = Some(ns.first);
@@ -1771,6 +1938,8 @@ impl Planner {
                 );
                 let return_room = self.return_path_room(info, exits, body_len, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let door = self.door_exit_info(&ns);
+                let door_debt = self.door_exit_debt(door, body_len, exits);
                 let score = -(dist as i64) * 1_700
                     + info.space as i64 * 10
                     + exits as i64 * 1_650
@@ -1780,6 +1949,7 @@ impl Planner {
                     + escape.space as i64 * 4
                     + if is_food(c) { 26_000 } else { 0 }
                     + forced.end_exits as i64 * 1_100
+                    + self.door_exit_credit(door)
                     - if exits <= 1 {
                         8_000 + forced.steps as i64 * 540
                     } else {
@@ -1805,7 +1975,8 @@ impl Planner {
                         24_000
                     } else {
                         0
-                    };
+                    }
+                    - door_debt;
                 if score > best_score {
                     best_score = score;
                     best = Some(ns.first);
@@ -1831,6 +2002,8 @@ impl Planner {
                 let body_len = ns.body.len() as i32;
                 let return_room = self.return_path_room(info, exits, body_len, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
+                let door = self.door_exit_info(&ns);
+                let door_debt = self.door_exit_debt(door, body_len, exits);
                 let dist = if is_food(c) {
                     0
                 } else {
@@ -1845,6 +2018,7 @@ impl Planner {
                         0
                     }
                     + if is_food(c) { 6_000 } else { 0 }
+                    + self.door_exit_credit(door)
                     - if c == 1 {
                         if return_room {
                             1_500
@@ -1856,6 +2030,7 @@ impl Planner {
                     }
                     - ns.stones as i64 * 45
                     - if return_risk { 12_000 } else { 0 }
+                    - door_debt
                     + if ns.first == st.dir { 80 } else { 0 };
                 if score > best_score {
                     best_score = score;
@@ -1902,6 +2077,80 @@ fn is_arrow(c: u16) -> bool {
 
 fn open(c: u16) -> bool {
     c == 32 || c == 1 || is_food(c)
+}
+
+fn room_door_level(level: i32) -> bool {
+    matches!((level - 1).rem_euclid(16), 2 | 10)
+}
+
+fn static_open_cell(board: &[u16; BOARD_LEN], body_bits: BoardBits, o: i32) -> bool {
+    (0..BOARD_LEN as i32).contains(&o) && (body_bits.contains(o) || open(board[o as usize]))
+}
+
+fn static_wall_cell(board: &[u16; BOARD_LEN], body_bits: BoardBits, o: i32) -> bool {
+    (0..BOARD_LEN as i32).contains(&o) && !static_open_cell(board, body_bits, o)
+}
+
+fn detect_doors(
+    board: &[u16; BOARD_LEN],
+    body_bits: BoardBits,
+    level: i32,
+) -> (Vec<Door>, BoardBits) {
+    if !room_door_level(level) {
+        return (Vec::new(), BoardBits::default());
+    }
+    let mut doors = Vec::new();
+    let mut bits = BoardBits::default();
+
+    for row in 2..=24 {
+        for col in 2..=77 {
+            let a = offset(row, col);
+            let b = offset(row, col + 1);
+            if static_open_cell(board, body_bits, a)
+                && static_open_cell(board, body_bits, b)
+                && static_wall_cell(board, body_bits, offset(row, col - 1))
+                && static_wall_cell(board, body_bits, offset(row, col + 2))
+                && static_open_cell(board, body_bits, a - 160)
+                && static_open_cell(board, body_bits, b - 160)
+                && static_open_cell(board, body_bits, a + 160)
+                && static_open_cell(board, body_bits, b + 160)
+            {
+                doors.push(Door {
+                    cells: [a, b],
+                    before: [a - 160, b - 160],
+                    after: [a + 160, b + 160],
+                });
+                bits.insert(a);
+                bits.insert(b);
+            }
+        }
+    }
+
+    for row in 2..=23 {
+        for col in 2..=79 {
+            let a = offset(row, col);
+            let b = offset(row + 1, col);
+            if static_open_cell(board, body_bits, a)
+                && static_open_cell(board, body_bits, b)
+                && static_wall_cell(board, body_bits, offset(row - 1, col))
+                && static_wall_cell(board, body_bits, offset(row + 2, col))
+                && static_open_cell(board, body_bits, a - 2)
+                && static_open_cell(board, body_bits, b - 2)
+                && static_open_cell(board, body_bits, a + 2)
+                && static_open_cell(board, body_bits, b + 2)
+            {
+                doors.push(Door {
+                    cells: [a, b],
+                    before: [a - 2, b - 2],
+                    after: [a + 2, b + 2],
+                });
+                bits.insert(a);
+                bits.insert(b);
+            }
+        }
+    }
+
+    (doors, bits)
 }
 
 fn step(sc: i32) -> i32 {
@@ -1967,6 +2216,20 @@ mod tests {
 
     fn planner(board: [u16; BOARD_LEN], body: Vec<i32>) -> Planner {
         Planner::new(board, body, [0; ENEMY_LEN], 26, 12, false, 1_000_000.0)
+    }
+
+    fn planner_level(board: [u16; BOARD_LEN], body: Vec<i32>, level: i32) -> Planner {
+        Planner::new(board, body, [0; ENEMY_LEN], level, 12, false, 1_000_000.0)
+    }
+
+    fn vertical_door_board() -> [u16; BOARD_LEN] {
+        let mut board = empty_board();
+        for row in 8..=13 {
+            board[offset(row, 12) as usize] = 179;
+        }
+        board[offset(10, 12) as usize] = 32;
+        board[offset(11, 12) as usize] = 32;
+        board
     }
 
     #[test]
@@ -2081,6 +2344,39 @@ mod tests {
         let info = p.space_info(&st, false);
         assert!(!info.tail_reach);
         assert!(p.return_path_risk(&st, info, 2, 1));
+    }
+
+    #[test]
+    fn door_exit_strategy_accepts_one_reserved_lane() {
+        let board = vertical_door_board();
+        let body = vec![offset(10, 13), offset(10, 14)];
+        let p = planner_level(board, body, 27);
+        let st = p.start_state();
+        let info = p.door_exit_info(&st);
+        assert_eq!(p.doors.len(), 1);
+        assert_eq!(info.total, 1);
+        assert_eq!(info.usable, 1);
+        assert_eq!(info.blocked, 0);
+        assert!(!p.door_exit_closed(info));
+    }
+
+    #[test]
+    fn door_exit_strategy_flags_blocked_return_lanes() {
+        let board = vertical_door_board();
+        let body = vec![
+            offset(9, 14),
+            offset(10, 13),
+            offset(11, 13),
+            offset(10, 14),
+        ];
+        let p = planner_level(board, body, 27);
+        let st = p.start_state();
+        let info = p.door_exit_info(&st);
+        assert_eq!(info.total, 1);
+        assert_eq!(info.usable, 0);
+        assert_eq!(info.blocked, 1);
+        assert!(p.door_exit_closed(info));
+        assert!(p.door_exit_debt(info, st.body.len() as i32, 2) > 100_000);
     }
 
     #[test]

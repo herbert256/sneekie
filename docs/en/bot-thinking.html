@@ -349,7 +349,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="safety">
         <h2>7. Trap checks</h2>
-        <p>Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with four different survival signals.</p>
+        <p>Reaching a heart is not enough. Most bad snake bots die because they follow the shortest route to food and discover too late that the food was in a cul-de-sac. Sneekie's bot therefore tests a candidate route with several survival signals.</p>
         <div class="cards">
           <div class="card">
             <h3>Exit count</h3>
@@ -371,8 +371,12 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <h3>Route out</h3>
             <p><code>escapeProof()</code> simulates extra post-pickup moves and requires a path into open space or back toward the moving tail before the food route can win.</p>
           </div>
+          <div class="card">
+            <h3>Room doors</h3>
+            <p>On the room-grid layouts, the planner detects two-cell doors and checks that at least one door lane plus the cells immediately before and after it remain clear.</p>
+          </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, and early tail cutoffs are filtered before their short-term reward can win.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, blocked room exits, and early tail cutoffs are filtered before their short-term reward can win.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
@@ -389,7 +393,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr>
               <td><code>breathingMove()</code></td>
               <td>Avoid pockets</td>
-              <td>Runs before distant food routes when the board is cramped or the snake is long. It prefers moves that preserve tail reach, future exits, and open space.</td>
+              <td>Runs before distant food routes when the board is cramped or the snake is long. It prefers moves that preserve tail reach, future exits, room-door lanes, and open space.</td>
             </tr>
             <tr>
               <td><code>pressureFood()</code></td>
@@ -419,11 +423,13 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           score -= routeDistance * 260<br />
           score += returnPreservingSmileys * 8800<br />
           score += smileyEscapeBonus<br />
+          score += preservedRoomDoorLanes<br />
           score -= smileysEaten * 10500<br />
+          score -= blockedRoomDoorLanes<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>The large tail-reach, survival-depth, and route-out weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. Smileys still carry a cost, but a smiley that preserves the return path can score better than a clean pickup that would seal the snake in.</p>
+        <p>The large tail-reach, survival-depth, route-out, and room-door weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. Smileys still carry a cost, but a smiley that preserves the return path can score better than a clean pickup that would seal the snake in.</p>
         <p>The two newer food planners deliberately use different weights:</p>
         <table>
           <thead>

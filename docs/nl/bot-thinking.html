@@ -198,15 +198,16 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="safety">
         <h2>7. Valcontroles</h2>
-        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen, inclusief een bewezen uitweg na het oppakken en vroegere detectie van zelfinsluiting in kleine kamers of smalle doorgangen.</p>
+        <p>Een hart bereiken is niet genoeg. Veel slechte slangenbots volgen de kortste route en ontdekken te laat dat het voedsel in een doodlopende zak lag. Daarom test Sneekie's bot kandidaten met meerdere signalen, inclusief een bewezen uitweg na het oppakken, vrijgehouden kamerdeuren en vroegere detectie van zelfinsluiting in kleine kamers of smalle doorgangen.</p>
         <div class="cards">
           <div class="card"><h3>Uitgangen</h3><p><code>legalCount()</code> telt hoeveel zetten direct na het eten nog mogelijk zijn. Nul wordt geweigerd; een uitgang krijgt een zware straf.</p></div>
           <div class="card"><h3>Bereikbare ruimte</h3><p><code>spaceInfo()</code> vult vanaf de gesimuleerde kop en respecteert richting, muren, lijf, stenen, voedsel en gevaar.</p></div>
           <div class="card"><h3>Staartbereik</h3><p>Dezelfde flood fill noteert of de kop de staart kan bereiken. Dat betekent meestal een bewegende ontsnappingsroute.</p></div>
           <div class="card"><h3>Overlevingsdiepte</h3><p><code>survivalDepth()</code> kijkt met een kleine beam search hoeveel toekomstige zetten mogelijk blijven.</p></div>
           <div class="card"><h3>Uitweg</h3><p><code>escapeProof()</code> simuleert extra zetten na het oppakken en vereist een pad naar open ruimte of terug richting de bewegende staart.</p></div>
+          <div class="card"><h3>Kamerdeuren</h3><p>In de kamerroosters herkent de planner deuren van twee vakken breed en controleert hij dat minstens een deurstrook met de vakken direct ervoor en erna vrij blijft.</p></div>
         </div>
-        <p>Normale voedselroutes moeten na het oppakken een bewezen terugweg naar de bewegende staart houden. Urgente druk mag alleen als fallback een zeer ruime losgeraakte regio gebruiken. Kleine regio's, eenvaks-flessenhalzen en vroege staartafsnijdingen worden gefilterd voordat hun korte-termijnbeloning kan winnen.</p>
+        <p>Normale voedselroutes moeten na het oppakken een bewezen terugweg naar de bewegende staart houden. Urgente druk mag alleen als fallback een zeer ruime losgeraakte regio gebruiken. Kleine regio's, eenvaks-flessenhalzen, geblokkeerde kamerdeuren en vroege staartafsnijdingen worden gefilterd voordat hun korte-termijnbeloning kan winnen.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Noodzetten</h2>
@@ -214,7 +215,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <table>
           <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
           <tbody>
-            <tr><td><code>breathingMove()</code></td><td>Vakken vermijden</td><td>Loopt vóór verre voedselroutes wanneer het veld krap is of de slang lang is. Hij verkiest staartbereik, toekomstige uitgangen en open ruimte.</td></tr>
+            <tr><td><code>breathingMove()</code></td><td>Vakken vermijden</td><td>Loopt vóór verre voedselroutes wanneer het veld krap is of de slang lang is. Hij verkiest staartbereik, toekomstige uitgangen, vrije kamerdeuren en open ruimte.</td></tr>
             <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of herhaalde kopposities.</td></tr>
             <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>Als laatste fallback scoort hij directe zetten op ruimte, uitgangen, voedsel, terugwegruimte, smileykosten of -bonus, stenen en rechtdoor gaan.</td></tr>
           </tbody>
@@ -234,11 +235,13 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           score -= routeDistance * 260<br />
           score += returnPreservingSmileys * 8800<br />
           score += smileyEscapeBonus<br />
+          score += preservedRoomDoorLanes<br />
           score -= smileysEaten * 10500<br />
+          score -= blockedRoomDoorLanes<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>De grote gewichten voor staartbereik, overlevingsdiepte en bewezen uitweg zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in. Smileys blijven duur, maar een smiley die de terugweg open houdt kan beter scoren dan schoon voedsel dat de slang insluit.</p>
+        <p>De grote gewichten voor staartbereik, overlevingsdiepte, bewezen uitweg en vrije kamerdeuren zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in. Smileys blijven duur, maar een smiley die de terugweg open houdt kan beter scoren dan schoon voedsel dat de slang insluit.</p>
       </section>
       <section id="speed">
         <h2>10. Snelheidslimieten</h2>
