@@ -65,6 +65,17 @@
       <p class="lead">
         This is no recording. The <em>real</em> 1988 game runs live while a bot tackles levels 26-32: moving walls, arrows, stones, smileys, and a double-length snake. It reads the screen, plans a safe route, clears the board when it can, and tries again when the maze wins.
       </p>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Green</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute">Sound: on</button>
+          <button type="button" id="fs">Fullscreen</button>
+        </div>
+      </div>
       <div id="bezel">
         <div id="tube">
           <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
@@ -77,21 +88,10 @@
           <span class="knobs"><i></i><i></i></span>
         </div>
       </div>
-      <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Green</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="cga">CGA</button>
-        </div>
-        <div class="grp">
-          <button type="button" id="mute">Sound: on</button>
-          <button type="button" id="fs">Fullscreen</button>
-        </div>
-      </div>
       <div class="speedbar">
         <label for="speed">Bot speed</label>
-        <input id="speed" type="range" min="0" max="10" step="1" value="9" aria-valuetext="90" />
-        <output id="speedout" for="speed">90</output>
+        <input id="speed" type="range" min="0" max="10" step="1" value="7" aria-valuetext="70" />
+        <output id="speedout" for="speed">70</output>
       </div>
       <div class="leveltabs" id="leveltabs" role="group" aria-label="Bot level"></div>
       <p class="live-note">It's live, not a recording. Keep this tab in front &mdash; browsers throttle background tabs, which pauses the running game.</p>

@@ -16,7 +16,7 @@
 .page-bot #bezel{
   width:fit-content;
   max-width:100%;
-  margin:22px auto 6px;
+  margin:8px auto 6px;
   padding:14px 16px 12px;
   background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
   border-radius:16px;
@@ -113,11 +113,14 @@
   display:flex;
   flex-wrap:wrap;
   gap:8px;
-  justify-content:center;
+  justify-content:space-between;
   align-items:center;
-  margin-top:8px;
+  width:min(584px, calc(100vw - 80px));
+  max-width:100%;
+  margin:22px auto 0;
 }
-.page-bot #controls .grp{ display:flex; gap:6px; }
+.page-bot #controls .grp{ display:flex; flex-wrap:wrap; gap:6px; }
+.page-bot #controls .grp:last-child{ justify-content:flex-end; margin-left:auto; }
 .page-bot #controls button{
   font:inherit;
   font-size:11px;
@@ -199,6 +202,7 @@
 }
 @media (max-width:520px){
   .page-bot .lead{ font-size:16px; text-align:left; }
+  .page-bot #controls{ margin-top:18px; }
   .page-bot .speedbar{ grid-template-columns:auto minmax(120px, 1fr) auto; gap:6px; max-width:300px; }
   .page-bot .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }

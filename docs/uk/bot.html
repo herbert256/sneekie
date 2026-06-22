@@ -63,6 +63,17 @@
         <h1 class="page-title">Бот спускається в глибину &mdash; рівні 26-32</h1>
       </div>
       <p class="lead">Це не запис. <em>Справжня</em> гра 1988 року працює наживо, поки бот проходить рівні 26-32: рухомі стіни, стріли, камені, смайлики і змія подвійної довжини. Він читає екран, планує безпечний маршрут, очищає поле, коли може, і пробує знову, коли лабіринт перемагає.</p>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Зелений</button>
+          <button type="button" data-theme="amber">Бурштин</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute">Звук: увімкнено</button>
+          <button type="button" id="fs">На весь екран</button>
+        </div>
+      </div>
       <div id="bezel">
         <div id="tube">
           <canvas id="screen" width="640" height="384" role="img" aria-label="Ігровий екран Sneekie"></canvas>
@@ -75,21 +86,10 @@
           <span class="knobs"><i></i><i></i></span>
         </div>
       </div>
-      <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Зелений</button>
-          <button type="button" data-theme="amber">Бурштин</button>
-          <button type="button" data-theme="cga">CGA</button>
-        </div>
-        <div class="grp">
-          <button type="button" id="mute">Звук: увімкнено</button>
-          <button type="button" id="fs">На весь екран</button>
-        </div>
-      </div>
       <div class="speedbar">
         <label for="speed">Швидкість бота</label>
-        <input id="speed" type="range" min="0" max="10" step="1" value="9" aria-valuetext="90" />
-        <output id="speedout" for="speed">90</output>
+        <input id="speed" type="range" min="0" max="10" step="1" value="7" aria-valuetext="70" />
+        <output id="speedout" for="speed">70</output>
       </div>
       <div class="leveltabs" id="leveltabs" role="group" aria-label="Рівень бота наживо"></div>
       <p class="live-note">Це наживо, не запис. Тримайте цю вкладку попереду &mdash; браузери сповільнюють фонові вкладки, і гра зупиняється.</p>

@@ -350,12 +350,24 @@ impl Planner {
         let proved = if breathe_first {
             self.near_food(false)
                 .or_else(|| self.breathing_move())
+                .or_else(|| self.near_food(true))
                 .or_else(|| self.route_food(false))
+                .or_else(|| self.route_food(true))
+                .or_else(|| self.pressure_food(true, self.urgent))
                 .or_else(|| self.pressure_food(false, self.urgent))
         } else {
             self.near_food(false)
                 .or_else(|| self.route_food(false))
                 .or_else(|| self.pressure_food(false, self.urgent))
+                .or_else(|| {
+                    if self.urgent {
+                        self.near_food(true)
+                            .or_else(|| self.route_food(true))
+                            .or_else(|| self.pressure_food(true, self.urgent))
+                    } else {
+                        None
+                    }
+                })
         };
         proved
             .or_else(|| {
@@ -372,7 +384,7 @@ impl Planner {
 
     fn time_up(&mut self) -> bool {
         self.clock_checks = self.clock_checks.wrapping_add(1);
-        if self.clock_checks & 0x1f != 0 {
+        if self.clock_checks & 0x07 != 0 {
             return false;
         }
         host_now_ms() >= self.deadline
@@ -444,7 +456,7 @@ impl Planner {
     fn smile_cost(&self, kind: RouteKind, urgent: bool) -> i64 {
         match kind {
             RouteKind::Near => 8_500,
-            RouteKind::Route => 11_500,
+            RouteKind::Route => 10_500,
             RouteKind::Pressure => {
                 if urgent {
                     5_800
@@ -463,21 +475,77 @@ impl Planner {
         info: SpaceInfo,
         escape: EscapeInfo,
     ) -> i64 {
-        if smiles <= 0 || info.tail_reach || !escape.tail_reach {
+        if smiles <= 0 || !escape.tail_reach {
             return 0;
         }
-        smiles as i64
-            * match kind {
-                RouteKind::Near => 1_500,
-                RouteKind::Route => 2_600,
-                RouteKind::Pressure => {
-                    if urgent {
-                        3_200
-                    } else {
-                        2_200
-                    }
+        let mut credit = match kind {
+            RouteKind::Near => 5_800,
+            RouteKind::Route => 8_800,
+            RouteKind::Pressure => {
+                if urgent {
+                    7_400
+                } else {
+                    6_600
                 }
             }
+        };
+        if !info.tail_reach {
+            credit += match kind {
+                RouteKind::Near => 1_200,
+                RouteKind::Route => 2_000,
+                RouteKind::Pressure => {
+                    if urgent {
+                        2_200
+                    } else {
+                        1_400
+                    }
+                }
+            };
+        }
+        if escape.exits >= 3 {
+            credit += 1_000;
+        }
+        smiles as i64 * credit
+    }
+
+    fn smile_step_credit(
+        &self,
+        c: u16,
+        info: SpaceInfo,
+        escape: EscapeInfo,
+        return_room: bool,
+        return_risk: bool,
+        exits: i32,
+        forced: ForcedInfo,
+    ) -> i64 {
+        if c != 1 {
+            return 0;
+        }
+        let mut credit = 0;
+        if return_room {
+            credit += 5_500;
+        }
+        if info.tail_reach {
+            credit += 4_000;
+        }
+        if escape.tail_reach {
+            credit += 10_000;
+        }
+        if escape.ok {
+            credit += 3_000;
+        }
+        credit += match exits {
+            3.. => 4_500,
+            2 => 2_400,
+            _ => 0,
+        };
+        if forced.end_exits >= 2 {
+            credit += 1_800;
+        }
+        if return_risk && !escape.tail_reach {
+            credit -= 12_000;
+        }
+        credit
     }
 
     fn arrow_level(&self) -> bool {
@@ -1348,7 +1416,7 @@ impl Planner {
         let escape_limit = if few || self.urgent { 20 } else { 16 };
         let min_space = (body_len + if few { 34 } else { 22 }).min(240);
 
-        for allow_smile in [false] {
+        for allow_smile in [true] {
             let mut best = None;
             let mut best_score = i64::MIN;
             for ns in self.legal(&st, allow_smile) {
@@ -1374,6 +1442,7 @@ impl Planner {
                     continue;
                 }
                 let return_room = self.return_path_room(info, exits, ns.body.len() as i32, few);
+                let return_risk = self.return_path_risk(&ns, info, exits, 1);
                 let food_dist = if is_food(c) {
                     0
                 } else {
@@ -1393,6 +1462,15 @@ impl Planner {
                     + if info.tail_reach { 46_000 } else { 0 }
                     + if escape.tail_reach { 18_000 } else { 0 }
                     + if is_food(c) { 3_000 } else { 0 }
+                    + self.smile_step_credit(
+                        c,
+                        info,
+                        escape,
+                        return_room,
+                        return_risk,
+                        exits,
+                        forced,
+                    )
                     - if exits <= 1 {
                         13_000 + forced.steps as i64 * 650
                     } else {
@@ -1404,6 +1482,11 @@ impl Planner {
                         } else {
                             9_500
                         }
+                    } else {
+                        0
+                    }
+                    - if return_risk && !escape.tail_reach {
+                        16_000
                     } else {
                         0
                     }
@@ -2060,6 +2143,30 @@ mod tests {
             .move_state(&ns, 77, true)
             .expect("second smiley is physically reachable");
         assert!(p.route_prefix_state(ns, &cfg).is_none());
+    }
+
+    #[test]
+    fn breathing_move_can_take_smiley_bridge_out_of_a_trap() {
+        let mut board = empty_board();
+        let body = vec![offset(10, 9), offset(10, 10)];
+        board[offset(10, 11) as usize] = 1;
+
+        // Up and down are legal first steps, but each immediately enters a
+        // one-way dead pocket. The right move grows through a smiley but keeps
+        // the only route into the open area.
+        for off in [
+            offset(8, 10),
+            offset(9, 9),
+            offset(9, 11),
+            offset(12, 10),
+            offset(11, 9),
+            offset(11, 11),
+        ] {
+            board[off as usize] = 196;
+        }
+
+        let mut p = planner(board, body);
+        assert_eq!(p.breathing_move(), Some(77));
     }
 
     #[test]

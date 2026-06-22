@@ -204,10 +204,12 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         pressureFood(false, urgent)
       : nearFood(false) ??
         routeFood(false) ??
-        nearFood(true) ??
-        routeFood(true) ??
         pressureFood(false, urgent) ??
-        pressureFood(true, urgent);
+        (urgent
+          ? nearFood(true) ??
+            routeFood(true) ??
+            pressureFood(true, urgent)
+          : null);
   } finally {
     routeDeadline = 0;
   }
@@ -388,7 +390,8 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
           score += returnPreservingSmileys * 8800<br />
-          score -= smileysEaten * 1050<br />
+          score += smileyEscapeBonus<br />
+          score -= smileysEaten * 10500<br />
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>

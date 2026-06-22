@@ -12,17 +12,17 @@
   const speed = document.getElementById('speed');
   const speedout = document.getElementById('speedout');
   const configuredSpeed = Number(window.SNEEKIE_BOT_SPEED);
-  let botSpeed = SPEED_CHOICES.includes(configuredSpeed) ? configuredSpeed : 50;
+  let botSpeed = SPEED_CHOICES.includes(configuredSpeed) ? configuredSpeed : 70;
   const silentWake = window.SNEEKIE_BOT_SILENT === true;
   function speedToDelay(value){ return Math.round(45 + 375 * Math.pow((100 - value) / 100, 1.6)); }
   function speedIndex(){
     if(!speed){
       const index = SPEED_CHOICES.indexOf(botSpeed);
-      return index >= 0 ? index : SPEED_CHOICES.indexOf(50);
+      return index >= 0 ? index : SPEED_CHOICES.indexOf(70);
     }
     const value = Number(speed.value);
     if(Number.isFinite(value)) return Math.max(0, Math.min(SPEED_CHOICES.length - 1, Math.round(value)));
-    return SPEED_CHOICES.indexOf(50);
+    return SPEED_CHOICES.indexOf(70);
   }
   function updateSpeed(){
     const index = speedIndex();

@@ -63,6 +63,17 @@
         <h1 class="page-title">De bot daalt af in de diepte &mdash; levels 26-32</h1>
       </div>
       <p class="lead">Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live terwijl een bot levels 26-32 aanpakt: bewegende muren, pijlen, stenen, smileys en een dubbele slang. Hij leest het scherm, plant een veilige route, ruimt het bord op wanneer dat kan, en probeert opnieuw wanneer het doolhof wint.</p>
+      <div id="controls">
+        <div class="grp" id="themes">
+          <button type="button" data-theme="hercules">Groen</button>
+          <button type="button" data-theme="amber">Amber</button>
+          <button type="button" data-theme="cga">CGA</button>
+        </div>
+        <div class="grp">
+          <button type="button" id="mute">Geluid: aan</button>
+          <button type="button" id="fs">Volledig scherm</button>
+        </div>
+      </div>
       <div id="bezel">
         <div id="tube">
           <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie spelscherm"></canvas>
@@ -75,21 +86,10 @@
           <span class="knobs"><i></i><i></i></span>
         </div>
       </div>
-      <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Groen</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="cga">CGA</button>
-        </div>
-        <div class="grp">
-          <button type="button" id="mute">Geluid: aan</button>
-          <button type="button" id="fs">Volledig scherm</button>
-        </div>
-      </div>
       <div class="speedbar">
         <label for="speed">Botsnelheid</label>
-        <input id="speed" type="range" min="0" max="10" step="1" value="9" aria-valuetext="90" />
-        <output id="speedout" for="speed">90</output>
+        <input id="speed" type="range" min="0" max="10" step="1" value="7" aria-valuetext="70" />
+        <output id="speedout" for="speed">70</output>
       </div>
       <div class="leveltabs" id="leveltabs" role="group" aria-label="Livebot level"></div>
       <p class="live-note">Het is live, geen opname. Houd dit tabblad vooraan &mdash; browsers vertragen achtergrondtabs, waardoor het lopende spel pauzeert.</p>
