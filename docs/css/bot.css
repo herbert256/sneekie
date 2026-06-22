@@ -59,6 +59,37 @@
 .page-bot #bezel:fullscreen #tube{ width:auto; max-width:none; padding:0; background:#000; border-radius:0; box-shadow:none; }
 .page-bot #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
 
+/* ---------- startup status popup ---------- */
+.page-bot .bot-startup{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,.58);
+  opacity:1;
+  transition:opacity .22s ease;
+}
+.page-bot .bot-startup.is-done{ opacity:0; }
+.page-bot .bot-startup-panel{
+  width:min(420px, 100%);
+  border:1px solid color-mix(in srgb, var(--accent) 48%, var(--border));
+  border-radius:6px;
+  background:#08100c;
+  box-shadow:0 26px 70px -28px rgba(0,0,0,.95), 0 0 24px -14px var(--accent);
+  padding:18px 20px;
+  text-align:center;
+}
+.page-bot .bot-startup-text{
+  margin:0;
+  color:var(--accent);
+  font-size:16px;
+  line-height:1.45;
+  letter-spacing:.02em;
+}
+
 /* ---------- the game controls (theme / sound / fullscreen) ---------- */
 .page-bot #controls{
   display:flex;

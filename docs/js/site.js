@@ -161,7 +161,7 @@ function registerOfflineSupport(){
   const siteRoot = new URL(pageRoot(), location.href);
   const hadController = !!navigator.serviceWorker.controller;
   const botPage = document.body && document.body.classList.contains('page-bot');
-  const registerDelay = botPage ? 8000 : 0;
+  const registerDelay = botPage ? 15000 : 0;
   let refreshing = false;
   if(hadController){
     navigator.serviceWorker.addEventListener('controllerchange', () => {
