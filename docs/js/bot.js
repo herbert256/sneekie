@@ -54,8 +54,7 @@
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const waitingForKey = () =>
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
-  const botText = key =>
-    typeof window.sneekieText === 'function' ? window.sneekieText(key) : key;
+  const botText = key => (window.SNEEKIE_TEXT && window.SNEEKIE_TEXT[key]) || key;
   function showStartupProgress(){
     if(STARTUP_DELAY_MS <= 0) return null;
     const overlay = document.createElement('div');
@@ -111,7 +110,7 @@
   };
   let target = 26, activeLevel = 26, pendingJump = 26, jumpingTo = null;
   const tablist = document.getElementById('leveltabs');
-  const pageLang = typeof window.sneekieLang === 'function' ? window.sneekieLang() : document.documentElement.lang;
+  const pageLang = window.SNEEKIE_LANG || document.documentElement.lang || 'en';
   const levelPrefix = pageLang === 'uk' ? 'Рівень ' : 'Level ';
   const tabs = new Map();
   function markTabs(){ tabs.forEach((b, n) => b.setAttribute('aria-pressed', String(n === target))); }
@@ -146,7 +145,10 @@
      on a final death (snake fully unwound, ETEL > BTEL) AND on a clean win where
      the bot clears the last level with the snake intact (ETEL <= BTEL) -- so we
      key off LEVEL > 32, not the snake state, or a clean win would freeze here. */
-  const yesKey = () => (typeof gt === 'function' ? gt('yesInput') : 'y');
+  const yesKey = () => {
+    const key = typeof gt === 'function' ? gt('yesInput') : 'y';
+    return key && key !== 'yesInput' ? key : 'y';
+  };
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, stuckQueued = false;
     let observedLive = null;

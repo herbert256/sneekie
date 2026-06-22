@@ -71,20 +71,21 @@ The faithful game logic lives in `docs/js/game.js`. `docs/<lang>/game.html`
 provides the game page markup. The root `docs/index*.html` files are localized
 home pages that link to the matching game page; they use `docs/css/site.css` and
 `docs/css/index.css` and only use inline JavaScript for the live home-page bot preview
-and cleanup of old service-worker installs. Static prose/error pages (`history`, `bot-thinking`, `explained`,
-`migration`, `404`) load no runtime JavaScript. Generated or interactive pages
-keep the scripts they need (`game`, `source`, `manual`, `bot`, `magazine`,
-`vram`).
+and cleanup of old service-worker installs. Static prose/error pages (`history`,
+`bot-thinking`, `explained`, `migration`, `source`, `404`) load no external runtime
+JavaScript. Interactive pages keep the scripts they need (`game`, `manual`, `bot`,
+`magazine`, `vram`).
 `docs/css/game.css` styles the monitor shell, and `docs/css/site.css` styles the
 static shared chrome used by the content pages.
 
 ## Maintenance
 
 Shared header/footer/nav text is static HTML in the localized pages, not runtime
-JavaScript. Runtime language metadata and dynamic UI strings live in `docs/js/i18n.js`
-only for pages that still need translated runtime text (`game`, `source`, `bot`, and
-`vram`). Edit localized pages directly under `docs/<lang>/` and keep the English,
-Dutch, and Ukrainian versions aligned by hand.
+JavaScript. Runtime UI strings that JavaScript needs live inline in the localized
+HTML pages that use them, usually as `window.SNEEKIE_TEXT`. The Source and
+Migration pages carry their rendered code directly in HTML. Edit localized pages
+directly under `docs/<lang>/` and keep the English, Dutch, and Ukrainian versions
+aligned by hand.
 
 Sneekie intentionally has no offline/PWA cache. `docs/sw.js` is only a cleanup shim:
 it lets browsers with an older installed service worker delete `sneekie-*` caches,

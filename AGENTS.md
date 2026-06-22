@@ -26,28 +26,27 @@ https://sneekie.xyz/.
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
   standard static header/footer chrome, a hero "play" section whose CRT image links to the
   matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
-  `css/site.css` and `css/index.css` only; there is no `js/index.js`. Keep the inline service
-  worker registration and JSON-LD structured-data block inline.
+  `css/site.css` and `css/index.css`; there is no `js/index.js`. The live bot preview scripts
+  (`game.js`, `bot-engine.js`, and `bot.js`) are lazy-loaded from inline code after the page is
+  loaded/idle. Keep the inline service-worker cleanup and JSON-LD structured-data block inline.
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only; no bot).
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
   `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
-  `migration`, and `404`) load no runtime JavaScript. JavaScript-backed pages load `../js/site.js`
-  and the page script they need (`game`, `source`, `manual`, `bot`, `magazine`, or `vram`);
-  pages with runtime UI text also load `../js/i18n.js` (`game`, `source`, `bot`, `vram`).
+  `migration`, `source`, and `404`) load no external runtime JavaScript. JavaScript-backed
+  pages load `../js/site.js` and the page script they need (`game`, `manual`, `bot`,
+  `magazine`, or `vram`). Runtime UI text for `game`, `bot`, and `vram` is provided inline in
+  the localized HTML pages as `window.SNEEKIE_TEXT`.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
   Keep shared visual language in `site.css`; only page-only layout and components belong in
   page CSS.
-- `docs/js/site.js` - shared runtime behavior for JavaScript-backed pages: language helpers,
-  clean-link normalization outside the static chrome, old service-worker cleanup, and the
-  shared BASIC tokenizer used by the listing pages. It must not create `header.top` or
-  `<footer>`. Download and Print live on the Source page, not in the header.
-- `docs/js/i18n.js` - runtime language registry and dynamic UI strings used by JavaScript.
-  Static header/footer/nav strings do **not** live here; they are literal HTML in the localized
-  pages under `docs/<lang>/`.
+- `docs/js/site.js` - shared runtime behavior for JavaScript-backed pages: localStorage
+  helpers, clean-link normalization outside the static chrome, and old service-worker cleanup.
+  It must not create `header.top` or `<footer>`. Download and Print live on the Source page,
+  not in the header.
 - `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
   are used by more than one page.
 - `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
@@ -70,18 +69,18 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
 
 ## Pages
 
-- `docs/<lang>/source.html` + `docs/js/source.js` - syntax-highlighted recovered GW-BASIC
-  listing. `source.js` embeds `docs/SNEEKIE.BAS` as base64 (so it renders from `file://` too),
-  drops the first 10 banner lines for display, and shows only the BASIC line numbers. This page
-  also carries the **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the
-  top; `source.js` wires Print to `window.print()`).
+- `docs/<lang>/source.html` - fully static, syntax-highlighted recovered GW-BASIC listing.
+  The rendered listing is checked into each localized HTML file directly, after dropping the
+  first 10 banner lines and showing only the BASIC line numbers. This page also carries the
+  **Download** (`SNEEKIE.BAS`) and **Print** buttons (a `.toolbar` near the top; a small inline
+  script wires Print to `window.print()` and handles the Green/Amber/CGA source theme).
 - `docs/<lang>/explained.html` - static single-column annotated walkthrough of the same source.
   The TOC, section cards, BASIC listing, and amber line notes are rendered directly into each
   localized HTML page; these pages do not load runtime JavaScript.
 - `docs/<lang>/migration.html` - static 1988 BASIC and 2026 JavaScript side-by-side pages.
-  These pages do not load runtime JavaScript. The rendered code pairs were generated from the
-  frozen base64 snapshots in `docs/js/migration.js`, not from the current live source files, so
-  the hard-coded BASIC/JS line ranges remain co-calibrated.
+  These pages do not load runtime JavaScript. The rendered code pairs are checked into each
+  localized HTML file directly; keep the hard-coded BASIC/JS line ranges co-calibrated when
+  editing the inline snippets.
 - `docs/<lang>/vram.html` + `docs/js/vram.js` - interactive visualization of the text-VRAM
   model. It is a focused sandbox, not the full game engine.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
@@ -125,9 +124,9 @@ The checked-in `docs/en/`, `docs/nl/`, and `docs/uk/` pages are the editable sou
 When changing page copy, static chrome, canonical links, hreflang alternates, or the sitemap,
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
-`docs/js/i18n.js` is only for runtime language metadata and dynamic JavaScript strings
-(game/source/bot/vram text). Static chrome strings and static prose
-live in the HTML pages, not in runtime `docs/js/i18n.js`.
+Runtime UI strings that JavaScript needs live inline in the localized HTML page that uses
+them, usually as `window.SNEEKIE_TEXT` before the page script. Static chrome strings and static
+prose live directly in the HTML pages.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
@@ -136,18 +135,17 @@ There is no Light/Dark mode.
 ## Source Embeds
 
 `docs/SNEEKIE.BAS` is the frozen recovered 1988 source and is the specification for game
-behavior. The listing pages embed it as base64 (so every page also renders straight from
-`file://`, not just over http):
+behavior. The Source pages carry checked-in rendered HTML based on that frozen listing:
 
-- `docs/js/source.js` embeds `docs/SNEEKIE.BAS` as base64 and keys off it directly. The display
-  code drops the 10-line header with `slice(10)`, so keep that header intact. `SNEEKIE.BAS` is
-  permanently frozen, so this embed normally does not need refreshing.
+- `docs/<lang>/source.html` contains the static rendered source listing. The rendered content
+  drops the 10-line header, so keep that header intact in `docs/SNEEKIE.BAS`. `SNEEKIE.BAS` is
+  permanently frozen, so this rendered listing normally does not need refreshing.
 - `docs/<lang>/explained.html` contains static rendered annotations for the same BASIC source.
   When changing those pages, keep the English, Dutch, and Ukrainian static listings aligned.
-- `docs/<lang>/migration.html` contains static rendered side-by-side code pairs. They were
-  generated from the frozen base64 snapshots in `docs/js/migration.js`, not from the current
-  live `docs/SNEEKIE.BAS` or `docs/js/game.js`. When changing those pages, keep using that
-  snapshot as the base unless deliberately recalibrating every BASIC/JS line range.
+- `docs/<lang>/migration.html` contains static rendered side-by-side code pairs. The BASIC and
+  JavaScript snippets are checked into the HTML directly, based on the frozen migration snapshot
+  rather than the current live `docs/SNEEKIE.BAS` or `docs/js/game.js`. When changing those
+  pages, edit all three localized files and keep every BASIC/JS line range co-calibrated.
 
 ## Running & Verification
 

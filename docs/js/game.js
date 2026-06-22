@@ -57,6 +57,7 @@ const GAME_TEXT = {
     end: 'The End',
     stuck: 'Stuck !!!',
     playAgain: 'Any key to start again',
+    yesInput: 'y',
     soundOn: 'Sound: on',
     soundOff: 'Sound: off'
   },
@@ -71,13 +72,14 @@ const GAME_TEXT = {
     end: 'Einde',
     stuck: 'Vast !!!',
     playAgain: 'Toets om opnieuw',
+    yesInput: 'j',
     soundOn: 'Geluid: aan',
     soundOff: 'Geluid: uit'
   }
 };
 
 function gameLang(){
-  return typeof window.sneekieLang === 'function' ? window.sneekieLang() : 'en';
+  return window.SNEEKIE_LANG || document.documentElement.lang || 'en';
 }
 function gt(key){
   const lang = gameLang() === 'nl' ? 'nl' : 'en';
@@ -1380,7 +1382,8 @@ document.querySelectorAll('#themes button').forEach(b =>
 
 const muteBtn = document.getElementById('mute');
 function gameUiText(key){
-  return typeof window.sneekieText === 'function' ? window.sneekieText(key) : gt(key);
+  const pageText = window.SNEEKIE_TEXT || {};
+  return pageText[key] || gt(key);
 }
 function paintMute(){ muteBtn.textContent = muted ? gameUiText('soundOff') : gameUiText('soundOn'); }
 muteBtn.addEventListener('click', () => {
