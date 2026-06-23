@@ -25,8 +25,7 @@ pub extern "C" fn trail_ptr() -> *mut i32 {
     core::ptr::addr_of_mut!(TRAIL).cast::<i32>()
 }
 
-#[no_mangle]
-pub extern "C" fn decide(
+fn make_planner(
     level: i32,
     items: i32,
     body_len: i32,
@@ -36,7 +35,7 @@ pub extern "C" fn decide(
     budget_ms: f64,
     force_risk: i32,
     bonus: i32,
-) -> i32 {
+) -> Planner {
     let body_len = body_len.clamp(2, BODY_CAP as i32) as usize;
     let trail_len = trail_len.clamp(0, TRAIL_CAP as i32) as usize;
     let mut board = [0u16; BOARD_LEN];
@@ -70,5 +69,42 @@ pub extern "C" fn decide(
     );
     planner.force_risk = force_risk != 0;
     planner.bonus = bonus.max(0);
-    planner.decide()
+    planner
+}
+
+#[no_mangle]
+pub extern "C" fn decide(
+    level: i32,
+    items: i32,
+    body_len: i32,
+    idle: i32,
+    looping: i32,
+    trail_len: i32,
+    budget_ms: f64,
+    force_risk: i32,
+    bonus: i32,
+) -> i32 {
+    make_planner(
+        level, items, body_len, idle, looping, trail_len, budget_ms, force_risk, bonus,
+    )
+    .decide()
+}
+
+#[no_mangle]
+pub extern "C" fn decide_mode(
+    mode: i32,
+    level: i32,
+    items: i32,
+    body_len: i32,
+    idle: i32,
+    looping: i32,
+    trail_len: i32,
+    budget_ms: f64,
+    force_risk: i32,
+    bonus: i32,
+) -> i32 {
+    make_planner(
+        level, items, body_len, idle, looping, trail_len, budget_ms, force_risk, bonus,
+    )
+    .decide_mode_tagged(mode)
 }

@@ -42,6 +42,7 @@ impl Planner {
             urgent,
             force_risk: false,
             bonus: 0,
+            search_profile: 0,
             deadline,
             clock_checks: 0,
             danger_masks: [BoardBits::default(); MAX_DANGER_TICKS + 1],
@@ -56,26 +57,81 @@ impl Planner {
     }
 
     pub(crate) fn decide(&mut self) -> i32 {
-        if self.force_risk {
-            return self.decide_forced();
+        decision_sc(self.decide_tagged())
+    }
+
+    pub(crate) fn decide_mode_tagged(&mut self, mode: i32) -> i32 {
+        match mode {
+            // Baseline compatibility/debug modes.
+            1 => {
+                let tagged = self.decide_proved_tagged().unwrap_or(0);
+                self.finalize_decision(tagged)
+            }
+            2 => {
+                let tagged = self.decide_fallback_tagged().unwrap_or(0);
+                self.finalize_decision(tagged)
+            }
+            3 => {
+                self.search_profile = 2;
+                self.urgent = true;
+                let tagged = self.decide_forced_tagged();
+                self.finalize_decision(tagged)
+            }
+            // Worker-only modes. They use wider route searches and larger budgets,
+            // but keep the same safety gates and fallback ordering as the baseline.
+            4 => {
+                self.search_profile = 1;
+                self.decide_tagged()
+            }
+            5 => {
+                self.search_profile = 2;
+                self.urgent = true;
+                self.decide_tagged()
+            }
+            _ => self.decide_tagged(),
         }
+    }
+
+    pub(crate) fn decide_tagged(&mut self) -> i32 {
+        if self.force_risk {
+            return self.decide_forced_tagged();
+        }
+        let chosen = self
+            .decide_proved_tagged()
+            .or_else(|| self.decide_fallback_tagged())
+            .unwrap_or(0);
+        self.finalize_decision(chosen)
+    }
+
+    fn decide_proved_tagged(&mut self) -> Option<i32> {
         let breathe_first = self.needs_breathing();
-        let proved = if breathe_first {
+        if breathe_first {
             self.near_food(false)
-                .or_else(|| self.breathing_move())
-                .or_else(|| self.near_food(true))
-                .or_else(|| self.route_food(false))
-                .or_else(|| self.route_food(true))
-                .or_else(|| self.pressure_food(true, self.urgent))
-                .or_else(|| self.pressure_food(false, self.urgent))
+                .map(|sc| pack_decision(10, sc))
+                .or_else(|| self.breathing_move().map(|sc| pack_decision(12, sc)))
+                .or_else(|| self.near_food(true).map(|sc| pack_decision(14, sc)))
+                .or_else(|| self.route_food(false).map(|sc| pack_decision(20, sc)))
+                .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                .or_else(|| {
+                    self.pressure_food(true, self.urgent)
+                        .map(|sc| pack_decision(32, sc))
+                })
+                .or_else(|| {
+                    self.pressure_food(false, self.urgent)
+                        .map(|sc| pack_decision(30, sc))
+                })
         } else if self.urgent && self.idle >= 36 {
             self.pressure_food(false, true)
-                .or_else(|| self.pressure_food(true, true))
-                .or_else(|| self.pressure_step())
-                .or_else(|| self.near_food(false))
-                .or_else(|| self.route_food(false))
-                .or_else(|| self.route_food(true))
-                .or_else(|| self.near_food(true))
+                .map(|sc| pack_decision(30, sc))
+                .or_else(|| {
+                    self.pressure_food(true, true)
+                        .map(|sc| pack_decision(32, sc))
+                })
+                .or_else(|| self.pressure_step().map(|sc| pack_decision(60, sc)))
+                .or_else(|| self.near_food(false).map(|sc| pack_decision(10, sc)))
+                .or_else(|| self.route_food(false).map(|sc| pack_decision(20, sc)))
+                .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                .or_else(|| self.near_food(true).map(|sc| pack_decision(14, sc)))
         } else if self.few() {
             // Endgame: only a few hearts remain, usually tucked in tight spots. In
             // testing even the clears orbited near the stuck limit (idle ~100-150)
@@ -84,11 +140,18 @@ impl Planner {
             // dig-aware pressure step so the snake actually goes and finishes the level
             // instead of circling it.
             self.route_food(false)
-                .or_else(|| self.near_food(false))
-                .or_else(|| self.pressure_food(false, self.urgent))
-                .or_else(|| self.route_food(true))
-                .or_else(|| self.pressure_food(true, true))
-                .or_else(|| self.pressure_step())
+                .map(|sc| pack_decision(20, sc))
+                .or_else(|| self.near_food(false).map(|sc| pack_decision(10, sc)))
+                .or_else(|| {
+                    self.pressure_food(false, self.urgent)
+                        .map(|sc| pack_decision(30, sc))
+                })
+                .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                .or_else(|| {
+                    self.pressure_food(true, true)
+                        .map(|sc| pack_decision(32, sc))
+                })
+                .or_else(|| self.pressure_step().map(|sc| pack_decision(60, sc)))
         } else if !self.open_board_level() {
             // Advice #1: on any walled level, sweep with the space-aware route_food
             // (which weights tail-reachability and open space) rather than the greedy
@@ -96,58 +159,83 @@ impl Planner {
             // isolated pickups that later wall off; preferring the considered route
             // clears the board more like a sweep and leaves the free space connected.
             self.route_food(false)
-                .or_else(|| self.near_food(false))
-                .or_else(|| self.pressure_food(false, self.urgent))
-                .or_else(|| self.route_food(true))
-                .or_else(|| self.pressure_food(true, self.urgent))
+                .map(|sc| pack_decision(20, sc))
+                .or_else(|| self.near_food(false).map(|sc| pack_decision(10, sc)))
+                .or_else(|| {
+                    self.pressure_food(false, self.urgent)
+                        .map(|sc| pack_decision(30, sc))
+                })
+                .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                .or_else(|| {
+                    self.pressure_food(true, self.urgent)
+                        .map(|sc| pack_decision(32, sc))
+                })
                 .or_else(|| {
                     if self.urgent {
                         self.near_food(true)
-                            .or_else(|| self.route_food(true))
-                            .or_else(|| self.pressure_food(true, self.urgent))
+                            .map(|sc| pack_decision(14, sc))
+                            .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                            .or_else(|| {
+                                self.pressure_food(true, self.urgent)
+                                    .map(|sc| pack_decision(32, sc))
+                            })
                     } else {
                         None
                     }
                 })
         } else {
             self.near_food(false)
-                .or_else(|| self.route_food(false))
-                .or_else(|| self.pressure_food(false, self.urgent))
-                .or_else(|| self.route_food(true))
-                .or_else(|| self.pressure_food(true, self.urgent))
+                .map(|sc| pack_decision(10, sc))
+                .or_else(|| self.route_food(false).map(|sc| pack_decision(20, sc)))
+                .or_else(|| {
+                    self.pressure_food(false, self.urgent)
+                        .map(|sc| pack_decision(30, sc))
+                })
+                .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                .or_else(|| {
+                    self.pressure_food(true, self.urgent)
+                        .map(|sc| pack_decision(32, sc))
+                })
                 .or_else(|| {
                     if self.urgent {
                         self.near_food(true)
-                            .or_else(|| self.route_food(true))
-                            .or_else(|| self.pressure_food(true, self.urgent))
+                            .map(|sc| pack_decision(14, sc))
+                            .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
+                            .or_else(|| {
+                                self.pressure_food(true, self.urgent)
+                                    .map(|sc| pack_decision(32, sc))
+                            })
                     } else {
                         None
                     }
                 })
-        };
-        let chosen = proved
-            .or_else(|| {
-                if self.urgent {
-                    self.pressure_step()
-                } else {
-                    None
-                }
-            })
-            .or_else(|| self.tail_chase_move())
-            .or_else(|| self.survival_move())
-            .or_else(|| self.last_chance_move())
-            .unwrap_or(0);
+        }
+    }
+
+    fn decide_fallback_tagged(&mut self) -> Option<i32> {
+        (if self.urgent {
+            self.pressure_step().map(|sc| pack_decision(60, sc))
+        } else {
+            None
+        })
+        .or_else(|| self.tail_chase_move().map(|sc| pack_decision(70, sc)))
+        .or_else(|| self.survival_move().map(|sc| pack_decision(80, sc)))
+        .or_else(|| self.last_chance_move().map(|sc| pack_decision(90, sc)))
+    }
+
+    fn finalize_decision(&mut self, chosen: i32) -> i32 {
+        let sc = decision_sc(chosen);
         // Advice #3: on the cramped non-stone mazes, refuse a move that boxes the head
         // into a sub-body pocket when a roomier move exists. Skipped in the endgame
         // (few items, finishing is worth a squeeze).
-        if chosen != 0 && self.maze_confined() && !self.few() {
-            self.avoid_self_seal(chosen)
+        if sc != 0 && self.maze_confined() && !self.few() {
+            replace_decision_sc(chosen, self.avoid_self_seal(sc))
         } else {
             chosen
         }
     }
 
-    pub(super) fn decide_forced(&mut self) -> i32 {
+    pub(super) fn decide_forced_tagged(&mut self) -> i32 {
         // Break a stall. The driver flips this on after an orbit, and it used to
         // hand control to the weaker JavaScript planner -- so the bot switched to
         // its least capable brain exactly when it was stuck. Keep the full
@@ -155,12 +243,13 @@ impl Planner {
         // the dig-aware pressure step, then fall back through survival moves.
         // recent-memory penalties (the loop breaker) stay active throughout.
         self.pressure_food(true, true)
-            .or_else(|| self.near_food(true))
-            .or_else(|| self.route_food(true))
-            .or_else(|| self.pressure_step())
-            .or_else(|| self.tail_chase_move())
-            .or_else(|| self.survival_move())
-            .or_else(|| self.last_chance_move())
+            .map(|sc| pack_decision(40, sc))
+            .or_else(|| self.near_food(true).map(|sc| pack_decision(42, sc)))
+            .or_else(|| self.route_food(true).map(|sc| pack_decision(44, sc)))
+            .or_else(|| self.pressure_step().map(|sc| pack_decision(60, sc)))
+            .or_else(|| self.tail_chase_move().map(|sc| pack_decision(70, sc)))
+            .or_else(|| self.survival_move().map(|sc| pack_decision(80, sc)))
+            .or_else(|| self.last_chance_move().map(|sc| pack_decision(90, sc)))
             .unwrap_or(0)
     }
 

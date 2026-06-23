@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. The landing pages still use the separate JavaScript planner in <code>bot-home.js</code> for passive previews, but the Bot page waits for WebAssembly before it drives the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, a small worker pool when the browser exposes spare cores, and a thin driver in <code>bot.js</code> in the same page. The landing pages still use the separate JavaScript planner in <code>bot-home.js</code> for passive previews, but the Bot page waits for WebAssembly before it drives the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -106,11 +106,12 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code> (the WebAssembly planner), then <code>bot.js</code>. The driver waits until <code>bot-engine.wasm</code> is ready before pressing a move. It still handles tabs, restarts, speed, and key presses:</p>
-        <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
-if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
-const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
-if(sc !== null) pushKey(keyOf[sc]);</code></pre>
+        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code> (the WebAssembly planner and worker coordinator), then <code>bot.js</code>. The driver waits until <code>bot-engine.wasm</code> is ready before pressing a move. It still handles tabs, restarts, speed, and key presses:</p>
+        <pre><code>const stalled = idle &gt; 120 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
+const fallbackRandom = stalled || movesSincePickup &gt;= 250;
+let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
+if(sc === null) sc = randomLegalScancode();   // planner gave up or a safeguard tripped
+if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt; snake death</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
         <div class="cards">
           <div class="card">
@@ -180,11 +181,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript planner in <code>bot-home.js</code> is kept for the landing-page previews only. For simulated routes, the Rust planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. When workers are available, each worker owns its own WebAssembly instance and receives the same snapshot, so it can think without sharing mutable game state. The JavaScript planner in <code>bot-home.js</code> is kept for the landing-page previews only. For simulated routes, the Rust planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
-        <p>Every bot move follows the same ladder. The first strategy that returns a direction wins; the bot presses that key, waits according to the speed slider, then recalculates from the new live game state. The route-proof searches share a small per-tick time budget so a hard maze cannot make the bot pause while it thinks.</p>
+        <p>Every bot move follows the same ladder. In single-thread mode, the first strategy that returns a direction wins. In worker mode, the coordinator runs the baseline planner beside deeper search profiles: a deeper full planner, a deeper urgent/finish planner, and an aggressive stall-breaker when enough cores are available. Results are tagged by strategy tier, so a deeper worker can replace the baseline only when it proves an equally good or better kind of move. The bot then presses that key, waits according to the speed slider, and recalculates from the new live game state.</p>
         <div class="ladder">
           <div class="step">
             <b>1. Reset danger cache</b>
@@ -239,7 +240,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. When the driver raises <code>forceRisk</code> after a stall, the WebAssembly planner stays in charge and runs its own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves &mdash; while quadrupling that recent-cell debt so every forced move walks into fresh cells. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>forceRisk</code> branch shown above is the planner's own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves, all while quadrupling that recent-cell debt so every forced move walks into fresh cells &mdash; but the live driver no longer raises it. After a stall it simply makes a random legal move instead (see &sect;11), so a stall can never push the snake into a fatal risk. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep moving until the snake is really stuck (no legal move at all) or the level clears.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -475,7 +476,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <li><code>survivalDepth()</code> is a beam search: after each depth, WebAssembly keeps up to 128 states with the most immediate exits.</li>
           <li><code>escapeProof()</code> keeps up to 160 post-pickup states per depth while proving that a food route has a way out.</li>
           <li>Food search is shallower on ordinary mid-level decisions and deeper only near the end of a level.</li>
-          <li>The page speed slider sets the target cadence between key presses; planner time is counted inside that cadence when it fits.</li>
+          <li>The page speed slider sets the target cadence between key presses; planner time is counted inside that cadence when it fits, and spare worker threads get larger route-search budgets than the baseline.</li>
         </ul>
         <p>The slider snaps to the page's speed choices: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Low values make the bot wait longer between moves; high values press keys much faster, down to roughly 45&nbsp;ms per move. Normal planning time is subtracted from that wait; if a search overruns the target cadence, the next key is sent immediately.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
@@ -501,23 +502,23 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td><code>BTEL</code> stops advancing</td>
-              <td>The snake is boxed, dying, or not moving. Keep forcing moves until the run ends in death or a clear.</td>
+              <td>The snake is boxed or not moving. Keep making moves; the run ends in death only when no legal move remains, otherwise it ends in a clear.</td>
             </tr>
             <tr>
-              <td>No survivable move</td>
-              <td>Try a risky passable move; if no playable move exists, use the normal snake death sequence instead of stuck handling.</td>
+              <td>Planner returns no move</td>
+              <td>Fall back to a random legal move. The normal snake death sequence is used only when no legal move exists at all &mdash; the snake is really stuck.</td>
             </tr>
             <tr>
-              <td>No score gain for 40 decisions, or 24 with repeated head positions</td>
-              <td>Raise <code>forceRisk</code>. The WebAssembly planner runs its own escape ladder &mdash; aggressive food grab, stone-dig pressure, tail-follow, survival &mdash; while quadrupling the recent-cell penalty to break the loop. No stuck request is sent.</td>
+              <td>No score gain for 120 decisions, or 24 with repeated head positions</td>
+              <td>Stop asking the planner and make a random legal JavaScript move so the snake keeps wandering. No risk is forced and no death is triggered.</td>
             </tr>
             <tr>
-              <td>150 moves without eating a heart or club (smileys no longer count)</td>
-              <td>Trigger the explicit stuck sequence. This is the hard safeguard against endless forced-risk play and against orbiting forever on smileys.</td>
+              <td>250 moves without eating a heart or club (smileys do not count)</td>
+              <td>The same random-move fallback, so the snake keeps moving instead of orbiting forever on smileys. It is no longer a death or restart trigger.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure. The separate 320-move pickup cap counts only real food &mdash; a &minus;50 smiley is not progress, so nibbling smileys can no longer postpone the restart forever &mdash; and it exists only to stop an endless live demo.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps searching rather than reading the quiet score as failure. The separate 250-move pickup cap counts only real food &mdash; a &minus;50 smiley is not progress, so nibbling smileys can no longer keep the cap from tripping &mdash; and when it trips it only switches the bot to random moves, never a death or restart.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>

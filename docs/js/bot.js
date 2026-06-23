@@ -143,28 +143,43 @@
     return key && key !== 'yesInput' ? key : 'y';
   };
   window.SNEEKIE_BOT_DRIVES_GAME = true;
-  const STALL_IDLE_LIMIT = 40;
+  const STALL_IDLE_LIMIT = 120;
   const STALL_LOOP_IDLE_LIMIT = 24;
-  const PICKUP_STUCK_LIMIT = 150;
+  const PICKUP_STUCK_LIMIT = 250;
   const stepOf = {72:-160, 80:160, 75:-2, 77:2};
   const targetCellFor = sc => {
     const step = stepOf[sc];
     return step === undefined ? 0 : peek(T[BTEL] + step);
   };
-  // Only real food (heart/club) counts as progress for the stuck safeguard.
+  // A move the snake can make right now without walking into a wall, its own
+  // body, or an enemy arrow: an empty cell, a heart/club/smiley, or a stone
+  // with an empty cell behind it (so it can be pushed). The random fallback
+  // below uses this so the bot keeps wandering instead of giving up -- the
+  // snake only dies when NO such move exists (it is really stuck).
+  const passableStep = (head, step) => {
+    const ch = peek(head + step);
+    if(ch === 32 || ch === 3 || ch === 5 || ch === 1) return true;   // empty / heart / club / smiley
+    if(ch === 10) return peek(head + step * 2) === 32;               // a stone we can push
+    return false;
+  };
+  const randomLegalScancode = () => {
+    const head = T[BTEL];
+    const opts = [];
+    for(const sc of [72, 80, 75, 77]) if(passableStep(head, stepOf[sc])) opts.push(sc);
+    return opts.length ? opts[Math.floor(Math.random() * opts.length)] : null;
+  };
+  // Only real food (heart/club) counts as progress for the no-food safeguard.
   // A smiley (1) is worth -50, so letting it reset the counter let the bot
-  // orbit forever nibbling smileys without ever tripping the restart.
+  // orbit forever nibbling smileys without ever tripping the fallback.
   const isFoodCell = ch => ch === 3 || ch === 5;
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, forcedDeathQueued = false;
-    let movesSincePickup = 0, safeguardStuckQueued = false, safeguardStuckWaitTicks = 0;
+    let movesSincePickup = 0;
     let observedLive = null;
     const headTrail = [];
     const resetMoveCounters = () => {
       idle = 0;
       movesSincePickup = 0;
-      safeguardStuckQueued = false;
-      safeguardStuckWaitTicks = 0;
       headTrail.length = 0;
     };
     while(true){
@@ -241,16 +256,12 @@
       const tickStarted = now();
       if(waitingForKey()){
         forcedDeathQueued = false;
-        safeguardStuckQueued = false;
-        safeguardStuckWaitTicks = 0;
         pushKey('\r');                                 // under the level popup -> any key dismisses it
         await sleepForTick(tickStarted); continue;
       }
       if(ZCORE > prevScore){
         idle = 0;
         movesSincePickup = 0;
-        safeguardStuckQueued = false;
-        safeguardStuckWaitTicks = 0;
       } else idle++;
       prevScore = ZCORE;
       headTrail.push(T[BTEL]);
@@ -258,31 +269,25 @@
       let repeats = 0;
       for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
       const looping = idle > 20 && repeats >= 2;
-      if(movesSincePickup >= PICKUP_STUCK_LIMIT){
-        if(!safeguardStuckQueued || ++safeguardStuckWaitTicks > 12){
-          safeguardStuckQueued = true;
-          safeguardStuckWaitTicks = 0;
-          if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
-          else pushKey('\r');
-        }
-        await sleepForTick(tickStarted); continue;
-      }
-      // Stop orbiting forever with no progress. A short looping run (revisiting
-      // the same cell) trips earlier than a plain no-score stall and switches to
-      // riskier forced moves instead of the stuck/restart path.
+      // Two situations used to make the snake give up here: a long run with no
+      // real food eaten, or a stall (orbiting with no score gain). Neither kills
+      // the snake anymore. When either trips we stop asking the Wasm/JS planner
+      // and just make a random legal move in JavaScript, so the snake keeps
+      // wandering. The planner is also never allowed to force a death: if it
+      // returns no move we fall back to that same random move. The snake only
+      // dies when it is REALLY stuck -- when no legal move exists at all.
       const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
-      const sc = planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled });
+      const fallbackRandom = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
+      let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() });
+      if(sc === null) sc = randomLegalScancode();      // planner gave up or a safeguard tripped
       if(sc !== null){
         forcedDeathQueued = false;
-        if(isFoodCell(targetCellFor(sc))){
-          movesSincePickup = 0;
-          safeguardStuckQueued = false;
-          safeguardStuckWaitTicks = 0;
-        } else movesSincePickup++;
-        pushKey(keyOf[sc]);                            // a planned move; forced mode may accept risk
+        if(isFoodCell(targetCellFor(sc))) movesSincePickup = 0;
+        else movesSincePickup++;
+        pushKey(keyOf[sc]);
       }
-      // No playable move remains. On the bot page this uses the normal snake
-      // death sequence, not the modern stuck popup.
+      // No legal move remains -> the snake is really stuck. Only now use the
+      // normal snake death sequence.
       else if(!forcedDeathQueued){
         forcedDeathQueued = true;
         if(typeof window.sneekieRequestBotDeath === 'function') window.sneekieRequestBotDeath();

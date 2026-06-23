@@ -6,7 +6,7 @@ impl Planner {
         let arrow_level = self.arrow_level();
         let start = self.start_state();
         let max_depth = if few { 14 } else { 10 };
-        self.food_search(FoodSearch {
+        self.profiled_food_search(FoodSearch {
             start,
             allow_smile,
             max_depth,
@@ -23,7 +23,7 @@ impl Planner {
         let arrow_level = self.arrow_level();
         let start = self.start_state();
         let stone_maze = self.stone_maze_level();
-        self.food_search(FoodSearch {
+        self.profiled_food_search(FoodSearch {
             start,
             allow_smile,
             max_depth: if few {
@@ -65,7 +65,7 @@ impl Planner {
         let start = self.start_state();
         let stone_maze = self.stone_maze_level();
         let deep_stall = stone_maze && self.idle >= 70;
-        self.food_search(FoodSearch {
+        self.profiled_food_search(FoodSearch {
             start,
             allow_smile,
             max_depth: if few {
@@ -111,6 +111,31 @@ impl Planner {
             arrow_level,
             urgent,
         })
+    }
+
+    fn profiled_food_search(&mut self, mut cfg: FoodSearch) -> Option<i32> {
+        self.apply_search_profile(&mut cfg);
+        self.food_search(cfg)
+    }
+
+    fn apply_search_profile(&self, cfg: &mut FoodSearch) {
+        if self.search_profile <= 0 {
+            return;
+        }
+        let (depth_num, depth_den, depth_extra, scan_num, scan_den, check_num, check_den) =
+            match (self.search_profile, cfg.route_kind) {
+                (1, RouteKind::Near) => (1, 1, 2, 4, 3, 1, 1),
+                (1, RouteKind::Route) => (6, 5, 8, 3, 2, 4, 3),
+                (1, RouteKind::Pressure) => (6, 5, 8, 3, 2, 4, 3),
+                (_, RouteKind::Near) => (1, 1, 3, 3, 2, 1, 1),
+                (_, RouteKind::Route) => (4, 3, 10, 2, 1, 5, 3),
+                (_, RouteKind::Pressure) => (3, 2, 12, 5, 2, 2, 1),
+            };
+        cfg.max_depth = scale_limit(cfg.max_depth, depth_num, depth_den, depth_extra, 210);
+        cfg.scan_limit = scale_limit(cfg.scan_limit, scan_num, scan_den, 0, 24_000);
+        if cfg.check_limit < INF / 2 {
+            cfg.check_limit = scale_limit(cfg.check_limit, check_num, check_den, 0, 220);
+        }
     }
 
     pub(super) fn food_search(&mut self, cfg: FoodSearch) -> Option<i32> {

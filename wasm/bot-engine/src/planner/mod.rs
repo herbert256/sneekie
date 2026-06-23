@@ -281,6 +281,7 @@ pub(crate) struct Planner {
     urgent: bool,
     pub(crate) force_risk: bool,
     pub(crate) bonus: i32,
+    pub(crate) search_profile: i32,
     deadline: f64,
     clock_checks: u32,
     danger_masks: [BoardBits; MAX_DANGER_TICKS + 1],
@@ -453,6 +454,36 @@ fn state_key(st: &State) -> u64 {
     let near_tail = (st.body.prev_head().unwrap_or(0).max(0) as u64) >> 1;
     ((((head * 4 + dir_idx(st.dir)) * 2000 + first) * 2000 + near_tail) * 16000)
         + st.body.len() as u64
+}
+
+fn pack_decision(tier: i32, sc: i32) -> i32 {
+    if sc == 0 {
+        0
+    } else {
+        tier.saturating_mul(256) + sc
+    }
+}
+
+fn decision_sc(packed: i32) -> i32 {
+    if packed == 0 {
+        0
+    } else {
+        packed & 0xff
+    }
+}
+
+fn replace_decision_sc(packed: i32, sc: i32) -> i32 {
+    if packed == 0 || sc == 0 {
+        0
+    } else {
+        pack_decision(packed / 256, sc)
+    }
+}
+
+fn scale_limit(value: i32, num: i32, den: i32, extra: i32, cap: i32) -> i32 {
+    let den = den.max(1);
+    let scaled = value.saturating_mul(num).saturating_add(den - 1) / den + extra;
+    scaled.min(cap).max(value)
 }
 
 #[cfg(test)]

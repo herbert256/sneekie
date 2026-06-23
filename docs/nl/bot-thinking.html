@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De landingspagina's gebruiken nog de aparte JavaScript-planner in <code>bot-home.js</code> voor passieve previews, maar de Bot-pagina wacht op WebAssembly voordat hij het spel bestuurt. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, een kleine workerpool wanneer de browser extra cores meldt, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De landingspagina's gebruiken nog de aparte JavaScript-planner in <code>bot-home.js</code> voor passieve previews, maar de Bot-pagina wacht op WebAssembly voordat hij het spel bestuurt. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
@@ -82,11 +82,12 @@
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code> (de WebAssembly-planner), en daarna <code>bot.js</code>. De driver wacht tot <code>bot-engine.wasm</code> klaar is voordat hij een zet indrukt. Hij regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
-        <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
-if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
-const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
-if(sc !== null) pushKey(keyOf[sc]);</code></pre>
+        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code> (de WebAssembly-planner en workercoordinator), en daarna <code>bot.js</code>. De driver wacht tot <code>bot-engine.wasm</code> klaar is voordat hij een zet indrukt. Hij regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
+        <pre><code>const stalled = idle &gt; 120 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
+const fallbackRandom = stalled || movesSincePickup &gt;= 250;
+let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
+if(sc === null) sc = randomLegalScancode();   // planner geeft op of een beveiliging is getript
+if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet -&gt; slang sterft</code></pre>
         <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Scripts in dezelfde pagina kunnen die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
         <div class="cards">
           <div class="card"><h3>Levelsprong</h3><p>Hij sluit level 1, zet <code>LEVEL = TARGET - 1</code>, drukt een keer F10, en laat de eigen gameloop het gekozen level openen.</p></div>
@@ -110,11 +111,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. De JavaScript-planner in <code>bot-home.js</code> blijft alleen voor de previews op de landingspagina's. Voor denkbeeldige routes bewaart de Rust-planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
+        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. Als workers beschikbaar zijn, heeft elke worker zijn eigen WebAssembly-instance en krijgt hij dezelfde snapshot, zodat hij kan denken zonder gedeelde muteerbare gametoestand. De JavaScript-planner in <code>bot-home.js</code> blijft alleen voor de previews op de landingspagina's. Voor denkbeeldige routes bewaart de Rust-planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
-        <p>Elke zet volgt dezelfde ladder. De eerste strategie die een richting oplevert wint; de bot drukt die toets, wacht volgens de snelheidsschuif, en rekent daarna opnieuw vanuit de nieuwe live toestand. De routebewijzen delen een klein tijdbudget per tick, zodat een lastig doolhof de bot niet zichtbaar laat pauzeren.</p>
+        <p>Elke zet volgt dezelfde ladder. In single-threadmodus wint de eerste strategie die een richting oplevert. In workermodus draait de coordinator de basisplanner naast diepere zoekprofielen: een diepere volledige planner, een diepere urgente/afrondplanner, en bij genoeg cores een agressieve stallbreker. Resultaten krijgen een strategietier, zodat een diepere worker de basis alleen vervangt wanneer hij een even goede of betere soort zet bewijst. Daarna drukt de bot die toets, wacht volgens de snelheidsschuif en rekent opnieuw vanuit de nieuwe live toestand.</p>
         <div class="ladder">
           <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
           <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
@@ -148,7 +149,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. De WebAssembly-planner krijgt dat spoor nu ook direct, zodat gesimuleerde routes die over recente hete vakken teruglopen strategische schuld betalen, tenzij ze voedsel dichterbij brengen of staarttoegang bewaren. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. Wanneer de driver na een stilstand <code>forceRisk</code> aanzet, blijft de WebAssembly-planner aan zet en draait hij zijn eigen ontsnappingsladder &mdash; de meest agressieve voedselgreep, de steen-graafdrukzet, het staartvolgen voor lange slangen, en dan de lokale overlevingszetten &mdash; terwijl hij die schuld voor recente vakken verviervoudigt zodat elke geforceerde zet een vers vak inloopt. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. In die krappe stand kan een smiley beter zijn dan een verre schone pickup als de smileyroute een pad terug naar de bewegende staart houdt. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; botpagina's blijven zetten forceren tot de slang sterft of het level leeg is.</p>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. De WebAssembly-planner krijgt dat spoor nu ook direct, zodat gesimuleerde routes die over recente hete vakken teruglopen strategische schuld betalen, tenzij ze voedsel dichterbij brengen of staarttoegang bewaren. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. De <code>forceRisk</code>-tak hierboven is de eigen ontsnappingsladder van de planner &mdash; de meest agressieve voedselgreep, de steen-graafdrukzet, het staartvolgen voor lange slangen, en dan de lokale overlevingszetten, terwijl hij die schuld voor recente vakken verviervoudigt zodat elke geforceerde zet een vers vak inloopt &mdash; maar de live driver zet hem niet meer aan. Na een stilstand doet hij gewoon een willekeurige legale zet (zie &sect;11), zodat een stilstand de slang nooit een dodelijk risico in kan duwen. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. In die krappe stand kan een smiley beter zijn dan een verre schone pickup als de smileyroute een pad terug naar de bewegende staart houdt. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; botpagina's blijven zetten doen tot de slang echt vastzit (geen enkele legale zet) of het level leeg is.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>
@@ -253,7 +254,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <li><code>pressureFood()</code> kan 5000 toestanden scannen, of 9000 wanneer urgent.</li>
           <li><code>survivalDepth()</code> is een beam search en bewaart in WebAssembly tot 128 toestanden per diepte.</li>
           <li><code>escapeProof()</code> bewaart tot 160 beste toestanden per diepte na het oppakken terwijl hij bewijst dat de voedselroute een uitweg heeft.</li>
-          <li>De schuifregelaar zet het doeltempo tussen toetsaanslagen; plannertijd telt mee binnen dat tempo wanneer dat past.</li>
+          <li>De schuifregelaar zet het doeltempo tussen toetsaanslagen; plannertijd telt mee binnen dat tempo wanneer dat past, en extra workerthreads krijgen grotere routezoekbudgetten dan de basisplanner.</li>
         </ul>
         <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet. Normale plannertijd wordt van die wachttijd afgetrokken; als een zoekactie langer duurt dan het doeltempo, gaat de volgende toets meteen door.</p>
         <pre><code>delay = round(45 + 375 * ((100 - speedValue) / 100) ** 1.6)</code></pre>
@@ -266,13 +267,13 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <tbody>
             <tr><td><code>LEVEL === TARGET + 1 &amp;&amp; LIVE &gt; 0</code></td><td>Schoon gehaald. Groen flitsen en door naar het volgende gekozen level.</td></tr>
             <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
-            <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang is ingesloten, sterft of beweegt niet. Blijf zetten forceren tot de run eindigt in dood of een leeg level.</td></tr>
-            <tr><td>Geen overleefbare zet</td><td>Probeer een riskante begaanbare zet; als er geen speelbare zet bestaat, gebruik dan de normale sterfsequentie in plaats van vast-afhandeling.</td></tr>
-            <tr><td>Geen scorewinst gedurende 40 beslissingen, of 24 met herhaalde kopposities</td><td>Zet <code>forceRisk</code> aan. De WebAssembly-planner draait zijn eigen ontsnappingsladder &mdash; agressieve voedselgreep, steen-graafdruk, staartvolgen, overleven &mdash; en verviervoudigt de schuld voor recente vakken om de lus te breken. Er wordt geen vast-verzoek verstuurd.</td></tr>
-            <tr><td>150 zetten zonder hart of klaver te eten (smileys tellen niet meer)</td><td>Start de expliciete vast-sequentie. Dit is de harde beveiliging tegen eindeloos geforceerd-risico spel en tegen eindeloos rondjes draaien op smileys.</td></tr>
+            <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang is ingesloten of beweegt niet. Blijf zetten doen; de run eindigt alleen in dood als er geen legale zet meer is, anders in een leeg level.</td></tr>
+            <tr><td>Planner geeft geen zet terug</td><td>Val terug op een willekeurige legale zet. De normale sterfsequentie wordt alleen gebruikt als er helemaal geen legale zet bestaat &mdash; de slang zit echt vast.</td></tr>
+            <tr><td>Geen scorewinst gedurende 120 beslissingen, of 24 met herhaalde kopposities</td><td>Stop met de planner raadplegen en doe een willekeurige legale JavaScript-zet zodat de slang blijft dwalen. Er wordt geen risico geforceerd en geen dood getriggerd.</td></tr>
+            <tr><td>250 zetten zonder hart of klaver te eten (smileys tellen niet mee)</td><td>Dezelfde willekeurige-zet-terugval, zodat de slang blijft bewegen in plaats van eindeloos rondjes te draaien op smileys. Het is geen dood- of herstart-trigger meer.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft geforceerde druk zetten. De aparte pickup-limiet van 150 zetten telt alleen echt voedsel &mdash; een smiley van &minus;50 is geen vooruitgang, dus knabbelen aan smileys kan de herstart niet meer eindeloos uitstellen &mdash; en bestaat alleen om een eindeloze live demo te stoppen.</p>
+        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft zoeken in plaats van de stille score als mislukking te lezen. De aparte pickup-limiet van 250 zetten telt alleen echt voedsel &mdash; een smiley van &minus;50 is geen vooruitgang, dus knabbelen aan smileys kan niet meer voorkomen dat de limiet trips &mdash; en wanneer hij trips, schakelt hij de bot enkel over op willekeurige zetten, nooit een dood of herstart.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>
