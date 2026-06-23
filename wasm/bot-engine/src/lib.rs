@@ -1236,7 +1236,12 @@ impl Planner {
     }
 
     fn stone_maze_level(&self) -> bool {
-        matches!((self.level - 1).rem_euclid(16), 3 | 11)
+        // lay1400 (modes 3|11) is a full stone field; lay1750 (modes 7|15) is the bar
+        // maze with a regular stone pattern. Both place pushable stones, so both need
+        // the dig-distance gradient and stone-tuned search. Without 7|15 here the bot
+        // treated food walled behind L8's stones as unreachable and orbited -- L8 was
+        // the worst-stall level in testing (1.8% pickup rate, 261-move idle streaks).
+        matches!((self.level - 1).rem_euclid(16), 3 | 7 | 11 | 15)
     }
 
     fn line_maze_level(&self) -> bool {
