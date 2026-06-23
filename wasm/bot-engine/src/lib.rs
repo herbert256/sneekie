@@ -617,14 +617,20 @@ impl Planner {
     }
 
     fn smile_cost(&self, kind: RouteKind, urgent: bool, body_len: i32) -> i64 {
+        // Each smiley is -50 points and spawns another, so over-eating them turns a
+        // winning board into a falling score (L2/L3 averaged 7-11 smileys a level).
+        // Raised ~30% from 8500/10500/5800/8000 so a smiley bridge has to clearly pay
+        // off; the strategic-smile credit still rebates a bridge that opens a real food
+        // cluster or keeps tail access, and the urgent value stays lowest so a starving
+        // snake can still spend one rather than orbit to a restart.
         let base = match kind {
-            RouteKind::Near => 8_500,
-            RouteKind::Route => 10_500,
+            RouteKind::Near => 11_000,
+            RouteKind::Route => 14_000,
             RouteKind::Pressure => {
                 if urgent {
-                    5_800
+                    7_500
                 } else {
-                    8_000
+                    10_500
                 }
             }
         };
