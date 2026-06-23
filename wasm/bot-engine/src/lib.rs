@@ -483,7 +483,7 @@ impl Planner {
                     }
                 })
         };
-        proved
+        let chosen = proved
             .or_else(|| {
                 if self.urgent {
                     self.pressure_step()
@@ -494,7 +494,15 @@ impl Planner {
             .or_else(|| self.tail_chase_move())
             .or_else(|| self.survival_move())
             .or_else(|| self.last_chance_move())
-            .unwrap_or(0)
+            .unwrap_or(0);
+        // Advice #3: on the cramped non-stone mazes, refuse a move that boxes the head
+        // into a sub-body pocket when a roomier move exists. Skipped in the endgame
+        // (few items, finishing is worth a squeeze).
+        if chosen != 0 && self.maze_confined() && !self.few() {
+            self.avoid_self_seal(chosen)
+        } else {
+            chosen
+        }
     }
 
     fn decide_forced(&mut self) -> i32 {
@@ -1316,6 +1324,15 @@ impl Planner {
         })
     }
 
+    fn maze_confined(&self) -> bool {
+        // The cramped non-stone mazes -- line segments, the room/door grid, and the
+        // wall-gap walls. They partition the board into pockets joined by narrow
+        // gaps, which is where the snake coils itself to death. (Stone fields are
+        // excluded: their failure is the opposite, orbiting without digging; arrow
+        // and empty boards are open and rarely seal.)
+        self.line_maze_level() || room_door_level(self.level) || self.wall_gap_level()
+    }
+
     fn start_state(&self) -> State {
         State {
             head: *self.body.last().unwrap_or(&0),
@@ -1655,6 +1672,71 @@ impl Planner {
             space: cell_count,
             tail_reach,
         }
+    }
+
+    fn reach_space_strict(&self, st: &State) -> i32 {
+        // Reachable free space from the head with the WHOLE body solid -- the tail
+        // is NOT treated as passable. space_info lets the flood pass through the
+        // tail cell, which over-counts in a tight coil: the head looks roomy while
+        // it is sealing itself against its own (receding) tail, which is how the
+        // line/room/wall mazes entomb the snake. This stricter count is what
+        // avoid_self_seal uses to refuse the sealing move.
+        let mut seen = BoardBits::default();
+        let mut q = VecDeque::from([st.head]);
+        seen.insert(st.head);
+        let mut count = 0;
+        while let Some(o) = q.pop_front() {
+            count += 1;
+            if count >= 400 {
+                break;
+            }
+            for &(_, d) in &DIRS {
+                let n = o + d;
+                if self.danger(n, 0) || st.body_bits.contains(n) || !open(self.cell(st, n)) {
+                    continue;
+                }
+                if seen.insert(n) {
+                    q.push_back(n);
+                }
+            }
+        }
+        count
+    }
+
+    fn avoid_self_seal(&self, chosen: i32) -> i32 {
+        // Advice #3: never voluntarily step into a pocket too small to hold the body
+        // when a much roomier legal move exists. Measured with the strict (body-solid)
+        // flood so a coil's adjacent tail cannot fake the breathing room away. The
+        // override target skips a smiley landing, so the guard never trades a self-seal
+        // for a -50 smiley. Deliberately narrow -- it only fires on a near-certain
+        // self-seal -- so it does not fight normal play.
+        let st = self.start_state();
+        let body_len = st.body.len() as i32;
+        let mut best_sc = chosen;
+        let mut best_space = -1;
+        let mut chosen_space = i32::MAX;
+        for &(sc, _) in &DIRS {
+            let Some(ns) = self.move_state(&st, sc, true) else {
+                continue;
+            };
+            let sp = self.reach_space_strict(&ns);
+            if sc == chosen {
+                chosen_space = sp;
+            }
+            let lands_on_smile = self.cell(&st, st.head + step(sc)) == 1;
+            if !lands_on_smile && sp > best_space {
+                best_space = sp;
+                best_sc = sc;
+            }
+        }
+        if best_sc != chosen
+            && chosen_space < body_len
+            && best_space >= 6
+            && best_space >= chosen_space * 2
+        {
+            return best_sc;
+        }
+        chosen
     }
 
     fn survival_depth(&mut self, start: &State, limit: i32) -> i32 {
@@ -4173,6 +4255,27 @@ mod tests {
 
         let mut p = planner(board, body);
         assert_eq!(p.breathing_move(), Some(77));
+    }
+
+    #[test]
+    fn self_seal_guard_overrides_into_a_tiny_pocket() {
+        // Advice #3: a long body about to step into a 2-cell dead pocket, when an
+        // open direction exists, gets steered to the roomy move instead.
+        let mut board = empty_board();
+        // Pocket {(10,12),(10,13)} sealed on every side but the body to its left.
+        board[offset(9, 12) as usize] = 196;
+        board[offset(9, 13) as usize] = 196;
+        board[offset(11, 12) as usize] = 196;
+        board[offset(11, 13) as usize] = 196;
+        board[offset(10, 14) as usize] = 196;
+        // A 10-long body lying along row 10, head at (10,11).
+        let body: Vec<i32> = (2..=11).map(|c| offset(10, c)).collect();
+        let p = planner_level(board, body, 2); // line maze -> maze_confined
+        assert!(p.maze_confined());
+        // Right (77) seals into the 2-cell pocket; up (72) is wide open.
+        let overridden = p.avoid_self_seal(77);
+        assert_ne!(overridden, 77, "should refuse to seal into the tiny pocket");
+        assert!(matches!(overridden, 72 | 80), "should pick an open direction");
     }
 
     #[test]
