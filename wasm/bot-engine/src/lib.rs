@@ -1027,16 +1027,21 @@ impl Planner {
                 continue;
             }
             let age = len.saturating_sub(1 + i);
+            // Slightly flatter decay than before (was 10/7/4/2/1). A clean geometric
+            // orbit of 20-40 cells revisits each cell at age ~20-40, which the old curve
+            // barely penalized (heat 4). Nudge the medium bands up so loops carry more
+            // weight, but stay gentle at 1x: the real orbit-break comes from the force
+            // -risk path, which quadruples this debt once the driver flags a stall.
             heat += if age <= 8 {
                 10
             } else if age <= 20 {
-                7
+                8
             } else if age <= 42 {
-                4
+                6
             } else if age <= 72 {
-                2
+                3
             } else {
-                1
+                2
             };
         }
         heat
@@ -1088,17 +1093,21 @@ impl Planner {
             debt = debt * 4 / 5;
         }
         let cap = match kind {
-            RouteKind::Near => 72_000,
-            RouteKind::Route => 58_000,
+            RouteKind::Near => 80_000,
+            RouteKind::Route => 64_000,
             RouteKind::Pressure => {
                 if urgent {
-                    34_000
+                    40_000
                 } else {
-                    46_000
+                    52_000
                 }
             }
         };
-        debt.min(if self.force_risk { cap.max(160_000) } else { cap })
+        // The force-risk floor is the real lever and is safe for normal play: it only
+        // applies once the driver has flagged a stall, where breaking the loop matters
+        // far more than the food route. Raised from 160k so a forced move genuinely
+        // walks into fresh cells instead of re-circling the same pocket.
+        debt.min(if self.force_risk { cap.max(220_000) } else { cap })
     }
 
     fn food_cluster(
