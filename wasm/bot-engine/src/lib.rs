@@ -454,6 +454,19 @@ impl Planner {
                 .or_else(|| self.route_food(false))
                 .or_else(|| self.route_food(true))
                 .or_else(|| self.near_food(true))
+        } else if self.few() {
+            // Endgame: only a few hearts remain, usually tucked in tight spots. In
+            // testing even the clears orbited near the stuck limit (idle ~100-150)
+            // chasing the last one or two while the bonus drained. Lead with the safe
+            // routes, but fall through to the committed urgent-pressure search and the
+            // dig-aware pressure step so the snake actually goes and finishes the level
+            // instead of circling it.
+            self.route_food(false)
+                .or_else(|| self.near_food(false))
+                .or_else(|| self.pressure_food(false, self.urgent))
+                .or_else(|| self.route_food(true))
+                .or_else(|| self.pressure_food(true, true))
+                .or_else(|| self.pressure_step())
         } else {
             self.near_food(false)
                 .or_else(|| self.route_food(false))
@@ -4269,6 +4282,28 @@ mod tests {
         let st = p.start_state();
         let first = p.move_state(&st, 77, false).unwrap();
         assert!(p.pickup_rollout(&first, 2, false, false) > 0);
+    }
+
+    #[test]
+    fn endgame_commits_to_the_last_heart() {
+        // Advice #8: with only a few items left, decide() should still route to a
+        // reachable heart and not stall.
+        let mut board = empty_board();
+        board[offset(10, 16) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = Planner::new(
+            board,
+            body,
+            [0; ENEMY_LEN],
+            Vec::new(),
+            26,
+            3, // few(): only 3 items remain
+            0,
+            false,
+            1_000_000.0,
+        );
+        assert!(p.few());
+        assert_eq!(p.decide(), 77, "endgame should head toward the remaining heart");
     }
 
     #[test]
