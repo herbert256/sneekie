@@ -83,8 +83,8 @@
       <section id="where">
         <h2>1. Waar de bot draait</h2>
         <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine start meteen met de JavaScript-planner, laadt <code>bot-engine.wasm</code> op de achtergrond, en schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
-        <pre><code>const stalled = idle &gt; 70 || (idle &gt; 40 &amp;&amp; repeats &gt;= 3);
-if(movesSincePickup &gt;= 320) window.sneekieRequestStuck();
+        <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
+if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>Die plek is bewust gekozen. De game gebruikt <code>const</code>- en <code>let</code>-globals zoals <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> en <code>pushKey()</code>. Scripts in dezelfde pagina kunnen die namen zien, ook al zijn het geen gewone <code>window</code>-eigenschappen. Zo kan de bot <code>peek()</code> aanroepen, <code>T[BTEL]</code> lezen en via <code>pushKey()</code> toetsen indrukken alsof hij onderdeel van de pagina is.</p>
@@ -268,11 +268,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>LEVEL !== TARGET</code></td><td>Het spel sprong weg of eindigde. Beschouw als falen en flits rood.</td></tr>
             <tr><td><code>BTEL</code> beweegt niet meer</td><td>De slang is ingesloten, sterft of beweegt niet. Blijf zetten forceren tot de run eindigt in dood of een leeg level.</td></tr>
             <tr><td>Geen overleefbare zet</td><td>Probeer een riskante begaanbare zet; als er geen speelbare zet bestaat, gebruik dan de normale sterfsequentie in plaats van vast-afhandeling.</td></tr>
-            <tr><td>Geen scorewinst gedurende 70 beslissingen, of 40 met herhaalde kopposities</td><td>Zet <code>forceRisk</code> aan. De WebAssembly-planner draait zijn eigen ontsnappingsladder &mdash; agressieve voedselgreep, steen-graafdruk, staartvolgen, overleven &mdash; en verviervoudigt de schuld voor recente vakken om de lus te breken. Er wordt geen vast-verzoek verstuurd.</td></tr>
-            <tr><td>320 zetten zonder hart of klaver te eten (smileys tellen niet meer)</td><td>Start de expliciete vast-sequentie. Dit is de harde beveiliging tegen eindeloos geforceerd-risico spel en tegen eindeloos rondjes draaien op smileys.</td></tr>
+            <tr><td>Geen scorewinst gedurende 40 beslissingen, of 24 met herhaalde kopposities</td><td>Zet <code>forceRisk</code> aan. De WebAssembly-planner draait zijn eigen ontsnappingsladder &mdash; agressieve voedselgreep, steen-graafdruk, staartvolgen, overleven &mdash; en verviervoudigt de schuld voor recente vakken om de lus te breken. Er wordt geen vast-verzoek verstuurd.</td></tr>
+            <tr><td>150 zetten zonder hart of klaver te eten (smileys tellen niet meer)</td><td>Start de expliciete vast-sequentie. Dit is de harde beveiliging tegen eindeloos geforceerd-risico spel en tegen eindeloos rondjes draaien op smileys.</td></tr>
           </tbody>
         </table>
-        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft geforceerde druk zetten. De aparte pickup-limiet van 320 zetten telt alleen echt voedsel &mdash; een smiley van &minus;50 is geen vooruitgang, dus knabbelen aan smileys kan de herstart niet meer eindeloos uitstellen &mdash; en bestaat alleen om een eindeloze live demo te stoppen.</p>
+        <p>Score wordt gebruikt voor het idle-signaal in plaats van itemaantal, omdat late harten klavers kunnen spawnen. De laatste klaver kan een lange route vragen zonder dat de score meteen verandert, dus de bot blijft geforceerde druk zetten. De aparte pickup-limiet van 150 zetten telt alleen echt voedsel &mdash; een smiley van &minus;50 is geen vooruitgang, dus knabbelen aan smileys kan de herstart niet meer eindeloos uitstellen &mdash; en bestaat alleen om een eindeloze live demo te stoppen.</p>
       </section>
       <section id="limits">
         <h2>12. Grenzen en afwegingen</h2>

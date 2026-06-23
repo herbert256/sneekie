@@ -107,8 +107,8 @@
       <section id="where">
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
-        <pre><code>const stalled = idle &gt; 70 || (idle &gt; 40 &amp;&amp; repeats &gt;= 3);
-if(movesSincePickup &gt;= 320) window.sneekieRequestStuck();
+        <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
+if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
@@ -508,11 +508,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
               <td>Try a risky passable move; if no playable move exists, use the normal snake death sequence instead of stuck handling.</td>
             </tr>
             <tr>
-              <td>No score gain for 70 decisions, or 40 with repeated head positions</td>
+              <td>No score gain for 40 decisions, or 24 with repeated head positions</td>
               <td>Raise <code>forceRisk</code>. The WebAssembly planner runs its own escape ladder &mdash; aggressive food grab, stone-dig pressure, tail-follow, survival &mdash; while quadrupling the recent-cell penalty to break the loop. No stuck request is sent.</td>
             </tr>
             <tr>
-              <td>320 moves without eating a heart or club (smileys no longer count)</td>
+              <td>150 moves without eating a heart or club (smileys no longer count)</td>
               <td>Trigger the explicit stuck sequence. This is the hard safeguard against endless forced-risk play and against orbiting forever on smileys.</td>
             </tr>
           </tbody>
