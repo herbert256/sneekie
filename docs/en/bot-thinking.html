@@ -107,8 +107,8 @@
       <section id="where">
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
-        <pre><code>const stalled = idle &gt; 160 || (idle &gt; 100 &amp;&amp; repeats &gt;= 3);
-if(movesSincePickup &gt;= 500) window.sneekieRequestStuck();
+        <pre><code>const stalled = idle &gt; 70 || (idle &gt; 40 &amp;&amp; repeats &gt;= 3);
+if(movesSincePickup &gt;= 320) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
 if(sc !== null) pushKey(keyOf[sc]);</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
@@ -239,7 +239,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. When the driver raises <code>forceRisk</code> after a stall, the WebAssembly planner stays in charge and runs its own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves &mdash; while quadrupling that recent-cell debt so every forced move walks into fresh cells. It only drops to the simpler JavaScript backup if WebAssembly never loaded. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -341,6 +341,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           </tbody>
         </table>
         <p>The endgame gets deeper search because the last few hearts and clubs are exactly where traps and long detours become most expensive. Earlier in the level, a shallower search is usually enough and keeps the bot fast. Smileys are still second-class targets: the bot prefers clean food, but it may eat one if that keeps the return route open or opens a useful cluster of future pickups.</p>
+        <p>The stone mazes need one extra trick. There, almost every remaining heart or club ends up walled behind stones, and plain distance treats a stone as a wall &mdash; so the food search finds nothing and the bot would just circle an open pocket. When that happens the pressure step falls back to a <em>dig</em> distance: a step-count that may pass through a stone cell when the cell just beyond it is empty, meaning that stone could be pushed. The bot then heads along that gradient and pushes its way toward the walled-off food instead of orbiting. The dig heading is only a pull, not a promise, so it is used for steering, never to override the trap checks below.</p>
       </section>
       <section id="safety">
         <h2>7. Trap checks</h2>
@@ -383,7 +384,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
-        <p>The bot has three fallback behaviors around the normal safe food planners. They keep it from freezing without adding a standalone "follow the tail" mode.</p>
+        <p>The bot has four fallback behaviors around the normal safe food planners. They keep it from freezing, and the last one is a deliberate long-snake "follow the tail" discipline.</p>
         <table>
           <thead>
             <tr>
@@ -404,9 +405,14 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
               <td>Runs when <code>idle &gt;= 18</code> or the recent head trail shows repeated positions. It searches for food with lighter survival gates, first without smileys, then with smileys.</td>
             </tr>
             <tr>
+              <td><code>tailChaseMove()</code></td>
+              <td>Long-snake endgame</td>
+              <td>Once the body reaches about 80 cells, it picks the safe move with the deepest guaranteed survival while keeping the tail reachable &mdash; in practice it trails its own tail and fills space rather than sealing itself in. Short snakes skip it.</td>
+            </tr>
+            <tr>
               <td><code>survivalMove()</code></td>
               <td>Short bridge</td>
-              <td>As the final fallback, scores each immediately legal move by reachable space, exits, food, tail-return room, smiley cost or credit, stone penalty, and straight-ahead preference.</td>
+              <td>The lighter final fallback. It scores each immediately legal move by reachable space, exits, a global pull toward the nearest reachable food, tail-return room, smiley cost or credit, stone penalty, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
@@ -452,10 +458,11 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
             <tr>
               <td><code>survivalMove()</code></td>
-              <td>Does not search for a full food route. It scores immediate legal moves by open space, exits, direct food, smiley cost, stone cost, and straight-ahead preference.</td>
+              <td>Does not search for a full food route. It scores immediate legal moves by open space, a pull toward the nearest reachable food, exits, smiley cost, stone cost, and straight-ahead preference.</td>
             </tr>
           </tbody>
         </table>
+        <p>Two more pressures shape the score. A smiley is worth &minus;50, and on these levels every pickup spawns a fresh one, so the board fills with smileys; the planner only discounts eating one when it genuinely bridges toward reachable food, and otherwise keeps the full penalty so the bot does not nibble smileys for nothing. And because the level bonus drains every move and banks into the score when the level clears, a small extra distance penalty &mdash; scaled by the remaining bonus &mdash; kicks in once only a few items are left, nudging the bot to take the shortest finishing route rather than dawdle on the last pickups. Both are tie-breakers: they never override the survival gates.</p>
       </section>
       <section id="speed">
         <h2>10. Speed limits</h2>
@@ -501,16 +508,16 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
               <td>Try a risky passable move; if no playable move exists, use the normal snake death sequence instead of stuck handling.</td>
             </tr>
             <tr>
-              <td>No score gain for 160 decisions, or 100 with repeated head positions</td>
-              <td>Bypass WebAssembly, use JavaScript forced-risk mode, and allow riskier smiley or danger moves. No stuck request is sent.</td>
+              <td>No score gain for 70 decisions, or 40 with repeated head positions</td>
+              <td>Raise <code>forceRisk</code>. The WebAssembly planner runs its own escape ladder &mdash; aggressive food grab, stone-dig pressure, tail-follow, survival &mdash; while quadrupling the recent-cell penalty to break the loop. No stuck request is sent.</td>
             </tr>
             <tr>
-              <td>500 moves without eating a heart, club, or smiley</td>
-              <td>Trigger the explicit stuck sequence. This is the hard safeguard against endless forced-risk play.</td>
+              <td>320 moves without eating a heart or club (smileys no longer count)</td>
+              <td>Trigger the explicit stuck sequence. This is the hard safeguard against endless forced-risk play and against orbiting forever on smileys.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure. The separate 500-move pickup cap is intentionally larger and exists only to stop an endless live demo.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps applying forced pressure. The separate 320-move pickup cap counts only real food &mdash; a &minus;50 smiley is not progress, so nibbling smileys can no longer postpone the restart forever &mdash; and it exists only to stop an endless live demo.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>
@@ -522,7 +529,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
           <li>It may choose a smiley when clean food routes fail or when the board is cramped and the smiley keeps the return path open.</li>
           <li>The survival beam favors positions with many exits, so it can miss rare narrow routes that are technically safe but expensive to prove.</li>
         </ul>
-        <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight, it values open space and future exits, but it no longer follows its own tail as a fallback strategy.</p>
+        <p>In short: the bot thinks like a cautious snake player. It wants nearby food first, but only when that food leaves breathing room. When the board gets tight it values open space and future exits, in a stone maze it digs toward walled food, and once it grows long it falls back to following its own tail to keep the deepest survival and fill space.</p>
       </section>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-closing.webp" alt="A Sneekie maze exploding into glowing route choices, hazard zones, and bot decision paths." />
