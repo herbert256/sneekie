@@ -658,6 +658,13 @@ impl Planner {
         if self.open_board_level() && !self.few() {
             return body_len >= 20 && !(self.urgent && self.idle >= 70);
         }
+        // The cramped non-stone mazes: refuse smiley bridges from a moderate body, so
+        // the snake routes around the corridor/room smileys instead of nibbling them
+        // all game (L2/L3/L5 ran to 20-38 smileys once the snake survived longer),
+        // while a genuinely starving snake can still spend one to break out.
+        if self.maze_confined() && !self.few() {
+            return body_len >= 55 && !(self.urgent && self.idle >= 60);
+        }
         // Long bodies normally never bridge a smiley, but when starving (food walled
         // off behind smileys) allow it -- otherwise the snake just orbits to a restart.
         body_len >= 115 && !self.few() && !(self.urgent && self.idle >= 50)
@@ -682,10 +689,18 @@ impl Planner {
             }
         };
         // On an open board a smiley is almost never worth -50, so double the cost
-        // there. The strategic-smile credit can still rebate a genuinely useful
-        // bridge, and the urgent/desperate paths keep their own lower thresholds.
-        let open_extra = if self.open_board_level() { base } else { 0 };
-        base + open_extra + self.smile_growth_debt(body_len, urgent)
+        // there; the cramped non-stone mazes get a +70% bump (a bridge is occasionally
+        // a real necessity there, so not the full double). The strategic-smile credit
+        // can still rebate a genuinely useful bridge, and the urgent/desperate paths
+        // keep their own lower thresholds.
+        let extra = if self.open_board_level() {
+            base
+        } else if self.maze_confined() {
+            base * 7 / 10
+        } else {
+            0
+        };
+        base + extra + self.smile_growth_debt(body_len, urgent)
     }
 
     fn smile_escape_credit(
@@ -1333,6 +1348,7 @@ impl Planner {
         // cell of an empty gap each tick and opens the one below.
         matches!((self.level - 1).rem_euclid(16), 4 | 12)
     }
+
 
     fn wall_gap_top(&self, col: i32) -> Option<i32> {
         // The row of the topmost gap cell in a wall column: the first non-pillar
@@ -4145,21 +4161,34 @@ mod tests {
 
     #[test]
     fn long_body_blocks_extra_smileys_before_endgame() {
+        // Default gate (115) on a stone field (level 4) -- neither a cramped maze nor
+        // an open board, so it keeps the long-body threshold.
         let board = empty_board();
         let body = vec![offset(10, 10), offset(10, 11)];
-        let p = Planner::new(
-            board,
-            body,
-            [0; ENEMY_LEN],
-            Vec::new(),
-            26,
-            12,
-            0,
-            false,
-            1_000_000.0,
-        );
+        let p = planner_level(board, body, 4);
+        assert!(!p.maze_confined() && !p.open_board_level());
         assert!(!p.avoid_extra_smile(114));
         assert!(p.avoid_extra_smile(115));
+    }
+
+    #[test]
+    fn cramped_mazes_get_middle_smiley_discipline() {
+        // Smiley follow-up: every cramped non-stone maze (line L2, room L3, wall L5)
+        // gets a middle level of smiley discipline -- stricter than a stone field,
+        // looser than the wide-open arrow boards.
+        let line = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 2);
+        let room = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 3);
+        let wall = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 5);
+        let stone = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 4);
+        let arrow = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 6);
+        assert!(line.maze_confined() && room.maze_confined() && wall.maze_confined());
+        assert!(!stone.maze_confined() && !arrow.maze_confined());
+        let c = |p: &Planner| p.smile_cost(RouteKind::Route, false, 40);
+        assert!(c(&stone) < c(&room), "a cramped maze costs more than a stone field");
+        assert!(c(&room) < c(&arrow), "the open board still costs the most");
+        // A mid-length body refuses bridges on the cramped mazes but not on a stone field.
+        assert!(line.avoid_extra_smile(60) && room.avoid_extra_smile(60));
+        assert!(!stone.avoid_extra_smile(60));
     }
 
     #[test]
