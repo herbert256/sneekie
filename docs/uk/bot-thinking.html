@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Як думає бот</h1>
-      <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, Rust/WebAssembly-планувальник через <code>bot-engine.js</code> і тонкий драйвер у <code>bot.js</code> в одній сторінці. Якщо WebAssembly недоступний, той самий JavaScript-планувальник лишається запасним. Планувальник повертає DOS-код стрілки, а драйвер натискає ту саму клавішу, що й гравець.</p>
+      <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, Rust/WebAssembly-планувальник через <code>bot-engine.js</code> і тонкий драйвер у <code>bot.js</code> в одній сторінці. Якщо WebAssembly недоступний, JavaScript-планувальник у <code>bot-home.js</code> лишається запасним. Планувальник повертає DOS-код стрілки, а драйвер натискає ту саму клавішу, що й гравець.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Лабіринт Sneekie зі світними маршрутами, небезпеками і шляхами рішень бота." />
       </figure>
@@ -106,7 +106,7 @@
       </nav>
       <section id="where">
         <h2>1. Де працює бот</h2>
-        <p>Сторінка бота напряму розміщує справжню гру. Вона завантажує <code>game.js</code>, потім <code>bot-engine.js</code>, а потім <code>bot.js</code>. Рушій одразу стартує з JavaScript-планувальником, у тлі завантажує <code>bot-engine.wasm</code> і переходить на WebAssembly лише після готовності модуля. Драйвер і далі керує вкладками, перезапусками, швидкістю і натисканнями клавіш:</p>
+        <p>Сторінка бота напряму розміщує справжню гру. Вона завантажує <code>game.js</code>, потім <code>bot-home.js</code> (JavaScript-планувальник), потім <code>bot-engine.js</code> (WebAssembly-планувальник), а потім <code>bot.js</code>. Драйвер віддає перевагу WebAssembly і відкочується до JavaScript-планувальника; поки <code>bot-engine.wasm</code> завантажується у тлі, працює JavaScript-планувальник, а драйвер переходить на WebAssembly лише після готовності модуля. Драйвер і далі керує вкладками, перезапусками, швидкістю і натисканнями клавіш:</p>
         <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
 if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
@@ -152,7 +152,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>219</code></td><td>Голова змії</td><td>Гра використовує її для зіткнень; бот також відстежує голову через <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>На початку кожного рішення <code>bot-engine.js</code> копіює CP437-символи, зміщення змії з <code>T</code>, таблицю стріл <code>D</code> і недавній слід позицій голови у сталі WebAssembly-буфери. JavaScript-запасний планувальник використовує той самий snapshot. Для уявних маршрутів планувальник записує лише відмінності, наприклад проштовхнутий камінь або клітинку хвоста, що звільнилася, замість копіювати весь VRAM-масив для кожної гілки.</p>
+        <p>На початку кожного рішення <code>bot-engine.js</code> копіює CP437-символи, зміщення змії з <code>T</code>, таблицю стріл <code>D</code> і недавній слід позицій голови у сталі WebAssembly-буфери. JavaScript-планувальник у <code>bot-home.js</code> використовує той самий snapshot. Для уявних маршрутів планувальник записує лише відмінності, наприклад проштовхнутий камінь або клітинку хвоста, що звільнилася, замість копіювати весь VRAM-масив для кожної гілки.</p>
       </section>
       <section id="turn">
         <h2>3. Один цикл рішення</h2>

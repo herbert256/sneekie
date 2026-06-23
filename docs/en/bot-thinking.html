@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. If WebAssembly is unavailable, the same JavaScript planner remains as a backup. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. If WebAssembly is unavailable, the JavaScript planner in <code>bot-home.js</code> remains as a backup. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -106,7 +106,7 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code>, then <code>bot.js</code>. The engine returns immediately with the JavaScript planner, starts loading <code>bot-engine.wasm</code> in the background, and switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
+        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-home.js</code> (the JavaScript planner), then <code>bot-engine.js</code> (the WebAssembly planner), then <code>bot.js</code>. The driver prefers WebAssembly and falls back to the JavaScript planner; while <code>bot-engine.wasm</code> loads in the background the JavaScript planner runs, and the driver switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
         <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
 if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
@@ -180,7 +180,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript fallback keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript planner in <code>bot-home.js</code> keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>

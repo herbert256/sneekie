@@ -1,9 +1,10 @@
 'use strict';
 /* bot.js — the Live bot driver, running in THIS page (no iframe, so it works from
-   file:// too). game.js renders the real game into #screen; bot-engine.js plans
-   one scancode from a compact live snapshot, using WebAssembly when available
-   and JavaScript otherwise; this script handles tabs, restarts, speed, and
-   pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
+   file:// too). game.js renders the real game into #screen; a planner turns a
+   compact live snapshot into one scancode — the Wasm planner (bot-engine.js)
+   when available, otherwise the JavaScript planner (bot-home.js). This script
+   handles tabs, restarts, speed, and pushKey(). Wrapped in an IIFE so it never
+   redeclares game.js globals. */
 (function(){
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -94,7 +95,19 @@
     tick();
     return overlay;
   }
-  const planner = window.SneekieBotEngine && window.SneekieBotEngine.create({
+  // Wire whichever planners the page loaded: the Wasm planner (bot-engine.js,
+  // Bot page only) is preferred, the JavaScript planner (bot-home.js) is the
+  // fallback. Index pages load only the JS planner; the Bot page loads both, and
+  // wasm.decide() returns null until bot-engine.wasm finishes loading, so the JS
+  // planner runs in the meantime and the driver switches to Wasm once it is ready.
+  const isArrow = sc => sc===72 || sc===80 || sc===75 || sc===77;
+  function createPlanner(access){
+    const wasm = window.SneekieBotWasm && window.SneekieBotWasm.create(access);
+    const js = window.SneekieBotJs && window.SneekieBotJs.create(access);
+    if(wasm && js) return { decide: o => { const sc = wasm.decide(o); return isArrow(sc) ? sc : js.decide(o); } };
+    return wasm || js || null;
+  }
+  const planner = createPlanner({
     now,
     peek: o => peek(o),
     state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER, BONUS })

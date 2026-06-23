@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. Als WebAssembly niet beschikbaar is, blijft dezelfde JavaScript-planner de backup. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. Als WebAssembly niet beschikbaar is, blijft de JavaScript-planner in <code>bot-home.js</code> de backup. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
@@ -82,7 +82,7 @@
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code>, en daarna <code>bot.js</code>. De engine start meteen met de JavaScript-planner, laadt <code>bot-engine.wasm</code> op de achtergrond, en schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
+        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-home.js</code> (de JavaScript-planner), daarna <code>bot-engine.js</code> (de WebAssembly-planner), en daarna <code>bot.js</code>. De driver geeft voorrang aan WebAssembly en valt terug op de JavaScript-planner; terwijl <code>bot-engine.wasm</code> op de achtergrond laadt draait de JavaScript-planner, en de driver schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
         <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
 if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
@@ -110,7 +110,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. De JavaScript-backup gebruikt dezelfde snapshotvorm. Voor denkbeeldige routes bewaart de planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
+        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. De JavaScript-planner in <code>bot-home.js</code> gebruikt dezelfde snapshotvorm. Voor denkbeeldige routes bewaart de planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>

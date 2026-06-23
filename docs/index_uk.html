@@ -186,7 +186,7 @@
           });
         }
         function startPreview(){
-          Promise.all([loadScript('js/game.js'), loadScript('js/bot-engine.js')])
+          Promise.all([loadScript('js/game.js'), loadScript('js/bot-home.js')])
             .then(() => loadScript('js/bot.js'))
             .catch(error => {
               console.error(error);
