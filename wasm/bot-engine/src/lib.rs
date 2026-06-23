@@ -1299,6 +1299,23 @@ impl Planner {
         matches!((self.level - 1).rem_euclid(16), 1 | 9)
     }
 
+    fn wall_gap_level(&self) -> bool {
+        // lay1670 (modes 4|12): nine vertical walls on columns 8,16,...,72, each
+        // with a 3-cell gap. sub2130 crawls every gap downward -- it seals the top
+        // cell of an empty gap each tick and opens the one below.
+        matches!((self.level - 1).rem_euclid(16), 4 | 12)
+    }
+
+    fn wall_gap_top(&self, col: i32) -> Option<i32> {
+        // The row of the topmost gap cell in a wall column: the first non-pillar
+        // cell that sits directly under a pillar. That cell is the one sub2130
+        // seals next, so it is the closing edge of the moving gap.
+        let pillar = |c: u16| matches!(c, 179 | 193 | 194);
+        (5..=20).find(|&row| {
+            !pillar(self.base_cell(offset(row, col))) && pillar(self.base_cell(offset(row - 1, col)))
+        })
+    }
+
     fn start_state(&self) -> State {
         State {
             head: *self.body.last().unwrap_or(&0),
@@ -1359,9 +1376,24 @@ impl Planner {
         match (self.level - 1).rem_euclid(16) {
             5 | 13 => self.project_up_arrows(&mut masks),
             6 | 14 => self.project_horizontal_arrows(&mut masks),
+            4 | 12 => self.project_wall_gaps(&mut masks),
             _ => {}
         }
         (masks, len)
+    }
+
+    fn project_wall_gaps(&self, masks: &mut [BoardBits]) {
+        // Each wall's gap crawls down one row per (empty) tick, sealing its top
+        // cell. Mark only that single closing edge as danger so the snake threads
+        // the middle/bottom of a gap rather than diving at a mouth about to seal.
+        // Just one of the three gap cells is flagged, so the walls stay passable --
+        // marking more over-restricts traversal and starves the snake.
+        for i in 1..=9 {
+            let col = 8 * i;
+            if let Some(top) = self.wall_gap_top(col) {
+                masks[1].insert(offset(top, col));
+            }
+        }
     }
 
     fn project_up_arrows(&self, masks: &mut [BoardBits]) {
@@ -3715,6 +3747,27 @@ mod tests {
         assert_eq!(ns.body.len(), 2);
         assert!(!ns.body_bits.contains(offset(10, 10)));
         assert_eq!(p.cell(&ns, offset(10, 10)), 32);
+    }
+
+    #[test]
+    fn wall_gap_projection_marks_closing_gap_top() {
+        // Advice #7: on the wall-gap level the closing edge of each crawling gap is
+        // projected as danger so the snake does not dive into a sealing mouth.
+        let mut board = empty_board();
+        let col = 16;
+        for row in 4..=20 {
+            board[offset(row, col) as usize] = 179;
+        }
+        for row in 9..=11 {
+            board[offset(row, col) as usize] = 32; // a 3-cell gap
+        }
+        let body = vec![offset(2, 2), offset(2, 3)];
+        let p = planner_level(board, body, 5); // level 5 -> mode 4 -> wall-gap
+        assert!(p.wall_gap_level());
+        assert_eq!(p.wall_gap_top(col), Some(9));
+        assert!(p.danger(offset(9, col), 0), "the gap top is the closing edge");
+        // A wide-open cell nowhere near a wall is not flagged.
+        assert!(!p.danger(offset(10, 40), 0));
     }
 
     #[test]
