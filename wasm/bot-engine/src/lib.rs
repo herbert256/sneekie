@@ -2524,12 +2524,24 @@ impl Planner {
                     - ns.dist as i64 * if cfg.urgent { 95 } else { 170 }
             }
         };
+        // Advice #6: eat the easy (open) food first. While plenty of food is still
+        // on the board and the body is short, defer a pickup that lands in a tight
+        // cell (few exits) so the snake clears the open hearts first and comes back
+        // for the cornered ones once the surrounding area -- and its own body -- has
+        // room. Fades as items drop and switches off in the endgame, so the last
+        // hearts in tight spots are still taken.
+        let corner_defer = if !few && body_len < 60 && exits <= 2 {
+            (3 - exits).max(0) as i64 * self.items.clamp(0, 75) as i64 * 24
+        } else {
+            0
+        };
         Some(
             base + rollout
                 + cluster_credit
                 + smile_return_credit
                 + smile_strategy_credit
                 + self.door_exit_credit(door)
+                - corner_defer
                 - return_debt
                 - door_debt
                 - door_regression
@@ -4451,6 +4463,22 @@ mod tests {
         let body = vec![offset(10, 10), offset(10, 11)];
         let mut p = planner(board, body);
         assert_eq!(p.last_chance_move(), Some(77));
+    }
+
+    #[test]
+    fn open_food_is_preferred_over_a_cornered_heart() {
+        // Advice #6: with many items left, the open heart is taken before the one
+        // tucked in a tight niche.
+        let mut board = empty_board();
+        board[offset(10, 14) as usize] = 3; // open heart to the right
+        // A cornered heart up a one-wide niche (entry only from below).
+        board[offset(7, 11) as usize] = 196;
+        board[offset(8, 10) as usize] = 196;
+        board[offset(8, 12) as usize] = 196;
+        board[offset(8, 11) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner_level(board, body, 2);
+        assert_eq!(p.decide(), 77, "take the open heart first, defer the niche");
     }
 
     #[test]
