@@ -467,6 +467,26 @@ impl Planner {
                 .or_else(|| self.route_food(true))
                 .or_else(|| self.pressure_food(true, true))
                 .or_else(|| self.pressure_step())
+        } else if !self.open_board_level() {
+            // Advice #1: on any walled level, sweep with the space-aware route_food
+            // (which weights tail-reachability and open space) rather than the greedy
+            // near_food (-distance at -6400/step). Greedy nearest-food strands
+            // isolated pickups that later wall off; preferring the considered route
+            // clears the board more like a sweep and leaves the free space connected.
+            self.route_food(false)
+                .or_else(|| self.near_food(false))
+                .or_else(|| self.pressure_food(false, self.urgent))
+                .or_else(|| self.route_food(true))
+                .or_else(|| self.pressure_food(true, self.urgent))
+                .or_else(|| {
+                    if self.urgent {
+                        self.near_food(true)
+                            .or_else(|| self.route_food(true))
+                            .or_else(|| self.pressure_food(true, self.urgent))
+                    } else {
+                        None
+                    }
+                })
         } else {
             self.near_food(false)
                 .or_else(|| self.route_food(false))
@@ -4480,6 +4500,17 @@ mod tests {
         );
         assert!(p.few());
         assert_eq!(p.decide(), 77, "endgame should head toward the remaining heart");
+    }
+
+    #[test]
+    fn walled_level_sweeps_toward_reachable_food() {
+        // Advice #1: on a walled level decide() routes to a reachable heart.
+        let mut board = empty_board();
+        board[offset(10, 16) as usize] = 3;
+        let body = vec![offset(10, 10), offset(10, 11)];
+        let mut p = planner_level(board, body, 2); // line maze -> not open_board_level
+        assert!(!p.open_board_level());
+        assert_eq!(p.decide(), 77, "walled-level sweep heads toward the heart");
     }
 
     #[test]
