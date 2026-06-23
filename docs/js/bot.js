@@ -42,7 +42,7 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const passivePreview = window.SNEEKIE_PASSIVE_PREVIEW === true;
-  const STARTUP_DELAY_MS = passivePreview ? 0 : 5000;
+  const STARTUP_DELAY_MS = passivePreview ? 0 : 3000;
   const startupAt = now();
   const driveStartAt = startupAt + STARTUP_DELAY_MS;
   const startupGraceUntil = driveStartAt + 4000;
@@ -101,14 +101,14 @@
   });
   showStartupProgress();
 
-  /* ---- level tabs (26-32): which late-game maze the bot drops into ---- */
-  const LEVELS = [26,27,28,29,30,31,32];
+  /* ---- level tabs (2-8): which early maze the bot drops into ---- */
+  const LEVELS = [2,3,4,5,6,7,8];
   const hasBotLevel = n => LEVELS.includes(n);
   const nextBotLevel = n => {
     const index = LEVELS.indexOf(n);
     return LEVELS[index >= 0 && index < LEVELS.length - 1 ? index + 1 : 0];
   };
-  let target = 26, activeLevel = 26, pendingJump = 26, jumpingTo = null;
+  let target = 2, activeLevel = 2, pendingJump = 2, jumpingTo = null;
   const tablist = document.getElementById('leveltabs');
   const pageLang = window.SNEEKIE_LANG || document.documentElement.lang || 'en';
   const levelPrefix = pageLang === 'uk' ? 'Рівень ' : 'Level ';
