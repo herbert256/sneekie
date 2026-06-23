@@ -3211,15 +3211,27 @@ impl Planner {
                             } else {
                                 72
                             };
+                // Advice #4: a committed dig. On a stone field, heading through a
+                // pushable stone toward walled-off food AND getting closer to it.
+                // When the snake is stalling, let such a move bypass the strict
+                // escape gates below -- orbiting an open pocket without ever digging
+                // is what made L4/L8 stall out at ~15/40 food. The enclosure check
+                // stays, so it commits to digging without committing to a box-in.
+                let digging = stone_maze
+                    && via_dig
+                    && dist < current_dist
+                    && (self.urgent || deep_stall)
+                    && !self.enclosure_risk(&ns, info, exits, 1);
                 if stone_maze
                     && !escape.ok
                     && !escape.tail_reach
                     && !info.tail_reach
                     && !roomy_pressure
+                    && !digging
                 {
                     continue;
                 }
-                if stone_maze && return_risk && !escape.tail_reach && !roomy_pressure {
+                if stone_maze && return_risk && !escape.tail_reach && !roomy_pressure && !digging {
                     continue;
                 }
                 let door = self.door_exit_info(&ns);
