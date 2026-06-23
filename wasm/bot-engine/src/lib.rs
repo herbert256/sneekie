@@ -611,6 +611,12 @@ impl Planner {
     }
 
     fn avoid_extra_smile(&self, body_len: i32) -> bool {
+        // On an open board there is room to go around a smiley, so refuse to bridge
+        // one well before the body is long -- only a genuinely starving snake (deep
+        // idle streak) may still spend one rather than orbit to a restart.
+        if self.open_board_level() && !self.few() {
+            return body_len >= 20 && !(self.urgent && self.idle >= 70);
+        }
         // Long bodies normally never bridge a smiley, but when starving (food walled
         // off behind smileys) allow it -- otherwise the snake just orbits to a restart.
         body_len >= 115 && !self.few() && !(self.urgent && self.idle >= 50)
@@ -634,7 +640,11 @@ impl Planner {
                 }
             }
         };
-        base + self.smile_growth_debt(body_len, urgent)
+        // On an open board a smiley is almost never worth -50, so double the cost
+        // there. The strategic-smile credit can still rebate a genuinely useful
+        // bridge, and the urgent/desperate paths keep their own lower thresholds.
+        let open_extra = if self.open_board_level() { base } else { 0 };
+        base + open_extra + self.smile_growth_debt(body_len, urgent)
     }
 
     fn smile_escape_credit(
@@ -1252,6 +1262,15 @@ impl Planner {
 
     fn arrow_level(&self) -> bool {
         matches!((self.level - 1).rem_euclid(16), 5 | 6 | 13 | 14)
+    }
+
+    fn open_board_level(&self) -> bool {
+        // The arrow levels and the two empty levels (modes 0|8) have no maze walls:
+        // the board is wide open, so there is almost never a reason to eat a -50
+        // smiley -- the snake can route around one with room to spare. Smiley
+        // discipline is tightened hard here so a pickup that should be free is not
+        // paid for with points.
+        self.arrow_level() || matches!((self.level - 1).rem_euclid(16), 0 | 8)
     }
 
     fn stone_maze_level(&self) -> bool {
@@ -3941,6 +3960,25 @@ mod tests {
         );
         assert!(!p.avoid_extra_smile(114));
         assert!(p.avoid_extra_smile(115));
+    }
+
+    #[test]
+    fn open_levels_are_stingier_with_smileys() {
+        // Advice #5: on the wide-open arrow levels a smiley should cost much more
+        // than on a walled maze (where one can be a needed bridge), and the snake
+        // should refuse to bridge one well before the long-body gate.
+        let arrow = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 6);
+        let stone = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 4);
+        assert!(arrow.open_board_level());
+        assert!(!stone.open_board_level());
+        assert!(
+            arrow.smile_cost(RouteKind::Route, false, 40) > stone.smile_cost(RouteKind::Route, false, 40),
+            "an open-board smiley must cost more than a maze smiley"
+        );
+        // A mid-length body refuses smiley bridges on the open board but not yet on
+        // the stone maze (where the long-body gate is 115).
+        assert!(arrow.avoid_extra_smile(25));
+        assert!(!stone.avoid_extra_smile(25));
     }
 
     #[test]
