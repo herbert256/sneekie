@@ -224,15 +224,25 @@ impl Planner {
     }
 
     fn finalize_decision(&mut self, chosen: i32) -> i32 {
-        let sc = decision_sc(chosen);
+        if decision_sc(chosen) == 0 {
+            return chosen;
+        }
+        let mut out = chosen;
         // Advice #3: on the cramped non-stone mazes, refuse a move that boxes the head
         // into a sub-body pocket when a roomier move exists. Skipped in the endgame
         // (few items, finishing is worth a squeeze).
-        if sc != 0 && self.maze_confined() && !self.few() {
-            replace_decision_sc(chosen, self.avoid_self_seal(sc))
-        } else {
-            chosen
+        if self.maze_confined() && !self.few() {
+            out = replace_decision_sc(out, self.avoid_self_seal(decision_sc(out)));
         }
+        // Advice #9: on the walled/stone mazes, never nibble a -50 smiley when real
+        // food is reachable without crossing one. Skipped in the endgame (a squeeze
+        // to finish is worth it) and when genuinely starving (a bridge may be the
+        // only way out). The open arrow boards already shun smileys, so leave them be.
+        let desperate = self.urgent && self.idle >= 50;
+        if !self.few() && !desperate && !self.open_board_level() {
+            out = replace_decision_sc(out, self.avoid_wasteful_smile(decision_sc(out)));
+        }
+        out
     }
 
     pub(super) fn decide_forced_tagged(&mut self) -> i32 {

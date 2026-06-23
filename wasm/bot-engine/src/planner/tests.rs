@@ -453,6 +453,47 @@ fn normal_food_route_rejects_cut_off_tail_return() {
 }
 
 #[test]
+fn wasteful_smiley_is_skipped_when_clean_food_is_reachable() {
+    // Advice #9: a smiley straight ahead, but a heart reachable up-and-around
+    // without crossing any smiley. The guard must steer off the -50 smiley.
+    let mut board = empty_board();
+    board[offset(10, 12) as usize] = 1; // smiley immediately to the right
+    board[offset(8, 14) as usize] = 3; // heart reachable without the smiley
+    let body = vec![offset(10, 10), offset(10, 11)];
+    let p = planner_level(board, body, 2); // line maze -> not open_board_level
+    assert!(!p.open_board_level());
+    assert!(
+        p.food_distance_no_smile(&p.start_state(), 1200) < INF,
+        "clean food is reachable without the smiley"
+    );
+    let out = p.avoid_wasteful_smile(77);
+    assert_ne!(out, 77, "should not nibble the smiley when a heart is cleanly reachable");
+    assert!(matches!(out, 72 | 80 | 75), "should pick a clean legal direction");
+}
+
+#[test]
+fn smiley_bridge_kept_when_no_clean_food_reachable() {
+    // The mirror case: the ONLY food sits behind the smiley (walled off every
+    // other way), so the guard must leave the bridge move alone.
+    let mut board = empty_board();
+    // Wall a one-wide corridor so the heart past the smiley has no clean route.
+    for col in 11..=15 {
+        board[offset(9, col) as usize] = 196;
+        board[offset(11, col) as usize] = 196;
+    }
+    board[offset(10, 16) as usize] = 196;
+    board[offset(10, 12) as usize] = 1; // smiley blocks the corridor
+    board[offset(10, 14) as usize] = 3; // heart only reachable through the smiley
+    let body = vec![offset(10, 10), offset(10, 11)];
+    let p = planner_level(board, body, 2);
+    assert!(
+        p.food_distance_no_smile(&p.start_state(), 1200) >= INF,
+        "no clean route to the walled-off heart"
+    );
+    assert_eq!(p.avoid_wasteful_smile(77), 77, "the bridge move must be preserved");
+}
+
+#[test]
 fn strategic_smiley_bridge_can_unlock_clustered_food() {
     let mut board = empty_board();
     board[offset(10, 12) as usize] = 1;

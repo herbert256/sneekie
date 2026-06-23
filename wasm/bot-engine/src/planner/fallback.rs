@@ -623,6 +623,43 @@ impl Planner {
         INF
     }
 
+    pub(super) fn food_distance_no_smile(&self, st: &State, limit: usize) -> i32 {
+        // Like food_distance, but treats a smiley (1) as a wall instead of a
+        // passable cell. A finite result means "real food is reachable from here
+        // without eating a single -50 smiley." avoid_wasteful_smile uses this to
+        // refuse nibbling a smiley while clean food is on offer a step around it.
+        let mut seen = VisitBits::default();
+        seen.insert(st.head, st.dir);
+        let mut q = VecDeque::from([(st.head, st.dir, 0i32)]);
+        while let Some((o, dir, dist)) = q.pop_front() {
+            if q.len() >= limit {
+                break;
+            }
+            for &(sc, d) in &DIRS {
+                if sc == opp(dir) {
+                    continue;
+                }
+                let n = o + d;
+                if self.danger(n, dist) || st.body_bits.contains(n) {
+                    continue;
+                }
+                let c = self.cell(st, n);
+                if is_food(c) {
+                    return dist + 1;
+                }
+                // A smiley is "open" for normal travel, but crossing it costs -50,
+                // so this clean-reach BFS treats it (and stones/walls) as solid.
+                if c == 1 || !open(c) {
+                    continue;
+                }
+                if seen.insert(n, sc) {
+                    q.push_back((n, sc, dist + 1));
+                }
+            }
+        }
+        INF
+    }
+
     pub(super) fn goal_distance(&mut self, st: &State, limit: usize) -> i32 {
         // Global heading toward the nearest gettable food, with the stone "dig"
         // distance as a fallback so walled-off food still gives a direction.

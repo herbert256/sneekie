@@ -271,6 +271,47 @@ impl Planner {
         chosen
     }
 
+    pub(super) fn avoid_wasteful_smile(&self, chosen: i32) -> i32 {
+        // Advice #9: a smiley is -50 points AND it grows the snake AND eating it
+        // spawns another, so on the walled/stone mazes the snake used to bleed its
+        // score negative nibbling smileys while real food was reachable a step
+        // around them (L2/L3 ran to -200/-690 in testing). When the chosen move
+        // lands on a smiley but plain food is reachable without crossing one, steer
+        // to the best clean move heading toward that food instead. Deliberately
+        // narrow: it never fires when no clean food is reachable (then a bridge may
+        // be the only way on), so it leaves the strategic smiley bridge intact.
+        let st = self.start_state();
+        if self.cell(&st, st.head + step(chosen)) != 1 {
+            return chosen; // not a smiley move at all
+        }
+        if self.food_distance_no_smile(&st, 1200) >= INF {
+            return chosen; // no clean food to reach -- a bridge may be justified
+        }
+        let mut best = chosen;
+        let mut best_key = (i32::MAX, i32::MIN); // minimize clean-food distance, then maximize strict space
+        for &(sc, _) in &DIRS {
+            // allow_smile = false, so move_state already rejects any smiley landing.
+            let Some(ns) = self.move_state(&st, sc, false) else {
+                continue;
+            };
+            let exits = self.legal_count(&ns, true);
+            if exits == 0 {
+                continue;
+            }
+            let forced = self.forced_path(&ns, true, 12);
+            if exits <= 1 && forced.dead {
+                continue;
+            }
+            let fd = self.food_distance_no_smile(&ns, 1200);
+            let sp = self.reach_space_strict(&ns);
+            if fd < best_key.0 || (fd == best_key.0 && sp > best_key.1) {
+                best_key = (fd, sp);
+                best = sc;
+            }
+        }
+        best
+    }
+
     pub(super) fn survival_depth(&mut self, start: &State, limit: i32) -> i32 {
         let keep = if self.urgent || self.few() { 128 } else { 96 };
         let mut frontier = vec![start.clone()];

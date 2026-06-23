@@ -463,7 +463,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
           </tbody>
         </table>
-        <p>Two more pressures shape the score. A smiley is worth &minus;50, and on these levels every pickup spawns a fresh one, so the board fills with smileys; the planner only discounts eating one when it genuinely bridges toward reachable food, and otherwise keeps the full penalty so the bot does not nibble smileys for nothing. And because the level bonus drains every move and banks into the score when the level clears, a small extra distance penalty &mdash; scaled by the remaining bonus &mdash; kicks in once only a few items are left, nudging the bot to take the shortest finishing route rather than dawdle on the last pickups. Both are tie-breakers: they never override the survival gates.</p>
+        <p>Two more pressures shape the score. A smiley is worth &minus;50, and on these levels every pickup spawns a fresh one, so the board fills with smileys; the planner only discounts eating one when it genuinely bridges toward reachable food, and otherwise keeps the full penalty so the bot does not nibble smileys for nothing. As a final check after a move is chosen, the bot refuses to step onto a smiley at all when a heart is reachable without crossing one, so it never pays the &minus;50 for a pickup it could have reached a step around. And because the level bonus drains every move and banks into the score when the level clears, a small extra distance penalty &mdash; scaled by the remaining bonus &mdash; kicks in once only a few items are left, nudging the bot to take the shortest finishing route rather than dawdle on the last pickups. Both are tie-breakers: they never override the survival gates.</p>
       </section>
       <section id="speed">
         <h2>10. Speed limits</h2>
@@ -510,7 +510,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
             <tr>
               <td>No score gain for 120 decisions, or 24 with repeated head positions</td>
-              <td>Stop asking the planner and make a random legal JavaScript move so the snake keeps wandering. No risk is forced and no death is triggered.</td>
+              <td>Stop asking the planner and make a tiered random legal JavaScript move &mdash; preferring an adjacent heart or club, then empty space or a stone push, and a &minus;50 smiley only as a last resort &mdash; so the snake keeps wandering without nibbling smileys for nothing. No risk is forced and no death is triggered.</td>
             </tr>
             <tr>
               <td>250 moves without eating a heart or club (smileys do not count)</td>

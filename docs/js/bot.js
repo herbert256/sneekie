@@ -156,17 +156,26 @@
   // with an empty cell behind it (so it can be pushed). The random fallback
   // below uses this so the bot keeps wandering instead of giving up -- the
   // snake only dies when NO such move exists (it is really stuck).
-  const passableStep = (head, step) => {
-    const ch = peek(head + step);
-    if(ch === 32 || ch === 3 || ch === 5 || ch === 1) return true;   // empty / heart / club / smiley
-    if(ch === 10) return peek(head + step * 2) === 32;               // a stone we can push
-    return false;
-  };
+  // The random wander fallback used while stalled. It is tiered so the dumb
+  // wander still does the obvious right things: grab an adjacent heart/club (a
+  // free pickup that also breaks the stall), otherwise step onto empty space or
+  // push a stone, and only ever step onto a -50 smiley as a true last resort
+  // when no other legal move exists. Earlier this picked uniformly across all
+  // legal cells, so a long random stall nibbled a pile of smileys (one L2 stall
+  // ate ~19, tanking the score) for no reason. Entropy is preserved by picking
+  // randomly WITHIN the best available tier, so it still escapes orbits.
   const randomLegalScancode = () => {
     const head = T[BTEL];
-    const opts = [];
-    for(const sc of [72, 80, 75, 77]) if(passableStep(head, stepOf[sc])) opts.push(sc);
-    return opts.length ? opts[Math.floor(Math.random() * opts.length)] : null;
+    const food = [], plain = [], smile = [];
+    for(const sc of [72, 80, 75, 77]){
+      const step = stepOf[sc], ch = peek(head + step);
+      if(ch === 3 || ch === 5) food.push(sc);                          // heart/club: free pickup
+      else if(ch === 32) plain.push(sc);                               // empty
+      else if(ch === 10){ if(peek(head + step * 2) === 32) plain.push(sc); } // pushable stone
+      else if(ch === 1) smile.push(sc);                                // smiley: -50, last resort
+    }
+    const tier = food.length ? food : plain.length ? plain : smile;
+    return tier.length ? tier[Math.floor(Math.random() * tier.length)] : null;
   };
   // Only real food (heart/club) counts as progress for the no-food safeguard.
   // A smiley (1) is worth -50, so letting it reset the counter let the bot
