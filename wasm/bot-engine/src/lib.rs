@@ -1172,22 +1172,26 @@ impl Planner {
         if cluster.foods <= 0 {
             return 0;
         }
+        // Lean a little harder toward dense food regions (per-food weight and caps
+        // raised ~25%). Greedy nearest-food strands isolated pickups that later wall
+        // off as the body grows; preferring to clear a cluster keeps the board tidier
+        // and cuts the self-entombment that follows from chasing scattered food.
         let base = match kind {
-            RouteKind::Near => cluster.score / 6 + cluster.foods as i64 * 900,
-            RouteKind::Route => cluster.score / 4 + cluster.foods as i64 * 1_900,
+            RouteKind::Near => cluster.score / 6 + cluster.foods as i64 * 1_150,
+            RouteKind::Route => cluster.score / 4 + cluster.foods as i64 * 2_400,
             RouteKind::Pressure => {
                 cluster.score / if urgent { 3 } else { 4 }
-                    + cluster.foods as i64 * if urgent { 2_400 } else { 1_600 }
+                    + cluster.foods as i64 * if urgent { 2_900 } else { 2_050 }
             }
         };
         base.min(match kind {
-            RouteKind::Near => 18_000,
-            RouteKind::Route => 34_000,
+            RouteKind::Near => 22_000,
+            RouteKind::Route => 42_000,
             RouteKind::Pressure => {
                 if urgent {
-                    42_000
+                    50_000
                 } else {
-                    30_000
+                    37_000
                 }
             }
         })
@@ -2750,9 +2754,14 @@ impl Planner {
         // greedily grabbing whatever space is nearest. When no food grab proved
         // safe, follow the path with the deepest guaranteed survival while
         // keeping the tail reachable -- in practice this trails the tail and
-        // fills space safely instead of sealing the body in. Short snakes skip
-        // this and use the lighter survival fallback.
-        if self.body.len() < 80 {
+        // fills space safely instead of sealing the body in.
+        //
+        // Engage it earlier on the cramped maze levels: there the snake sealed
+        // itself in well before body 80 (L2/L3 entombed at body 40-60). The open
+        // arrow levels clear cleanly, so they keep the higher gate and the lighter
+        // survival fallback below it.
+        let floor = if self.arrow_level() { 80 } else { 52 };
+        if (self.body.len() as i32) < floor {
             return None;
         }
         let st = self.start_state();
