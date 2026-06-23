@@ -2,8 +2,7 @@
 /* bot-engine.js - WebAssembly planner glue for the Live bot. It loads
    bot-engine.wasm, copies one compact snapshot from the real game into the
    module's memory each tick, and returns one DOS arrow scancode. It is loaded
-   only on the Bot page; bot.js (the driver) prefers it and falls back to the
-   JavaScript planner in bot-home.js when WebAssembly is unavailable. */
+   only on the Bot page; bot.js (the driver) waits for it before driving. */
 (function(){
   const defaultNow = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const scriptSrc = document.currentScript && document.currentScript.src;
@@ -43,7 +42,7 @@
         bindMemory();
       } catch(err) {
         disabled = true;
-        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot unavailable; using JavaScript planner.', err);
+        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot unavailable.', err);
       }
     })() : Promise.resolve();
 
@@ -91,7 +90,7 @@
         if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot returned invalid scancode:', sc);
       } catch(err) {
         disabled = true;
-        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot failed; using JavaScript planner.', err);
+        if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot failed.', err);
       }
       return null;
     };

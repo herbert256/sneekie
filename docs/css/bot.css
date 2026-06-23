@@ -74,54 +74,27 @@
 .page-bot #bezel:fullscreen #tube{ width:auto; max-width:none; padding:0; background:#000; border-radius:0; box-shadow:none; }
 .page-bot #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
 
-/* ---------- startup status popup ---------- */
-.page-bot .bot-startup{
+/* ---------- delayed loading status ---------- */
+.page-bot .bot-loading{
   position:fixed;
-  inset:0;
+  left:50%;
+  bottom:24px;
+  transform:translateX(-50%);
   z-index:50;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  background:rgba(0,0,0,.58);
-  opacity:1;
-  transition:opacity .22s ease;
-}
-.page-bot .bot-startup.is-done{ opacity:0; }
-.page-bot .bot-startup-panel{
-  width:min(420px, 100%);
+  max-width:min(420px, calc(100vw - 32px));
   border:1px solid color-mix(in srgb, var(--accent) 48%, var(--border));
   border-radius:6px;
   background:#08100c;
-  box-shadow:0 26px 70px -28px rgba(0,0,0,.95), 0 0 24px -14px var(--accent);
-  padding:18px 20px;
-  text-align:center;
-}
-.page-bot .bot-startup-text{
-  margin:0;
+  box-shadow:0 18px 52px -28px rgba(0,0,0,.95), 0 0 22px -14px var(--accent);
+  padding:10px 14px;
   color:var(--accent);
-  font-size:16px;
-  line-height:1.45;
-  letter-spacing:.02em;
+  font-size:13px;
+  line-height:1.35;
+  text-align:center;
+  opacity:1;
+  transition:opacity .22s ease;
 }
-.page-bot .bot-startup-progress{
-  height:10px;
-  margin-top:14px;
-  overflow:hidden;
-  border:1px solid color-mix(in srgb, var(--accent) 44%, var(--border));
-  border-radius:5px;
-  background:#020604;
-  box-shadow:inset 0 0 8px rgba(0,0,0,.72);
-}
-.page-bot .bot-startup-progress-fill{
-  width:100%;
-  height:100%;
-  background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 56%, #0d2417), var(--accent));
-  box-shadow:0 0 16px -4px var(--accent);
-  transform:scaleX(0);
-  transform-origin:left center;
-  transition:transform .1s linear;
-}
+.page-bot .bot-loading.is-done{ opacity:0; }
 
 /* ---------- the game controls (theme / sound / fullscreen) ---------- */
 .page-bot #controls{

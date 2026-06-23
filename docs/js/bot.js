@@ -1,10 +1,10 @@
 'use strict';
 /* bot.js — the Live bot driver, running in THIS page (no iframe, so it works from
-   file:// too). game.js renders the real game into #screen; a planner turns a
-   compact live snapshot into one scancode — the Wasm planner (bot-engine.js)
-   when available, otherwise the JavaScript planner (bot-home.js). This script
-   handles tabs, restarts, speed, and pushKey(). Wrapped in an IIFE so it never
-   redeclares game.js globals. */
+   file:// too for the landing-page preview). game.js renders the real game into
+   #screen; the loaded planner turns a compact live snapshot into one scancode.
+   Bot pages load the Wasm planner (bot-engine.js); index previews load the
+   JavaScript planner (bot-home.js). This script handles tabs, restarts, speed,
+   and pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
 (function(){
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -43,10 +43,8 @@
   function botDelay(){ return speedToDelay(botSpeed); }
   const now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const passivePreview = window.SNEEKIE_PASSIVE_PREVIEW === true;
-  const STARTUP_DELAY_MS = passivePreview ? 0 : 3000;
   const startupAt = now();
-  const driveStartAt = startupAt + STARTUP_DELAY_MS;
-  const startupGraceUntil = driveStartAt + 4000;
+  const startupGraceUntil = startupAt + 4000;
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
   const routeBudget = () => {
     const cap = now() < startupGraceUntil ? 10 : 28;
@@ -56,63 +54,45 @@
   const waitingForKey = () =>
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
   const botText = key => (window.SNEEKIE_TEXT && window.SNEEKIE_TEXT[key]) || key;
-  function showStartupProgress(){
-    if(STARTUP_DELAY_MS <= 0) return null;
-    const overlay = document.createElement('div');
-    overlay.className = 'bot-startup';
-    overlay.setAttribute('role', 'status');
-    overlay.setAttribute('aria-live', 'polite');
-    overlay.setAttribute('aria-atomic', 'true');
-    const panel = document.createElement('div');
-    panel.className = 'bot-startup-panel';
-    const text = document.createElement('p');
-    text.className = 'bot-startup-text';
-    text.textContent = botText('botLoading');
-    const progress = document.createElement('div');
-    progress.className = 'bot-startup-progress';
-    progress.setAttribute('role', 'progressbar');
-    progress.setAttribute('aria-label', botText('botLoading'));
-    progress.setAttribute('aria-valuemin', '0');
-    progress.setAttribute('aria-valuemax', '100');
-    progress.setAttribute('aria-valuenow', '0');
-    const fill = document.createElement('div');
-    fill.className = 'bot-startup-progress-fill';
-    progress.appendChild(fill);
-    panel.appendChild(text);
-    panel.appendChild(progress);
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-    const tick = () => {
-      const progressValue = Math.max(0, Math.min(1, (now() - startupAt) / STARTUP_DELAY_MS));
-      fill.style.transform = 'scaleX(' + progressValue.toFixed(3) + ')';
-      progress.setAttribute('aria-valuenow', String(Math.round(progressValue * 100)));
-      if(progressValue < 1) setTimeout(tick, 100);
-      else {
-        overlay.classList.add('is-done');
-        setTimeout(() => overlay.remove(), 260);
+  function delayedLoadingStatus(isReady){
+    if(passivePreview) return { done(){} };
+    let shown = null, finished = false;
+    const timer = setTimeout(() => {
+      if(finished || isReady()) return;
+      shown = document.createElement('div');
+      shown.className = 'bot-loading';
+      shown.setAttribute('role', 'status');
+      shown.setAttribute('aria-live', 'polite');
+      shown.setAttribute('aria-atomic', 'true');
+      shown.textContent = botText('botLoading');
+      document.body.appendChild(shown);
+    }, 450);
+    return {
+      done(){
+        if(finished) return;
+        finished = true;
+        clearTimeout(timer);
+        if(shown){
+          shown.classList.add('is-done');
+          setTimeout(() => shown.remove(), 220);
+        }
       }
     };
-    tick();
-    return overlay;
   }
-  // Wire whichever planners the page loaded: the Wasm planner (bot-engine.js,
-  // Bot page only) is preferred, the JavaScript planner (bot-home.js) is the
-  // fallback. Index pages load only the JS planner; the Bot page loads both, and
-  // wasm.decide() returns null until bot-engine.wasm finishes loading, so the JS
-  // planner runs in the meantime and the driver switches to Wasm once it is ready.
-  const isArrow = sc => sc===72 || sc===80 || sc===75 || sc===77;
+  // Wire the planner this page loaded. Bot pages now load only the Wasm planner
+  // and wait for bot-engine.wasm before driving; index previews load only the
+  // JavaScript planner so they still work from file://.
   function createPlanner(access){
     const wasm = window.SneekieBotWasm && window.SneekieBotWasm.create(access);
-    const js = window.SneekieBotJs && window.SneekieBotJs.create(access);
-    if(wasm && js) return { decide: o => { const sc = wasm.decide(o); return isArrow(sc) ? sc : js.decide(o); } };
-    return wasm || js || null;
+    return wasm || (window.SneekieBotJs && window.SneekieBotJs.create(access)) || null;
   }
   const planner = createPlanner({
     now,
     peek: o => peek(o),
     state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER, BONUS })
   });
-  showStartupProgress();
+  const plannerReady = () => planner && (typeof planner.ready !== 'function' || planner.ready());
+  const loadingStatus = delayedLoadingStatus(plannerReady);
 
   /* ---- level tabs (2-8): which early maze the bot drops into ---- */
   const LEVELS = [2,3,4,5,6,7,8];
@@ -189,7 +169,8 @@
     };
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
-      if(now() < driveStartAt){ await sleep(80); continue; } // let first paint/input settle before planning
+      if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm on the Bot page
+      loadingStatus.done();
       // game finished (final death or clean win) -> answer "play again", re-target.
       // Checked before the jump below so a tab click can't overwrite LEVEL first.
       if(LEVEL > 32){
@@ -290,7 +271,7 @@
       // the same cell) trips earlier than a plain no-score stall and switches to
       // riskier forced moves instead of the stuck/restart path.
       const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
-      const sc = planner ? planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled }) : null;
+      const sc = planner.decide({ idle, looping, headTrail, budgetMs:routeBudget(), forceRisk:stalled });
       if(sc !== null){
         forcedDeathQueued = false;
         if(isFoodCell(targetCellFor(sc))){

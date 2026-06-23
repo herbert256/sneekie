@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner, then lets the bot press the same arrow-key scancodes a player would press." />
     <title>Sneekie - How the bot thinks</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -21,7 +21,7 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - How the bot thinks" />
-    <meta property="og:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta property="og:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta property="og:url" content="https://sneekie.xyz/en/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -29,7 +29,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - How the bot thinks" />
-    <meta name="twitter:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner and JavaScript fallback, then lets the bot press the same arrow-key scancodes a player would press." />
+    <meta name="twitter:description" content="The Bot page does not play a recording. It runs the real game with a Rust/WebAssembly planner, then lets the bot press the same arrow-key scancodes a player would press." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. If WebAssembly is unavailable, the JavaScript planner in <code>bot-home.js</code> remains as a backup. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, and a thin driver in <code>bot.js</code> in the same page. The landing pages still use the separate JavaScript planner in <code>bot-home.js</code> for passive previews, but the Bot page waits for WebAssembly before it drives the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -106,7 +106,7 @@
       </nav>
       <section id="where">
         <h2>1. Where the bot runs</h2>
-        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-home.js</code> (the JavaScript planner), then <code>bot-engine.js</code> (the WebAssembly planner), then <code>bot.js</code>. The driver prefers WebAssembly and falls back to the JavaScript planner; while <code>bot-engine.wasm</code> loads in the background the JavaScript planner runs, and the driver switches to WebAssembly only after the module is ready. The driver still handles tabs, restarts, speed, and key presses:</p>
+        <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code> (the WebAssembly planner), then <code>bot.js</code>. The driver waits until <code>bot-engine.wasm</code> is ready before pressing a move. It still handles tabs, restarts, speed, and key presses:</p>
         <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
 if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
@@ -180,7 +180,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript planner in <code>bot-home.js</code> keeps the same snapshot shape. For simulated routes, the planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. The JavaScript planner in <code>bot-home.js</code> is kept for the landing-page previews only. For simulated routes, the Rust planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
@@ -239,7 +239,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. When the driver raises <code>forceRisk</code> after a stall, the WebAssembly planner stays in charge and runs its own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves &mdash; while quadrupling that recent-cell debt so every forced move walks into fresh cells. It only drops to the simpler JavaScript backup if WebAssembly never loaded. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. When the driver raises <code>forceRisk</code> after a stall, the WebAssembly planner stays in charge and runs its own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves &mdash; while quadrupling that recent-cell debt so every forced move walks into fresh cells. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep forcing moves until the snake dies or the level clears.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>

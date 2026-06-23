@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <title>Sneekie - Hoe de bot denkt</title>
     <link rel="icon" type="image/png" href="../favicon.png" />
     <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
@@ -21,7 +21,7 @@
     <meta property="og:locale" content="nl_NL" />
     <meta property="og:site_name" content="Sneekie" />
     <meta property="og:title" content="Sneekie - Hoe de bot denkt" />
-    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta property="og:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta property="og:url" content="https://sneekie.xyz/nl/bot-thinking" />
     <meta property="og:image" content="https://sneekie.xyz/images/og.png" />
     <meta property="og:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
@@ -29,7 +29,7 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Sneekie - Hoe de bot denkt" />
-    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en JavaScript-backup, en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
+    <meta name="twitter:description" content="De pagina Bot speelt geen opname af. Hij draait het echte spel met een Rust/WebAssembly-planner en laat de bot dezelfde pijltjesscancodes indrukken als een speler." />
     <meta name="twitter:image" content="https://sneekie.xyz/images/og.png" />
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">Hoe de bot denkt</h1>
-      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. Als WebAssembly niet beschikbaar is, blijft de JavaScript-planner in <code>bot-home.js</code> de backup. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
+      <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De landingspagina's gebruiken nog de aparte JavaScript-planner in <code>bot-home.js</code> voor passieve previews, maar de Bot-pagina wacht op WebAssembly voordat hij het spel bestuurt. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
@@ -82,7 +82,7 @@
       </nav>
       <section id="where">
         <h2>1. Waar de bot draait</h2>
-        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-home.js</code> (de JavaScript-planner), daarna <code>bot-engine.js</code> (de WebAssembly-planner), en daarna <code>bot.js</code>. De driver geeft voorrang aan WebAssembly en valt terug op de JavaScript-planner; terwijl <code>bot-engine.wasm</code> op de achtergrond laadt draait de JavaScript-planner, en de driver schakelt pas over wanneer WebAssembly klaar is. De driver regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
+        <p>De botpagina host het echte spel direct. Hij laadt <code>game.js</code>, daarna <code>bot-engine.js</code> (de WebAssembly-planner), en daarna <code>bot.js</code>. De driver wacht tot <code>bot-engine.wasm</code> klaar is voordat hij een zet indrukt. Hij regelt nog steeds tabs, herstarts, snelheid en toetsaanslagen:</p>
         <pre><code>const stalled = idle &gt; 40 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
 if(movesSincePickup &gt;= 150) window.sneekieRequestStuck();
 const sc = planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(), forceRisk: stalled });
@@ -110,7 +110,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
           </tbody>
         </table>
-        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. De JavaScript-planner in <code>bot-home.js</code> gebruikt dezelfde snapshotvorm. Voor denkbeeldige routes bewaart de planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
+        <p>Aan het begin van elke beslissing kopieert <code>bot-engine.js</code> de CP437-tekens, de slangoffsets uit <code>T</code>, de pijlentabel <code>D</code> en het recente koppositiespoor naar vaste WebAssembly-buffers. De JavaScript-planner in <code>bot-home.js</code> blijft alleen voor de previews op de landingspagina's. Voor denkbeeldige routes bewaart de Rust-planner alleen verschillen, zoals een geduwde steen of een leeg geworden staartvak, in plaats van voor elke tak de volledige VRAM-array te kopiëren.</p>
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
@@ -148,7 +148,7 @@ if(sc !== null) pushKey(keyOf[sc]);</code></pre>
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. De WebAssembly-planner krijgt dat spoor nu ook direct, zodat gesimuleerde routes die over recente hete vakken teruglopen strategische schuld betalen, tenzij ze voedsel dichterbij brengen of staarttoegang bewaren. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. Wanneer de driver na een stilstand <code>forceRisk</code> aanzet, blijft de WebAssembly-planner aan zet en draait hij zijn eigen ontsnappingsladder &mdash; de meest agressieve voedselgreep, de steen-graafdrukzet, het staartvolgen voor lange slangen, en dan de lokale overlevingszetten &mdash; terwijl hij die schuld voor recente vakken verviervoudigt zodat elke geforceerde zet een vers vak inloopt. Hij valt alleen terug op de simpelere JavaScript-backup als WebAssembly nooit geladen is. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. In die krappe stand kan een smiley beter zijn dan een verre schone pickup als de smileyroute een pad terug naar de bewegende staart houdt. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; botpagina's blijven zetten forceren tot de slang sterft of het level leeg is.</p>
+        <p>De <code>looping</code>-vlag komt uit een korte reeks kopposities. De WebAssembly-planner krijgt dat spoor nu ook direct, zodat gesimuleerde routes die over recente hete vakken teruglopen strategische schuld betalen, tenzij ze voedsel dichterbij brengen of staarttoegang bewaren. Als dezelfde kop-offset vaker terugkomt terwijl de score niet stijgt, behandelt de bot staartvolgen als verdacht en schakelt hij over op voedseldruk. Wanneer de driver na een stilstand <code>forceRisk</code> aanzet, blijft de WebAssembly-planner aan zet en draait hij zijn eigen ontsnappingsladder &mdash; de meest agressieve voedselgreep, de steen-graafdrukzet, het staartvolgen voor lange slangen, en dan de lokale overlevingszetten &mdash; terwijl hij die schuld voor recente vakken verviervoudigt zodat elke geforceerde zet een vers vak inloopt. <code>breathingMove()</code> werkt anders: die stap komt vóór verre voedselroutes wanneer de huidige regio krap is, en weegt staartbereik, uitgangen en overlevingsdiepte zwaarder dan directe punten. In die krappe stand kan een smiley beter zijn dan een verre schone pickup als de smileyroute een pad terug naar de bewegende staart houdt. Als de bewijsplanners geen route kunnen certificeren binnen het tijdbudget, kiest <code>pressureStep()</code> een veilige directe zet die de afstand tot bereikbaar voedsel verkleint. Als zelfs dat faalt, geeft <code>lastChanceMove()</code> de minst slechte direct legale zet terug; botpagina's blijven zetten forceren tot de slang sterft of het level leeg is.</p>
       </section>
       <section id="danger">
         <h2>4. Pijlengevaar</h2>

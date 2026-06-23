@@ -1,9 +1,9 @@
 'use strict';
 /* bot-home.js - the JavaScript planner for the Live bot. It reads one compact
    snapshot from the real game each tick, searches that snapshot, and returns one
-   DOS arrow scancode. This is the planner the index landing pages use, and the
-   fallback the Bot page uses when WebAssembly is unavailable. game.js remains the
-   only game engine; bot.js (the driver) presses normal keys. */
+   DOS arrow scancode. This is the planner the index landing pages use for their
+   passive previews; Bot pages use the WebAssembly planner instead. game.js
+   remains the only game engine; bot.js (the driver) presses normal keys. */
 (function(){
   const DIRS = [[72,-160],[80,160],[75,-2],[77,2]];
   const STEP = {72:-160, 80:160, 75:-2, 77:2};

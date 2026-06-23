@@ -17,7 +17,8 @@ All site source editing now happens directly under `docs/`, including the
 localized pages in `docs/en/`, `docs/nl/`, and `docs/uk/`.
 The Live bot is the one exception with source outside `docs/`: its Rust planner
 lives under `wasm/bot-engine/` and is checked in as `docs/js/bot-engine.wasm`,
-with `docs/js/bot-engine.js` falling back to JavaScript when Wasm is unavailable.
+with `docs/js/bot-engine.js` loading it on the Bot page. The root landing pages
+use `docs/js/bot-home.js` for their passive JavaScript previews.
 
 ## Controls
 
