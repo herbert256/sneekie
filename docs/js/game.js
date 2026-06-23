@@ -283,7 +283,7 @@ function setClickTarget(e){
 }
 function routePassable(idx){
   const ch = peek(idx * 2);
-  return (ch === 32 || ch === 3 || ch === 5) && !routeArrowNextUnsafe(idx);
+  return (ch === 32 || ch === 1 || ch === 3 || ch === 5) && !routeArrowNextUnsafe(idx);
 }
 function routeArrowNextUnsafe(idx){
   const row = (idx / 80 | 0) + 1;
