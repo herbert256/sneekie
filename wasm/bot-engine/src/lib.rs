@@ -3621,6 +3621,14 @@ fn room_door_level(level: i32) -> bool {
     matches!((level - 1).rem_euclid(16), 2 | 10)
 }
 
+fn door_detect_level(level: i32) -> bool {
+    // Advice #2: reserve narrow gaps as doors on the line and wall-gap mazes too,
+    // not just the room/door grid. The detector below matches 2-wide chokepoints;
+    // the line maze's wall segments leave several of those, and reserving a return
+    // lane through them keeps the snake from sealing a region behind itself.
+    room_door_level(level) || matches!((level - 1).rem_euclid(16), 1 | 4 | 9 | 12)
+}
+
 fn static_open_cell(board: &[u16; BOARD_LEN], body_bits: BoardBits, o: i32) -> bool {
     (0..BOARD_LEN as i32).contains(&o) && (body_bits.contains(o) || open(board[o as usize]))
 }
@@ -3634,7 +3642,7 @@ fn detect_doors(
     body_bits: BoardBits,
     level: i32,
 ) -> (Vec<Door>, BoardBits) {
-    if !room_door_level(level) {
+    if !door_detect_level(level) {
         return (Vec::new(), BoardBits::default());
     }
     let mut doors = Vec::new();
