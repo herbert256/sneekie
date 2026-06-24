@@ -571,14 +571,16 @@ const DEATH = {sneekie:'crashed'};          // RETURN 510
 const STUCK = {sneekie:'stuck'};
 const STUCK_FLASH_COUNT = 4;
 const STUCK_FLASH_MS = 250;
-async function flashStuckScreen(){
+async function flashTubeScreen(className){
   for(let I = 1; I <= STUCK_FLASH_COUNT; I++){
-    tube.classList.add('stuck-red');
+    tube.classList.add(className);
     await sleep(STUCK_FLASH_MS);
-    tube.classList.remove('stuck-red');
+    tube.classList.remove(className);
     if(I < STUCK_FLASH_COUNT) await sleep(STUCK_FLASH_MS);
   }
 }
+async function flashStuckScreen(){ await flashTubeScreen('stuck-red'); }
+async function flashLevelClearScreen(){ await flashTubeScreen('clear-green'); }
 
 /* ---------- BOOT SHOW: compressed PC DOS + GW-BASIC startup, before line 80 ---------- */
 const BOOT_TIME_SCALE = 2.15;
@@ -1318,6 +1320,7 @@ async function playLevels(){
       }
     }
     if(!died && !skip){
+      if(document.body && document.body.classList.contains('page-bot')) await flashLevelClearScreen();
       /* 1030-1060: drain bonus into score */
       let n = 0;
       while(BONUS > 0){

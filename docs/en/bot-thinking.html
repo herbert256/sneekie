@@ -111,7 +111,7 @@
 const fallbackRandom = stalled || movesSincePickup &gt;= 250;
 let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
 if(sc === null) sc = randomLegalScancode();   // planner gave up or a safeguard tripped
-if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt; snake death</code></pre>
+if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt; stuck flash</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
         <div class="cards">
           <div class="card">
@@ -506,7 +506,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
             <tr>
               <td>Planner returns no move</td>
-              <td>Fall back to a random legal move. The normal snake death sequence is used only when no legal move exists at all &mdash; the snake is really stuck.</td>
+              <td>Fall back to a random legal move. The stuck sequence, including the red flash, is used only when no legal move exists at all &mdash; the snake is really stuck.</td>
             </tr>
             <tr>
               <td>No score gain for 120 decisions, or 24 with repeated head positions</td>

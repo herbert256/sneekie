@@ -296,10 +296,10 @@
         pushKey(keyOf[sc]);
       }
       // No legal move remains -> the snake is really stuck. Only now use the
-      // normal snake death sequence.
+      // stuck path, including the red flash before the normal death unwind.
       else if(!forcedDeathQueued){
         forcedDeathQueued = true;
-        if(typeof window.sneekieRequestBotDeath === 'function') window.sneekieRequestBotDeath();
+        if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
         else pushKey('\x1b');
       }
       await sleepForTick(tickStarted);

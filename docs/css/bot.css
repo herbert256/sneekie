@@ -39,17 +39,25 @@
   image-rendering:pixelated;
   box-shadow:0 0 0 2px #000, 0 0 40px -4px var(--glow);
 }
-.page-bot #tube.stuck-red::after{
+.page-bot #tube.stuck-red::after,
+.page-bot #tube.clear-green::after{
   content:"";
   position:absolute;
   inset:8px;
   z-index:4;
   border-radius:6px;
-  background:rgba(255,0,0,.55);
-  box-shadow:inset 0 0 36px rgba(255,255,255,.18), 0 0 34px rgba(255,0,0,.65);
   pointer-events:none;
 }
-.page-bot #bezel:fullscreen #tube.stuck-red::after{
+.page-bot #tube.stuck-red::after{
+  background:rgba(255,0,0,.55);
+  box-shadow:inset 0 0 36px rgba(255,255,255,.18), 0 0 34px rgba(255,0,0,.65);
+}
+.page-bot #tube.clear-green::after{
+  background:rgba(0,255,80,.50);
+  box-shadow:inset 0 0 36px rgba(255,255,255,.18), 0 0 34px rgba(0,255,80,.62);
+}
+.page-bot #bezel:fullscreen #tube.stuck-red::after,
+.page-bot #bezel:fullscreen #tube.clear-green::after{
   inset:0;
   border-radius:0;
 }

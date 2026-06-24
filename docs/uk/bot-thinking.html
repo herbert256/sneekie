@@ -111,7 +111,7 @@
 const fallbackRandom = stalled || movesSincePickup &gt;= 250;
 let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
 if(sc === null) sc = randomLegalScancode();   // планувальник здався або спрацював запобіжник
-if(sc !== null) pushKey(keyOf[sc]);           // інакше: жодного легального ходу -&gt; змія помирає</code></pre>
+if(sc !== null) pushKey(keyOf[sc]);           // інакше: жодного легального ходу -&gt; спалах застрягання</code></pre>
         <p>Таке розміщення навмисне. Гра використовує глобальні <code>const</code> і <code>let</code>, зокрема <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code> і <code>pushKey()</code>. Ці імена видимі скриптам на тій самій сторінці, але не є звичайними властивостями <code>window</code>. Так бот може викликати <code>peek()</code>, читати <code>T[BTEL]</code> і натискати клавіші через <code>pushKey()</code>, ніби він є частиною сторінки.</p>
         <div class="cards">
           <div class="card">
@@ -478,7 +478,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // інакше: жодного л
             </tr>
             <tr>
               <td>Планувальник не повертає ходу</td>
-              <td>Відкотитися до випадкового легального ходу. Звичайна смерть змії використовується лише коли взагалі немає легального ходу &mdash; змія справді застрягла.</td>
+              <td>Відкотитися до випадкового легального ходу. Послідовність застрягання, включно з червоним спалахом, використовується лише коли взагалі немає легального ходу &mdash; змія справді застрягла.</td>
             </tr>
             <tr>
               <td>Немає приросту рахунку 120 рішень, або 24 із повтореними позиціями голови</td>
