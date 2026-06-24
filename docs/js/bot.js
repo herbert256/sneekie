@@ -2,9 +2,11 @@
 /* bot.js — the Live bot driver, running in THIS page (no iframe, so it works from
    file:// too for the landing-page preview). game.js renders the real game into
    #screen; the loaded planner turns a compact live snapshot into one scancode.
-   Bot pages load the Wasm planner (bot-engine.js); index previews load the
-   JavaScript planner (bot-home.js). This script handles tabs, restarts, speed,
-   and pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
+   Bot pages load both planners and prefer the Wasm one (bot-engine.js), waiting
+   for it before driving; when WebAssembly cannot load (e.g. from file://) the
+   driver falls back to the JavaScript planner (bot-home.js). Index previews load
+   only the JavaScript planner. This script handles tabs, restarts, speed, and
+   pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
 (function(){
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
