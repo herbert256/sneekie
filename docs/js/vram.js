@@ -36,13 +36,15 @@ function stopArrows(){
 function startFailureFlash(){
   if(restartTimer) return;
   stopArrows();
+  const FLASHES = 8, STEP = 250;          // 8 red flashes: 0.25s on, 0.25s off in between
+  const TICKS = FLASHES * 2;
   let tick = 0;
   const pulse = () => {
     screenFlashOn = tick % 2 === 0;
     render();
     tick++;
-    if(tick < 10){
-      restartTimer = setTimeout(pulse, 250);
+    if(tick < TICKS){
+      restartTimer = setTimeout(pulse, STEP);
     } else {
       screenFlashOn = false;
       restartTimer = null;

@@ -6,7 +6,8 @@
   display:flex;
   gap:22px;
   flex-wrap:wrap;
-  align-items:stretch;
+  align-items:flex-start;   /* don't pad the screen card out to the taller side column */
+  justify-content:center;   /* keep the screen card centered when it wraps onto its own row */
   margin-top:22px;
 }
 .page-vram .stage,
@@ -16,7 +17,7 @@
   gap:14px;
   min-width:0;
 }
-.page-vram .stage{ flex:1 1 360px; max-width:100%; }
+.page-vram .stage{ flex:0 1 auto; max-width:100%; }   /* hug the screen so its left/right margins match */
 .page-vram .side{ flex:1 1 460px; max-width:100%; }
 .page-vram .panel{
   padding:12px 14px;
