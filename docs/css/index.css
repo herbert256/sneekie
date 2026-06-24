@@ -107,11 +107,45 @@
   overflow-wrap:anywhere;
 }
 
-.home-game .play-note{
-  margin-bottom:12px;
-  color:var(--greenhi);
-  font-weight:700;
+/* The two call-to-action buttons below the monitor (WASM bot / play yourself).
+   Aligned to the same width as the monitor and the title logo above it. */
+.home-bot-actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-width:760px;
+  margin:16px auto 0;
+}
+
+.home-action{
+  display:block;
+  padding:13px 18px;
+  color:var(--ink);
+  background:var(--button);
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:15px;
+  line-height:1.4;
   text-align:center;
+  text-decoration:none;
+  box-shadow:0 14px 36px -30px rgba(0,0,0,.95);
+  transition:color .12s, border-color .12s, box-shadow .12s, background .12s, transform .12s;
+}
+
+.home-action--primary{
+  color:var(--greenhi);
+  border-color:color-mix(in srgb, var(--accent) 45%, var(--border));
+  background:color-mix(in srgb, var(--accent) 9%, var(--button));
+}
+
+.home-action:hover,
+.home-action:focus-visible{
+  color:var(--greenhi);
+  border-color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 13%, var(--button));
+  box-shadow:0 18px 42px -28px rgba(0,0,0,.95), 0 0 18px -10px var(--accent);
+  text-decoration:none;
+  transform:translateY(-1px);
 }
 
 .topic-card p{
@@ -148,7 +182,7 @@
 
 .play-link{
   display:block;
-  max-width:700px;
+  max-width:760px;             /* match the title image so the monitor lines up under the logo */
   color:inherit;
   text-decoration:none;
   touch-action:pan-y;
@@ -348,8 +382,13 @@
     font-size:14px;
     line-height:1.45;
   }
-  .home-game .play-note{
-    margin-bottom:8px;
+  .home-bot-actions{
+    margin-top:12px;
+    gap:8px;
+  }
+  .home-action{
+    padding:12px 14px;
+    font-size:14px;
   }
   .topic-grid{
     grid-template-columns:1fr;

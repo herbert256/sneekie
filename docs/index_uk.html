@@ -89,7 +89,6 @@
       <section class="home-game" aria-label="Грати в Sneekie">
         <h2 class="visually-hidden">Sneekie - Текстова гра MS-DOS 1988 року</h2>
         <img class="home-title-image" loading="eager" width="1200" height="260" src="images/home-title-uk.webp" alt="" aria-hidden="true" />
-        <p>Запустіть Sneekie у браузері й проведіть змію крізь усі 32 рівні лабіринту, не врізаючись у стріли, камені чи власний хвіст, що росте.</p>
         <div class="play-link home-bot-preview" aria-label="Живий бот Sneekie проходить рівні 2-8">
           <a class="home-bot-hit" href="uk/game.html" aria-label="Відкрити Sneekie, щоб зіграти самому"></a>
           <span id="bezel" class="crt">
@@ -105,7 +104,10 @@
             </span>
           </span>
         </div>
-        <p class="play-note">Натисніть на зображення вище, щоб зіграти самому !</p>
+        <div class="home-bot-actions">
+          <a class="home-action home-action--primary" href="uk/bot.html">Тут грає легкий JavaScript-бот — подивіться на розумнішого WASM-бота.</a>
+          <a class="home-action" href="uk/game.html">Натисніть тут, щоб зіграти самому !</a>
+        </div>
         <div class="home-bot-hidden" aria-hidden="true">
           <div id="themes">
             <button type="button" data-theme="hercules">Green</button>

@@ -89,7 +89,6 @@
       <section class="home-game" aria-label="Play Sneekie">
         <h2 class="visually-hidden">Sneekie - The 1988 MS-DOS text game</h2>
         <img class="home-title-image" loading="eager" width="1200" height="260" src="images/home-title-en.webp" alt="" aria-hidden="true" />
-        <p>Start Sneekie in your browser and try to guide the snake through all 32 maze levels without running into arrows, stones, or your own growing tail.</p>
         <div class="play-link home-bot-preview" aria-label="Live Sneekie bot playing levels 2 to 8">
           <a class="home-bot-hit" href="en/game.html" aria-label="Open Sneekie to play yourself"></a>
           <span id="bezel" class="crt">
@@ -105,7 +104,10 @@
             </span>
           </span>
         </div>
-        <p class="play-note">Click above image to play yourself !</p>
+        <div class="home-bot-actions">
+          <a class="home-action home-action--primary" href="en/bot.html">A lightweight JavaScript bot is playing — watch the smarter WASM bot.</a>
+          <a class="home-action" href="en/game.html">Click here to play yourself !</a>
+        </div>
         <div class="home-bot-hidden" aria-hidden="true">
           <div id="themes">
             <button type="button" data-theme="hercules">Green</button>
