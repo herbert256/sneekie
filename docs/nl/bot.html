@@ -62,27 +62,29 @@
         <h1 class="page-title">De bot pakt de vroege doolhoven aan</h1>
       </div>
       <p class="lead">Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live terwijl een bot de vroege levels 2-8 speelt: pijlen, stenen, smileys en een slang die groeit terwijl hij eet. Hij leest het scherm, plant een veilige route, ruimt het bord op wanneer dat kan, en probeert opnieuw wanneer het doolhof wint.</p>
-      <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules" data-short="Groen">Groen</button>
-          <button type="button" data-theme="amber" data-short="Amber">Amber</button>
-          <button type="button" data-theme="cga" data-short="CGA">CGA</button>
+      <div id="game-stage">
+        <div id="controls">
+          <div class="grp" id="themes">
+            <button type="button" data-theme="hercules" data-short="Groen">Groen</button>
+            <button type="button" data-theme="amber" data-short="Amber">Amber</button>
+            <button type="button" data-theme="cga" data-short="CGA">CGA</button>
+          </div>
+          <div class="grp">
+            <button type="button" id="mute" data-short="Geluid">Geluid: aan</button>
+            <button type="button" id="fs" data-short="Vol.">Volledig scherm</button>
+          </div>
         </div>
-        <div class="grp">
-          <button type="button" id="mute" data-short="Geluid">Geluid: aan</button>
-          <button type="button" id="fs" data-short="Vol.">Volledig scherm</button>
-        </div>
-      </div>
-      <div id="bezel">
-        <div id="tube">
-          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie spelscherm"></canvas>
-          <div id="glass" aria-hidden="true"></div>
-          <div id="power" aria-hidden="true"></div>
-        </div>
-        <div id="panel" aria-hidden="true">
-          <span class="logo">Acme Corporation</span>
-          <span class="led"></span>
-          <span class="knobs"><i></i><i></i></span>
+        <div id="bezel">
+          <div id="tube">
+            <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie spelscherm"></canvas>
+            <div id="glass" aria-hidden="true"></div>
+            <div id="power" aria-hidden="true"></div>
+          </div>
+          <div id="panel" aria-hidden="true">
+            <span class="logo">Acme Corporation</span>
+            <span class="led"></span>
+            <span class="knobs"><i></i><i></i></span>
+          </div>
         </div>
       </div>
       <div class="speedbar">

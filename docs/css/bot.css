@@ -12,40 +12,82 @@
   text-align:center;
 }
 
-/* ---------- the embedded game screen (a compact CRT) ---------- */
-.page-bot #bezel{
-  width:fit-content;
+/* ---------- the embedded game screen (full CRT, matching game.html) ----------
+   The toolbar + bezel sit in #game-stage{width:max-content} so the toolbar tracks
+   the monitor width, and game.js's fit() sizes the canvas to its native scale
+   (1x = 640px) like game.html. The mobile block below drops the frame for an
+   edge-to-edge screen. */
+.page-bot #game-stage{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  width:max-content;
   max-width:100%;
-  margin:8px auto 6px;
-  padding:14px 16px 12px;
+  margin:14px auto 6px;
+}
+.page-bot #bezel{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:13px;
   background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
-  border-radius:16px;
-  box-shadow:0 28px 64px -30px rgba(0,0,0,.95), inset 0 2px 0 rgba(255,255,255,.08), inset 0 -3px 9px rgba(0,0,0,.5);
+  border-radius:20px;
+  padding:18px 22px 15px;
+  box-shadow:0 38px 84px -28px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45);
+  animation:poweron .6s ease-out both .08s;
+}
+@keyframes poweron{
+  from{ opacity:0; transform:scale(.985); }
+  to{ opacity:1; transform:none; }
 }
 .page-bot #tube{
   position:relative;
-  width:600px;
-  max-width:100%;
-  margin:0 auto;
+  align-self:center;
   background:#060708;
-  padding:8px;
-  border-radius:11px;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035), inset 0 0 16px 5px rgba(0,0,0,.9);
+  padding:9px;
+  border-radius:14px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035), inset 0 0 18px 5px rgba(0,0,0,.9);
 }
 .page-bot #screen{
   display:block;
   background:#000;
-  border-radius:6px;
+  border-radius:7px;
   image-rendering:pixelated;
-  box-shadow:0 0 0 2px #000, 0 0 40px -4px var(--glow);
+  box-shadow:0 0 0 2px #000, 0 0 44px -2px var(--glow);
+  touch-action:none;
+}
+.page-bot #glass,
+.page-bot #power{
+  position:absolute;
+  inset:9px;
+  border-radius:7px;
+  pointer-events:none;
+}
+.page-bot #glass{
+  z-index:2;
+  background:linear-gradient(133deg, rgba(255,255,255,.07), rgba(255,255,255,.012) 24%, transparent 40%), radial-gradient(128% 132% at 50% 47%, transparent 56%, rgba(0,0,0,.40) 100%), repeating-linear-gradient(to bottom, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+  box-shadow:inset 0 0 26px 5px rgba(0,0,0,.5);
+}
+.page-bot #power{
+  z-index:3;
+  background:radial-gradient(120% 100% at 50% 50%, #fff, rgba(255,255,255,.55));
+  opacity:0;
+}
+.page-bot #power.go{ animation:crton 620ms ease-out both; }
+@keyframes crton{
+  0%{ opacity:0; transform:scaleY(.006); filter:brightness(2.2); }
+  7%{ opacity:.95; transform:scaleY(.03); }
+  22%{ opacity:.55; transform:scaleY(1); }
+  100%{ opacity:0; transform:scaleY(1); }
 }
 .page-bot #tube.stuck-red::after,
 .page-bot #tube.clear-green::after{
   content:"";
   position:absolute;
-  inset:8px;
+  inset:9px;
   z-index:4;
-  border-radius:6px;
+  border-radius:7px;
   pointer-events:none;
 }
 .page-bot #tube.stuck-red::after{
@@ -61,26 +103,70 @@
   inset:0;
   border-radius:0;
 }
-/* size the canvas to the frame, overriding game.js's fit() inline sizing (except in
-   fullscreen, where fit() should size it to the screen) */
-.page-bot #bezel:not(:fullscreen) #screen{ width:100% !important; height:auto !important; }
-.page-bot #glass,
-.page-bot #power,
-.page-bot #panel{ display:none; }
+.page-bot #panel{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  height:16px;
+  padding:0 5px;
+}
+.page-bot #panel .logo{
+  font:700 10px/1 ui-monospace, monospace;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:#494e53;
+  text-shadow:0 1px 0 rgba(255,255,255,.06), 0 -1px 0 rgba(0,0,0,.55);
+}
+.page-bot #panel .led{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:radial-gradient(circle at 34% 30%, #e6ffe6, var(--phos) 52%, rgba(0,0,0,.7) 100%);
+  box-shadow:0 0 9px 1px var(--glow);
+}
+.page-bot #panel .knobs{
+  margin-left:auto;
+  display:flex;
+  gap:11px;
+}
+.page-bot #panel .knobs i{
+  position:relative;
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:radial-gradient(circle at 38% 30%, #4a4f54, #25292c 62%, #15171a 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.6);
+}
+.page-bot #panel .knobs i::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:2px;
+  width:1.5px;
+  height:5px;
+  background:rgba(0,0,0,.6);
+  border-radius:1px;
+  transform:translateX(-50%);
+}
 
 /* fullscreen: hand the whole display to the screen */
 .page-bot #bezel:fullscreen{
   display:flex;
   align-items:center;
   justify-content:center;
+  gap:0;
   padding:0;
   background:#000;
   max-width:none;
   border-radius:0;
   box-shadow:none;
+  animation:none;
 }
-.page-bot #bezel:fullscreen #tube{ width:auto; max-width:none; padding:0; background:#000; border-radius:0; box-shadow:none; }
+.page-bot #bezel:fullscreen #tube{ align-self:auto; padding:0; background:#000; border-radius:0; box-shadow:none; }
 .page-bot #bezel:fullscreen #screen{ border-radius:0; box-shadow:none; }
+.page-bot #bezel:fullscreen #glass,
+.page-bot #bezel:fullscreen #power{ inset:0; border-radius:0; }
+.page-bot #bezel:fullscreen #panel{ display:none; }
 
 /* ---------- delayed loading status ---------- */
 .page-bot .bot-loading{
@@ -104,19 +190,17 @@
 }
 .page-bot .bot-loading.is-done{ opacity:0; }
 
-/* ---------- the game controls (theme / sound / fullscreen) ---------- */
+/* ---------- the game toolbar (theme / sound / fullscreen), matching game.html ---------- */
 .page-bot #controls{
   display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  gap:12px;
   width:100%;
-  max-width:632px;
-  margin:22px auto 0;
+  margin:0 0 12px;
 }
-.page-bot #controls .grp{ display:flex; flex-wrap:wrap; gap:6px; }
-.page-bot #controls .grp:last-child{ justify-content:flex-end; margin-left:auto; }
+.page-bot #controls .grp{ display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start; }
+.page-bot #controls .grp:last-child{ justify-content:flex-end; gap:8px; margin-left:auto; }
 .page-bot #controls button{
   font:inherit;
   font-size:11px;
@@ -200,6 +284,11 @@
   /* Mobile: drop the CRT monitor frame and run the game screen edge-to-edge,
      matching the landing page (index.html) preview. */
   .page-bot{ overflow-x:hidden; }
+  .page-bot #game-stage{
+    width:100%;
+    max-width:100%;
+    margin:14px 0 0;
+  }
   .page-bot #bezel{
     width:100vw;
     max-width:none;
@@ -221,6 +310,11 @@
     border-radius:0;
     box-shadow:none;
   }
+  /* fill the full-bleed frame, overriding game.js's fit() inline canvas sizing */
+  .page-bot #bezel:not(:fullscreen) #screen{ width:100% !important; height:auto !important; }
+  .page-bot #glass,
+  .page-bot #power,
+  .page-bot #panel{ display:none; }
   .page-bot #tube.stuck-red::after,
   .page-bot #tube.clear-green::after{
     inset:0;
@@ -253,7 +347,7 @@
 }
 @media (max-width:520px){
   .page-bot .lead{ font-size:16px; text-align:left; }
-  .page-bot #controls{ margin-top:18px; }
+  .page-bot #game-stage{ margin-top:18px; }
   .page-bot .speedbar{ grid-template-columns:auto minmax(120px, 1fr) auto; gap:6px; max-width:300px; }
   .page-bot .leveltabs{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }

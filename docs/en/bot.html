@@ -64,27 +64,29 @@
       <p class="lead">
         This is no recording. The <em>real</em> 1988 game runs live while a bot plays the early levels 2-8: arrows, stones, smileys, and a snake that grows as it eats. It reads the screen, plans a safe route, clears the board when it can, and tries again when the maze wins.
       </p>
-      <div id="controls">
-        <div class="grp" id="themes">
-          <button type="button" data-theme="hercules" data-short="Green">Green</button>
-          <button type="button" data-theme="amber" data-short="Amber">Amber</button>
-          <button type="button" data-theme="cga" data-short="CGA">CGA</button>
+      <div id="game-stage">
+        <div id="controls">
+          <div class="grp" id="themes">
+            <button type="button" data-theme="hercules" data-short="Green">Green</button>
+            <button type="button" data-theme="amber" data-short="Amber">Amber</button>
+            <button type="button" data-theme="cga" data-short="CGA">CGA</button>
+          </div>
+          <div class="grp">
+            <button type="button" id="mute" data-short="Sound">Sound: on</button>
+            <button type="button" id="fs" data-short="Full">Fullscreen</button>
+          </div>
         </div>
-        <div class="grp">
-          <button type="button" id="mute" data-short="Sound">Sound: on</button>
-          <button type="button" id="fs" data-short="Full">Fullscreen</button>
-        </div>
-      </div>
-      <div id="bezel">
-        <div id="tube">
-          <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
-          <div id="glass" aria-hidden="true"></div>
-          <div id="power" aria-hidden="true"></div>
-        </div>
-        <div id="panel" aria-hidden="true">
-          <span class="logo">Acme Corporation</span>
-          <span class="led"></span>
-          <span class="knobs"><i></i><i></i></span>
+        <div id="bezel">
+          <div id="tube">
+            <canvas id="screen" width="640" height="384" role="img" aria-label="Sneekie game screen"></canvas>
+            <div id="glass" aria-hidden="true"></div>
+            <div id="power" aria-hidden="true"></div>
+          </div>
+          <div id="panel" aria-hidden="true">
+            <span class="logo">Acme Corporation</span>
+            <span class="led"></span>
+            <span class="knobs"><i></i><i></i></span>
+          </div>
         </div>
       </div>
       <div class="speedbar">
