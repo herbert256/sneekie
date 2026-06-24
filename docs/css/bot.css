@@ -103,8 +103,8 @@
   gap:8px;
   justify-content:space-between;
   align-items:center;
-  width:min(584px, calc(100vw - 80px));
-  max-width:100%;
+  width:100%;
+  max-width:632px;
   margin:22px auto 0;
 }
 .page-bot #controls .grp{ display:flex; flex-wrap:wrap; gap:6px; }
