@@ -196,28 +196,60 @@
 @media (max-width:900px){
   .page-bot .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
 }
-@media (pointer:coarse), (max-width:520px){
-  .page-bot #controls{
-    display:grid;
-    grid-template-columns:repeat(5, minmax(0, 1fr));
-    gap:4px;
-    align-items:stretch;
+@media (max-width:640px){
+  /* Mobile: drop the CRT monitor frame and run the game screen edge-to-edge,
+     matching the landing page (index.html) preview. */
+  .page-bot{ overflow-x:hidden; }
+  .page-bot #bezel{
+    width:100vw;
+    max-width:none;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+    padding:0;
+    background:none;
+    border-radius:0;
+    box-shadow:none;
   }
-  .page-bot #controls .grp{ display:contents; }
+  .page-bot #tube{
+    width:100%;
+    padding:0;
+    background:none;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .page-bot #screen{
+    border-radius:0;
+    box-shadow:none;
+  }
+  .page-bot #tube.stuck-red::after,
+  .page-bot #tube.clear-green::after{
+    inset:0;
+    border-radius:0;
+  }
+}
+@media (pointer:coarse), (max-width:520px){
+  /* Smaller controls that keep their full labels, matching game.html's mobile
+     buttons (flex-wrap, not the old abbreviated 5-column grid). */
+  .page-bot #controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    justify-content:center;
+  }
+  .page-bot #controls .grp{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:5px;
+  }
   .page-bot #controls .grp:last-child{ margin-left:0; }
   .page-bot #controls button{
     min-width:0;
-    width:100%;
     min-height:32px;
-    padding:8px 4px;
-    font-size:0;
-    letter-spacing:0;
-    white-space:nowrap;
-  }
-  .page-bot #controls button::before{
-    content:attr(data-short);
+    padding:8px 6px;
     font-size:10px;
-    letter-spacing:.04em;
+    letter-spacing:.055em;
+    white-space:nowrap;
   }
 }
 @media (max-width:520px){
