@@ -164,6 +164,16 @@ const cdesc = d => d===32 ? vt('vramEmpty') : d===3 ? vt('vramHeart') :
   d===HEAD ? vt('vramSnakeHead') : SNAKE.has(d) ? vt('vramSnakeBody') :
   WALLSET.has(d) ? vt('vramWall') : vt('vramSpace');
 
+/* a direction the snake could actually take: open floor, a pickup, or a stone with room to slide */
+function canMove(dir){
+  const A = T[BTEL] + D[dir].d, d = peek(A);
+  if(d === 32 || d === 3 || d === 5 || d === 1) return true;     // floor or a pickup
+  if(d === 10) return peek(A + D[dir].d) === 32;                 // a stone we can shove
+  return false;                                                  // wall, body, immovable stone, arrow
+}
+/* really stuck = nowhere left to go; only then do we restart (apart from arrow hits) */
+function isStuck(){ return !['U','R','D','L'].some(canMove); }
+
 function move(dir){
   if(dead) return;
   const E = dir, F = DIR, A = T[BTEL] + D[dir].d;
@@ -199,8 +209,10 @@ function move(dir){
     ops.push(['poke', A, HEAD, vt('vramDrawHead')]);
     DIR = E; FDIR = E;
   }
+  const stuck = !moved && isStuck();                            // a wall/stone bump only kills when there's nowhere left to go
+  if(stuck) ops.push(['blk', vt('vramStuck'), '', '']);
   render(); logMove({dir, grow}, ops);
-  if(!moved) failAndRestart();
+  if(stuck) failAndRestart();
   if(hearts === 0 && !heartsBannerShown){ heartsBannerShown = true; setTimeout(() => log.insertAdjacentHTML('beforeend','<div class="mv">' + vt('vramAllHearts') + '</div>') , 10); }
 }
 
