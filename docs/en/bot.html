@@ -66,13 +66,13 @@
       </p>
       <div id="controls">
         <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Green</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="cga">CGA</button>
+          <button type="button" data-theme="hercules" data-short="Green">Green</button>
+          <button type="button" data-theme="amber" data-short="Amber">Amber</button>
+          <button type="button" data-theme="cga" data-short="CGA">CGA</button>
         </div>
         <div class="grp">
-          <button type="button" id="mute">Sound: on</button>
-          <button type="button" id="fs">Fullscreen</button>
+          <button type="button" id="mute" data-short="Sound">Sound: on</button>
+          <button type="button" id="fs" data-short="Full">Fullscreen</button>
         </div>
       </div>
       <div id="bezel">
@@ -107,6 +107,8 @@
     <script>window.SNEEKIE_TEXT = {
       "soundOn": "Sound: on",
       "soundOff": "Sound: off",
+      "soundShortOn": "Sound",
+      "soundShortOff": "Mute",
       "botLoading": "One moment - Loading bot code"
     };</script>
     <script src="../js/site.js"></script>

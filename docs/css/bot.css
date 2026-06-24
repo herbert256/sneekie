@@ -196,6 +196,30 @@
 @media (max-width:900px){
   .page-bot .leveltabs{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
 }
+@media (pointer:coarse), (max-width:520px){
+  .page-bot #controls{
+    display:grid;
+    grid-template-columns:repeat(5, minmax(0, 1fr));
+    gap:4px;
+    align-items:stretch;
+  }
+  .page-bot #controls .grp{ display:contents; }
+  .page-bot #controls .grp:last-child{ margin-left:0; }
+  .page-bot #controls button{
+    min-width:0;
+    width:100%;
+    min-height:32px;
+    padding:8px 4px;
+    font-size:0;
+    letter-spacing:0;
+    white-space:nowrap;
+  }
+  .page-bot #controls button::before{
+    content:attr(data-short);
+    font-size:10px;
+    letter-spacing:.04em;
+  }
+}
 @media (max-width:520px){
   .page-bot .lead{ font-size:16px; text-align:left; }
   .page-bot #controls{ margin-top:18px; }

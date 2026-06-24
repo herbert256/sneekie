@@ -1418,7 +1418,12 @@ function gameUiText(key){
   const pageText = window.SNEEKIE_TEXT || {};
   return pageText[key] || gt(key);
 }
-function paintMute(){ muteBtn.textContent = muted ? gameUiText('soundOff') : gameUiText('soundOn'); }
+function paintMute(){
+  const pageText = window.SNEEKIE_TEXT || {};
+  muteBtn.textContent = muted ? gameUiText('soundOff') : gameUiText('soundOn');
+  const shortKey = muted ? 'soundShortOff' : 'soundShortOn';
+  if(Object.prototype.hasOwnProperty.call(pageText, shortKey)) muteBtn.dataset.short = pageText[shortKey];
+}
 muteBtn.addEventListener('click', () => {
   ensureAudio();
   muted = !muted;

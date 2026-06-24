@@ -64,13 +64,13 @@
       <p class="lead">Dit is geen opname. Het <em>echte</em> spel uit 1988 draait live terwijl een bot de vroege levels 2-8 speelt: pijlen, stenen, smileys en een slang die groeit terwijl hij eet. Hij leest het scherm, plant een veilige route, ruimt het bord op wanneer dat kan, en probeert opnieuw wanneer het doolhof wint.</p>
       <div id="controls">
         <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Groen</button>
-          <button type="button" data-theme="amber">Amber</button>
-          <button type="button" data-theme="cga">CGA</button>
+          <button type="button" data-theme="hercules" data-short="Groen">Groen</button>
+          <button type="button" data-theme="amber" data-short="Amber">Amber</button>
+          <button type="button" data-theme="cga" data-short="CGA">CGA</button>
         </div>
         <div class="grp">
-          <button type="button" id="mute">Geluid: aan</button>
-          <button type="button" id="fs">Volledig scherm</button>
+          <button type="button" id="mute" data-short="Geluid">Geluid: aan</button>
+          <button type="button" id="fs" data-short="Vol.">Volledig scherm</button>
         </div>
       </div>
       <div id="bezel">
@@ -105,6 +105,8 @@
     <script>window.SNEEKIE_TEXT = {
       "soundOn": "Geluid: aan",
       "soundOff": "Geluid: uit",
+      "soundShortOn": "Geluid",
+      "soundShortOff": "Stil",
       "botLoading": "Even geduld - botcode laden"
     };</script>
     <script src="../js/site.js"></script>

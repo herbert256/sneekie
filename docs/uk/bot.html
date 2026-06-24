@@ -64,13 +64,13 @@
       <p class="lead">Це не запис. <em>Справжня</em> гра 1988 року працює наживо, поки бот грає ранні рівні 2-8: стріли, камені, смайлики і змія, що росте, коли їсть. Він читає екран, планує безпечний маршрут, очищає поле, коли може, і пробує знову, коли лабіринт перемагає.</p>
       <div id="controls">
         <div class="grp" id="themes">
-          <button type="button" data-theme="hercules">Зелений</button>
-          <button type="button" data-theme="amber">Бурштин</button>
-          <button type="button" data-theme="cga">CGA</button>
+          <button type="button" data-theme="hercules" data-short="Зел.">Зелений</button>
+          <button type="button" data-theme="amber" data-short="Бурш.">Бурштин</button>
+          <button type="button" data-theme="cga" data-short="CGA">CGA</button>
         </div>
         <div class="grp">
-          <button type="button" id="mute">Звук: увімкнено</button>
-          <button type="button" id="fs">На весь екран</button>
+          <button type="button" id="mute" data-short="Звук">Звук: увімкнено</button>
+          <button type="button" id="fs" data-short="Екран">На весь екран</button>
         </div>
       </div>
       <div id="bezel">
@@ -105,6 +105,8 @@
     <script>window.SNEEKIE_TEXT = {
       "soundOn": "Звук: увімкнено",
       "soundOff": "Звук: вимкнено",
+      "soundShortOn": "Звук",
+      "soundShortOff": "Тихо",
       "botLoading": "Хвилинку - завантаження коду бота"
     };</script>
     <script src="../js/site.js"></script>
