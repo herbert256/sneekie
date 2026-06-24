@@ -183,3 +183,70 @@
 .page-vram .log .blk{ color:var(--red); }
 
 .page-vram button:hover{ color:var(--accent); border-color:var(--accent); }
+
+/* ---- CP437 font explorer (the second half of the page) ---- */
+.page-vram .font-explorer{
+  margin-top:48px;
+  padding-top:36px;
+  border-top:1px solid var(--border);
+}
+.page-vram .fontwrap{
+  display:flex;
+  gap:22px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  margin-top:22px;
+}
+.page-vram .fontgrid-panel{ flex:0 1 auto; max-width:100%; }
+.page-vram .glyph-panel{ flex:1 1 320px; min-width:0; }
+.page-vram canvas#fontgrid{
+  display:block;
+  width:min(100%, 384px);
+  height:auto;
+  background:#000;
+  border-radius:4px;
+  image-rendering:pixelated;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.page-vram canvas#fontgrid:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+.page-vram .glyph-detail{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.page-vram canvas#glyphbig{
+  flex:0 0 auto;
+  width:96px;
+  height:192px;       /* 64x128 internal, scaled up and kept pixelated */
+  background:#000;
+  border-radius:4px;
+  image-rendering:pixelated;
+}
+.page-vram .glyph-meta{
+  margin:0;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:5px 12px;
+  align-content:start;
+  font-size:13px;
+}
+.page-vram .glyph-meta dt{ color:var(--muted); }
+.page-vram .glyph-meta dd{ margin:0; color:var(--heading); font-family:ui-monospace, monospace; }
+.page-vram .glyph-bytes-title{
+  margin:16px 0 6px;
+  color:var(--muted);
+  font:600 11px/1 ui-monospace, monospace;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.page-vram .glyph-bytes{
+  font:12px/1.4 ui-monospace, monospace;
+  white-space:nowrap;
+  overflow-x:auto;
+}
+.page-vram .glyph-bytes .bh{ color:var(--muted); margin-right:6px; }
+.page-vram .glyph-bytes i{ font-style:normal; }
+.page-vram .glyph-bytes .on{ color:var(--accent); }
+.page-vram .glyph-bytes .off{ color:var(--border); }

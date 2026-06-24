@@ -106,6 +106,30 @@
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="PEEK- en POKE-stralen halen 3D-harten, klavers, pijlen, stenen en slangdelen uit videogeheugen." />
       </figure>
+      <section class="font-explorer" aria-labelledby="font-title">
+        <h2 id="font-title" class="page-title">De tekens achter de bytes</h2>
+        <p class="lead">Elk teken dat je net zag bewegen &mdash; de slang, de muren, het <em>hart</em> &mdash; is één van de <strong>256 tekens</strong> die in hetzelfde IBM&nbsp;VGA <strong>8&times;16</strong> ROM-font zitten waarmee de game tekent. Elk teken is <em>16 bytes</em>, en elke byte is één rij van 8 pixels: een bit dat aan staat licht een pixel op. Dat hele font zit ingebakken in <code>game.js</code>. De <strong>gekleurde</strong> tekens zijn degene die Sneekie echt in het videogeheugen poket &mdash; beweeg over of tik op een cel om hem te ontleden.</p>
+        <div class="fontwrap">
+          <div class="panel fontgrid-panel">
+            <div class="ptitle">CP437 &mdash; alle 256 tekens</div>
+            <canvas id="fontgrid" tabindex="0" role="img" aria-label="De 256 CP437-tekens van het IBM VGA 8x16 ROM-font; kies er een met de pijltjestoetsen"></canvas>
+          </div>
+          <div class="panel glyph-panel">
+            <div class="ptitle">Ontleed een teken</div>
+            <div class="glyph-detail">
+              <canvas id="glyphbig" role="img" aria-label="Het gekozen teken, vergroot"></canvas>
+              <dl class="glyph-meta">
+                <dt>Code</dt><dd id="g-dec">&mdash;</dd>
+                <dt>Hex</dt><dd id="g-hex">&mdash;</dd>
+                <dt>Teken</dt><dd id="g-uni">&mdash;</dd>
+                <dt>In Sneekie</dt><dd id="g-role">&mdash;</dd>
+              </dl>
+            </div>
+            <div class="glyph-bytes-title">16 bytes &rarr; 16 rijen pixels</div>
+            <div class="glyph-bytes" id="g-bytes"></div>
+          </div>
+        </div>
+      </section>
     </main>
     <footer>
       Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Origineel: GW-BASIC, 80&times;25 tekstmodus, met POKE direct in het videogeheugen.<br>Browserversie: juni 2026.
@@ -141,7 +165,8 @@
       "vramAllHearts": "&#9733; alle harten verzameld!",
       "vramDead": "&#10007; een bewegende pijl ving de slang &mdash; herstart.",
       "vramStuck": "&#10007; de slang zit volledig klem &mdash; herstart.",
-      "vramMove": "zet "
+      "vramMove": "zet ",
+      "vramFontUnused": "&mdash; niet gebruikt door Sneekie"
     };</script>
     <script src="../js/site.js"></script>
     <script src="../js/vram.js"></script>

@@ -106,6 +106,30 @@
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="PEEK and POKE beams pulling 3D hearts, clubs, arrows, stones, and snake segments from video memory." />
       </figure>
+      <section class="font-explorer" aria-labelledby="font-title">
+        <h2 id="font-title" class="page-title">The glyphs behind the bytes</h2>
+        <p class="lead">Every character you just watched move &mdash; the snake, the walls, the <em>heart</em> &mdash; is one of <strong>256 glyphs</strong> baked into the same IBM&nbsp;VGA <strong>8&times;16</strong> ROM font the game draws with. Each glyph is <em>16 bytes</em>, and each byte is one row of 8 pixels: a bit that is on lights a pixel. That whole font is embedded right in <code>game.js</code>. The <strong>coloured</strong> glyphs are the ones Sneekie actually pokes into video memory &mdash; hover or tap any cell to take it apart.</p>
+        <div class="fontwrap">
+          <div class="panel fontgrid-panel">
+            <div class="ptitle">CP437 &mdash; all 256 glyphs</div>
+            <canvas id="fontgrid" tabindex="0" role="img" aria-label="The 256 CP437 glyphs of the IBM VGA 8x16 ROM font; use the arrow keys to choose one"></canvas>
+          </div>
+          <div class="panel glyph-panel">
+            <div class="ptitle">Take a glyph apart</div>
+            <div class="glyph-detail">
+              <canvas id="glyphbig" role="img" aria-label="The selected glyph, enlarged"></canvas>
+              <dl class="glyph-meta">
+                <dt>Code</dt><dd id="g-dec">&mdash;</dd>
+                <dt>Hex</dt><dd id="g-hex">&mdash;</dd>
+                <dt>Character</dt><dd id="g-uni">&mdash;</dd>
+                <dt>In Sneekie</dt><dd id="g-role">&mdash;</dd>
+              </dl>
+            </div>
+            <div class="glyph-bytes-title">16 bytes &rarr; 16 rows of pixels</div>
+            <div class="glyph-bytes" id="g-bytes"></div>
+          </div>
+        </div>
+      </section>
     </main>
     <footer>
       Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Original: GW-BASIC, 80&times;25 text mode, POKEs straight into video memory.<br>Browser version: June 2026.
@@ -141,7 +165,8 @@
       "vramAllHearts": "&#9733; all hearts collected!",
       "vramDead": "&#10007; a moving arrow caught the snake &mdash; restarting.",
       "vramStuck": "&#10007; the snake is boxed in &mdash; restarting.",
-      "vramMove": "move "
+      "vramMove": "move ",
+      "vramFontUnused": "&mdash; not used by Sneekie"
     };</script>
     <script src="../js/site.js"></script>
     <script src="../js/vram.js"></script>

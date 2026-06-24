@@ -106,6 +106,30 @@
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/vram-closing.webp" alt="Промені PEEK і POKE витягують із відеопамʼяті 3D-серця, трефи, стріли, камені й частини змії." />
       </figure>
+      <section class="font-explorer" aria-labelledby="font-title">
+        <h2 id="font-title" class="page-title">Гліфи за байтами</h2>
+        <p class="lead">Кожен символ, який щойно рухався &mdash; змійка, стіни, <em>серце</em> &mdash; це один із <strong>256 гліфів</strong>, вбудованих у той самий ROM-шрифт IBM&nbsp;VGA <strong>8&times;16</strong>, яким малює гра. Кожен гліф &mdash; це <em>16 байтів</em>, і кожен байт &mdash; це один рядок із 8 пікселів: увімкнений біт запалює піксель. Увесь цей шрифт вбудовано просто в <code>game.js</code>. <strong>Кольорові</strong> гліфи &mdash; ті, що Sneekie справді записує у відеопамʼять &mdash; наведіть або торкніться будь-якої клітинки, щоб розібрати її.</p>
+        <div class="fontwrap">
+          <div class="panel fontgrid-panel">
+            <div class="ptitle">CP437 &mdash; усі 256 гліфів</div>
+            <canvas id="fontgrid" tabindex="0" role="img" aria-label="256 гліфів CP437 ROM-шрифту IBM VGA 8x16; оберіть один за допомогою стрілок"></canvas>
+          </div>
+          <div class="panel glyph-panel">
+            <div class="ptitle">Розберіть гліф</div>
+            <div class="glyph-detail">
+              <canvas id="glyphbig" role="img" aria-label="Обраний гліф, збільшений"></canvas>
+              <dl class="glyph-meta">
+                <dt>Код</dt><dd id="g-dec">&mdash;</dd>
+                <dt>Hex</dt><dd id="g-hex">&mdash;</dd>
+                <dt>Символ</dt><dd id="g-uni">&mdash;</dd>
+                <dt>У Sneekie</dt><dd id="g-role">&mdash;</dd>
+              </dl>
+            </div>
+            <div class="glyph-bytes-title">16 байтів &rarr; 16 рядків пікселів</div>
+            <div class="glyph-bytes" id="g-bytes"></div>
+          </div>
+        </div>
+      </section>
     </main>
     <footer>
       Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.
@@ -141,7 +165,8 @@
       "vramAllHearts": "&#9733; усі серця зібрано!",
       "vramDead": "&#10007; рухома стріла спіймала змію &mdash; перезапуск.",
       "vramStuck": "&#10007; змія повністю застрягла &mdash; перезапуск.",
-      "vramMove": "хід "
+      "vramMove": "хід ",
+      "vramFontUnused": "&mdash; не використовується у Sneekie"
     };</script>
     <script src="../js/site.js"></script>
     <script src="../js/vram.js"></script>

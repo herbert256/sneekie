@@ -326,3 +326,100 @@ cv.addEventListener('touchend', e => {
 document.getElementById('reset').addEventListener('click', () => init());
 
 init();
+
+/* ================================================================= *
+ *  CP437 font explorer — the second half of the page.
+ *  Same IBM VGA 8x16 ROM font the game draws with (FONT, above):
+ *  256 glyphs, each 16 bytes, each byte one row of 8 pixels.
+ * ================================================================= */
+(function fontExplorer(){
+  const grid = document.getElementById('fontgrid');
+  if(!grid) return;                                              // page without the explorer — do nothing
+  const gctx = grid.getContext('2d');
+  const big  = document.getElementById('glyphbig'), bctx = big.getContext('2d');
+  const gDec = document.getElementById('g-dec'),  gHex = document.getElementById('g-hex');
+  const gUni = document.getElementById('g-uni'),  gRole = document.getElementById('g-role');
+  const gBytes = document.getElementById('g-bytes');
+
+  const COLS = 16, ROWS = 16, CW = 24, CH = 34, GS = 2;         // 16x16 grid; glyph scaled x2
+  grid.width = COLS * CW; grid.height = ROWS * CH;              // 384 x 544
+  const BS = 8;                                                 // big-preview pixel size -> 64 x 128
+  big.width = 8 * BS; big.height = 16 * BS;
+
+  /* CP437 -> Unicode, only for the "character" readout; the glyphs themselves come from the ROM. */
+  const CP437_LOW = ' ☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼';
+  const CP437_HIGH =
+    'ÇüéâäàåçêëèïîìÄÅ' + 'ÉæÆôöòûùÿÖÜ¢£¥₧ƒ' + 'áíóúñÑªº¿⌐¬½¼¡«»' +
+    '░▒▓│┤╡╢╖╕╣║╗╝╜╛┐' + '└┴┬├─┼╞╟╚╔╩╦╠═╬╧' + '╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀' +
+    'αßΓπΣσµτΦΘΩδ∞φε∩' + '≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ';
+  const cp437 = code => code === 127 ? '⌂' : code < 32 ? CP437_LOW[code] :
+    code < 127 ? String.fromCharCode(code) : CP437_HIGH[code - 128];
+
+  /* the codes the game actually pokes into video memory — drawn in their game colour */
+  const GAME = new Set([32, 1, 3, 5, 10, 24, 25, 26, 27, ...SNAKE, ...WALLSET]);
+  const hex2 = n => n.toString(16).toUpperCase().padStart(2, '0');
+
+  let sel = 3, hov = null;                                       // a ♥ selected to start
+
+  function outlineCell(code, color){
+    const x = (code % COLS) * CW, y = ((code / COLS) | 0) * CH;
+    gctx.strokeStyle = color; gctx.lineWidth = 2;
+    gctx.strokeRect(x + 1, y + 1, CW - 2, CH - 2);
+  }
+  function drawGrid(){
+    gctx.fillStyle = getCss('--codebg'); gctx.fillRect(0, 0, grid.width, grid.height);
+    for(let code = 0; code < 256; code++){
+      const gc = colorOf(code);                                 // a game colour, or null for the rest
+      gctx.fillStyle = gc || getCss('--green');
+      gctx.globalAlpha = gc ? 1 : 0.5;                          // unused glyphs sit back in dim phosphor
+      const bx = (code % COLS) * CW + (CW - 16) / 2, by = ((code / COLS) | 0) * CH + (CH - 32) / 2;
+      for(let r = 0; r < 16; r++){ const bits = FONT[code * 16 + r];
+        for(let c = 0; c < 8; c++) if(bits & (0x80 >> c)) gctx.fillRect(bx + c * GS, by + r * GS, GS, GS); }
+    }
+    gctx.globalAlpha = 1;
+    gctx.strokeStyle = getCss('--border'); gctx.lineWidth = 1;
+    for(let i = 0; i <= COLS; i++){ const x = i * CW + .5; gctx.beginPath(); gctx.moveTo(x, 0); gctx.lineTo(x, grid.height); gctx.stroke(); }
+    for(let i = 0; i <= ROWS; i++){ const y = i * CH + .5; gctx.beginPath(); gctx.moveTo(0, y); gctx.lineTo(grid.width, y); gctx.stroke(); }
+    if(hov != null && hov !== sel) outlineCell(hov, getCss('--wall'));
+    outlineCell(sel, getCss('--accent'));
+  }
+  function drawBig(code){
+    bctx.fillStyle = getCss('--codebg'); bctx.fillRect(0, 0, big.width, big.height);
+    bctx.fillStyle = colorOf(code) || getCss('--green');
+    for(let r = 0; r < 16; r++){ const bits = FONT[code * 16 + r];
+      for(let c = 0; c < 8; c++) if(bits & (0x80 >> c)) bctx.fillRect(c * BS, r * BS, BS, BS); }
+  }
+  function show(code){
+    drawBig(code);
+    gDec.textContent = code;
+    gHex.textContent = '0x' + hex2(code);
+    const ch = cp437(code) || ' ';
+    gUni.textContent = ch + '  U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
+    gRole.innerHTML = GAME.has(code) ? cdesc(code) : vt('vramFontUnused');
+    let rows = '';
+    for(let r = 0; r < 16; r++){ const b = FONT[code * 16 + r]; let bits = '';
+      for(let c = 0; c < 8; c++) bits += (b & (0x80 >> c)) ? '<i class="on">&#9608;</i>' : '<i class="off">&middot;</i>';
+      rows += '<div><span class="bh">0x' + hex2(b) + '</span> ' + bits + '</div>'; }
+    gBytes.innerHTML = rows;
+  }
+  function setHov(code){ if(hov === code) return; hov = code; drawGrid(); show(hov ?? sel); }
+  function setSel(code){ sel = code; hov = null; drawGrid(); show(sel); }
+
+  function codeFromEvent(e){
+    const rect = grid.getBoundingClientRect();
+    const c = Math.floor((e.clientX - rect.left) / (rect.width / COLS));
+    const r = Math.floor((e.clientY - rect.top) / (rect.height / ROWS));
+    return (c < 0 || c >= COLS || r < 0 || r >= ROWS) ? null : r * COLS + c;
+  }
+  grid.addEventListener('mousemove', e => { const code = codeFromEvent(e); if(code != null) setHov(code); });
+  grid.addEventListener('mouseleave', () => { if(hov !== null){ hov = null; drawGrid(); show(sel); } });
+  grid.addEventListener('click', e => { const code = codeFromEvent(e); if(code != null) setSel(code); });
+  grid.addEventListener('keydown', e => {                        // arrow keys when the grid is focused
+    const d = { ArrowLeft:-1, ArrowRight:1, ArrowUp:-COLS, ArrowDown:COLS }[e.key];
+    if(d == null) return;
+    e.preventDefault(); e.stopPropagation();                    // don't let the snake demo grab them
+    setSel(Math.max(0, Math.min(255, sel + d)));
+  });
+
+  drawGrid(); show(sel);
+})();
