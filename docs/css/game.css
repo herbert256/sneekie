@@ -386,8 +386,8 @@
     max-width:100%;
   }
   .page-index #game-toolbar{
-    flex-wrap:nowrap;
-    gap:5px;
+    flex-wrap:wrap;
+    gap:6px 8px;
     align-items:center;
     justify-content:space-between;
     margin-bottom:8px;
@@ -427,26 +427,30 @@
   .page-index #panel .knobs i{ width:12px; height:12px; }
   .page-index #themes{
     width:auto;
-    flex:0 0 auto;
+    max-width:100%;
+    flex:0 1 auto;
     flex-wrap:nowrap;
-    gap:3px;
+    gap:5px;
     padding:0;
   }
   .page-index #controls{
     width:auto;
+    max-width:100%;
     min-width:0;
     flex:0 1 auto;
-    gap:3px;
-    justify-content:flex-end;
+    gap:5px;
+    justify-content:center;
     margin:0;
     padding:0;
   }
   .page-index #controls .grp{
     width:auto;
+    max-width:100%;
     min-width:0;
     display:flex;
-    flex-wrap:nowrap;
-    gap:3px;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:5px;
   }
   .page-index button{
     min-width:0;
@@ -456,12 +460,13 @@
     min-height:32px;
   }
   .page-index #game-toolbar button{
-    padding:6px 2px;
-    font-size:8.5px;
+    flex:0 0 auto;
+    padding:8px 6px;
+    font-size:9.5px;
     line-height:1;
-    letter-spacing:0;
+    letter-spacing:.015em;
     white-space:nowrap;
-    min-height:26px;
+    min-height:32px;
   }
   .page-index #hint{
     margin-top:7px;
