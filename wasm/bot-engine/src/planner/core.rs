@@ -281,7 +281,7 @@ impl Planner {
     }
 
     pub(super) fn few(&self) -> bool {
-        self.items <= 6
+        self.items <= 10
     }
 
     pub(super) fn finish_dist_penalty(&self) -> i64 {
@@ -295,7 +295,7 @@ impl Planner {
         if !self.few() || self.bonus <= 0 {
             return 0;
         }
-        let item_factor = (7 - self.items.clamp(1, 6)) as i64; // 1 (6 left) .. 6 (1 left)
+        let item_factor = (11 - self.items.clamp(1, 10)) as i64; // 1 (10 left) .. 10 (1 left)
         self.bonus as i64 / 100 * item_factor / 6
     }
 
