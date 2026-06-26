@@ -27,9 +27,9 @@ https://sneekie.xyz/.
   standard static header/footer chrome, a hero "play" section whose CRT image links to the
   matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
   `css/site.css` and `css/index.css`; there is no `js/index.js`. The live bot preview scripts
-  (`game.js`, `bot-home.js`, and `bot.js`) are lazy-loaded from inline code after the page is
-  loaded/idle. The index preview runs the JavaScript planner only (`bot-home.js`); the
-  WebAssembly bot (`bot-engine.js`) is not loaded here. Keep the inline service-worker cleanup
+  (`game.js`, `bot-engine.js`, and `bot.js`) are lazy-loaded from inline code after the page is
+  loaded/idle. The index preview runs the same Rust/WebAssembly bot (`bot-engine.js`) as the Bot
+  page, in passive preview mode. Keep the inline service-worker cleanup
   and JSON-LD structured-data block inline.
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
   `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
@@ -88,20 +88,20 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
 - `docs/<lang>/bot.html` - the **Live bot** demo. It hosts the real game in the
-  SAME page (no iframe, so it works from `file://`): it loads `../css/game.css` + `../js/game.js`
+  SAME page (no iframe): it loads `../css/game.css` + `../js/game.js`
   (which render the game into `#screen`), sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot
-  animation, then loads the planners and the driver. `bot-home.js` is the JavaScript planner
-  (`window.SneekieBotJs`), `bot-engine.js` loads the Rust/WebAssembly planner
-  (`window.SneekieBotWasm`, backed by `bot-engine.wasm`), and `bot.js` is the driver: it reads
-  `game.js`'s globals directly, prefers the Wasm planner and falls back to the JS planner when
-  WebAssembly is unavailable (e.g. on `file://`), and steers via `pushKey()`. Level
+  animation, then loads the planner and the driver. `bot-engine.js` loads the Rust/WebAssembly
+  planner (`window.SneekieBotWasm`, backed by `bot-engine.wasm`), and `bot.js` is the driver: it
+  reads `game.js`'s globals directly, waits for the Wasm planner before driving, and steers via
+  `pushKey()`. The Wasm bot needs http(s); when WebAssembly cannot load (e.g. on `file://`) the
+  bot stays idle. Level
   tabs (26-32) jump the bot into a maze; a speed slider sets the pace. Body class is
   `page-index page-bot` (the game styling comes from `.page-index`; `bot.css` only adds the
-  lead/speed/tabs/note). The page links to `bot-thinking.html`. Keep the planners
-  (`bot-home.js` + `bot-engine.js`) and the driver (`bot.js`) in sync with `bot-thinking.html`.
+  lead/speed/tabs/note). The page links to `bot-thinking.html`. Keep the planner
+  (`bot-engine.js`) and the driver (`bot.js`) in sync with `bot-thinking.html`.
 - `docs/<lang>/bot-thinking.html` - static prose explaining how that bot plans (no runtime JS).
-  It is linked only from `bot.html`, not from the nav. Keep it in sync with the planners in
-  `docs/js/bot-home.js` and `docs/js/bot-engine.js` (and the driver in `docs/js/bot.js`) when
+  It is linked only from `bot.html`, not from the nav. Keep it in sync with the planner in
+  `docs/js/bot-engine.js` (and the driver in `docs/js/bot.js`) when
   planner behavior changes. (CSS class is `.page-bot-thinking`.)
 - `docs/<lang>/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.

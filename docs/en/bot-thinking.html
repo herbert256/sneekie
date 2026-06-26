@@ -58,7 +58,7 @@
     </header>
     <main id="main" tabindex="-1">
       <h1 class="page-title">How the bot thinks</h1>
-      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, a small worker pool when the browser exposes spare cores, and a thin driver in <code>bot.js</code> in the same page. The landing pages still use the separate JavaScript planner in <code>bot-home.js</code> for passive previews, but the Bot page waits for WebAssembly before it drives the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
+      <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, a small worker pool when the browser exposes spare cores, and a thin driver in <code>bot.js</code> in the same page. The landing-page previews load the same Rust/WebAssembly planner, and like the Bot page they wait for WebAssembly before driving the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
@@ -108,8 +108,8 @@
         <h2>1. Where the bot runs</h2>
         <p>The bot page hosts the real game directly. It loads <code>game.js</code>, then <code>bot-engine.js</code> (the WebAssembly planner and worker coordinator), then <code>bot.js</code>. The driver waits until <code>bot-engine.wasm</code> is ready before pressing a move. It still handles tabs, restarts, speed, and key presses:</p>
         <pre><code>const stalled = idle &gt; 120 || (idle &gt; 24 &amp;&amp; repeats &gt;= 3);
-const fallbackRandom = stalled || movesSincePickup &gt;= 250;
-let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget() });
+const forceRisk = stalled || movesSincePickup &gt;= 250;
+let sc = await planner.decide({ idle, looping, headTrail, budgetMs: routeBudget(forceRisk), forceRisk });
 if(sc === null) sc = randomLegalScancode();   // planner gave up or a safeguard tripped
 if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt; stuck flash</code></pre>
         <p>That placement is deliberate. The game uses <code>const</code> and <code>let</code> globals such as <code>T</code>, <code>BTEL</code>, <code>ETEL</code>, <code>LEVEL</code>, <code>HART</code>, <code>KLAVER</code>, and <code>pushKey()</code>. Those names are visible to scripts running in the same page, but they are not ordinary <code>window</code> properties. Keeping the bot in the same script realm lets it call <code>peek()</code>, read <code>T[BTEL]</code>, and press keys through <code>pushKey()</code> as if it were part of the page.</p>
@@ -181,7 +181,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
           </tbody>
         </table>
-        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. When workers are available, each worker owns its own WebAssembly instance and receives the same snapshot, so it can think without sharing mutable game state. The JavaScript planner in <code>bot-home.js</code> is kept for the landing-page previews only. For simulated routes, the Rust planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
+        <p>At the start of each decision, <code>bot-engine.js</code> copies the CP437 character bytes, the snake offsets from <code>T</code>, the arrow enemy table <code>D</code>, and the recent head-position trail into fixed WebAssembly memory buffers. When workers are available, each worker owns its own WebAssembly instance and receives the same snapshot, so it can think without sharing mutable game state. For simulated routes, the Rust planner records only changes caused by imaginary moves, such as a pushed stone or an emptied tail cell, instead of cloning the whole VRAM array for every branch.</p>
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
@@ -240,7 +240,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
     : proved ?? (urgent ? pressureStep() : null) ??
       survivalMove() ?? lastChanceMove();
 };</code></pre>
-        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>forceRisk</code> branch shown above is the planner's own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves, all while quadrupling that recent-cell debt so every forced move walks into fresh cells &mdash; but the live driver no longer raises it. After a stall it simply makes a random legal move instead (see &sect;11), so a stall can never push the snake into a fatal risk. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep moving until the snake is really stuck (no legal move at all) or the level clears.</p>
+        <p>The <code>looping</code> flag comes from a short head-position trail. The WebAssembly planner also receives that trail directly, so simulated routes that walk back over hot recent cells pay a memory debt unless they make food progress or preserve tail access. If the current head offset has appeared repeatedly while the score has not changed, the bot treats tail-following as suspicious and switches to food pressure. The <code>forceRisk</code> branch shown above is the planner's own escape ladder &mdash; the most aggressive food grab, the stone-dig pressure step, the long-snake tail-follow, then the local survival moves, all while quadrupling that recent-cell debt so every forced move walks into fresh cells. The live driver raises that branch when the snake stalls or goes too long without a real pickup, giving the Wasm planner a larger budget before random fallback is considered. The <code>breathingMove()</code> gate is different: it runs before distant food routes when the current region is cramped, and it values tail reach, exits, and survival depth over immediate points. In that constrained mode, a smiley can beat a distant clean pickup if the smiley route keeps a route back to the moving tail. If the proof planners time out or cannot certify a route, <code>pressureStep()</code> chooses a safe immediate move that lowers the distance to reachable food. If even that fails, <code>lastChanceMove()</code> returns the least-bad immediately legal move; bot pages keep moving until the snake is really stuck (no legal move at all) or the level clears.</p>
       </section>
       <section id="danger">
         <h2>4. Arrow danger model</h2>
@@ -408,7 +408,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             <tr>
               <td><code>tailChaseMove()</code></td>
               <td>Long-snake endgame</td>
-              <td>Once the body reaches about 80 cells, it picks the safe move with the deepest guaranteed survival while keeping the tail reachable &mdash; in practice it trails its own tail and fills space rather than sealing itself in. Short snakes skip it.</td>
+              <td>Once the body reaches about 80 cells on open boards, or about 24 cells on cramped maze layouts, it picks the safe move with the deepest guaranteed survival while keeping the tail reachable &mdash; in practice it trails its own tail and fills space rather than sealing itself in. Short snakes skip it.</td>
             </tr>
             <tr>
               <td><code>survivalMove()</code></td>
@@ -510,15 +510,15 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
             <tr>
               <td>No score gain for 120 decisions, or 24 with repeated head positions</td>
-              <td>Stop asking the planner and make a tiered random legal JavaScript move &mdash; preferring an adjacent heart or club, then empty space or a stone push, and a &minus;50 smiley only as a last resort &mdash; so the snake keeps wandering without nibbling smileys for nothing. No risk is forced and no death is triggered.</td>
+              <td>Keep asking the WebAssembly planner, but set <code>forceRisk</code>. That makes recent-cell loop debt much heavier, gives the planner more time, and favors fresh cells, food pressure, stone digging, and return-path-preserving moves. Random legal fallback is used only if the planner returns no move.</td>
             </tr>
             <tr>
               <td>250 moves without eating a heart or club (smileys do not count)</td>
-              <td>The same random-move fallback, so the snake keeps moving instead of orbiting forever on smileys. It is no longer a death or restart trigger.</td>
+              <td>The same <code>forceRisk</code> planner path, so a long dry run becomes a stronger Wasm escape search instead of a restart. It is no longer a death or restart trigger.</td>
             </tr>
           </tbody>
         </table>
-        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps searching rather than reading the quiet score as failure. The separate 250-move pickup cap counts only real food &mdash; a &minus;50 smiley is not progress, so nibbling smileys can no longer keep the cap from tripping &mdash; and when it trips it only switches the bot to random moves, never a death or restart.</p>
+        <p>Score is used for the idle signal instead of item count because late hearts can spawn clubs. Near the end this matters: the last club can require a long route without changing the score, so the bot keeps searching rather than reading the quiet score as failure. The separate 250-move pickup cap counts only real food &mdash; a &minus;50 smiley is not progress, so nibbling smileys can no longer keep the cap from tripping &mdash; and when it trips it only switches the bot into forced Wasm escape planning, never a death or restart.</p>
       </section>
       <section id="limits">
         <h2>12. Limits and tradeoffs</h2>

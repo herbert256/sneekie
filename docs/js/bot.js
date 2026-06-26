@@ -1,11 +1,9 @@
 'use strict';
-/* bot.js — the Live bot driver, running in THIS page (no iframe, so it works from
-   file:// too for the landing-page preview). game.js renders the real game into
-   #screen; the loaded planner turns a compact live snapshot into one scancode.
-   Bot pages load both planners and prefer the Wasm one (bot-engine.js), waiting
-   for it before driving; when WebAssembly cannot load (e.g. from file://) the
-   driver falls back to the JavaScript planner (bot-home.js). Index previews load
-   only the JavaScript planner. This script handles tabs, restarts, speed, and
+/* bot.js — the Live bot driver, running in THIS page (no iframe). game.js renders
+   the real game into #screen; the Wasm planner turns a compact live snapshot into
+   one scancode. The Bot page and the landing-page previews both load bot-engine.js
+   and wait for bot-engine.wasm before driving; when WebAssembly cannot load (e.g.
+   from file://) the bot stays idle. This script handles tabs, restarts, speed, and
    pushKey(). Wrapped in an IIFE so it never redeclares game.js globals. */
 (function(){
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -48,9 +46,9 @@
   const startupAt = now();
   const startupGraceUntil = startupAt + 4000;
   const sleepForTick = started => sleep(Math.max(0, botDelay() - (now() - started)));
-  const routeBudget = () => {
-    const cap = now() < startupGraceUntil ? 10 : 28;
-    return Math.max(8, Math.min(cap, botDelay() * 0.22));
+  const routeBudget = urgent => {
+    const cap = now() < startupGraceUntil ? 10 : urgent ? 42 : 28;
+    return Math.max(8, Math.min(cap, botDelay() * (urgent ? 0.34 : 0.22)));
   };
   const keyOf = {72:' H', 80:' P', 75:' K', 77:' M'};
   const waitingForKey = () =>
@@ -81,12 +79,10 @@
       }
     };
   }
-  // Wire the planner this page loaded. Bot pages now load only the Wasm planner
-  // and wait for bot-engine.wasm before driving; index previews load only the
-  // JavaScript planner so they still work from file://.
+  // Wire the Wasm planner. Both the Bot page and the landing-page previews load
+  // bot-engine.js and wait for bot-engine.wasm before driving.
   function createPlanner(access){
-    const wasm = window.SneekieBotWasm && window.SneekieBotWasm.create(access);
-    return wasm || (window.SneekieBotJs && window.SneekieBotJs.create(access)) || null;
+    return (window.SneekieBotWasm && window.SneekieBotWasm.create(access)) || null;
   }
   const planner = createPlanner({
     now,
@@ -195,7 +191,7 @@
     };
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
-      if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm on the Bot page
+      if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm to load
       loadingStatus.done();
       // game finished (final death or clean win) -> answer "play again", re-target.
       // Checked before the jump below so a tab click can't overwrite LEVEL first.
@@ -282,14 +278,19 @@
       const looping = idle > 20 && repeats >= 2;
       // Two situations used to make the snake give up here: a long run with no
       // real food eaten, or a stall (orbiting with no score gain). Neither kills
-      // the snake anymore. When either trips we stop asking the Wasm/JS planner
-      // and just make a random legal move in JavaScript, so the snake keeps
-      // wandering. The planner is also never allowed to force a death: if it
-      // returns no move we fall back to that same random move. The snake only
-      // dies when it is REALLY stuck -- when no legal move exists at all.
+      // the snake anymore. When either trips, keep the Wasm planner in charge but
+      // mark the decision as force-risk so its loop-breaking, strict-space, and
+      // return-path scoring get much heavier. Random wandering is now only a last
+      // fallback when the planner cannot find a move at all.
       const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
-      const fallbackRandom = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
-      let sc = fallbackRandom ? null : await planner.decide({ idle, looping, headTrail, budgetMs:routeBudget() });
+      const forceRisk = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
+      let sc = await planner.decide({
+        idle,
+        looping,
+        headTrail,
+        budgetMs:routeBudget(forceRisk),
+        forceRisk
+      });
       if(sc === null) sc = randomLegalScancode();      // planner gave up or a safeguard tripped
       if(sc !== null){
         forcedDeathQueued = false;

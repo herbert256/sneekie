@@ -104,10 +104,6 @@
             </span>
           </span>
         </div>
-        <div class="home-bot-actions">
-          <a class="home-action home-action--primary" href="nl/bot.html">Hier speelt een lichtgewicht JavaScript-bot — bekijk de slimmere WASM-bot.</a>
-          <a class="home-action" href="nl/game.html">Klik hier om zelf te spelen !</a>
-        </div>
         <div class="home-bot-hidden" aria-hidden="true">
           <div id="themes">
             <button type="button" data-theme="hercules">Green</button>
@@ -188,7 +184,7 @@
           });
         }
         function startPreview(){
-          Promise.all([loadScript('js/game.js'), loadScript('js/bot-home.js')])
+          Promise.all([loadScript('js/game.js'), loadScript('js/bot-engine.js')])
             .then(() => loadScript('js/bot.js'))
             .catch(error => {
               console.error(error);

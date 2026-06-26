@@ -4,11 +4,11 @@
    module's memory each tick, and returns one DOS arrow scancode. On browsers
    with enough logical cores it also starts a small Worker pool; each Worker
    owns a separate Wasm instance, so this is real parallel planning without
-   SharedArrayBuffer or cross-origin-isolation requirements. It is loaded on the
-   Bot page alongside bot-home.js; when WebAssembly can load, bot.js prefers this
-   planner and waits for it before driving. When it cannot load (e.g. from
-   file://, where fetch of the .wasm is blocked), createWasm returns null so
-   bot.js falls back to the JavaScript planner in bot-home.js. */
+   SharedArrayBuffer or cross-origin-isolation requirements. It is the only
+   planner: both the Bot page and the landing-page previews load it, and bot.js
+   waits for it before driving. When it cannot load (e.g. from file://, where
+   fetch of the .wasm is blocked), createWasm returns null and the bot stays
+   idle. */
 (function(){
   const BOARD_LEN = 4000;
   const BODY_CAP = 15001;
@@ -60,11 +60,9 @@
     const canLoad = typeof WebAssembly !== 'undefined' &&
       typeof WebAssembly.instantiate === 'function' &&
       typeof fetch === 'function' &&
-      window.SNEEKIE_BOT_FORCE_JS !== true &&
-      window.SNEEKIE_PASSIVE_PREVIEW !== true &&
       location.protocol !== 'file:';
-    // When WebAssembly can never load here, hand back null so the driver uses
-    // the JavaScript planner (bot-home.js) instead of waiting forever.
+    // When WebAssembly can never load here (e.g. from file://), hand back null so
+    // the driver simply waits instead of driving with no planner.
     if(!canLoad) return null;
 
     const bindMemory = () => {

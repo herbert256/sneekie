@@ -104,10 +104,6 @@
             </span>
           </span>
         </div>
-        <div class="home-bot-actions">
-          <a class="home-action home-action--primary" href="uk/bot.html">Тут грає легкий JavaScript-бот — подивіться на розумнішого WASM-бота.</a>
-          <a class="home-action" href="uk/game.html">Натисніть тут, щоб зіграти самому !</a>
-        </div>
         <div class="home-bot-hidden" aria-hidden="true">
           <div id="themes">
             <button type="button" data-theme="hercules">Green</button>
@@ -188,7 +184,7 @@
           });
         }
         function startPreview(){
-          Promise.all([loadScript('js/game.js'), loadScript('js/bot-home.js')])
+          Promise.all([loadScript('js/game.js'), loadScript('js/bot-engine.js')])
             .then(() => loadScript('js/bot.js'))
             .catch(error => {
               console.error(error);
