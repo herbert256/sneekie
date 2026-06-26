@@ -96,6 +96,39 @@ impl Planner {
         routes
     }
 
+    pub(super) fn tail_distance(&self, st: &State, allow_smile: bool, limit: usize) -> i32 {
+        let tail = st.body.tail().unwrap_or(st.head);
+        if st.head == tail {
+            return 0;
+        }
+        let mut seen = VisitBits::default();
+        seen.insert(st.head, st.dir);
+        let mut q = VecDeque::from([(st.head, st.dir, 0i32)]);
+        let mut scanned = 0usize;
+        while let Some((o, dir, dist)) = q.pop_front() {
+            scanned += 1;
+            if scanned >= limit {
+                break;
+            }
+            for &(sc, d) in &DIRS {
+                if sc == opp(dir) {
+                    continue;
+                }
+                let n = o + d;
+                if n == tail {
+                    return dist + 1;
+                }
+                if self.danger(n, dist) || !self.return_cell_open(st, n, tail, allow_smile) {
+                    continue;
+                }
+                if seen.insert(n, sc) {
+                    q.push_back((n, sc, dist + 1));
+                }
+            }
+        }
+        INF
+    }
+
     pub(super) fn return_gate_debt(
         &self,
         st: &State,
@@ -149,6 +182,83 @@ impl Planner {
                     debt * 3 / 5
                 } else {
                     debt * 3 / 4
+                }
+            }
+        }
+    }
+
+    pub(super) fn return_discipline_debt(
+        &self,
+        st: &State,
+        info: SpaceInfo,
+        exits: i32,
+        expected_growth: i32,
+        kind: RouteKind,
+        urgent: bool,
+    ) -> i64 {
+        let body_len = st.body.len() as i32;
+        let few = self.few();
+        let need = body_len + expected_growth + self.return_buffer(body_len, few);
+        let strict_space = if self.maze_confined() {
+            self.reach_space_strict(st)
+        } else {
+            info.space
+        };
+        let mut debt = 0i64;
+
+        if info.tail_reach {
+            let tail_routes = self.tail_route_count(st, true, 3, 1200);
+            if tail_routes == 0 {
+                debt += 58_000;
+            } else if tail_routes == 1 {
+                debt += 13_000 + body_len as i64 * 110 + if exits <= 2 { 18_000 } else { 0 };
+            }
+        } else {
+            debt += 34_000 + body_len as i64 * 170;
+            if self.maze_confined() {
+                debt += 32_000 + body_len as i64 * 210;
+            }
+            if exits <= 2 {
+                debt += 20_000;
+            }
+        }
+
+        if exits <= 1 {
+            debt += 40_000 + body_len as i64 * 130;
+        } else if exits == 2 {
+            debt += 15_000 + body_len as i64 * 65;
+        }
+
+        let space_short = (need + if info.tail_reach { 42 } else { 92 } - info.space).max(0);
+        debt += space_short as i64 * if self.maze_confined() { 720 } else { 430 };
+
+        if self.maze_confined() {
+            let strict_need =
+                body_len + expected_growth + if few { 70 } else if body_len >= 58 { 58 } else { 42 };
+            let strict_short = (strict_need - strict_space).max(0);
+            debt += strict_short as i64 * 1_350;
+            if body_len >= 45 && !info.tail_reach {
+                debt += 38_000;
+            }
+            if body_len >= 58 && exits <= 2 {
+                debt += 22_000;
+            }
+        } else if self.stone_maze_level() && !info.tail_reach && exits <= 2 {
+            debt += 20_000;
+        }
+
+        match kind {
+            RouteKind::Near => debt + debt / 5,
+            RouteKind::Route => debt,
+            RouteKind::Pressure => {
+                if urgent && few {
+                    debt * 3 / 5
+                } else if urgent && self.maze_confined() {
+                    debt
+                } else if urgent {
+                    debt * 4 / 5
+                } else {
+                    debt * 9 / 10
                 }
             }
         }

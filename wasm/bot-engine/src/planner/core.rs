@@ -256,7 +256,13 @@ impl Planner {
         // engine: lead with the most aggressive food grab (smileys allowed) and
         // the dig-aware pressure step, then fall back through survival moves.
         // recent-memory penalties (the loop breaker) stay active throughout.
-        let tail_first = self.maze_confined() && self.body.len() as i32 >= 24;
+        let st = self.start_state();
+        let bridge_food_only = self.maze_confined()
+            && !self.few()
+            && self.food_distance_no_smile(&st, 1600) >= INF
+            && self.food_distance(&st, 1600) < INF;
+        let tail_first =
+            self.maze_confined() && self.body.len() as i32 >= 24 && !bridge_food_only;
         (if tail_first {
             self.tail_chase_move().map(|sc| pack_decision(38, sc))
         } else {

@@ -41,6 +41,41 @@ impl Planner {
         room
     }
 
+    pub(super) fn open_room_cell(&self, st: &State, o: i32) -> bool {
+        (0..BOARD_LEN as i32).contains(&o)
+            && !self.door_bits.contains(o)
+            && (o == st.head || open(self.cell(st, o)))
+    }
+
+    pub(super) fn current_open_room_cells(&self, st: &State) -> BoardBits {
+        let mut room = BoardBits::default();
+        if self.doors.is_empty() {
+            return room;
+        }
+        let mut q = VecDeque::new();
+        let push_seed = |room: &mut BoardBits, q: &mut VecDeque<i32>, o: i32| {
+            if self.open_room_cell(st, o) && room.insert(o) {
+                q.push_back(o);
+            }
+        };
+        if self.door_bits.contains(st.head) {
+            for &(_, d) in &DIRS {
+                push_seed(&mut room, &mut q, st.head + d);
+            }
+        } else {
+            push_seed(&mut room, &mut q, st.head);
+        }
+        while let Some(o) = q.pop_front() {
+            for &(_, d) in &DIRS {
+                let n = o + d;
+                if self.open_room_cell(st, n) && room.insert(n) {
+                    q.push_back(n);
+                }
+            }
+        }
+        room
+    }
+
     pub(super) fn door_lane_clear(&self, st: &State, door: Door, lane: usize, tail: i32) -> bool {
         self.door_path_clear(st, door.cells[lane], tail)
             && self.door_path_clear(st, door.before[lane], tail)
@@ -75,6 +110,41 @@ impl Planner {
             }
         }
         info
+    }
+
+    pub(super) fn current_room_foods(&self, st: &State) -> i32 {
+        if self.doors.is_empty() {
+            return 0;
+        }
+        let room = self.current_open_room_cells(st);
+        let mut foods = 0;
+        for o in (0..BOARD_LEN as i32).step_by(2) {
+            if room.contains(o) && is_food(self.cell(st, o)) {
+                foods += 1;
+            }
+        }
+        foods
+    }
+
+    pub(super) fn empty_room_debt(&self, st: &State, exits: i32) -> i64 {
+        if !room_door_level(self.level) || self.few() || self.current_room_foods(st) > 0 {
+            return 0;
+        }
+        let door = self.door_exit_info(st);
+        if door.total == 0 {
+            return 0;
+        }
+        let body_len = st.body.len() as i32;
+        let mut debt = 22_000 + body_len as i64 * 360;
+        if door.usable == 0 {
+            debt += 78_000;
+        } else if door.usable == 1 {
+            debt += 24_000;
+        }
+        if exits <= 2 {
+            debt += 18_000;
+        }
+        debt
     }
 
     pub(super) fn door_exit_closed(&self, info: DoorInfo) -> bool {

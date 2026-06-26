@@ -144,11 +144,16 @@
   const STALL_IDLE_LIMIT = 120;
   const STALL_LOOP_IDLE_LIMIT = 24;
   const PICKUP_STUCK_LIMIT = 250;
+  const DIRS = [72, 80, 75, 77];
   const stepOf = {72:-160, 80:160, 75:-2, 77:2};
+  const oppositeOf = {72:80, 80:72, 75:77, 77:75};
+  const isArrowScancode = sc => sc === 72 || sc === 80 || sc === 75 || sc === 77;
   const targetCellFor = sc => {
     const step = stepOf[sc];
     return step === undefined ? 0 : peek(T[BTEL] + step);
   };
+  const arrowNextUnsafe = off =>
+    typeof routeArrowNextUnsafe === 'function' && routeArrowNextUnsafe(off >> 1);
   // A move the snake can make right now without walking into a wall, its own
   // body, or an enemy arrow: an empty cell, a heart/club/smiley, or a stone
   // with an empty cell behind it (so it can be pushed). The random fallback
@@ -165,8 +170,9 @@
   const randomLegalScancode = () => {
     const head = T[BTEL];
     const food = [], plain = [], smile = [];
-    for(const sc of [72, 80, 75, 77]){
+    for(const sc of DIRS){
       const step = stepOf[sc], ch = peek(head + step);
+      if(arrowNextUnsafe(head + step)) continue;
       if(ch === 3 || ch === 5) food.push(sc);                          // heart/club: free pickup
       else if(ch === 32) plain.push(sc);                               // empty
       else if(ch === 10){ if(peek(head + step * 2) === 32) plain.push(sc); } // pushable stone
@@ -179,6 +185,139 @@
   // A smiley (1) is worth -50, so letting it reset the counter let the bot
   // orbit forever nibbling smileys without ever tripping the fallback.
   const isFoodCell = ch => ch === 3 || ch === 5;
+  const isOpenCell = ch => ch === 32 || ch === 1 || isFoodCell(ch);
+  const legalMove = sc => {
+    if(!isArrowScancode(sc)) return false;
+    const head = T[BTEL], step = stepOf[sc], next = head + step;
+    if(arrowNextUnsafe(next)) return false;
+    const ch = peek(next);
+    if(isOpenCell(ch)) return true;
+    return ch === 10 && peek(next + step) === 32;
+  };
+  const bodySet = () => {
+    const body = new Set();
+    for(let i = ETEL; i <= BTEL; i++) body.add(T[i]);
+    return body;
+  };
+  const foodDistanceFrom = (head, dir, body, cellAt, noSmile, limit = 1600) => {
+    const seen = new Set([head + ':' + dir]);
+    const q = [[head, dir, 0]];
+    let scanned = 0;
+    while(q.length && scanned < limit){
+      const [off, currentDir, dist] = q.shift();
+      scanned++;
+      for(const sc of DIRS){
+        if(sc === oppositeOf[currentDir]) continue;
+        const next = off + stepOf[sc];
+        if(next < 0 || next >= 4000 || body.has(next)) continue;
+        const ch = cellAt(next);
+        if(isFoodCell(ch)) return dist + 1;
+        if(noSmile ? ch !== 32 : !isOpenCell(ch)) continue;
+        const key = next + ':' + sc;
+        if(!seen.has(key)){
+          seen.add(key);
+          q.push([next, sc, dist + 1]);
+        }
+      }
+    }
+    return Infinity;
+  };
+  const currentFoodDistance = noSmile =>
+    foodDistanceFrom(T[BTEL], F, bodySet(), off => peek(off), noSmile, 1600);
+  const projectedState = sc => {
+    if(!legalMove(sc)) return null;
+    const step = stepOf[sc], head = T[BTEL], next = head + step, first = peek(next);
+    const body = bodySet();
+    if(first === 32 || first === 10) body.delete(T[ETEL]);
+    body.add(next);
+    const empty = new Set();
+    const stones = new Set();
+    if(first === 10){
+      empty.add(next);
+      stones.add(next + step);
+    }
+    const cellAt = off => stones.has(off) ? 10 : empty.has(off) ? 32 : peek(off);
+    return { head: next, dir: sc, body, cellAt, first };
+  };
+  const projectedFoodDistance = (sc, noSmile) => {
+    const projected = projectedState(sc);
+    if(!projected) return Infinity;
+    if(isFoodCell(projected.first)) return 0;
+    return foodDistanceFrom(projected.head, projected.dir, projected.body, projected.cellAt, noSmile, 1600);
+  };
+  const projectedLegalCount = sc => {
+    const projected = projectedState(sc);
+    if(!projected) return 0;
+    let count = 0;
+    for(const nextSc of DIRS){
+      if(nextSc === oppositeOf[projected.dir]) continue;
+      const step = stepOf[nextSc], next = projected.head + step;
+      if(next < 0 || next >= 4000 || arrowNextUnsafe(next) || projected.body.has(next)) continue;
+      const ch = projected.cellAt(next);
+      if(isOpenCell(ch)) count++;
+      else if(ch === 10 && !projected.body.has(next + step) && projected.cellAt(next + step) === 32) count++;
+    }
+    return count;
+  };
+  const projectedSpace = sc => {
+    const projected = projectedState(sc);
+    if(!projected) return 0;
+    const seen = new Set([projected.head]);
+    const q = [projected.head];
+    while(q.length && seen.size < 4000){
+      const off = q.shift();
+      for(const nextSc of DIRS){
+        const next = off + stepOf[nextSc];
+        if(next < 0 || next >= 4000 || seen.has(next) || projected.body.has(next)) continue;
+        if(!isOpenCell(projected.cellAt(next))) continue;
+        seen.add(next);
+        q.push(next);
+      }
+    }
+    return seen.size;
+  };
+  const preserveFoodRoute = sc => {
+    if(!legalMove(sc)) return sc;
+    const exits = projectedLegalCount(sc);
+    const currentClean = currentFoodDistance(true);
+    const currentFood = currentClean < Infinity ? currentClean : currentFoodDistance(false);
+    if(currentFood === Infinity && exits > 0) return sc;
+    const nextClean = projectedFoodDistance(sc, true);
+    const nextFood = nextClean < Infinity ? nextClean : projectedFoodDistance(sc, false);
+    const bodyLen = BTEL - ETEL + 1;
+    const roomyEnough = Math.max(800, bodyLen + 8);
+    const chosenSpace = projectedSpace(sc);
+    const losesClean = currentClean < Infinity && nextClean === Infinity;
+    const losesFood = currentFood < Infinity && nextFood === Infinity;
+    if(bodyLen <= 24 && losesClean && !losesFood && chosenSpace >= roomyEnough && exits > 0) return sc;
+    if((currentClean >= Infinity || nextClean < Infinity) &&
+        (currentFood >= Infinity || nextFood < Infinity) &&
+        exits > 0) return sc;
+
+    let best = null, bestScore = -Infinity;
+    for(const cand of DIRS){
+      if(!legalMove(cand)) continue;
+      const candExits = projectedLegalCount(cand);
+      if(candExits <= 0) continue;
+      const clean = projectedFoodDistance(cand, true);
+      const food = clean < Infinity ? clean : projectedFoodDistance(cand, false);
+      if(currentClean < Infinity && clean === Infinity) continue;
+      if(currentFood < Infinity && food === Infinity) continue;
+      const ch = targetCellFor(cand);
+      const dist = currentClean < Infinity ? clean : food;
+      const score = (isFoodCell(ch) ? 120000 : 0)
+        + (clean < Infinity ? 60000 : 0)
+        + candExits * 12000
+        - (ch === 1 ? 18000 : 0)
+        - dist * 1800
+        + (cand === F ? 250 : 0);
+      if(score > bestScore){
+        bestScore = score;
+        best = cand;
+      }
+    }
+    return best || sc;
+  };
   (async () => {
     let idle = 0, prevScore = 0, over = 0, deathQueued = false, gameEndQueued = false, forcedDeathQueued = false;
     let movesSincePickup = 0;
@@ -292,6 +431,7 @@
         forceRisk
       });
       if(sc === null) sc = randomLegalScancode();      // planner gave up or a safeguard tripped
+      else sc = preserveFoodRoute(sc);
       if(sc !== null){
         forcedDeathQueued = false;
         if(isFoodCell(targetCellFor(sc))) movesSincePickup = 0;
@@ -303,7 +443,6 @@
       else if(!forcedDeathQueued){
         forcedDeathQueued = true;
         if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
-        else pushKey('\x1b');
       }
       await sleepForTick(tickStarted);
     }

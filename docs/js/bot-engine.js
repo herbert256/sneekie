@@ -239,7 +239,8 @@
       if(ready.length === 0) return decideSingle(options);
       const snap = snapshot(options);
       if(!snap) return null;
-      const plans = MODE_PLAN.slice(0, ready.length);
+      const planSource = snap.forceRisk ? MODE_PLAN : MODE_PLAN.filter(plan => plan.mode !== 3);
+      const plans = planSource.slice(0, ready.length);
       const timeoutMs = Math.max(8, Math.max(...plans.map(plan => snap.budgetMs * plan.budgetScale)) + 12);
       const tasks = plans.map((plan, index) => new Promise(resolve => {
         const state = ready[index];

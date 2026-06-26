@@ -32,7 +32,9 @@ function parseArgs(){
     modes: 'page',
     json: false,
     dumpBoard: false,
-    traceFailures: 0
+    traceFailures: 0,
+    traceTail: 0,
+    traceChoices: false
   };
   for(let i = 2; i < process.argv.length; i++){
     const arg = process.argv[i];
@@ -47,6 +49,8 @@ function parseArgs(){
     else if(arg === '--json') args.json = true;
     else if(arg === '--dump-board') args.dumpBoard = true;
     else if(arg === '--trace-failures') args.traceFailures = Number(next());
+    else if(arg === '--trace-tail') args.traceTail = Number(next());
+    else if(arg === '--trace-choices') args.traceChoices = true;
     else throw new Error(`unknown argument: ${arg}`);
   }
   return args;
@@ -83,7 +87,7 @@ function chooseBest(results){
       best = result;
     }
   }
-  return best ? best.sc : 0;
+  return best || { sc: 0, tier: Infinity, mode: -1, rank: Infinity };
 }
 
 class WasmBot {
@@ -133,12 +137,24 @@ class WasmBot {
       game.BONUS | 0
     ];
     if(opts.modes === 'single' || typeof this.exports.decide_mode !== 'function'){
-      return this.exports.decide(
+      const packed = this.exports.decide(
         common[0], common[1], common[2], common[3], common[4], common[5],
         opts.budgetMs, common[6], common[7]
       ) | 0;
+      const sc = decisionSc(packed);
+      return {
+        sc,
+        tier: decisionTier(packed),
+        mode: 0,
+        rank: 0
+      };
     }
-    const plans = opts.modes === 'forced' ? [MODE_PLAN[3]] : MODE_PLAN;
+    const planSource = opts.modes === 'forced'
+      ? [MODE_PLAN[3]]
+      : common[6]
+        ? MODE_PLAN
+        : MODE_PLAN.filter(plan => plan.mode !== 3);
+    const plans = planSource;
     const results = plans.map(plan => {
       const packed = this.exports.decide_mode(
         plan.mode, common[0], common[1], common[2], common[3], common[4], common[5],
@@ -457,6 +473,221 @@ class Game {
     return tier.length ? tier[Math.trunc(this.rnd() * tier.length)] : 0;
   }
 
+  foodDistance(noSmile, limit = 2000){
+    const body = new Set();
+    for(let i = this.ETEL; i <= this.BTEL; i++) body.add(this.T[i]);
+    const seen = new Set();
+    const q = [[this.T[this.BTEL], this.F, 0]];
+    seen.add(`${this.T[this.BTEL]}:${this.F}`);
+    let scanned = 0;
+    while(q.length && scanned < limit){
+      const [o, dir, dist] = q.shift();
+      scanned++;
+      for(const [sc, d] of DIRS){
+        if(sc === OPP.get(dir)) continue;
+        const n = o + d;
+        if(n < 0 || n >= BOARD_LEN || body.has(n)) continue;
+        const c = this.peek(n);
+        if(isFood(c)) return dist + 1;
+        if(c === 10){
+          const beyond = n + d;
+          if(body.has(beyond) || this.peek(beyond) !== 32) continue;
+        } else if(noSmile ? c !== 32 : !open(c)){
+          continue;
+        }
+        const key = `${n}:${sc}`;
+        if(!seen.has(key)){
+          seen.add(key);
+          q.push([n, sc, dist + 1]);
+        }
+      }
+    }
+    return Infinity;
+  }
+
+  projectedFoodDistance(sc, noSmile, limit = 2000, includeFirstFood = true){
+    if(!isArrowKey(sc) || !this.isSafeMove(sc)) return Infinity;
+    const d0 = STEP.get(sc);
+    const start = this.T[this.BTEL] + d0;
+    const first = this.peek(start);
+    if(includeFirstFood && isFood(first)) return 0;
+    const body = new Set();
+    for(let i = this.ETEL; i <= this.BTEL; i++) body.add(this.T[i]);
+    if(first === 32 || first === 10) body.delete(this.T[this.ETEL]);
+    body.add(start);
+    const empty = new Set();
+    const stones = new Set();
+    if(first === 10){
+      empty.add(start);
+      stones.add(start + d0);
+    }
+    const cellAt = o => {
+      if(stones.has(o)) return 10;
+      if(empty.has(o)) return 32;
+      return this.peek(o);
+    };
+    const seen = new Set();
+    const q = [[start, sc, 0]];
+    seen.add(`${start}:${sc}`);
+    let scanned = 0;
+    while(q.length && scanned < limit){
+      const [o, dir, dist] = q.shift();
+      scanned++;
+      for(const [nextSc, d] of DIRS){
+        if(nextSc === OPP.get(dir)) continue;
+        const n = o + d;
+        if(n < 0 || n >= BOARD_LEN || body.has(n)) continue;
+        const c = cellAt(n);
+        if(isFood(c)) return dist + 1;
+        if(noSmile ? c !== 32 : !open(c)) continue;
+        const key = `${n}:${nextSc}`;
+        if(!seen.has(key)){
+          seen.add(key);
+          q.push([n, nextSc, dist + 1]);
+        }
+      }
+    }
+    return Infinity;
+  }
+
+  projectedLegalCount(sc){
+    if(!isArrowKey(sc) || !this.isSafeMove(sc)) return 0;
+    const d0 = STEP.get(sc);
+    const start = this.T[this.BTEL] + d0;
+    const first = this.peek(start);
+    const body = new Set();
+    for(let i = this.ETEL; i <= this.BTEL; i++) body.add(this.T[i]);
+    if(first === 32 || first === 10) body.delete(this.T[this.ETEL]);
+    body.add(start);
+    const empty = new Set();
+    const stones = new Set();
+    if(first === 10){
+      empty.add(start);
+      stones.add(start + d0);
+    }
+    const cellAt = o => {
+      if(stones.has(o)) return 10;
+      if(empty.has(o)) return 32;
+      return this.peek(o);
+    };
+    let count = 0;
+    for(const [nextSc, d] of DIRS){
+      if(nextSc === OPP.get(sc)) continue;
+      const n = start + d;
+      if(n < 0 || n >= BOARD_LEN || this.routeArrowNextUnsafe(n >> 1) || body.has(n)) continue;
+      const c = cellAt(n);
+      if(c === 32 || c === 1 || isFood(c)){
+        count++;
+      } else if(c === 10) {
+        const beyond = n + d;
+        if(!body.has(beyond) && cellAt(beyond) === 32) count++;
+      }
+    }
+    return count;
+  }
+
+  projectedSpace(sc, limit = 4000){
+    if(!isArrowKey(sc) || !this.isSafeMove(sc)) return 0;
+    const d0 = STEP.get(sc);
+    const start = this.T[this.BTEL] + d0;
+    const first = this.peek(start);
+    const body = new Set();
+    for(let i = this.ETEL; i <= this.BTEL; i++) body.add(this.T[i]);
+    if(first === 32 || first === 10) body.delete(this.T[this.ETEL]);
+    body.add(start);
+    const empty = new Set();
+    const stones = new Set();
+    if(first === 10){
+      empty.add(start);
+      stones.add(start + d0);
+    }
+    const cellAt = o => {
+      if(stones.has(o)) return 10;
+      if(empty.has(o)) return 32;
+      return this.peek(o);
+    };
+    const seen = new Set([start]);
+    const q = [start];
+    while(q.length && seen.size < limit){
+      const o = q.shift();
+      for(const [, d] of DIRS){
+        const n = o + d;
+        if(n < 0 || n >= BOARD_LEN || seen.has(n) || body.has(n)) continue;
+        const c = cellAt(n);
+        if(!open(c)) continue;
+        seen.add(n);
+        q.push(n);
+      }
+    }
+    return seen.size;
+  }
+
+  preserveFoodRoute(sc){
+    if(!isArrowKey(sc) || !this.isSafeMove(sc)) return sc;
+    const chosenExits = this.projectedLegalCount(sc);
+    const currentClean = this.foodDistance(true, 2000);
+    const currentFood = currentClean < Infinity ? currentClean : this.foodDistance(false, 2000);
+    if(currentFood === Infinity && chosenExits > 0) return sc;
+    const chosenClean = this.projectedFoodDistance(sc, true, 2000);
+    const chosenFood = chosenClean < Infinity ? chosenClean : this.projectedFoodDistance(sc, false, 2000);
+    const losesClean = currentClean < Infinity && chosenClean === Infinity;
+    const losesFood = currentFood < Infinity && chosenFood === Infinity;
+    const bodyLen = this.BTEL - this.ETEL + 1;
+    const roomyEnough = Math.max(800, bodyLen + 8);
+    const chosenSpace = this.projectedSpace(sc, 4000);
+    if(bodyLen <= 24 && losesClean && !losesFood && chosenSpace >= roomyEnough && chosenExits > 0) return sc;
+    if(!losesClean && !losesFood && chosenExits > 0) return sc;
+
+    let best = 0;
+    let bestScore = -Infinity;
+    for(const [cand, d] of DIRS){
+      if(!this.isSafeMove(cand)) continue;
+      const exits = this.projectedLegalCount(cand);
+      if(exits <= 0) continue;
+      const c = this.peek(this.T[this.BTEL] + d);
+      const clean = this.projectedFoodDistance(cand, true, 2000);
+      const food = clean < Infinity ? clean : this.projectedFoodDistance(cand, false, 2000);
+      if(currentClean < Infinity && clean === Infinity) continue;
+      if(currentFood < Infinity && food === Infinity) continue;
+      const dist = currentClean < Infinity ? clean : food;
+      const score = (isFood(c) ? 120000 : 0)
+        + (clean < Infinity ? 60000 : 0)
+        + exits * 12000
+        + (c === 1 ? -18000 : 0)
+        - dist * 1800
+        + (cand === this.F ? 250 : 0);
+      if(score > bestScore){
+        bestScore = score;
+        best = cand;
+      }
+    }
+    return best || sc;
+  }
+
+  traceChoices(plannerSc, chosenSc){
+    const fmt = value => value === Infinity ? 'INF' : String(value);
+    const currentClean = this.foodDistance(true, 2000);
+    const currentFood = currentClean < Infinity ? currentClean : this.foodDistance(false, 2000);
+    const rows = [`cur clean=${fmt(currentClean)} food=${fmt(currentFood)} planner=${KEY_NAME.get(plannerSc) || plannerSc} chosen=${KEY_NAME.get(chosenSc) || chosenSc}`];
+    for(const [cand, d] of DIRS){
+      if(!this.isSafeMove(cand)){
+        rows.push(`${KEY_NAME.get(cand)} unsafe`);
+        continue;
+      }
+      const ch = this.peek(this.T[this.BTEL] + d);
+      const clean = this.projectedFoodDistance(cand, true, 2000);
+      const food = clean < Infinity ? clean : this.projectedFoodDistance(cand, false, 2000);
+      const afterClean = this.projectedFoodDistance(cand, true, 2000, false);
+      const afterFood = afterClean < Infinity ? afterClean : this.projectedFoodDistance(cand, false, 2000, false);
+      const exits = this.projectedLegalCount(cand);
+      const space = this.projectedSpace(cand, 4000);
+      const mark = cand === chosenSc ? '*' : cand === plannerSc ? '+' : ' ';
+      const label = ch === 3 ? 'heart' : ch === 5 ? 'club' : ch === 1 ? 'smile' : ch === 10 ? 'stone' : ch === 32 ? 'space' : `#${ch}`;
+      rows.push(`${mark}${KEY_NAME.get(cand)} ${label} exits=${exits} space=${space} clean=${fmt(clean)} food=${fmt(food)} after=${fmt(afterFood)} afterClean=${fmt(afterClean)}`);
+    }
+    return rows.join(' | ');
+  }
+
   step(sc){
     if(this.isStuck()) return { done: true, result: 'stuck' };
     if(sc === 72 || sc === 80 || sc === 75 || sc === 77) this.E = sc;
@@ -564,6 +795,8 @@ function resultRow(game, args, data){
     moves: data.moves.join(''),
     trail: summarizeTrail(data.headTrail)
   };
+  if(data.trace && data.trace.length) row.trace = data.trace;
+  if(data.overrides && data.overrides.length) row.overrides = data.overrides;
   if(args.dumpBoard) row.board = boardDump(game);
   return row;
 }
@@ -574,6 +807,8 @@ async function runOne(bot, level, seed, args){
   let movesSincePickup = 0;
   const headTrail = [];
   const moves = [];
+  const trace = [];
+  const overrides = [];
   const started = performance.now();
   for(let tick = 1; tick <= args.maxTicks; tick++){
     if(game.score > prevScore) idle = 0; else idle++;
@@ -585,7 +820,9 @@ async function runOne(bot, level, seed, args){
     const looping = idle > 20 && repeats >= 2;
     const stalled = idle > 120 || (idle > 24 && repeats >= 3);
     const forceRisk = stalled || movesSincePickup >= 250;
-    let sc = bot.decide(game, {
+    const cleanDist = game.foodDistance(true, 2000);
+    const foodDist = cleanDist < Infinity ? cleanDist : game.foodDistance(false, 2000);
+    const decision = bot.decide(game, {
       idle,
       looping,
       headTrail,
@@ -593,9 +830,28 @@ async function runOne(bot, level, seed, args){
       forceRisk,
       modes: args.modes
     });
+    const plannerSc = decision.sc;
+    let sc = plannerSc;
     if(sc === 0){
       nulls++;
       sc = game.randomLegalScancode();
+    } else {
+      sc = game.preserveFoodRoute(sc);
+    }
+    const choices = args.traceChoices ? game.traceChoices(plannerSc, sc) : '';
+    if(plannerSc && sc !== plannerSc){
+      overrides.push({
+        tick,
+        planner: KEY_NAME.get(plannerSc) || String(plannerSc),
+        chosen: KEY_NAME.get(sc) || String(sc),
+        row: rowOf(game.T[game.BTEL]),
+        col: colOf(game.T[game.BTEL]),
+        items: game.HART + game.KLAVER,
+        cleanDist: cleanDist === Infinity ? 'INF' : cleanDist,
+        foodDist: foodDist === Infinity ? 'INF' : foodDist,
+        choices
+      });
+      if(overrides.length > 24) overrides.shift();
     }
     const before = game.T[game.BTEL];
     const step = game.step(sc);
@@ -607,16 +863,36 @@ async function runOne(bot, level, seed, args){
     if(step.ate) foods++;
     if(step.ate) movesSincePickup = 0;
     else movesSincePickup++;
+    if(args.traceTail > 0){
+      trace.push({
+        tick,
+        sc: KEY_NAME.get(sc) || String(sc),
+        result: step.done ? step.result : step.blocked ? 'blocked' : step.ate ? 'ate' : step.smile ? 'smile' : step.stone ? 'stone' : 'move',
+        row: rowOf(game.T[game.BTEL]),
+        col: colOf(game.T[game.BTEL]),
+        items: game.HART + game.KLAVER,
+        body: game.BTEL - game.ETEL + 1,
+        idle,
+        cleanDist: cleanDist === Infinity ? 'INF' : cleanDist,
+        foodDist: foodDist === Infinity ? 'INF' : foodDist,
+        tier: decision.tier === Infinity ? 'INF' : decision.tier,
+        mode: decision.mode,
+        rank: decision.rank === Infinity ? 'INF' : decision.rank,
+        forceRisk,
+        choices
+      });
+      if(trace.length > args.traceTail) trace.shift();
+    }
     if(step.done){
       return resultRow(game, args, {
         level, seed, result: step.result, ticks: tick, foods, smiles, stones,
-        blocked, nulls, idle, started, moves, headTrail, before
+        blocked, nulls, idle, started, moves, headTrail, before, trace, overrides
       });
     }
   }
   return resultRow(game, args, {
     level, seed, result: 'timeout', ticks: args.maxTicks, foods, smiles, stones,
-    blocked, nulls, idle, started, moves, headTrail
+    blocked, nulls, idle, started, moves, headTrail, trace, overrides
   });
 }
 
@@ -642,6 +918,18 @@ function printSummary(results, traceFailures){
     console.log(`fail L${r.level} seed=${r.seed} ${r.result} ticks=${r.ticks} idle=${r.idle} items=${r.items} body=${r.bodyLen} score=${r.score} blocked=${r.blocked} nulls=${r.nulls} head=${r.row},${r.col}`);
     console.log(`  moves=${r.moves}`);
     console.log(`  trail=${r.trail}`);
+    if(r.overrides){
+      for(const o of r.overrides){
+        console.log(`  override t${o.tick} head=${o.row},${o.col} items=${o.items} clean=${o.cleanDist} food=${o.foodDist} planner=${o.planner} chosen=${o.chosen}`);
+        if(o.choices) console.log(`    choices ${o.choices}`);
+      }
+    }
+    if(r.trace){
+      for(const t of r.trace){
+        console.log(`  t${t.tick} ${t.sc} ${t.result} head=${t.row},${t.col} items=${t.items} body=${t.body} idle=${t.idle} clean=${t.cleanDist} food=${t.foodDist} tier=${t.tier} mode=${t.mode} rank=${t.rank} force=${t.forceRisk}`);
+        if(t.choices) console.log(`    choices ${t.choices}`);
+      }
+    }
     if(r.board) console.log(r.board);
   }
 }

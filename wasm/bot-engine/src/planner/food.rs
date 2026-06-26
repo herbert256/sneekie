@@ -190,16 +190,25 @@ impl Planner {
 
     pub(super) fn route_prefix_state(&mut self, mut ns: State, cfg: &FoodSearch) -> Option<State> {
         let exits = self.legal_count(&ns, true);
+        let few = self.few();
         if exits == 0 {
             return None;
         }
         if cfg.allow_smile && ns.smiles > self.smile_limit(cfg.route_kind, cfg.urgent) {
             return None;
         }
+        if cfg.allow_smile
+            && ns.smiles > 0
+            && self.maze_confined()
+            && !few
+            && (ns.body.len() as i32) >= 12
+            && self.food_distance_no_smile(&cfg.start, 1200) < INF
+        {
+            return None;
+        }
         if cfg.allow_smile && ns.smiles > 0 && self.avoid_extra_smile(ns.body.len() as i32) {
             return None;
         }
-        let few = self.few();
         if exits <= 1 {
             let forced = self.forced_path(
                 &ns,
@@ -268,7 +277,15 @@ impl Planner {
                         }
                         ns.chokes += 5;
                     }
-                    RouteKind::Pressure => ns.chokes += if cfg.urgent { 3 } else { 5 },
+                    RouteKind::Pressure => {
+                        if self.maze_confined()
+                            && !few
+                            && (exits <= 2 || ns.body.len() as i32 >= 45)
+                        {
+                            return None;
+                        }
+                        ns.chokes += if cfg.urgent { 5 } else { 6 };
+                    }
                 }
             } else if !info.tail_reach && exits <= 2 {
                 match cfg.route_kind {
@@ -321,6 +338,31 @@ impl Planner {
                 return None;
             }
             ns.chokes += (gate_debt / 24_000).min(5) as i32;
+
+            let discipline_debt = self.return_discipline_debt(
+                &ns,
+                info,
+                exits,
+                ns.ate + 1,
+                cfg.route_kind,
+                cfg.urgent,
+            );
+            let reject = match cfg.route_kind {
+                RouteKind::Near => discipline_debt > 72_000,
+                RouteKind::Route => discipline_debt > if cfg.urgent { 112_000 } else { 88_000 },
+                RouteKind::Pressure => {
+                    discipline_debt
+                        > if cfg.urgent {
+                            if few { 168_000 } else { 108_000 }
+                        } else {
+                            112_000
+                        }
+                }
+            };
+            if reject {
+                return None;
+            }
+            ns.chokes += (discipline_debt / 34_000).min(6) as i32;
         }
 
         if ns.dist >= 4 && ns.repeats > 0 && (ns.dist % 4 == 0 || ns.repeats >= 22) {
@@ -521,7 +563,11 @@ impl Planner {
                     // Long bodies normally refuse a pickup without a guaranteed tail
                     // return; when starving, accept it if the landing room is genuinely
                     // roomy (exits >= 3 + ample space, the roomy_no_tail floor).
-                    if !cfg.urgent || !roomy_no_tail || (body_len >= 58 && self.idle < 50) {
+                    if !cfg.urgent
+                        || !roomy_no_tail
+                        || (body_len >= 58 && self.idle < 50)
+                        || (self.maze_confined() && !few && body_len >= 32)
+                    {
                         return None;
                     }
                 }
@@ -571,16 +617,39 @@ impl Planner {
                 RouteKind::Near => 64_000,
                 RouteKind::Route => {
                     if cfg.urgent {
-                        112_000
+                        98_000
                     } else {
                         82_000
                     }
                 }
                 RouteKind::Pressure => {
                     if cfg.urgent {
-                        150_000
+                        108_000
                     } else {
                         118_000
+                    }
+                }
+            }
+        {
+            return None;
+        }
+        let discipline_debt =
+            self.return_discipline_debt(ns, info, exits, ns.ate + 2, cfg.route_kind, cfg.urgent);
+        if discipline_debt
+            > match cfg.route_kind {
+                RouteKind::Near => 78_000,
+                RouteKind::Route => {
+                    if cfg.urgent {
+                        116_000
+                    } else {
+                        92_000
+                    }
+                }
+                RouteKind::Pressure => {
+                    if cfg.urgent {
+                        if few { 185_000 } else { 112_000 }
+                    } else {
+                        126_000
                     }
                 }
             }
@@ -616,7 +685,7 @@ impl Planner {
                 RouteKind::Route => 42_000,
                 RouteKind::Pressure => {
                     if cfg.urgent {
-                        12_000
+                        26_000
                     } else {
                         24_000
                     }
@@ -718,6 +787,7 @@ impl Planner {
                 - door_debt
                 - door_regression
                 - gate_debt
+                - discipline_debt
                 - recent_debt
                 - ns.smiles as i64 * self.smile_cost(cfg.route_kind, cfg.urgent, body_len)
                 - ns.stones as i64 * 52
@@ -727,7 +797,7 @@ impl Planner {
                         RouteKind::Route => 2_200,
                         RouteKind::Pressure => {
                             if cfg.urgent {
-                                850
+                                1_500
                             } else {
                                 1_400
                             }

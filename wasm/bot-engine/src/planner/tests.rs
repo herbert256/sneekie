@@ -396,7 +396,9 @@ fn cramped_mazes_get_middle_smiley_discipline() {
         "a cramped maze costs more than a stone field"
     );
     assert!(c(&room) < c(&arrow), "the open board still costs the most");
-    // A mid-length body refuses bridges on the cramped mazes but not on a stone field.
+    // A moderate body refuses bridges on the cramped mazes but not on a stone field.
+    assert!(line.avoid_extra_smile(30) && room.avoid_extra_smile(30));
+    assert!(!stone.avoid_extra_smile(30));
     assert!(line.avoid_extra_smile(60) && room.avoid_extra_smile(60));
     assert!(!stone.avoid_extra_smile(60));
 }
@@ -453,6 +455,52 @@ fn normal_food_route_rejects_cut_off_tail_return() {
 }
 
 #[test]
+fn pressure_food_rejects_midgame_sealed_return_pocket() {
+    let mut board = empty_board();
+    for row in 8..=12 {
+        board[offset(row, 12) as usize] = 179;
+        board[offset(row, 16) as usize] = 179;
+    }
+    for col in 12..=16 {
+        board[offset(8, col) as usize] = 196;
+        board[offset(12, col) as usize] = 196;
+    }
+    board[offset(10, 15) as usize] = 3;
+
+    let mut body: Vec<i32> = (2..=33).map(|col| offset(6, col)).collect();
+    body.push(offset(10, 13));
+    body.push(offset(10, 14));
+    let mut p = planner_level(board, body, 27); // room/door maze -> confined
+    p.urgent = true;
+    p.idle = 72;
+
+    let st = p.start_state();
+    let ns = p
+        .move_state(&st, 77, false)
+        .expect("the sealed-pocket food is physically reachable");
+    let cfg = FoodSearch {
+        start: st,
+        allow_smile: false,
+        max_depth: 10,
+        scan_limit: 50,
+        check_limit: 10,
+        route_kind: RouteKind::Pressure,
+        arrow_level: false,
+        urgent: true,
+    };
+    let info = p.space_info(&ns, false);
+    let exits = p.legal_count(&ns, true);
+    assert!(
+        p.return_discipline_debt(&ns, info, exits, 2, RouteKind::Pressure, true) > 138_000,
+        "the sealed pocket must carry enough return debt to lose to safer routes"
+    );
+    assert!(
+        p.score_food_candidate(&ns, &cfg).is_none(),
+        "urgent pressure should not spend the return path during mid-game"
+    );
+}
+
+#[test]
 fn wasteful_smiley_is_skipped_when_clean_food_is_reachable() {
     // Advice #9: a smiley straight ahead, but a heart reachable up-and-around
     // without crossing any smiley. The guard must steer off the -50 smiley.
@@ -469,6 +517,38 @@ fn wasteful_smiley_is_skipped_when_clean_food_is_reachable() {
     let out = p.avoid_wasteful_smile(77);
     assert_ne!(out, 77, "should not nibble the smiley when a heart is cleanly reachable");
     assert!(matches!(out, 72 | 80 | 75), "should pick a clean legal direction");
+}
+
+#[test]
+fn confined_route_defers_smiley_when_clean_food_is_reachable() {
+    let mut board = empty_board();
+    board[offset(10, 12) as usize] = 1;
+    board[offset(8, 14) as usize] = 3;
+    let body: Vec<i32> = (1..=11).map(|col| offset(10, col)).collect();
+    let mut p = planner_level(board, body, 3); // room/door maze -> confined
+    assert!(p.maze_confined());
+    let st = p.start_state();
+    assert!(
+        p.food_distance_no_smile(&st, 1200) < INF,
+        "clean food is reachable without spending the smiley"
+    );
+    let cfg = FoodSearch {
+        start: st.clone(),
+        allow_smile: true,
+        max_depth: 10,
+        scan_limit: 50,
+        check_limit: 10,
+        route_kind: RouteKind::Route,
+        arrow_level: false,
+        urgent: false,
+    };
+    let ns = p
+        .move_state(&st, 77, true)
+        .expect("the smiley bridge is physically reachable");
+    assert!(
+        p.route_prefix_state(ns, &cfg).is_none(),
+        "sweep clean food before growing through a smiley"
+    );
 }
 
 #[test]

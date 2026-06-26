@@ -43,7 +43,7 @@ impl Planner {
         // all game (L2/L3/L5 ran to 20-38 smileys once the snake survived longer),
         // while a genuinely starving snake can still spend one to break out.
         if self.maze_confined() && !self.few() {
-            return body_len >= 55 && !(self.urgent && self.idle >= 60);
+            return body_len >= 30 && !(self.urgent && self.idle >= 96 && self.items <= 18);
         }
         // Long bodies normally never bridge a smiley, but when starving (food walled
         // off behind smileys) allow it -- otherwise the snake just orbits to a restart.

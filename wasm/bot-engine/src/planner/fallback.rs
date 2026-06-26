@@ -43,6 +43,11 @@ impl Planner {
         let st = self.start_state();
         let body_len = st.body.len() as i32;
         let few = self.few();
+        let current_clean = if self.maze_confined() && !few {
+            self.food_distance_no_smile(&st, 1200)
+        } else {
+            INF
+        };
         let live_limit = if few || self.urgent { 32 } else { 24 };
         let escape_limit = if few || self.urgent { 20 } else { 16 };
         let min_space = (body_len + if few { 34 } else { 22 }).min(240);
@@ -87,6 +92,30 @@ impl Planner {
                 );
                 let gate_debt =
                     self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let empty_room_debt = self.empty_room_debt(&ns, exits);
+                let discipline_debt = self.return_discipline_debt(
+                    &ns,
+                    info,
+                    exits,
+                    1,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                if self.maze_confined()
+                    && !few
+                    && discipline_debt > if self.urgent { 112_000 } else { 104_000 }
+                {
+                    continue;
+                }
+                if current_clean < INF
+                    && !is_food(c)
+                    && self.food_distance_no_smile(&ns, 1200) >= INF
+                {
+                    continue;
+                }
+                if !is_food(c) && empty_room_debt > 58_000 {
+                    continue;
+                }
                 let cluster = if c == 1 {
                     self.food_cluster(&ns, 42, 700, true)
                 } else {
@@ -171,6 +200,8 @@ impl Planner {
                     - door_debt
                     - door_regression
                     - gate_debt
+                    - empty_room_debt
+                    - discipline_debt / 2
                     - recent_debt
                     - ns.stones as i64 * 62
                     + if ns.first == st.dir { 90 } else { 0 };
@@ -389,6 +420,11 @@ impl Planner {
         }
         let st = self.start_state();
         let few = self.few();
+        let current_clean = if self.maze_confined() && !few {
+            self.food_distance_no_smile(&st, 1600)
+        } else {
+            INF
+        };
         let live_limit = if few || self.urgent { 30 } else { 24 };
         for allow_smile in [false, true] {
             let mut best = None;
@@ -410,6 +446,30 @@ impl Planner {
                 if self.enclosure_risk(&ns, info, exits, 1) && !(info.tail_reach && exits >= 2) {
                     continue;
                 }
+                let discipline_debt = self.return_discipline_debt(
+                    &ns,
+                    info,
+                    exits,
+                    1,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                if self.maze_confined()
+                    && !few
+                    && discipline_debt > if self.urgent { 106_000 } else { 98_000 }
+                {
+                    continue;
+                }
+                if current_clean < INF
+                    && !is_food(c)
+                    && self.food_distance_no_smile(&ns, 1600) >= INF
+                {
+                    continue;
+                }
+                let empty_room_debt = self.empty_room_debt(&ns, exits);
+                if !is_food(c) && empty_room_debt > 52_000 {
+                    continue;
+                }
                 let live = self.survival_depth(&ns, live_limit);
                 let goal = if is_food(c) {
                     0
@@ -417,9 +477,9 @@ impl Planner {
                     self.goal_distance(&ns, 1600)
                 };
                 let goal_pull = if goal < INF {
-                    3_000 - goal.min(180) as i64 * 25
+                    12_000 - goal.min(180) as i64 * if self.maze_confined() { 90 } else { 35 }
                 } else {
-                    0
+                    -24_000
                 };
                 let recent_debt = self.recent_memory_debt(
                     &ns,
@@ -447,6 +507,8 @@ impl Planner {
                         0
                     }
                     - ns.stones as i64 * 30
+                    - empty_room_debt
+                    - discipline_debt / 2
                     - recent_debt
                     + if ns.first == st.dir { 80 } else { 0 };
                 if score > best_score {
@@ -465,6 +527,11 @@ impl Planner {
         let st = self.start_state();
         let few = self.few();
         let current_goal = self.goal_distance(&st, 1600);
+        let current_clean = if self.maze_confined() && !few {
+            self.food_distance_no_smile(&st, 1600)
+        } else {
+            INF
+        };
         for allow_smile in [false, true] {
             let mut best = None;
             let mut best_score = i64::MIN;
@@ -504,6 +571,30 @@ impl Planner {
                 );
                 let gate_debt =
                     self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let empty_room_debt = self.empty_room_debt(&ns, exits);
+                let discipline_debt = self.return_discipline_debt(
+                    &ns,
+                    info,
+                    exits,
+                    1,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                if self.maze_confined()
+                    && !few
+                    && discipline_debt > if self.urgent { 106_000 } else { 98_000 }
+                {
+                    continue;
+                }
+                if current_clean < INF
+                    && !is_food(c)
+                    && self.food_distance_no_smile(&ns, 1600) >= INF
+                {
+                    continue;
+                }
+                if !is_food(c) && empty_room_debt > 52_000 {
+                    continue;
+                }
                 let cluster = if c == 1 {
                     self.food_cluster(&ns, 36, 520, true)
                 } else {
@@ -540,9 +631,10 @@ impl Planner {
                     } else {
                         0
                     };
-                    6_000 - goal.min(180) as i64 * 45 + progress * 500
+                    10_000 - goal.min(180) as i64 * if self.maze_confined() { 95 } else { 50 }
+                        + progress * if self.maze_confined() { 1_200 } else { 600 }
                 } else {
-                    0
+                    -22_000
                 };
                 let score = info.space as i64 * 26
                     + exits as i64 * 1_000
@@ -585,6 +677,8 @@ impl Planner {
                     - door_debt
                     - door_regression
                     - gate_debt
+                    - empty_room_debt
+                    - discipline_debt / 2
                     - recent_debt;
                 if score > best_score {
                     best_score = score;
@@ -671,6 +765,13 @@ impl Planner {
         // distance as a fallback so walled-off food still gives a direction.
         // The space-maximizing fallbacks use this so they are never aimless
         // while items remain somewhere on the board.
+        if self.maze_confined() && !self.few() {
+            let clean = self.food_distance_no_smile(st, limit);
+            if clean < INF {
+                return clean;
+            }
+            return INF;
+        }
         let d = self.food_distance(st, limit);
         if d < INF {
             return d;
@@ -746,7 +847,18 @@ impl Planner {
         } else {
             420
         };
-        let current_food = self.food_distance(&st, dist_limit);
+        let current_clean = if self.maze_confined() && !few {
+            self.food_distance_no_smile(&st, dist_limit)
+        } else {
+            INF
+        };
+        let current_food = if current_clean < INF {
+            current_clean
+        } else if self.maze_confined() && !few && !self.force_risk {
+            INF
+        } else {
+            self.food_distance(&st, dist_limit)
+        };
         let current_dist = if current_food >= INF && stone_maze {
             self.dig_distance(&st, dist_limit)
         } else {
@@ -770,8 +882,17 @@ impl Planner {
                 if exits <= 1 && forced.dead {
                     continue;
                 }
+                let clean_dist = if current_clean < INF {
+                    self.food_distance_no_smile(&ns, dist_limit)
+                } else {
+                    INF
+                };
                 let food_dist = if is_food(c) {
                     0
+                } else if clean_dist < INF {
+                    clean_dist
+                } else if self.maze_confined() && !few && !self.force_risk {
+                    INF
                 } else {
                     self.food_distance(&ns, dist_limit)
                 };
@@ -843,6 +964,27 @@ impl Planner {
                 );
                 let gate_debt =
                     self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let empty_room_debt = self.empty_room_debt(&ns, exits);
+                let discipline_debt = self.return_discipline_debt(
+                    &ns,
+                    info,
+                    exits,
+                    1,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
+                if self.maze_confined()
+                    && !few
+                    && discipline_debt > if self.urgent { 108_000 } else { 100_000 }
+                {
+                    continue;
+                }
+                if current_clean < INF && !is_food(c) && clean_dist >= INF {
+                    continue;
+                }
+                if !is_food(c) && empty_room_debt > 54_000 {
+                    continue;
+                }
                 let cluster = self.food_cluster(
                     &ns,
                     if stone_maze { 48 } else { 36 },
@@ -981,6 +1123,8 @@ impl Planner {
                     - door_debt
                     - door_regression
                     - gate_debt
+                    - empty_room_debt
+                    - discipline_debt / 2
                     - recent_debt;
                 if score > best_score {
                     best_score = score;
@@ -997,6 +1141,13 @@ impl Planner {
     pub(super) fn last_chance_move(&mut self) -> Option<i32> {
         let st = self.start_state();
         let few = self.few();
+        let current_food_dist = self.food_distance(&st, 260);
+        let current_clean_dist = if self.maze_confined() && !few {
+            self.food_distance_no_smile(&st, 260)
+        } else {
+            INF
+        };
+        let current_tail_dist = self.tail_distance(&st, true, 900);
         for allow_smile in [false, true] {
             let mut best = None;
             let mut best_score = i64::MIN;
@@ -1005,6 +1156,8 @@ impl Planner {
                 let exits = self.legal_count(&ns, true);
                 let info = self.space_info(&ns, false);
                 let body_len = ns.body.len() as i32;
+                let live = self.survival_depth(&ns, if self.force_risk || self.urgent { 18 } else { 12 });
+                let forced = self.forced_path(&ns, true, if self.force_risk || self.urgent { 18 } else { 12 });
                 let return_room = self.return_path_room(info, exits, body_len, few);
                 let return_risk = self.return_path_risk(&ns, info, exits, 1);
                 let door = self.door_exit_info(&ns);
@@ -1020,6 +1173,15 @@ impl Planner {
                 );
                 let gate_debt =
                     self.return_gate_debt(&ns, info, exits, 1, RouteKind::Pressure, self.urgent);
+                let empty_room_debt = self.empty_room_debt(&ns, exits);
+                let discipline_debt = self.return_discipline_debt(
+                    &ns,
+                    info,
+                    exits,
+                    1,
+                    RouteKind::Pressure,
+                    self.urgent,
+                );
                 let cluster = self.food_cluster(&ns, 28, 360, allow_smile);
                 let escape = EscapeInfo {
                     ok: false,
@@ -1044,6 +1206,67 @@ impl Planner {
                 } else {
                     self.food_distance(&ns, 180)
                 };
+                let clean_dist = if current_clean_dist < INF {
+                    self.food_distance_no_smile(&ns, 180)
+                } else {
+                    INF
+                };
+                let tail_dist = self.tail_distance(&ns, true, 900);
+                let food_progress = if current_food_dist < INF && dist < INF {
+                    (current_food_dist - dist).clamp(-16, 16) as i64
+                } else {
+                    0
+                };
+                let food_gradient = if current_food_dist < INF {
+                    if dist < INF {
+                        let progress_weight = if self.force_risk || self.urgent {
+                            3_600
+                        } else {
+                            1_800
+                        };
+                        food_progress * progress_weight
+                            - if dist > current_food_dist {
+                                (dist - current_food_dist).min(16) as i64 * 2_200
+                            } else {
+                                0
+                            }
+                    } else {
+                        -55_000
+                    }
+                } else {
+                    0
+                };
+                let clean_gradient = if current_clean_dist < INF {
+                    if clean_dist < INF {
+                        let progress = (current_clean_dist - clean_dist).clamp(-16, 16) as i64;
+                        progress * 2_800
+                            - if clean_dist > current_clean_dist {
+                                (clean_dist - current_clean_dist).min(16) as i64 * 2_600
+                            } else {
+                                0
+                            }
+                    } else {
+                        -90_000
+                    }
+                } else {
+                    0
+                };
+                let tail_gradient = if current_food_dist >= INF || current_clean_dist >= INF {
+                    if tail_dist < INF {
+                        let progress = if current_tail_dist < INF {
+                            (current_tail_dist - tail_dist).clamp(-24, 24) as i64
+                        } else {
+                            0
+                        };
+                        (420 - tail_dist.min(420)) as i64 * 150 + progress * 2_800
+                    } else {
+                        -34_000
+                    }
+                } else if tail_dist < INF {
+                    (220 - tail_dist.min(220)) as i64 * 45
+                } else {
+                    -8_000
+                };
                 let recent_debt = self.recent_memory_debt(
                     &ns,
                     info,
@@ -1053,14 +1276,19 @@ impl Planner {
                     self.urgent,
                     if is_food(c) || dist < 20 { 1 } else { 0 },
                 );
-                let score = info.space as i64 * 14
+                let score = live as i64 * if self.force_risk || self.urgent { 4_600 } else { 3_400 }
+                    + info.space as i64 * 14
                     + exits as i64 * 2_400
+                    + forced.end_exits as i64 * 1_350
                     + if info.tail_reach { 9_000 } else { 0 }
                     + if dist < INF {
                         (20 - dist).max(0) as i64 * 180
                     } else {
                         0
                     }
+                    + food_gradient
+                    + clean_gradient
+                    + tail_gradient
                     + if is_food(c) { 6_000 } else { 0 }
                     + self.cluster_credit(cluster, RouteKind::Pressure, self.urgent) / 3
                     + smile_strategy_credit
@@ -1076,9 +1304,18 @@ impl Planner {
                     }
                     - ns.stones as i64 * 45
                     - if return_risk { 12_000 } else { 0 }
+                    - if forced.dead {
+                        36_000 + forced.steps as i64 * 1_400
+                    } else if exits <= 1 {
+                        11_000 + forced.steps as i64 * 700
+                    } else {
+                        0
+                    }
                     - door_debt
                     - door_regression
                     - gate_debt
+                    - empty_room_debt
+                    - discipline_debt / 3
                     - recent_debt
                     + if ns.first == st.dir { 80 } else { 0 };
                 if score > best_score {
