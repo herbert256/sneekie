@@ -404,6 +404,20 @@ impl Planner {
         if self.enclosure_risk(ns, info, exits, ns.ate + 2) {
             return None;
         }
+        let strict_space = if self.maze_confined() {
+            self.reach_space_strict(ns)
+        } else {
+            info.space
+        };
+        if self.maze_confined()
+            && !few
+            && body_len >= 24
+            && exits <= 2
+            && strict_space < body_len + 10
+            && !(cfg.urgent && self.idle >= 50)
+        {
+            return None;
+        }
         let forced = self.forced_path(ns, true, if cfg.urgent || few { 30 } else { 22 });
         if exits <= 1 && forced.dead {
             return None;
@@ -680,7 +694,15 @@ impl Planner {
         // room. Fades as items drop and switches off in the endgame, so the last
         // hearts in tight spots are still taken.
         let corner_defer = if !few && body_len < 60 && exits <= 2 {
-            (3 - exits).max(0) as i64 * self.items.clamp(0, 75) as i64 * 24
+            let scale = if self.maze_confined() { 900 } else { 24 };
+            (3 - exits).max(0) as i64 * self.items.clamp(0, 75) as i64 * scale
+        } else {
+            0
+        };
+        let confined_pocket_debt = if self.maze_confined() && !few && body_len < 80 {
+            let want = body_len + if body_len >= 45 { 54 } else { 38 };
+            let short = (want - strict_space).max(0) as i64;
+            short * 1_150 + if short > 0 && exits <= 2 { 18_000 } else { 0 }
         } else {
             0
         };
@@ -691,6 +713,7 @@ impl Planner {
                 + smile_strategy_credit
                 + self.door_exit_credit(door)
                 - corner_defer
+                - confined_pocket_debt
                 - return_debt
                 - door_debt
                 - door_regression

@@ -261,14 +261,93 @@ impl Planner {
                 best_sc = sc;
             }
         }
+        let cramped_limit = if self.maze_confined() && body_len >= 24 {
+            body_len + 24
+        } else {
+            body_len
+        };
+        let clearly_roomier = best_space >= chosen_space * 2
+            || (self.maze_confined()
+                && body_len >= 24
+                && best_space >= chosen_space + 10
+                && best_space >= body_len + 8);
         if best_sc != chosen
-            && chosen_space < body_len
+            && chosen_space < cramped_limit
             && best_space >= 6
-            && best_space >= chosen_space * 2
+            && clearly_roomier
         {
             return best_sc;
         }
         chosen
+    }
+
+    pub(super) fn avoid_forced_dead_end(&mut self, chosen: i32) -> i32 {
+        // A food/pressure route can be locally legal and still funnel the head
+        // into a short no-exit corridor once the body advances behind it. Catch
+        // that just before returning the move, using body-solid reachable space
+        // so a receding tail cannot make the pocket look larger than it is.
+        let st = self.start_state();
+        let Some(chosen_state) = self.move_state(&st, chosen, true) else {
+            return chosen;
+        };
+        let body_len = chosen_state.body.len() as i32;
+        let chosen_exits = self.legal_count(&chosen_state, true);
+        let chosen_forced =
+            self.forced_path(&chosen_state, true, if self.maze_confined() { 32 } else { 24 });
+        let chosen_strict = self.reach_space_strict(&chosen_state);
+        let chosen_bad = chosen_forced.dead
+            || (chosen_exits <= 1
+                && chosen_strict
+                    < body_len
+                        + if self.maze_confined() {
+                            20
+                        } else if self.stone_maze_level() {
+                            14
+                        } else {
+                            10
+                        });
+        if !chosen_bad {
+            return chosen;
+        }
+
+        let mut best = chosen;
+        let mut best_score = i64::MIN;
+        for &(sc, _) in &DIRS {
+            if sc == chosen {
+                continue;
+            }
+            let Some(ns) = self.move_state(&st, sc, true) else {
+                continue;
+            };
+            let c = self.cell(&st, st.head + step(sc));
+            let exits = self.legal_count(&ns, true);
+            if exits == 0 {
+                continue;
+            }
+            let forced = self.forced_path(&ns, true, if self.maze_confined() { 32 } else { 24 });
+            if forced.dead && forced.steps <= chosen_forced.steps + 3 {
+                continue;
+            }
+            let strict = self.reach_space_strict(&ns);
+            let info = self.space_info(&ns, false);
+            let return_risk = self.return_path_risk(&ns, info, exits, 1);
+            let score = strict as i64 * 160
+                + info.space as i64 * 12
+                + exits as i64 * 5_500
+                + forced.end_exits as i64 * 2_000
+                + if info.tail_reach { 40_000 } else { 0 }
+                + if is_food(c) { 5_000 } else { 0 }
+                - if forced.dead { 36_000 } else { 0 }
+                - if return_risk { 22_000 } else { 0 }
+                - if c == 1 { 16_000 } else { 0 }
+                - ns.stones as i64 * 30
+                + if ns.first == st.dir { 80 } else { 0 };
+            if score > best_score {
+                best_score = score;
+                best = sc;
+            }
+        }
+        best
     }
 
     pub(super) fn avoid_wasteful_smile(&self, chosen: i32) -> i32 {

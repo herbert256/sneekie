@@ -373,11 +373,17 @@ impl Planner {
         // keeping the tail reachable -- in practice this trails the tail and
         // fills space safely instead of sealing the body in.
         //
-        // Engage it earlier on the cramped maze levels: there the snake sealed
-        // itself in well before body 80 (L2/L3 entombed at body 40-60). The open
-        // arrow levels clear cleanly, so they keep the higher gate and the lighter
-        // survival fallback below it.
-        let floor = if self.arrow_level() { 80 } else { 52 };
+        // Engage it much earlier on the cramped maze levels: there the snake can
+        // seal itself into an edge pocket around body 25-30. The open arrow levels
+        // clear cleanly, so they keep the higher gate and the lighter survival
+        // fallback below it.
+        let floor = if self.arrow_level() {
+            80
+        } else if self.maze_confined() {
+            24
+        } else {
+            52
+        };
         if (self.body.len() as i32) < floor {
             return None;
         }

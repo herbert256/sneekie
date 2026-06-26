@@ -12,6 +12,12 @@ const DIRS = [[72, -160], [80, 160], [75, -2], [77, 2]];
 const STEP = new Map(DIRS);
 const KEY_NAME = new Map([[72, 'U'], [80, 'D'], [75, 'L'], [77, 'R']]);
 const OPP = new Map([[72, 80], [80, 72], [75, 77], [77, 75]]);
+const MODE_PLAN = [
+  { mode:0, rank:1, budgetScale:1.00 },
+  { mode:4, rank:0, budgetScale:1.70 },
+  { mode:5, rank:2, budgetScale:1.90 },
+  { mode:3, rank:3, budgetScale:1.35 }
+];
 const DATA1500 = [15,5,6,10,9,35,6,20,9,75,6,40,9,55,6,70,9,65,18,10,15,55,18,20,
   15,65,18,30,15,75,18,40,9,45,12,20,9,15,12,30,9,15,18,50,9,15,6,50,9,15,18,60];
 
@@ -23,7 +29,9 @@ function parseArgs(){
     startSeed: 1,
     maxTicks: 6000,
     budgetMs: 55,
+    modes: 'page',
     json: false,
+    dumpBoard: false,
     traceFailures: 0
   };
   for(let i = 2; i < process.argv.length; i++){
@@ -35,7 +43,9 @@ function parseArgs(){
     else if(arg === '--start-seed') args.startSeed = Number(next());
     else if(arg === '--max-ticks') args.maxTicks = Number(next());
     else if(arg === '--budget-ms') args.budgetMs = Number(next());
+    else if(arg === '--modes') args.modes = next();
     else if(arg === '--json') args.json = true;
+    else if(arg === '--dump-board') args.dumpBoard = true;
     else if(arg === '--trace-failures') args.traceFailures = Number(next());
     else throw new Error(`unknown argument: ${arg}`);
   }
@@ -58,6 +68,23 @@ function rowOf(o){ return Math.trunc(o / 160) + 1; }
 function colOf(o){ return Math.trunc((o % 160) / 2) + 1; }
 function isFood(c){ return c === 3 || c === 5; }
 function open(c){ return c === 32 || c === 1 || isFood(c); }
+function isArrowKey(sc){ return sc === 72 || sc === 80 || sc === 75 || sc === 77; }
+function decisionSc(packed){ return packed ? packed & 0xff : 0; }
+function decisionTier(packed){ return packed ? Math.floor(packed / 256) : Infinity; }
+
+function chooseBest(results){
+  let best = null;
+  for(const result of results){
+    if(!result || !isArrowKey(result.sc)) continue;
+    if(!best ||
+        result.tier < best.tier ||
+        (result.tier === best.tier && result.rank < best.rank) ||
+        (result.tier === best.tier && result.rank === best.rank && result.mode < best.mode)){
+      best = result;
+    }
+  }
+  return best ? best.sc : 0;
+}
 
 class WasmBot {
   constructor(exports){
@@ -95,15 +122,32 @@ class WasmBot {
     for(let i = start; i < sourceTrail.length && trailLen < TRAIL_CAP; i++, trailLen++){
       this.trail[trailLen] = sourceTrail[i] | 0;
     }
-    return this.exports.decide(
+    const common = [
       game.level,
       game.HART + game.KLAVER,
       len,
       opts.idle | 0,
       opts.looping ? 1 : 0,
       trailLen,
-      opts.budgetMs
-    ) | 0;
+      opts.forceRisk ? 1 : 0,
+      game.BONUS | 0
+    ];
+    if(opts.modes === 'single' || typeof this.exports.decide_mode !== 'function'){
+      return this.exports.decide(
+        common[0], common[1], common[2], common[3], common[4], common[5],
+        opts.budgetMs, common[6], common[7]
+      ) | 0;
+    }
+    const plans = opts.modes === 'forced' ? [MODE_PLAN[3]] : MODE_PLAN;
+    const results = plans.map(plan => {
+      const packed = this.exports.decide_mode(
+        plan.mode, common[0], common[1], common[2], common[3], common[4], common[5],
+        Math.max(1, opts.budgetMs * plan.budgetScale), common[6], common[7]
+      ) | 0;
+      const sc = decisionSc(packed);
+      return isArrowKey(sc) ? { sc, tier: decisionTier(packed), mode: plan.mode, rank: plan.rank } : null;
+    });
+    return chooseBest(results);
   }
 }
 
@@ -124,6 +168,7 @@ class Game {
     this.KLAVER = 0;
     this.AANTAL = 0;
     this.BMIN = 0;
+    this.BONUS = 0;
     this.K1 = 0;
     this.event = '';
     this.initLevel();
@@ -395,6 +440,23 @@ class Game {
     return this.BTEL > 0 && !DIRS.some(([sc]) => this.isSafeMove(sc));
   }
 
+  randomLegalScancode(){
+    const head = this.T[this.BTEL];
+    const food = [], plain = [], smile = [];
+    for(const [sc, d] of DIRS){
+      const ch = this.peek(head + d);
+      if(ch === 3 || ch === 5) food.push(sc);
+      else if(ch === 32) plain.push(sc);
+      else if(ch === 10){
+        if(this.peek(head + d * 2) === 32) plain.push(sc);
+      } else if(ch === 1) {
+        smile.push(sc);
+      }
+    }
+    const tier = food.length ? food : plain.length ? plain : smile;
+    return tier.length ? tier[Math.trunc(this.rnd() * tier.length)] : 0;
+  }
+
   step(sc){
     if(this.isStuck()) return { done: true, result: 'stuck' };
     if(sc === 72 || sc === 80 || sc === 75 || sc === 77) this.E = sc;
@@ -457,9 +519,59 @@ function summarizeTrail(trail){
   return trail.slice(-24).map(o => `${rowOf(o)},${colOf(o)}`).join(' ');
 }
 
+function boardDump(game){
+  const rows = [];
+  for(let row = 3; row <= 21; row++){
+    let line = '';
+    for(let col = 1; col <= 80; col++){
+      const ch = game.peek(off(row, col));
+      if(ch === 219) line += '@';
+      else if(ch === 186 || ch === 205) line += 'o';
+      else if(ch === 3) line += 'h';
+      else if(ch === 5) line += 'c';
+      else if(ch === 1) line += ':';
+      else if(ch === 10) line += '*';
+      else if(ch === 24) line += '^';
+      else if(ch === 26) line += '>';
+      else if(ch === 27) line += '<';
+      else if(ch === 179 || ch === 180 || ch === 193 || ch === 194 || ch === 195 || ch === 196 || ch === 197) line += '#';
+      else line += '.';
+    }
+    rows.push(line.replace(/\.+$/g, ''));
+  }
+  return rows.join('\n');
+}
+
+function resultRow(game, args, data){
+  const row = {
+    level: data.level,
+    seed: data.seed,
+    result: data.result,
+    ticks: data.ticks,
+    score: game.score,
+    foods: data.foods,
+    smiles: data.smiles,
+    stones: data.stones,
+    blocked: data.blocked,
+    nulls: data.nulls,
+    bodyLen: game.BTEL - game.ETEL + 1,
+    items: game.HART + game.KLAVER,
+    idle: data.idle,
+    head: game.T[game.BTEL],
+    row: rowOf(game.T[game.BTEL]),
+    col: colOf(game.T[game.BTEL]),
+    ms: Math.round(performance.now() - data.started),
+    moves: data.moves.join(''),
+    trail: summarizeTrail(data.headTrail)
+  };
+  if(args.dumpBoard) row.board = boardDump(game);
+  return row;
+}
+
 async function runOne(bot, level, seed, args){
   const game = new Game(level, seed);
   let idle = 0, prevScore = 0, nulls = 0, blocked = 0, smiles = 0, stones = 0, foods = 0;
+  let movesSincePickup = 0;
   const headTrail = [];
   const moves = [];
   const started = performance.now();
@@ -471,8 +583,20 @@ async function runOne(bot, level, seed, args){
     let repeats = 0;
     for(let i = 0; i < Math.min(headTrail.length - 10, 96); i++) if(headTrail[i] === game.T[game.BTEL]) repeats++;
     const looping = idle > 20 && repeats >= 2;
-    const sc = bot.decide(game, { idle, looping, headTrail, budgetMs: args.budgetMs });
-    if(sc === 0) nulls++;
+    const stalled = idle > 120 || (idle > 24 && repeats >= 3);
+    const forceRisk = stalled || movesSincePickup >= 250;
+    let sc = bot.decide(game, {
+      idle,
+      looping,
+      headTrail,
+      budgetMs: args.budgetMs,
+      forceRisk,
+      modes: args.modes
+    });
+    if(sc === 0){
+      nulls++;
+      sc = game.randomLegalScancode();
+    }
     const before = game.T[game.BTEL];
     const step = game.step(sc);
     if(sc !== 0) moves.push(KEY_NAME.get(sc) || `?${sc}`);
@@ -481,22 +605,19 @@ async function runOne(bot, level, seed, args){
     if(step.smile) smiles++;
     if(step.stone) stones++;
     if(step.ate) foods++;
+    if(step.ate) movesSincePickup = 0;
+    else movesSincePickup++;
     if(step.done){
-      return {
-        level, seed, result: step.result, ticks: tick, score: game.score, foods, smiles, stones,
-        blocked, nulls, bodyLen: game.BTEL - game.ETEL + 1, items: game.HART + game.KLAVER,
-        idle, head: game.T[game.BTEL], row: rowOf(game.T[game.BTEL]), col: colOf(game.T[game.BTEL]),
-        ms: Math.round(performance.now() - started), moves: moves.join(''), trail: summarizeTrail(headTrail),
-        before
-      };
+      return resultRow(game, args, {
+        level, seed, result: step.result, ticks: tick, foods, smiles, stones,
+        blocked, nulls, idle, started, moves, headTrail, before
+      });
     }
   }
-  return {
-    level, seed, result: 'timeout', ticks: args.maxTicks, score: game.score, foods, smiles, stones,
-    blocked, nulls, bodyLen: game.BTEL - game.ETEL + 1, items: game.HART + game.KLAVER,
-    idle, head: game.T[game.BTEL], row: rowOf(game.T[game.BTEL]), col: colOf(game.T[game.BTEL]),
-    ms: Math.round(performance.now() - started), moves: moves.join(''), trail: summarizeTrail(headTrail)
-  };
+  return resultRow(game, args, {
+    level, seed, result: 'timeout', ticks: args.maxTicks, foods, smiles, stones,
+    blocked, nulls, idle, started, moves, headTrail
+  });
 }
 
 function printSummary(results, traceFailures){
@@ -521,6 +642,7 @@ function printSummary(results, traceFailures){
     console.log(`fail L${r.level} seed=${r.seed} ${r.result} ticks=${r.ticks} idle=${r.idle} items=${r.items} body=${r.bodyLen} score=${r.score} blocked=${r.blocked} nulls=${r.nulls} head=${r.row},${r.col}`);
     console.log(`  moves=${r.moves}`);
     console.log(`  trail=${r.trail}`);
+    if(r.board) console.log(r.board);
   }
 }
 

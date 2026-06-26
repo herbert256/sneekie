@@ -94,7 +94,8 @@ impl Planner {
 
     pub(crate) fn decide_tagged(&mut self) -> i32 {
         if self.force_risk {
-            return self.decide_forced_tagged();
+            let tagged = self.decide_forced_tagged();
+            return self.finalize_decision(tagged);
         }
         let chosen = self
             .decide_proved_tagged()
@@ -106,9 +107,9 @@ impl Planner {
     fn decide_proved_tagged(&mut self) -> Option<i32> {
         let breathe_first = self.needs_breathing();
         if breathe_first {
-            self.near_food(false)
-                .map(|sc| pack_decision(10, sc))
-                .or_else(|| self.breathing_move().map(|sc| pack_decision(12, sc)))
+            self.breathing_move()
+                .map(|sc| pack_decision(12, sc))
+                .or_else(|| self.near_food(false).map(|sc| pack_decision(10, sc)))
                 .or_else(|| self.near_food(true).map(|sc| pack_decision(14, sc)))
                 .or_else(|| self.route_food(false).map(|sc| pack_decision(20, sc)))
                 .or_else(|| self.route_food(true).map(|sc| pack_decision(22, sc)))
@@ -228,6 +229,9 @@ impl Planner {
             return chosen;
         }
         let mut out = chosen;
+        if !self.few() && !self.open_board_level() {
+            out = replace_decision_sc(out, self.avoid_forced_dead_end(decision_sc(out)));
+        }
         // Advice #3: on the cramped non-stone mazes, refuse a move that boxes the head
         // into a sub-body pocket when a roomier move exists. Skipped in the endgame
         // (few items, finishing is worth a squeeze).
@@ -252,8 +256,13 @@ impl Planner {
         // engine: lead with the most aggressive food grab (smileys allowed) and
         // the dig-aware pressure step, then fall back through survival moves.
         // recent-memory penalties (the loop breaker) stay active throughout.
-        self.pressure_food(true, true)
-            .map(|sc| pack_decision(40, sc))
+        let tail_first = self.maze_confined() && self.body.len() as i32 >= 24;
+        (if tail_first {
+            self.tail_chase_move().map(|sc| pack_decision(38, sc))
+        } else {
+            None
+        })
+        .or_else(|| self.pressure_food(true, true).map(|sc| pack_decision(40, sc)))
             .or_else(|| self.near_food(true).map(|sc| pack_decision(42, sc)))
             .or_else(|| self.route_food(true).map(|sc| pack_decision(44, sc)))
             .or_else(|| self.pressure_step().map(|sc| pack_decision(60, sc)))
@@ -304,7 +313,10 @@ impl Planner {
             return true;
         }
         let info = self.space_info(&st, true);
-        (!info.tail_reach && info.space < body_len + if self.few() { 132 } else { 96 })
+        (self.maze_confined()
+            && body_len >= 24
+            && (exits <= 2 || info.space < body_len + if self.few() { 164 } else { 116 }))
+            || (!info.tail_reach && info.space < body_len + if self.few() { 132 } else { 96 })
             || (body_len >= 58 && (exits <= 2 || info.space < body_len + 150))
             || (body_len >= 96 && exits <= 3)
     }
@@ -316,6 +328,10 @@ impl Planner {
             155
         } else if body_len >= 45 {
             124
+        } else if body_len >= 36 {
+            118
+        } else if body_len >= 24 {
+            108
         } else {
             96
         };
