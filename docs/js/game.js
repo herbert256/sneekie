@@ -384,6 +384,7 @@ const fsHelpLead = document.getElementById('fs-help-lead');
 const fsHelpList = document.getElementById('fs-help-list');
 const fsHelpPlay = document.getElementById('fs-help-play');
 let fsHelpOpen = false;
+let fsHelpPending = false;   // entered fullscreen mid-boot: show the help once the boot animation ends
 
 function fillFullscreenHelp(){
   const touch = matchMedia('(pointer:coarse)').matches;
@@ -881,6 +882,10 @@ async function bootSequence(){
   bootActive = false;
   document.body.classList.remove('booting');  // boot done → reveal fullscreen touch controls
   fit();                                      // booting class changes touch-control/layout rules
+  if(fsHelpPending && document.fullscreenElement){  // went fullscreen mid-boot: now show the help
+    fsHelpPending = false;
+    showFullscreenHelp();
+  }
 }
 
 /* ---------- GAME STATE (names as in the BASIC) ---------- */
@@ -1500,11 +1505,17 @@ if(bezel.requestFullscreen){
     fsBtn.setAttribute('aria-pressed', String(fs));
     if(fs) lockLandscapeFullscreen();
     else {
+      fsHelpPending = false;
       hideFullscreenHelp();
       unlockFullscreenOrientation();
     }
     fit();
-    if(fs) showFullscreenHelp();
+    /* Don't cover the boot animation with the help popup: if boot is still
+       running, defer it until bootSequence() finishes (see bootActive = false). */
+    if(fs){
+      if(bootActive) fsHelpPending = true;
+      else showFullscreenHelp();
+    }
     /* In fullscreen the browser normally swallows <ESC> to leave fullscreen, so the
        game never sees it. The Keyboard Lock API (Chromium, secure context) routes
        <ESC> to the page instead; to leave fullscreen you then press & hold <ESC>
