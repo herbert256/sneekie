@@ -49,10 +49,26 @@ impl Planner {
             danger_len: 1,
             doors,
             door_bits,
+            escape_pressed: false,
+            weights: W_DEFAULTS,
+            last_route: Vec::new(),
+            target_region: None,
         };
         let (danger_masks, danger_len) = planner.build_danger_masks();
         planner.danger_masks = danger_masks;
         planner.danger_len = danger_len;
+        planner.target_region = planner.compute_target_region();
+        let body_len = planner.body.len() as i32;
+        if body_len >= 12 {
+            let st = planner.start_state();
+            let info = planner.space_info(&st, false);
+            // Deliberately tight: only a genuinely cut-off snake (no flood path
+            // back to the tail AND barely more room than the body itself) lifts
+            // the smiley discipline. A padded threshold flickered on constantly
+            // on the arrow boards, where danger masks shrink the flood, and the
+            // bot nibbled smileys all game.
+            planner.escape_pressed = !info.tail_reach && info.space < body_len + 40;
+        }
         planner
     }
 
@@ -61,6 +77,7 @@ impl Planner {
     }
 
     pub(crate) fn decide_mode_tagged(&mut self, mode: i32) -> i32 {
+        self.last_route.clear();
         match mode {
             // Baseline compatibility/debug modes.
             1 => {
@@ -93,6 +110,7 @@ impl Planner {
     }
 
     pub(crate) fn decide_tagged(&mut self) -> i32 {
+        self.last_route.clear();
         if self.force_risk {
             let tagged = self.decide_forced_tagged();
             return self.finalize_decision(tagged);
@@ -136,12 +154,15 @@ impl Planner {
         } else if self.few() {
             // Endgame: only a few hearts remain, usually tucked in tight spots. In
             // testing even the clears orbited near the stuck limit (idle ~100-150)
-            // chasing the last one or two while the bonus drained. Lead with the safe
-            // routes, but fall through to the committed urgent-pressure search and the
-            // dig-aware pressure step so the snake actually goes and finishes the level
-            // instead of circling it.
-            self.route_food(false)
-                .map(|sc| pack_decision(20, sc))
+            // chasing the last one or two while the bonus drained. Best case: one
+            // exact tour over everything left, fully simulated, committed as a
+            // single route to the level clear. Otherwise lead with the safe
+            // routes, and fall through to the committed urgent-pressure search and
+            // the dig-aware pressure step so the snake actually goes and finishes
+            // the level instead of circling it.
+            self.endgame_tour()
+                .map(|sc| pack_decision(8, sc))
+                .or_else(|| self.route_food(false).map(|sc| pack_decision(20, sc)))
                 .or_else(|| self.near_food(false).map(|sc| pack_decision(10, sc)))
                 .or_else(|| {
                     self.pressure_food(false, self.urgent)
@@ -224,19 +245,13 @@ impl Planner {
         .or_else(|| self.last_chance_move().map(|sc| pack_decision(90, sc)))
     }
 
-    fn finalize_decision(&mut self, chosen: i32) -> i32 {
+    pub(super) fn finalize_decision(&mut self, chosen: i32) -> i32 {
         if decision_sc(chosen) == 0 {
             return chosen;
         }
         let mut out = chosen;
-        if !self.few() && !self.open_board_level() {
+        if !self.open_board_level() {
             out = replace_decision_sc(out, self.avoid_forced_dead_end(decision_sc(out)));
-        }
-        // Advice #3: on the cramped non-stone mazes, refuse a move that boxes the head
-        // into a sub-body pocket when a roomier move exists. Skipped in the endgame
-        // (few items, finishing is worth a squeeze).
-        if self.maze_confined() && !self.few() {
-            out = replace_decision_sc(out, self.avoid_self_seal(decision_sc(out)));
         }
         // Advice #9: on the walled/stone mazes, never nibble a -50 smiley when real
         // food is reachable without crossing one. Skipped in the endgame (a squeeze
@@ -245,6 +260,16 @@ impl Planner {
         let desperate = self.urgent && self.idle >= 50;
         if !self.few() && !desperate && !self.open_board_level() {
             out = replace_decision_sc(out, self.avoid_wasteful_smile(decision_sc(out)));
+        }
+        // Advice #3 hardened: the return-path rule runs LAST, on every level and in
+        // the endgame, so no smiley-discipline guard can undo a seal-avoiding
+        // override -- including one that deliberately lands on a smiley.
+        out = replace_decision_sc(out, self.avoid_self_seal(decision_sc(out)));
+        // Route commitment: the recorded route is only replayable when the move
+        // being returned is still its first step -- any guard override, or a
+        // decision that came from a fallback mover, drops it.
+        if self.last_route.first() != Some(&decision_sc(out)) {
+            self.last_route.clear();
         }
         out
     }

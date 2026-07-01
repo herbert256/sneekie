@@ -276,8 +276,13 @@
     }
     return seen.size;
   };
+  const openBoardLevel = () => [0, 5, 6, 8, 13, 14].includes((LEVEL - 1) % 16);
   const preserveFoodRoute = sc => {
     if(!legalMove(sc)) return sc;
+    // On the walled mazes a planner smiley landing is deliberate (an escape
+    // bridge that keeps the return path), so trust it. On the open arrow
+    // boards nothing walls the snake in, so keep steering off smileys there.
+    if(targetCellFor(sc) === 1 && !openBoardLevel()) return sc;
     const exits = projectedLegalCount(sc);
     const currentClean = currentFoodDistance(true);
     const currentFood = currentClean < Infinity ? currentClean : currentFoodDistance(false);
@@ -299,6 +304,8 @@
       if(!legalMove(cand)) continue;
       const candExits = projectedLegalCount(cand);
       if(candExits <= 0) continue;
+      // Never redirect a roomy planner move into a cramped pocket.
+      if(chosenSpace >= bodyLen + 8 && projectedSpace(cand) < bodyLen + 8) continue;
       const clean = projectedFoodDistance(cand, true);
       const food = clean < Infinity ? clean : projectedFoodDistance(cand, false);
       if(currentClean < Infinity && clean === Infinity) continue;
@@ -323,10 +330,15 @@
     let movesSincePickup = 0;
     let observedLive = null;
     const headTrail = [];
+    // Route commitment: the planner returns its whole certified route, and the
+    // driver replays it step by step (re-validating each move) instead of
+    // replanning from scratch every tick. Cleared on any surprise.
+    let committedRoute = [];
     const resetMoveCounters = () => {
       idle = 0;
       movesSincePickup = 0;
       headTrail.length = 0;
+      committedRoute = [];
     };
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
@@ -423,15 +435,36 @@
       // fallback when the planner cannot find a move at all.
       const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
       const forceRisk = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
-      let sc = await planner.decide({
-        idle,
-        looping,
-        headTrail,
-        budgetMs:routeBudget(forceRisk),
-        forceRisk
-      });
-      if(sc === null) sc = randomLegalScancode();      // planner gave up or a safeguard tripped
-      else sc = preserveFoodRoute(sc);
+      let sc = null;
+      if(forceRisk || looping) committedRoute = [];
+      if(committedRoute.length){
+        // Replay the committed route while each step is still legal and the
+        // route-preservation check agrees; any disagreement drops the route.
+        const cand = committedRoute[0];
+        if(legalMove(cand) && preserveFoodRoute(cand) === cand){
+          committedRoute.shift();
+          sc = cand;
+        } else committedRoute = [];
+      }
+      if(sc === null){
+        const plan = await planner.decide({
+          idle,
+          looping,
+          headTrail,
+          budgetMs:routeBudget(forceRisk),
+          forceRisk
+        });
+        if(plan && plan.sc){
+          sc = preserveFoodRoute(plan.sc);
+          // Commit the rest of the route only when the first move survived the
+          // driver checks unchanged; cap the replay so it stays adaptive.
+          committedRoute = (sc === plan.sc && Array.isArray(plan.route)) ?
+            plan.route.slice(1, 25) : [];
+        } else {
+          sc = randomLegalScancode();                  // planner gave up or a safeguard tripped
+          committedRoute = [];
+        }
+      }
       if(sc !== null){
         forcedDeathQueued = false;
         if(isFoodCell(targetCellFor(sc))) movesSincePickup = 0;

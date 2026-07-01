@@ -69,6 +69,7 @@ impl Planner {
             stones: 0,
             chokes: 0,
             repeats: 0,
+            trace: 0,
         }
     }
 
@@ -95,15 +96,11 @@ impl Planner {
     }
 
     pub(super) fn build_danger_masks(&self) -> ([BoardBits; MAX_DANGER_TICKS + 1], usize) {
-        let horizon = if self.arrow_level() {
-            if self.urgent || self.few() {
-                6
-            } else {
-                4
-            }
-        } else {
-            1
-        };
+        // The arrows are deterministic (sub1830/sub1970 in game.js), so project
+        // them exactly for the full horizon -- the cost is a couple of inserts
+        // per lane per tick. This is what lets a route TIME a lane crossing
+        // instead of treating anything past a few ticks as frozen.
+        let horizon = if self.arrow_level() { 28 } else { 1 };
         let len = horizon.min(MAX_DANGER_TICKS) + 1;
         let mut masks = [BoardBits::default(); MAX_DANGER_TICKS + 1];
         for o in (0..BOARD_LEN as i32).step_by(2) {
@@ -134,6 +131,15 @@ impl Planner {
         }
     }
 
+    fn arrow_blocked(&self, o: i32) -> bool {
+        // sub1830/sub1970 only advance an arrow when the next cell's char code
+        // is <= 100: walls AND the snake's own glyphs (186/205/219...) stall it
+        // in place. The VRAM snapshot still holds the current body glyphs, so
+        // base_cell covers both. A stalled arrow is where death actually waits;
+        // assuming it flew past is exactly the wrong prediction.
+        self.base_cell(o) > 100
+    }
+
     pub(super) fn project_up_arrows(&self, masks: &mut [BoardBits]) {
         for col in (2..=78).step_by(2) {
             let mut row = self.enemy_value(col, 1);
@@ -144,7 +150,14 @@ impl Planner {
                 continue;
             }
             for mask in masks.iter_mut().skip(1) {
-                row = if row <= 4 { 20 } else { row - 1 };
+                // Exact sub1830 step: wrap 4 -> 21 first, then move up one row
+                // unless the cell above stalls the arrow.
+                if row <= 4 {
+                    row = 21;
+                }
+                if !self.arrow_blocked(offset(row - 1, col)) {
+                    row -= 1;
+                }
                 mask.insert(offset(row, col));
             }
         }
@@ -161,12 +174,24 @@ impl Planner {
                 left = self.scan_arrow_row(row, 27).unwrap_or(0);
             }
             for mask in masks.iter_mut().skip(1) {
+                // Exact sub1970 steps: wrap first (79 -> 1 rightward, 2 -> 80
+                // leftward), then advance unless the next cell stalls the arrow.
                 if right != 0 {
-                    right = if right >= 79 { 2 } else { right + 1 };
+                    if right >= 79 {
+                        right = 1;
+                    }
+                    if !self.arrow_blocked(offset(row, right + 1)) {
+                        right += 1;
+                    }
                     mask.insert(offset(row, right));
                 }
                 if left != 0 {
-                    left = if left <= 2 { 79 } else { left - 1 };
+                    if left <= 2 {
+                        left = 80;
+                    }
+                    if !self.arrow_blocked(offset(row, left - 1)) {
+                        left -= 1;
+                    }
                     mask.insert(offset(row, left));
                 }
             }

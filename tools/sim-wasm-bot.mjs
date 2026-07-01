@@ -34,7 +34,8 @@ function parseArgs(){
     dumpBoard: false,
     traceFailures: 0,
     traceTail: 0,
-    traceChoices: false
+    traceChoices: false,
+    weights: null
   };
   for(let i = 2; i < process.argv.length; i++){
     const arg = process.argv[i];
@@ -51,6 +52,7 @@ function parseArgs(){
     else if(arg === '--trace-failures') args.traceFailures = Number(next());
     else if(arg === '--trace-tail') args.traceTail = Number(next());
     else if(arg === '--trace-choices') args.traceChoices = true;
+    else if(arg === '--weights') args.weights = next();
     else throw new Error(`unknown argument: ${arg}`);
   }
   return args;
@@ -108,6 +110,23 @@ class WasmBot {
     this.body = new Int32Array(memory.buffer, this.exports.body_ptr(), BODY_CAP);
     this.enemy = new Int32Array(memory.buffer, this.exports.enemy_ptr(), ENEMY_LEN);
     this.trail = new Int32Array(memory.buffer, this.exports.trail_ptr(), TRAIL_CAP);
+    if(this.weightsVec) this.applyWeights();
+  }
+
+  setWeights(vector){
+    if(typeof this.exports.weights_ptr !== 'function') throw new Error('this wasm has no weights buffer');
+    const len = this.exports.weights_len();
+    if(!Array.isArray(vector) || vector.length !== len){
+      throw new Error(`weights vector must be an array of ${len} numbers`);
+    }
+    this.weightsVec = vector.map(Number);
+    this.applyWeights();
+  }
+
+  applyWeights(){
+    const buf = new Float64Array(this.exports.memory.buffer, this.exports.weights_ptr(), this.weightsVec.length + 1);
+    buf[0] = 1; // enable flag; slot 0 zero means "use compiled-in defaults"
+    for(let i = 0; i < this.weightsVec.length; i++) buf[i + 1] = this.weightsVec[i];
   }
 
   decide(game, opts){
@@ -146,7 +165,8 @@ class WasmBot {
         sc,
         tier: decisionTier(packed),
         mode: 0,
-        rank: 0
+        rank: 0,
+        route: this.readRoute()
       };
     }
     const planSource = opts.modes === 'forced'
@@ -161,9 +181,18 @@ class WasmBot {
         Math.max(1, opts.budgetMs * plan.budgetScale), common[6], common[7]
       ) | 0;
       const sc = decisionSc(packed);
-      return isArrowKey(sc) ? { sc, tier: decisionTier(packed), mode: plan.mode, rank: plan.rank } : null;
+      return isArrowKey(sc)
+        ? { sc, tier: decisionTier(packed), mode: plan.mode, rank: plan.rank, route: this.readRoute() }
+        : null;
     });
     return chooseBest(results);
+  }
+
+  readRoute(){
+    if(typeof this.exports.route_ptr !== 'function') return [];
+    const rbuf = new Int32Array(this.exports.memory.buffer, this.exports.route_ptr(), 161);
+    const rlen = Math.max(0, Math.min(160, rbuf[0] | 0));
+    return Array.from(rbuf.subarray(1, 1 + rlen));
   }
 }
 
@@ -622,8 +651,16 @@ class Game {
     return seen.size;
   }
 
+  openBoardLevel(){
+    return [0, 5, 6, 8, 13, 14].includes((this.level - 1) % 16);
+  }
+
   preserveFoodRoute(sc){
     if(!isArrowKey(sc) || !this.isSafeMove(sc)) return sc;
+    // On the walled mazes a planner smiley landing is deliberate (an escape
+    // bridge that keeps the return path), so trust it. On the open arrow
+    // boards nothing walls the snake in, so keep steering off smileys there.
+    if(this.peek(this.T[this.BTEL] + STEP.get(sc)) === 1 && !this.openBoardLevel()) return sc;
     const chosenExits = this.projectedLegalCount(sc);
     const currentClean = this.foodDistance(true, 2000);
     const currentFood = currentClean < Infinity ? currentClean : this.foodDistance(false, 2000);
@@ -644,6 +681,8 @@ class Game {
       if(!this.isSafeMove(cand)) continue;
       const exits = this.projectedLegalCount(cand);
       if(exits <= 0) continue;
+      // Never redirect a roomy planner move into a cramped pocket.
+      if(chosenSpace >= bodyLen + 8 && this.projectedSpace(cand, 4000) < bodyLen + 8) continue;
       const c = this.peek(this.T[this.BTEL] + d);
       const clean = this.projectedFoodDistance(cand, true, 2000);
       const food = clean < Infinity ? clean : this.projectedFoodDistance(cand, false, 2000);
@@ -805,6 +844,7 @@ async function runOne(bot, level, seed, args){
   const game = new Game(level, seed);
   let idle = 0, prevScore = 0, nulls = 0, blocked = 0, smiles = 0, stones = 0, foods = 0;
   let movesSincePickup = 0;
+  let committedRoute = [];
   const headTrail = [];
   const moves = [];
   const trace = [];
@@ -822,21 +862,41 @@ async function runOne(bot, level, seed, args){
     const forceRisk = stalled || movesSincePickup >= 250;
     const cleanDist = game.foodDistance(true, 2000);
     const foodDist = cleanDist < Infinity ? cleanDist : game.foodDistance(false, 2000);
-    const decision = bot.decide(game, {
-      idle,
-      looping,
-      headTrail,
-      budgetMs: args.budgetMs,
-      forceRisk,
-      modes: args.modes
-    });
-    const plannerSc = decision.sc;
-    let sc = plannerSc;
-    if(sc === 0){
-      nulls++;
-      sc = game.randomLegalScancode();
+    // Route commitment: replay the planner's certified route while each step
+    // stays legal, mirroring the page driver; any disagreement drops it.
+    if(forceRisk || looping) committedRoute = [];
+    let decision = null;
+    if(committedRoute.length){
+      const cand = committedRoute[0];
+      if(game.isSafeMove(cand) && game.preserveFoodRoute(cand) === cand){
+        committedRoute.shift();
+        decision = { sc: cand, tier: 0, mode: 'route', rank: 0 };
+      } else committedRoute = [];
+    }
+    let plannerSc, sc;
+    if(decision){
+      plannerSc = decision.sc;
+      sc = plannerSc;
     } else {
-      sc = game.preserveFoodRoute(sc);
+      decision = bot.decide(game, {
+        idle,
+        looping,
+        headTrail,
+        budgetMs: args.budgetMs,
+        forceRisk,
+        modes: args.modes
+      });
+      plannerSc = decision.sc;
+      sc = plannerSc;
+      if(sc === 0){
+        nulls++;
+        sc = game.randomLegalScancode();
+        committedRoute = [];
+      } else {
+        sc = game.preserveFoodRoute(sc);
+        committedRoute = (sc === plannerSc && Array.isArray(decision.route)) ?
+          decision.route.slice(1, 25) : [];
+      }
     }
     const choices = args.traceChoices ? game.traceChoices(plannerSc, sc) : '';
     if(plannerSc && sc !== plannerSc){
@@ -937,6 +997,9 @@ function printSummary(results, traceFailures){
 async function main(){
   const args = parseArgs();
   const bot = await WasmBot.load(args.wasm);
+  if(args.weights){
+    bot.setWeights(JSON.parse(await readFile(args.weights, 'utf8')));
+  }
   const results = [];
   for(const level of args.levels){
     for(let i = 0; i < args.seeds; i++){

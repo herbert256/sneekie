@@ -65,7 +65,13 @@
         s.forceRisk | 0,
         s.bonus | 0
       );
-      self.postMessage({ type:'result', id:message.id, packed:packed | 0 });
+      let route = [];
+      if(typeof exports.route_ptr === 'function'){
+        const rbuf = new Int32Array(exports.memory.buffer, exports.route_ptr(), 161);
+        const rlen = Math.max(0, Math.min(160, rbuf[0] | 0));
+        route = Array.from(rbuf.subarray(1, 1 + rlen));
+      }
+      self.postMessage({ type:'result', id:message.id, packed:packed | 0, route });
     } catch(err) {
       self.postMessage({ type:'error', id:message.id, error:String(err && err.message || err) });
     }

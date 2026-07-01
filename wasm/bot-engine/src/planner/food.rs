@@ -15,6 +15,9 @@ impl Planner {
             route_kind: RouteKind::Near,
             arrow_level,
             urgent: false,
+            local_food_dist: INF,
+            start_room: None,
+            start_room_foods: 0,
         })
     }
 
@@ -56,6 +59,9 @@ impl Planner {
             route_kind: RouteKind::Route,
             arrow_level,
             urgent: self.urgent,
+            local_food_dist: INF,
+            start_room: None,
+            start_room_foods: 0,
         })
     }
 
@@ -110,11 +116,36 @@ impl Planner {
             route_kind: RouteKind::Pressure,
             arrow_level,
             urgent,
+            local_food_dist: INF,
+            start_room: None,
+            start_room_foods: 0,
         })
     }
 
     fn profiled_food_search(&mut self, mut cfg: FoodSearch) -> Option<i32> {
         self.apply_search_profile(&mut cfg);
+        // Local-sweep anchor: the nearest reachable food from where the snake
+        // stands. Prefer the clean (no-smiley) distance so the bias never pulls
+        // toward a smiley bridge. Not on the stone mazes (the dig gradient, not
+        // plain distance, decides what is "near" there) and not on the wall-gap
+        // maze (the nearest food through a crawling gap is a timing hazard, not
+        // a sweep target).
+        if !self.stone_maze_level() && !self.wall_gap_level() {
+            let clean = self.food_distance_no_smile(&cfg.start, 1600);
+            cfg.local_food_dist = if clean < INF {
+                clean
+            } else {
+                self.food_distance(&cfg.start, 1600)
+            };
+        }
+        // No region debt on the wall-gap mazes: their "doors" crawl down the
+        // walls every tick, so a static room snapshot pins the snake against a
+        // moving hazard instead of sweeping anything.
+        if !self.doors.is_empty() && !self.few() && !self.wall_gap_level() {
+            let room = self.current_open_room_cells(&cfg.start);
+            cfg.start_room_foods = self.room_food_count(&cfg.start, &room);
+            cfg.start_room = Some(room);
+        }
         self.food_search(cfg)
     }
 
@@ -139,17 +170,24 @@ impl Planner {
     }
 
     pub(super) fn food_search(&mut self, cfg: FoodSearch) -> Option<i32> {
-        let mut q = VecDeque::from([cfg.start.clone()]);
+        let mut start = cfg.start.clone();
+        start.trace = 0;
+        let mut q = VecDeque::from([start]);
         let mut seen = SeenKeys::with_capacity(cfg.scan_limit.max(1) as usize);
         seen.insert(state_key(&cfg.start));
+        // Parent-pointer arena: (parent trace index, move scancode) per kept
+        // state, so the winning candidate's whole move list can be rebuilt for
+        // route commitment. Slot 0 is the root.
+        let mut arena: Vec<(u32, u8)> = vec![(0, 0)];
+        let mut best_trace = 0u32;
         let mut scanned = 0;
         let mut checked = 0;
         let mut best = None;
         let mut best_score = i64::MIN;
 
-        while let Some(st) = q.pop_front() {
+        'search: while let Some(st) = q.pop_front() {
             if scanned >= cfg.scan_limit || self.time_up() {
-                return best;
+                break 'search;
             }
             scanned += 1;
             if st.dist >= cfg.max_depth {
@@ -157,33 +195,39 @@ impl Planner {
             }
             for &(sc, _) in &DIRS {
                 if self.time_up() {
-                    return best;
+                    break 'search;
                 }
                 let Some(ns) = self.move_state(&st, sc, cfg.allow_smile) else {
                     continue;
                 };
-                let Some(ns) = self.route_prefix_state(ns, &cfg) else {
+                let Some(mut ns) = self.route_prefix_state(ns, &cfg) else {
                     continue;
                 };
                 let key = state_key(&ns);
                 if !seen.insert(key) {
                     continue;
                 }
+                arena.push((st.trace, sc as u8));
+                ns.trace = (arena.len() - 1) as u32;
                 if ns.ate > 0 {
                     checked += 1;
                     if let Some(score) = self.score_food_candidate(&ns, &cfg) {
                         if score > best_score {
                             best_score = score;
                             best = Some(ns.first);
+                            best_trace = ns.trace;
                         }
                     }
                     if checked >= cfg.check_limit && best.is_some() {
-                        return best;
+                        break 'search;
                     }
                 } else {
                     q.push_back(ns);
                 }
             }
+        }
+        if best.is_some() && best_trace != 0 {
+            self.last_route = rebuild_route(&arena, best_trace);
         }
         best
     }
@@ -199,11 +243,17 @@ impl Planner {
         }
         if cfg.allow_smile
             && ns.smiles > 0
-            && self.maze_confined()
+            && (self.maze_confined() || self.open_board_level())
             && !few
             && (ns.body.len() as i32) >= 12
+            && !self.escape_pressed
             && self.food_distance_no_smile(&cfg.start, 1200) < INF
         {
+            // Clean food being reachable is worthless once the way back to the
+            // tail is lost (escape_pressed), so the gate yields in that case.
+            // The open boards need this gate too: a smiley never resets the
+            // starvation clock (it LOSES points), so an urgent bridge there
+            // spirals into nibbling the board bare while clean food sits open.
             return None;
         }
         if cfg.allow_smile && ns.smiles > 0 && self.avoid_extra_smile(ns.body.len() as i32) {
@@ -560,6 +610,21 @@ impl Planner {
             match cfg.route_kind {
                 RouteKind::Near | RouteKind::Route => return None,
                 RouteKind::Pressure => {
+                    // On the walled mazes the clean pass never trades the return
+                    // path away: the smiley pass runs right behind it and can keep
+                    // the tail with a -50 bridge instead; only that smiley pass
+                    // keeps the roomy no-return grab as a genuine last resort.
+                    // Exceptions: the stone mazes (a freshly dug pocket has no
+                    // tail path yet -- eating inside it is the point of digging)
+                    // and the open boards (the arrow danger masks make tail reach
+                    // flicker, so rejecting clean roomy pickups there just diverts
+                    // decisions into the smiley pass).
+                    if !cfg.allow_smile
+                        && !self.stone_maze_level()
+                        && !self.open_board_level()
+                    {
+                        return None;
+                    }
                     // Long bodies normally refuse a pickup without a guaranteed tail
                     // return; when starving, accept it if the landing room is genuinely
                     // roomy (exits >= 3 + ample space, the roomy_no_tail floor).
@@ -600,6 +665,40 @@ impl Planner {
             cfg.route_kind,
             cfg.urgent,
         );
+        // Region sweep: leaving a room that still holds food strands it behind
+        // the growing body. Additive only (never a rejection): if everything in
+        // the room fails the safety gates the debt is shared by every scored
+        // candidate and cancels; it only reorders "safe in-room" above "safe
+        // out-of-room". Kept below the door-lane debts so it biases sweeps
+        // without overriding lane safety.
+        let region_debt = match &cfg.start_room {
+            Some(room) if cfg.start_room_foods > 0 && !room.contains(ns.head) => {
+                let base = self.weights[W_REGION_BASE]
+                    + cfg.start_room_foods.min(6) as i64 * self.weights[W_REGION_PER_FOOD];
+                match cfg.route_kind {
+                    RouteKind::Near => base + base / 3,
+                    RouteKind::Route => base,
+                    RouteKind::Pressure => {
+                        if cfg.urgent {
+                            base / 3
+                        } else {
+                            base * 2 / 3
+                        }
+                    }
+                }
+            }
+            _ => 0,
+        };
+        // Region sweep planner: a pickup outside the committed target region
+        // pays a debt, so the bot finishes the room it is sweeping before it
+        // wanders. Additive only -- when nothing safe remains in the target,
+        // every candidate shares the debt and it cancels in the argmax.
+        let region_focus_debt = match &self.target_region {
+            Some(target) if !few && !target.contains(ns.head) => {
+                self.weights[W_REGION_FOCUS_DEBT]
+            }
+            _ => 0,
+        };
         if start_door.usable > 0 && door.total > 0 && door.usable == 0 {
             match cfg.route_kind {
                 RouteKind::Near | RouteKind::Route => return None,
@@ -677,8 +776,19 @@ impl Planner {
             if cfg.urgent || few { 1400 } else { 900 },
             cfg.allow_smile,
         );
-        let cluster_credit = self.cluster_credit(cluster, cfg.route_kind, cfg.urgent);
-        let rollout = self.pickup_rollout(ns, 2, cfg.allow_smile, cfg.urgent);
+        // Damp the cluster pull by candidate distance: full credit next door, a
+        // floor from damp_floor cells out. A rich cluster across the screen must
+        // not outbid a heart sitting right beside the head.
+        let damp_floor = self.weights[W_CLUSTER_DAMP_FLOOR].clamp(8, 63) as i32;
+        let cluster_credit = self.cluster_credit(cluster, cfg.route_kind, cfg.urgent)
+            * (64 - ns.dist.min(damp_floor)) as i64
+            / 64;
+        // The rollout is a future-food credit like the cluster credit, so it gets
+        // the same distance damping: multi-pickup chains across the screen must
+        // not outbid a heart sitting right beside the head.
+        let rollout = self.pickup_rollout(ns, 2, cfg.allow_smile, cfg.urgent)
+            * (64 - ns.dist.min(damp_floor)) as i64
+            / 64;
         let one_exit_cost = if exits == 1 {
             (match cfg.route_kind {
                 RouteKind::Near => 22_000,
@@ -703,8 +813,10 @@ impl Planner {
                 RouteKind::Near => 38_000,
                 RouteKind::Route => 86_000,
                 RouteKind::Pressure => {
+                    // Raised from 20k so a return-open smiley bridge outranks a
+                    // roomy no-return grab within the urgent smiley pass.
                     if cfg.urgent {
-                        20_000
+                        self.weights[W_RETURN_DEBT_PRESSURE_URGENT]
                     } else {
                         44_000
                     }
@@ -726,8 +838,12 @@ impl Planner {
         );
         let base = match cfg.route_kind {
             RouteKind::Near => {
-                -ns.dist as i64 * 6_400
-                    + if info.tail_reach { 46_000 } else { 0 }
+                -ns.dist as i64 * self.weights[W_NEAR_DIST]
+                    + if info.tail_reach {
+                        self.weights[W_NEAR_TAIL]
+                    } else {
+                        0
+                    }
                     + live as i64 * 3_100
                     + exits as i64 * 1_800
                     + info.space as i64 * 9
@@ -736,35 +852,79 @@ impl Planner {
                     + ns.points as i64 * 130
             }
             RouteKind::Route => {
-                (if info.tail_reach { 145_000 } else { 0 })
-                    + live as i64 * 6_100
-                    + exits as i64 * 2_700
-                    + info.space as i64 * 18
+                (if info.tail_reach {
+                    self.weights[W_ROUTE_TAIL]
+                } else {
+                    0
+                }) + live as i64 * self.weights[W_ROUTE_LIVE]
+                    + exits as i64 * self.weights[W_ROUTE_EXITS]
+                    + info.space as i64 * self.weights[W_ROUTE_SPACE]
                     + escape.space as i64 * 9
-                    + if escape.tail_reach { 44_000 } else { 0 }
-                    + ns.points as i64 * 170
-                    - ns.dist as i64 * 230
+                    + if escape.tail_reach {
+                        self.weights[W_ROUTE_ESCAPE_TAIL]
+                    } else {
+                        0
+                    }
+                    + ns.points as i64 * self.weights[W_ROUTE_POINTS]
+                    - ns.dist as i64 * self.weights[W_ROUTE_DIST]
             }
             RouteKind::Pressure => {
-                (if info.tail_reach { 58_000 } else { 0 })
-                    + live as i64 * 4_000
+                (if info.tail_reach {
+                    self.weights[W_PRESSURE_TAIL]
+                } else {
+                    0
+                }) + live as i64 * 4_000
                     + exits as i64 * 2_300
                     + info.space as i64 * 14
                     + escape.space as i64 * 7
                     + if escape.tail_reach { 21_000 } else { 0 }
-                    + ns.points as i64 * 250
-                    - ns.dist as i64 * if cfg.urgent { 95 } else { 170 }
+                    + ns.points as i64 * self.weights[W_PRESSURE_POINTS]
+                    - ns.dist as i64
+                        * if cfg.urgent {
+                            self.weights[W_PRESSURE_DIST_URGENT]
+                        } else {
+                            self.weights[W_PRESSURE_DIST]
+                        }
             }
         };
-        // Advice #6: eat the easy (open) food first. While plenty of food is still
-        // on the board and the body is short, defer a pickup that lands in a tight
-        // cell (few exits) so the snake clears the open hearts first and comes back
-        // for the cornered ones once the surrounding area -- and its own body -- has
-        // room. Fades as items drop and switches off in the endgame, so the last
-        // hearts in tight spots are still taken.
-        let corner_defer = if !few && body_len < 60 && exits <= 2 {
-            let scale = if self.maze_confined() { 900 } else { 24 };
-            (3 - exits).max(0) as i64 * self.items.clamp(0, 75) as i64 * scale
+        // Local sweep: do not leave hearts behind. A candidate much farther than
+        // the nearest reachable food pays per extra cell. Anchored to the nearest
+        // food, so when the only food IS far this adds nothing (endgame-safe); a
+        // debt shared by all candidates cancels in the argmax, so it can never
+        // null out a search -- it only reorders "near first" above "far first".
+        let local_bias = if cfg.local_food_dist < INF && ns.dist > cfg.local_food_dist + 6 {
+            let over = (ns.dist - cfg.local_food_dist - 6) as i64;
+            let (weight, cap) = match cfg.route_kind {
+                RouteKind::Near => (0, 0), // Near's distance term already dominates
+                RouteKind::Route => (
+                    self.weights[W_LOCAL_BIAS_ROUTE],
+                    self.weights[W_LOCAL_BIAS_CAP_ROUTE],
+                ),
+                RouteKind::Pressure => {
+                    if cfg.urgent {
+                        (self.weights[W_LOCAL_BIAS_PRESSURE] / 2, 22_000)
+                    } else {
+                        (self.weights[W_LOCAL_BIAS_PRESSURE], 34_000)
+                    }
+                }
+            };
+            (over * weight).min(cap)
+        } else {
+            0
+        };
+        // Advice #6 reworked: a pocketed pickup is cheapest to clear EARLY, while
+        // the body is short -- later the grown body makes the pocket genuinely
+        // dangerous, and the return/enclosure gates already price that. Keep only
+        // a mild open-first preference that grows with body length; the old
+        // items-remaining multiplier deferred cornered hearts until the board
+        // walled them off.
+        let corner_defer = if !few && exits <= 2 {
+            let scale = if self.maze_confined() {
+                self.weights[W_CORNER_SCALE_CONFINED]
+            } else {
+                self.weights[W_CORNER_SCALE_OPEN]
+            };
+            (3 - exits).max(0) as i64 * body_len.min(70) as i64 * scale
         } else {
             0
         };
@@ -781,6 +941,9 @@ impl Planner {
                 + smile_return_credit
                 + smile_strategy_credit
                 + self.door_exit_credit(door)
+                - local_bias
+                - region_debt
+                - region_focus_debt
                 - corner_defer
                 - confined_pocket_debt
                 - return_debt

@@ -259,6 +259,7 @@ fn door_regression_debt_protects_reserved_return_lane() {
         stones: 0,
         chokes: 0,
         repeats: 0,
+        trace: 0,
     };
     let after = p.door_exit_info(&after_state);
     assert_eq!(before.usable, 1);
@@ -450,6 +451,9 @@ fn normal_food_route_rejects_cut_off_tail_return() {
         route_kind: RouteKind::Route,
         arrow_level: false,
         urgent: false,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
     };
     assert!(p.score_food_candidate(&ns, &cfg).is_none());
 }
@@ -487,6 +491,9 @@ fn pressure_food_rejects_midgame_sealed_return_pocket() {
         route_kind: RouteKind::Pressure,
         arrow_level: false,
         urgent: true,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
     };
     let info = p.space_info(&ns, false);
     let exits = p.legal_count(&ns, true);
@@ -508,7 +515,7 @@ fn wasteful_smiley_is_skipped_when_clean_food_is_reachable() {
     board[offset(10, 12) as usize] = 1; // smiley immediately to the right
     board[offset(8, 14) as usize] = 3; // heart reachable without the smiley
     let body = vec![offset(10, 10), offset(10, 11)];
-    let p = planner_level(board, body, 2); // line maze -> not open_board_level
+    let mut p = planner_level(board, body, 2); // line maze -> not open_board_level
     assert!(!p.open_board_level());
     assert!(
         p.food_distance_no_smile(&p.start_state(), 1200) < INF,
@@ -541,6 +548,9 @@ fn confined_route_defers_smiley_when_clean_food_is_reachable() {
         route_kind: RouteKind::Route,
         arrow_level: false,
         urgent: false,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
     };
     let ns = p
         .move_state(&st, 77, true)
@@ -565,7 +575,7 @@ fn smiley_bridge_kept_when_no_clean_food_reachable() {
     board[offset(10, 12) as usize] = 1; // smiley blocks the corridor
     board[offset(10, 14) as usize] = 3; // heart only reachable through the smiley
     let body = vec![offset(10, 10), offset(10, 11)];
-    let p = planner_level(board, body, 2);
+    let mut p = planner_level(board, body, 2);
     assert!(
         p.food_distance_no_smile(&p.start_state(), 1200) >= INF,
         "no clean route to the walled-off heart"
@@ -592,6 +602,9 @@ fn strategic_smiley_bridge_can_unlock_clustered_food() {
         route_kind: RouteKind::Route,
         arrow_level: false,
         urgent: false,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
     };
     let ns = p.move_state(&st, 77, true).unwrap();
     let ns = p.route_prefix_state(ns, &cfg).unwrap();
@@ -621,6 +634,9 @@ fn normal_food_route_rejects_second_smiley() {
         route_kind: RouteKind::Route,
         arrow_level: false,
         urgent: false,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
     };
     let ns = p
         .move_state(&st, 77, true)
@@ -669,9 +685,10 @@ fn self_seal_guard_overrides_into_a_tiny_pocket() {
     board[offset(11, 12) as usize] = 196;
     board[offset(11, 13) as usize] = 196;
     board[offset(10, 14) as usize] = 196;
-    // A 10-long body lying along row 10, head at (10,11).
-    let body: Vec<i32> = (2..=11).map(|c| offset(10, c)).collect();
-    let p = planner_level(board, body, 2); // line maze -> maze_confined
+    // A 12-long body ending along row 10, head at (10,11).
+    let mut body = vec![offset(12, 2), offset(11, 2)];
+    body.extend((2..=11).map(|c| offset(10, c)));
+    let mut p = planner_level(board, body, 2); // line maze -> maze_confined
     assert!(p.maze_confined());
     // Right (77) seals into the 2-cell pocket; up (72) is wide open.
     let overridden = p.avoid_self_seal(77);
@@ -939,4 +956,464 @@ fn cmp_desc_orders_high_scores_first() {
     let mut xs = [1, 9, 3];
     xs.sort_by(|a, b| cmp_i64_desc(*a, *b));
     assert_eq!(xs, [9, 3, 1]);
+}
+
+#[test]
+fn self_seal_guard_spends_a_smiley_when_it_is_the_only_escape() {
+    // The return-path hard rule: right seals into a 2-cell pocket, up is walled,
+    // and the only way to keep room for the body is a -50 smiley below. The
+    // guard must take the smiley rather than entomb the snake.
+    let mut board = empty_board();
+    board[offset(9, 12) as usize] = 196;
+    board[offset(9, 13) as usize] = 196;
+    board[offset(11, 12) as usize] = 196;
+    board[offset(11, 13) as usize] = 196;
+    board[offset(10, 14) as usize] = 196;
+    board[offset(9, 11) as usize] = 196; // up from the head is walled
+    board[offset(11, 11) as usize] = 1; // the smiley escape below the head
+    let mut body = vec![offset(12, 2), offset(11, 2)];
+    body.extend((2..=11).map(|c| offset(10, c)));
+    let mut p = planner_level(board, body, 2); // line maze -> maze_confined
+    assert_eq!(
+        p.avoid_self_seal(77),
+        80,
+        "a -50 smiley beats sealing the body into a 2-cell pocket"
+    );
+}
+
+#[test]
+fn self_seal_guard_still_fires_in_endgame() {
+    // The guard used to be skipped when few items remained -- exactly when the
+    // body is longest. finalize_decision must now refuse the seal in the endgame.
+    let mut board = empty_board();
+    board[offset(9, 12) as usize] = 196;
+    board[offset(9, 13) as usize] = 196;
+    board[offset(11, 12) as usize] = 196;
+    board[offset(11, 13) as usize] = 196;
+    board[offset(10, 14) as usize] = 196;
+    let mut body = vec![offset(12, 2), offset(11, 2)];
+    body.extend((2..=11).map(|c| offset(10, c)));
+    let mut p = Planner::new(
+        board,
+        body,
+        [0; ENEMY_LEN],
+        Vec::new(),
+        2,
+        3, // endgame: few() is true
+        0,
+        false,
+        1_000_000.0,
+    );
+    assert!(p.few());
+    let out = decision_sc(p.finalize_decision(pack_decision(20, 77)));
+    assert_ne!(out, 77, "the endgame must not seal into the tiny pocket");
+    assert!(matches!(out, 72 | 80), "should pick an open direction");
+}
+
+#[test]
+fn self_seal_guard_fires_on_stone_maze_level() {
+    // The guard used to run only on the confined mazes; a stone-maze level let
+    // the snake coil into a sub-body pocket. The pocket here is open enough to
+    // dodge the forced-dead-end guard (3 exits) yet far too small for the body.
+    let mut board = empty_board();
+    for col in 26..=27 {
+        board[offset(13, col) as usize] = 196; // pocket floor
+    }
+    for row in 11..=12 {
+        board[offset(row, 25) as usize] = 196; // pocket left wall
+        board[offset(row, 28) as usize] = 196; // pocket right wall
+    }
+    let body: Vec<i32> = (2..=27).map(|c| offset(10, c)).collect(); // 26 cells
+    let mut p = planner_level(board, body, 4); // stone maze, not confined
+    assert!(p.stone_maze_level());
+    assert!(!p.maze_confined());
+    let out = decision_sc(p.finalize_decision(pack_decision(20, 80)));
+    assert_ne!(out, 80, "must not coil into the 4-cell pocket under the body");
+    assert!(matches!(out, 72 | 77), "should pick an open direction");
+}
+
+#[test]
+fn escape_pressed_lifts_smiley_refusal() {
+    // Head trapped in a dead-end corridor behind its own body: no flood path back
+    // to the tail and less room than the body needs. escape_pressed must flag it
+    // and lift avoid_extra_smile so a -50 bridge can reopen the way back.
+    let mut board = empty_board();
+    for col in 2..=20 {
+        board[offset(9, col) as usize] = 196;
+        board[offset(11, col) as usize] = 196;
+    }
+    board[offset(10, 21) as usize] = 196; // corridor dead end
+    let body: Vec<i32> = (2..=13).map(|c| offset(10, c)).collect(); // 12 cells
+    let p = planner_level(board, body, 3); // room/door maze -> confined
+    assert!(p.escape_pressed, "cut off from the tail in a cramped corridor");
+    assert!(
+        !p.avoid_extra_smile(60),
+        "a trapped snake may spend a smiley to escape"
+    );
+    // Control: a healthy snake on an open board keeps the smiley discipline.
+    let control = planner_level(empty_board(), vec![offset(10, 10), offset(10, 11)], 6);
+    assert!(!control.escape_pressed);
+    assert!(control.avoid_extra_smile(60));
+}
+
+#[test]
+fn wasteful_smile_guard_keeps_return_saving_smiley() {
+    // The chosen smiley keeps the flood path back to the tail; the only clean
+    // alternative walks into a sealed room and loses it. The guard must not
+    // trade -50 for a possible entombment.
+    let mut board = empty_board();
+    for col in 9..=13 {
+        board[offset(5, col) as usize] = 196; // room top
+        board[offset(9, col) as usize] = 196; // room bottom
+    }
+    for row in 5..=9 {
+        board[offset(row, 9) as usize] = 196; // room left
+        board[offset(row, 13) as usize] = 196; // room right
+    }
+    board[offset(9, 11) as usize] = 32; // the door, straight above the head
+    board[offset(7, 11) as usize] = 3; // clean heart inside the room
+    board[offset(10, 10) as usize] = 1; // the chosen smiley, keeping tail reach
+    board[offset(11, 11) as usize] = 196; // down from the head is walled
+    let body: Vec<i32> = (11..=22).rev().map(|c| offset(10, c)).collect();
+    let mut p = planner_level(board, body, 2);
+    let st = p.start_state();
+    assert_eq!(st.dir, 75, "head moves left toward the smiley");
+    assert!(
+        p.food_distance_no_smile(&st, 1200) < INF,
+        "the room heart is cleanly reachable"
+    );
+    assert_eq!(
+        p.avoid_wasteful_smile(75),
+        75,
+        "keep the tail-preserving smiley over a sealing clean move"
+    );
+}
+
+#[test]
+fn forced_dead_end_lets_the_last_heart_finish() {
+    // A dead-end corridor holding the final item finishes the level: the
+    // forced-dead-end guard must let the snake commit to it.
+    let mut board = empty_board();
+    for col in 11..=14 {
+        board[offset(9, col) as usize] = 196;
+        board[offset(11, col) as usize] = 196;
+    }
+    board[offset(10, 15) as usize] = 196; // corridor cap
+    board[offset(10, 14) as usize] = 3; // the last heart
+    let body = vec![offset(10, 9), offset(10, 10)];
+    let mut last = Planner::new(
+        board,
+        body.clone(),
+        [0; ENEMY_LEN],
+        Vec::new(),
+        2,
+        1, // the heart is the final item
+        0,
+        false,
+        1_000_000.0,
+    );
+    assert_eq!(
+        last.avoid_forced_dead_end(77),
+        77,
+        "eating the final heart ends the level before the dead end matters"
+    );
+    let mut mid = planner_level(board, body, 2); // 12 items left
+    assert_ne!(
+        mid.avoid_forced_dead_end(77),
+        77,
+        "mid-game the same corridor is a death trap"
+    );
+}
+
+#[test]
+fn clean_pressure_never_accepts_no_return() {
+    // A pickup inside a big sealed room whose door is plugged by the snake's own
+    // body: roomy (3+ exits, huge space) but no path back to the tail. The clean
+    // pressure pass must reject it outright -- only the smiley pass may keep the
+    // roomy no-return grab as a last resort.
+    let mut board = empty_board();
+    for col in 30..=60 {
+        board[offset(2, col) as usize] = 196; // room top
+        board[offset(20, col) as usize] = 196; // room bottom
+    }
+    for row in 2..=20 {
+        board[offset(row, 30) as usize] = 196; // room left
+        board[offset(row, 60) as usize] = 196; // room right
+    }
+    board[offset(10, 30) as usize] = 32; // the door
+    board[offset(10, 33) as usize] = 3; // the heart inside
+    let body: Vec<i32> = (12..=32).map(|c| offset(10, c)).collect(); // plugs the door
+    // Room maze, body short enough to dodge the older confined carve-outs, so
+    // this isolates the rule. (Stone mazes and open boards are exempt: dug
+    // pockets have no tail path yet, and arrow danger makes tail reach flicker.)
+    let mut p = planner_level(board, body, 27);
+    p.urgent = true;
+    let st = p.start_state();
+    let ns = p
+        .move_state(&st, 77, false)
+        .expect("the room heart is physically reachable");
+    let cfg = FoodSearch {
+        start: st,
+        allow_smile: false,
+        max_depth: 10,
+        scan_limit: 50,
+        check_limit: 10,
+        route_kind: RouteKind::Pressure,
+        arrow_level: false,
+        urgent: true,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
+    };
+    assert!(
+        p.score_food_candidate(&ns, &cfg).is_none(),
+        "the clean pass must never trade the return path away"
+    );
+}
+
+#[test]
+fn nearby_heart_beats_cross_screen_cluster() {
+    // The local-sweep rule: a lone heart three cells away must outscore a rich
+    // cluster on the far side of the screen.
+    let mut board = empty_board();
+    board[offset(10, 14) as usize] = 3; // the nearby heart
+    for &(r, c) in &[(10, 60), (10, 61), (11, 60), (11, 61), (9, 61)] {
+        board[offset(r, c) as usize] = 3; // the far cluster
+    }
+    let body = vec![offset(10, 10), offset(10, 11)];
+    let mut p = planner_level(board, body, 2);
+    let st = p.start_state();
+    let anchor = p.food_distance_no_smile(&st, 2000);
+    assert_eq!(anchor, 3);
+    let cfg = FoodSearch {
+        start: st.clone(),
+        allow_smile: false,
+        max_depth: 60,
+        scan_limit: 5000,
+        check_limit: 60,
+        route_kind: RouteKind::Route,
+        arrow_level: false,
+        urgent: false,
+        local_food_dist: anchor,
+        start_room: None,
+        start_room_foods: 0,
+    };
+    let mut near = st.clone();
+    for _ in 0..3 {
+        near = p.move_state(&near, 77, false).expect("open row to the heart");
+    }
+    assert_eq!(near.ate, 1);
+    let mut far = p.move_state(&st, 72, false).expect("step above the near heart");
+    for _ in 0..49 {
+        far = p.move_state(&far, 77, false).expect("open row 9 to the cluster");
+    }
+    far = p.move_state(&far, 80, false).expect("drop into the cluster");
+    assert_eq!(far.ate, 1);
+    let near_score = p.score_food_candidate(&near, &cfg).expect("near heart scorable");
+    let far_score = p.score_food_candidate(&far, &cfg).expect("far cluster scorable");
+    assert!(
+        near_score > far_score,
+        "nearby heart ({near_score}) must beat the far cluster ({far_score})"
+    );
+}
+
+#[test]
+fn short_body_clears_pocketed_heart_early() {
+    // Advice #6 reworked: with a SHORT body, a heart tucked against a wall
+    // (2 exits) right next to the head must be eaten now, not deferred until
+    // the grown body can no longer reach it safely.
+    let mut board = empty_board();
+    for col in 8..=12 {
+        board[offset(4, col) as usize] = 196; // the wall above the heart
+    }
+    board[offset(5, 10) as usize] = 3; // the tucked heart, one step up
+    board[offset(6, 35) as usize] = 3; // an open heart across the room
+    let body = vec![offset(7, 10), offset(6, 10)];
+    let mut p = Planner::new(
+        board,
+        body,
+        [0; ENEMY_LEN],
+        Vec::new(),
+        3,  // room/door maze -> confined, where the old defer was harshest
+        70, // plenty of items left: the old code deferred hardest here
+        0,
+        false,
+        1_000_000.0,
+    );
+    assert!(p.maze_confined());
+    assert_eq!(p.decide(), 72, "eat the adjacent tucked heart first");
+}
+
+#[test]
+fn leaving_room_with_food_carries_region_debt() {
+    // Region sweep: crossing the door while the current room still holds food
+    // must cost exactly the region debt; with the room swept clean it costs
+    // nothing. The dividing wall spans the full height (and col 80 blocks the
+    // offset wrap) so the two rooms are genuinely sealed.
+    let mut board = empty_board();
+    for row in 1..=25 {
+        board[offset(row, 12) as usize] = 179; // full-height dividing wall
+        board[offset(row, 80) as usize] = 179; // block the col-80 row wrap
+    }
+    board[offset(10, 12) as usize] = 32; // the 2-wide door
+    board[offset(11, 12) as usize] = 32;
+    board[offset(12, 14) as usize] = 3; // food in the head's (east) room
+    board[offset(10, 9) as usize] = 3; // food beyond the door (west room)
+    let body = vec![offset(10, 14), offset(10, 13)];
+    let mut p = planner_level(board, body, 27); // room/door maze with doors
+    assert!(!p.doors.is_empty());
+    let st = p.start_state();
+    let room = p.current_open_room_cells(&st);
+    assert!(room.contains(offset(12, 14)), "east food is in the head's room");
+    assert!(!room.contains(offset(10, 9)), "west food is beyond the door");
+    assert_eq!(p.room_food_count(&st, &room), 1);
+
+    let mut west = st.clone();
+    for _ in 0..4 {
+        west = p
+            .move_state(&west, 75, false)
+            .expect("open path through the door");
+    }
+    assert_eq!(west.ate, 1);
+
+    let mut cfg = FoodSearch {
+        start: st.clone(),
+        allow_smile: false,
+        max_depth: 20,
+        scan_limit: 500,
+        check_limit: 50,
+        route_kind: RouteKind::Route,
+        arrow_level: false,
+        urgent: false,
+        local_food_dist: INF,
+        start_room: Some(room),
+        start_room_foods: 1,
+    };
+    let debited = p.score_food_candidate(&west, &cfg).expect("scorable");
+    cfg.start_room_foods = 0;
+    let clean = p.score_food_candidate(&west, &cfg).expect("scorable");
+    assert_eq!(
+        clean - debited,
+        6_000 + 2_500,
+        "leaving one heart behind costs the region debt"
+    );
+}
+
+#[test]
+fn local_bias_inactive_without_reachable_anchor() {
+    // With no reachable anchor (INF) the bias adds nothing; with an anchor it
+    // charges exactly per cell beyond anchor + slack.
+    let mut board = empty_board();
+    board[offset(10, 31) as usize] = 3; // a heart 20 cells right
+    let body = vec![offset(10, 10), offset(10, 11)];
+    let mut p = planner_level(board, body, 2);
+    let st = p.start_state();
+    let mut ns = st.clone();
+    for _ in 0..20 {
+        ns = p.move_state(&ns, 77, false).expect("open row to the heart");
+    }
+    assert_eq!(ns.ate, 1);
+    let mut cfg = FoodSearch {
+        start: st.clone(),
+        allow_smile: false,
+        max_depth: 30,
+        scan_limit: 500,
+        check_limit: 50,
+        route_kind: RouteKind::Route,
+        arrow_level: false,
+        urgent: false,
+        local_food_dist: INF,
+        start_room: None,
+        start_room_foods: 0,
+    };
+    let unbiased = p.score_food_candidate(&ns, &cfg).expect("scorable");
+    cfg.local_food_dist = 6;
+    let biased = p.score_food_candidate(&ns, &cfg).expect("scorable");
+    assert_eq!(unbiased - biased, (20 - 6 - 6) as i64 * 900);
+}
+
+#[test]
+fn arrow_projection_stalls_under_a_blocking_cell() {
+    // sub1830 only advances an arrow when the cell above is <= 100: a wall (or
+    // the snake's body) stalls it in place. The projection must keep the arrow
+    // at its stalled position instead of flying it through the wall.
+    let mut board = empty_board();
+    let col = 10;
+    board[offset(8, col) as usize] = 24; // up arrow at row 8
+    board[offset(6, col) as usize] = 179; // wall above row 7
+    let mut enemy = [0; ENEMY_LEN];
+    enemy[(col * 4 + 1) as usize] = 8;
+    let body = vec![offset(20, 40), offset(20, 41)];
+    let p = Planner::new(
+        board,
+        body,
+        enemy,
+        Vec::new(),
+        30,
+        20,
+        0,
+        false,
+        1_000_000.0,
+    );
+    assert!(p.danger(offset(7, col), 0), "first step up is exact");
+    assert!(p.danger(offset(7, col), 6), "the stalled arrow stays at row 7");
+    assert!(!p.danger(offset(5, col), 6), "the arrow never passes the wall");
+}
+
+#[test]
+fn endgame_tour_eats_all_remaining_food() {
+    // The endgame finisher must produce one complete simulated tour over the
+    // remaining items and publish it as the committed route.
+    let mut board = empty_board();
+    board[offset(10, 14) as usize] = 3;
+    board[offset(12, 20) as usize] = 3;
+    board[offset(8, 20) as usize] = 5;
+    let body = vec![offset(10, 10), offset(10, 11)];
+    let mut p = Planner::new(
+        board,
+        body,
+        [0; ENEMY_LEN],
+        Vec::new(),
+        2,
+        3, // exactly the three items on the board
+        0,
+        false,
+        1_000_000.0,
+    );
+    let first = p.endgame_tour().expect("a full tour exists");
+    assert_eq!(first, p.last_route[0], "returned move heads the route");
+    let route = p.last_route.clone();
+    let mut st = p.start_state();
+    for &sc in &route {
+        st = p.move_state(&st, sc, true).expect("tour replays legally");
+    }
+    assert_eq!(st.ate, 3, "the tour eats every remaining item");
+}
+
+#[test]
+fn region_sweep_targets_the_pocket_with_food() {
+    // Two pockets joined by a one-wide corridor on a line-maze level: the
+    // sweep planner must target the head's own pocket while it holds food,
+    // and the far pocket's food must sit outside the target region.
+    let mut board = empty_board();
+    for row in 1..=25 {
+        board[offset(row, 20) as usize] = 179; // dividing wall
+        board[offset(row, 40) as usize] = 179; // right boundary
+        board[offset(row, 80) as usize] = 179; // block the col-80 row wrap
+    }
+    board[offset(10, 20) as usize] = 32; // the corridor cell joining the pockets
+    board[offset(12, 10) as usize] = 3; // food in the head's (left) pocket
+    board[offset(12, 30) as usize] = 3; // food in the far (right) pocket
+    let body = vec![offset(8, 10), offset(8, 11)];
+    let p = planner_level(board, body, 2); // line maze -> sweep planner active
+    let target = p.target_region.as_ref().expect("a target region exists");
+    assert!(target.contains(offset(12, 10)), "own pocket is the target");
+    assert!(!target.contains(offset(12, 30)), "far pocket is not");
+
+    // With the left pocket swept clean, the target moves to the far pocket.
+    let mut cleared = board;
+    cleared[offset(12, 10) as usize] = 32;
+    let p2 = planner_level(cleared, vec![offset(8, 10), offset(8, 11)], 2);
+    let target2 = p2.target_region.as_ref().expect("a new target exists");
+    assert!(target2.contains(offset(12, 30)), "sweep moves to the next pocket");
 }

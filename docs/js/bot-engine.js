@@ -48,7 +48,7 @@
         best = result;
       }
     }
-    return best ? best.sc : null;
+    return best;
   }
 
   function createWasm(access){
@@ -141,6 +141,13 @@
       };
     };
 
+    const readRoute = () => {
+      if(!exports || typeof exports.route_ptr !== 'function') return [];
+      const rbuf = new Int32Array(exports.memory.buffer, exports.route_ptr(), 161);
+      const rlen = Math.max(0, Math.min(160, rbuf[0] | 0));
+      return Array.from(rbuf.subarray(1, 1 + rlen));
+    };
+
     const decideSingle = options => {
       if(disabled || !exports) return null;
       try {
@@ -153,7 +160,7 @@
             snap.trailLen, snap.budgetMs, snap.forceRisk, snap.bonus);
         const sc = typeof exports.decide_mode === 'function' ? decisionSc(packed) : packed;
         if(sc === 0) return null;
-        if(isArrowKey(sc)) return sc;
+        if(isArrowKey(sc)) return { sc, route: readRoute() };
         disabled = true;
         stopWorkers();
         if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm bot returned invalid scancode:', sc);
@@ -229,7 +236,8 @@
         tier: decisionTier(packed),
         mode: entry.mode,
         rank: entry.rank,
-        slot: state.slot
+        slot: state.slot,
+        route: Array.isArray(message.route) ? message.route : []
       } : null);
     }
 
@@ -259,7 +267,9 @@
       }));
       const results = await Promise.all(tasks);
       const best = chooseBest(results);
-      return best === null ? decideSingle(options) : best;
+      return best === null || best === undefined ?
+        decideSingle(options) :
+        { sc: best.sc, route: best.route || [] };
     };
 
     const decide = options => {

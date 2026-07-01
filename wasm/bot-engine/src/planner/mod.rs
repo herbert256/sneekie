@@ -8,8 +8,10 @@ mod doors;
 mod fallback;
 mod food;
 mod movement;
+mod region;
 mod smile;
 mod space;
+mod tour;
 
 #[cfg(test)]
 mod tests;
@@ -192,6 +194,10 @@ struct State {
     stones: i32,
     chokes: i32,
     repeats: i32,
+    // Index into the food search's parent-pointer arena, so the winning
+    // candidate's full move sequence can be reconstructed (route commitment).
+    // 0 = root / not tracked.
+    trace: u32,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -268,6 +274,68 @@ struct ClusterInfo {
     nearest: i32,
 }
 
+// The tunable scoring weights. The planner compiles with W_DEFAULTS; the host
+// may override them through the ffi weights buffer (used by the offline tuner,
+// tools/tune-bot-weights.mjs). Keep the index constants, W_DEFAULTS, and the
+// tuner's DEFAULTS array in sync.
+pub(crate) const W_LEN: usize = 27;
+pub(crate) const W_NEAR_DIST: usize = 0;
+pub(crate) const W_NEAR_TAIL: usize = 1;
+pub(crate) const W_ROUTE_TAIL: usize = 2;
+pub(crate) const W_ROUTE_LIVE: usize = 3;
+pub(crate) const W_ROUTE_EXITS: usize = 4;
+pub(crate) const W_ROUTE_SPACE: usize = 5;
+pub(crate) const W_ROUTE_ESCAPE_TAIL: usize = 6;
+pub(crate) const W_ROUTE_POINTS: usize = 7;
+pub(crate) const W_ROUTE_DIST: usize = 8;
+pub(crate) const W_PRESSURE_TAIL: usize = 9;
+pub(crate) const W_PRESSURE_POINTS: usize = 10;
+pub(crate) const W_PRESSURE_DIST_URGENT: usize = 11;
+pub(crate) const W_PRESSURE_DIST: usize = 12;
+pub(crate) const W_LOCAL_BIAS_ROUTE: usize = 13;
+pub(crate) const W_LOCAL_BIAS_CAP_ROUTE: usize = 14;
+pub(crate) const W_CLUSTER_DAMP_FLOOR: usize = 15;
+pub(crate) const W_CORNER_SCALE_CONFINED: usize = 16;
+pub(crate) const W_CORNER_SCALE_OPEN: usize = 17;
+pub(crate) const W_REGION_BASE: usize = 18;
+pub(crate) const W_REGION_PER_FOOD: usize = 19;
+pub(crate) const W_SMILE_COST_NEAR: usize = 20;
+pub(crate) const W_SMILE_COST_ROUTE: usize = 21;
+pub(crate) const W_SMILE_COST_PRESSURE_URGENT: usize = 22;
+pub(crate) const W_SMILE_COST_PRESSURE: usize = 23;
+pub(crate) const W_RETURN_DEBT_PRESSURE_URGENT: usize = 24;
+pub(crate) const W_LOCAL_BIAS_PRESSURE: usize = 25;
+pub(crate) const W_REGION_FOCUS_DEBT: usize = 26;
+pub(crate) const W_DEFAULTS: [i64; W_LEN] = [
+    6_400,   // near dist
+    46_000,  // near tail-reach
+    145_000, // route tail-reach
+    6_100,   // route survival depth
+    2_700,   // route exits
+    18,      // route space
+    44_000,  // route escape tail-reach
+    170,     // route points
+    230,     // route dist
+    58_000,  // pressure tail-reach
+    250,     // pressure points
+    95,      // pressure dist (urgent)
+    170,     // pressure dist
+    900,     // local-sweep bias per cell (route)
+    55_000,  // local-sweep bias cap (route)
+    48,      // cluster/rollout distance damping floor
+    130,     // corner defer scale (confined)
+    20,      // corner defer scale (elsewhere)
+    6_000,   // region-abandonment base
+    2_500,   // region-abandonment per food
+    11_000,  // smiley cost base (near)
+    14_000,  // smiley cost base (route)
+    7_500,   // smiley cost base (pressure urgent)
+    10_500,  // smiley cost base (pressure)
+    30_000,  // pressure-urgent no-return debt
+    700,     // local-sweep bias per cell (pressure)
+    9_000,   // pickup outside the target sweep region
+];
+
 pub(crate) struct Planner {
     board: [u16; BOARD_LEN],
     body: Vec<i32>,
@@ -288,6 +356,18 @@ pub(crate) struct Planner {
     danger_len: usize,
     doors: Vec<Door>,
     door_bits: BoardBits,
+    // The return path is already compromised where the snake stands: no flood
+    // path back to the tail and less room than the body needs. In that state the
+    // smiley-discipline vetoes yield, so a -50 bridge can reopen the way back.
+    escape_pressed: bool,
+    pub(crate) weights: [i64; W_LEN],
+    // The full move sequence of the winning food route (head of the list is the
+    // move being returned). Cleared whenever the final decision did not come
+    // from a food search, so the host only ever replays a committed route.
+    pub(crate) last_route: Vec<i32>,
+    // The region-sweep planner's current target: sweep this region clean before
+    // eating elsewhere. None on layouts where static regions would lie.
+    target_region: Option<BoardBits>,
 }
 
 struct FoodSearch {
@@ -299,6 +379,13 @@ struct FoodSearch {
     route_kind: RouteKind,
     arrow_level: bool,
     urgent: bool,
+    // Local-sweep anchor: BFS distance to the nearest reachable food from the
+    // search start (INF disables the bias). Filled by profiled_food_search.
+    local_food_dist: i32,
+    // The door-level room holding the search start, when it still has food in
+    // it -- candidates that leave the room pay a region-abandonment debt.
+    start_room: Option<BoardBits>,
+    start_room_foods: i32,
 }
 
 #[derive(Clone, Copy)]
@@ -306,6 +393,18 @@ enum RouteKind {
     Near,
     Route,
     Pressure,
+}
+
+fn rebuild_route(arena: &[(u32, u8)], best_trace: u32) -> Vec<i32> {
+    let mut route = Vec::new();
+    let mut at = best_trace;
+    while at != 0 {
+        let (parent, sc) = arena[at as usize];
+        route.push(sc as i32);
+        at = parent;
+    }
+    route.reverse();
+    route
 }
 
 fn keep_best_i32(items: &mut Vec<(State, i32)>, keep: usize) {

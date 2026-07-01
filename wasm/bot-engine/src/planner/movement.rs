@@ -71,6 +71,7 @@ impl Planner {
             stones,
             chokes: st.chokes,
             repeats: st.repeats + self.recent_step_heat(n),
+            trace: st.trace,
         })
     }
 
@@ -235,48 +236,137 @@ impl Planner {
         count
     }
 
-    pub(super) fn avoid_self_seal(&self, chosen: i32) -> i32 {
-        // Advice #3: never voluntarily step into a pocket too small to hold the body
-        // when a much roomier legal move exists. Measured with the strict (body-solid)
-        // flood so a coil's adjacent tail cannot fake the breathing room away. The
-        // override target skips a smiley landing, so the guard never trades a self-seal
-        // for a -50 smiley. Deliberately narrow -- it only fires on a near-certain
-        // self-seal -- so it does not fight normal play.
+    pub(super) fn avoid_self_seal(&mut self, chosen: i32) -> i32 {
+        // Advice #3, hardened into the return-path rule: never voluntarily step
+        // into a pocket too small to hold the body when a roomier legal move
+        // exists. Measured with the strict (body-solid) flood so a coil's adjacent
+        // tail cannot fake the breathing room away. Runs on every level and in the
+        // endgame, and when no clean move keeps the room it spends a -50 smiley
+        // rather than entomb the snake. Still deliberately margin-gated so it does
+        // not fight normal play.
         let st = self.start_state();
         let body_len = st.body.len() as i32;
-        let mut best_sc = chosen;
-        let mut best_space = -1;
-        let mut chosen_space = i32::MAX;
-        for &(sc, _) in &DIRS {
-            let Some(ns) = self.move_state(&st, sc, true) else {
-                continue;
-            };
-            let sp = self.reach_space_strict(&ns);
-            if sc == chosen {
-                chosen_space = sp;
-            }
-            let lands_on_smile = self.cell(&st, st.head + step(sc)) == 1;
-            if !lands_on_smile && sp > best_space {
-                best_space = sp;
-                best_sc = sc;
-            }
+        if body_len < 12 {
+            return chosen;
         }
+        // Open boards rarely seal; only guard genuinely huge bodies there.
+        if self.open_board_level() && body_len < 48 {
+            return chosen;
+        }
+        let Some(chosen_state) = self.move_state(&st, chosen, true) else {
+            return chosen;
+        };
+        // Eating the final item ends the level, so a seal behind it is irrelevant.
+        if self.items <= 1 && is_food(self.cell(&st, st.head + step(chosen))) {
+            return chosen;
+        }
+        // A committed dig legitimately has no tail path until it breaks through
+        // the stone field -- never yank the snake out of a stone push.
+        if chosen_state.stones > st.stones {
+            return chosen;
+        }
+        let chosen_space = self.reach_space_strict(&chosen_state);
+        let chosen_tail = self.space_info(&chosen_state, false).tail_reach;
         let cramped_limit = if self.maze_confined() && body_len >= 24 {
             body_len + 24
+        } else if body_len >= 24 {
+            body_len + 16
         } else {
             body_len
         };
-        let clearly_roomier = best_space >= chosen_space * 2
-            || (self.maze_confined()
-                && body_len >= 24
-                && best_space >= chosen_space + 10
-                && best_space >= body_len + 8);
-        if best_sc != chosen
-            && chosen_space < cramped_limit
-            && best_space >= 6
-            && clearly_roomier
-        {
-            return best_sc;
+        // On the confined mazes a coil can seal itself while the tail still looks
+        // reachable (the tail-passable flood over-counts), so cramped strict space
+        // alone is a threat there. Elsewhere -- stone mazes, open boards, digs,
+        // healthy tail-following -- small strict space with the tail still in
+        // reach is normal play, so the threat also requires losing the tail.
+        let seal_threat = if self.maze_confined() {
+            chosen_space < cramped_limit || (body_len >= 36 && !chosen_tail)
+        } else {
+            !chosen_tail && (chosen_space < cramped_limit || body_len >= 36)
+        };
+        if !seal_threat {
+            return chosen;
+        }
+        let desperate = self.urgent && self.idle >= 50;
+
+        struct SealCand {
+            sc: i32,
+            space: i32,
+            tail: bool,
+        }
+        let mut clean_best: Option<SealCand> = None;
+        let mut smile_best: Option<SealCand> = None;
+        for &(sc, _) in &DIRS {
+            if sc == chosen {
+                continue;
+            }
+            let Some(ns) = self.move_state(&st, sc, true) else {
+                continue;
+            };
+            let space = self.reach_space_strict(&ns);
+            let tail = self.space_info(&ns, false).tail_reach;
+            let lands_on_smile = self.cell(&st, st.head + step(sc)) == 1;
+            let slot = if lands_on_smile {
+                &mut smile_best
+            } else {
+                &mut clean_best
+            };
+            let better = match slot {
+                Some(cur) => (tail, space) > (cur.tail, cur.space),
+                None => true,
+            };
+            if better {
+                *slot = Some(SealCand { sc, space, tail });
+            }
+        }
+
+        let maze_confined = self.maze_confined();
+        let cautious = desperate || self.few();
+        let qualifies = |cand: &SealCand| -> bool {
+            if cand.space < 6 || cand.space <= chosen_space {
+                return false;
+            }
+            if cautious {
+                // Desperate stall-breaks and endgame squeezes must be able to
+                // commit: only fire on a near-certain seal.
+                return chosen_space < body_len && cand.space >= chosen_space * 2;
+            }
+            cand.space >= chosen_space * 2
+                || (maze_confined
+                    && body_len >= 24
+                    && cand.space >= chosen_space + 10
+                    && cand.space >= body_len + 8)
+                || (body_len >= 24
+                    && cand.space >= chosen_space + 24
+                    && cand.space >= body_len + 12)
+                || (body_len >= 36
+                    && !chosen_tail
+                    && cand.tail
+                    && cand.space >= (body_len / 2 + 8).min(64))
+        };
+
+        if let Some(c) = &clean_best {
+            if qualifies(c) {
+                return c.sc;
+            }
+        }
+        // No clean move keeps the room: spend a smiley rather than entomb. The
+        // -50 (plus one growth) is far cheaper than unwinding the whole body.
+        // Not on the open arrow boards: nothing walls the snake in there, and
+        // the danger masks make tail-reach flicker, so a smiley fallback would
+        // nibble the board bare instead of saving anything.
+        if self.open_board_level() {
+            return chosen;
+        }
+        if let Some(c) = &smile_best {
+            if (c.tail || c.space >= body_len + 24)
+                && c.space > chosen_space
+                && ((c.tail && !chosen_tail)
+                    || c.space >= chosen_space * 2
+                    || c.space >= chosen_space + 24)
+            {
+                return c.sc;
+            }
         }
         chosen
     }
@@ -294,6 +384,11 @@ impl Planner {
         let chosen_exits = self.legal_count(&chosen_state, true);
         let chosen_forced =
             self.forced_path(&chosen_state, true, if self.maze_confined() { 32 } else { 24 });
+        // A forced corridor whose pickups finish the level is the point of the
+        // endgame squeeze -- clearing the board ends the run before any dead end.
+        if chosen_state.ate + chosen_forced.ate >= self.items {
+            return chosen;
+        }
         let chosen_strict = self.reach_space_strict(&chosen_state);
         let chosen_bad = chosen_forced.dead
             || (chosen_exits <= 1
@@ -350,7 +445,7 @@ impl Planner {
         best
     }
 
-    pub(super) fn avoid_wasteful_smile(&self, chosen: i32) -> i32 {
+    pub(super) fn avoid_wasteful_smile(&mut self, chosen: i32) -> i32 {
         // Advice #9: a smiley is -50 points AND it grows the snake AND eating it
         // spawns another, so on the walled/stone mazes the snake used to bleed its
         // score negative nibbling smileys while real food was reachable a step
@@ -366,6 +461,10 @@ impl Planner {
         if self.food_distance_no_smile(&st, 1200) >= INF {
             return chosen; // no clean food to reach -- a bridge may be justified
         }
+        let chosen_tail = self
+            .move_state(&st, chosen, true)
+            .map(|ns| self.space_info(&ns, false).tail_reach)
+            .unwrap_or(false);
         let mut best = chosen;
         let mut best_key = (i32::MAX, i32::MIN); // minimize clean-food distance, then maximize strict space
         for &(sc, _) in &DIRS {
@@ -379,6 +478,12 @@ impl Planner {
             }
             let forced = self.forced_path(&ns, true, 12);
             if exits <= 1 && forced.dead {
+                continue;
+            }
+            // Never steer off a tail-preserving smiley onto a clean move that
+            // loses the way back to the tail -- that trades -50 for a possible
+            // entombment, the wrong side of the return-path rule.
+            if chosen_tail && !self.space_info(&ns, false).tail_reach {
                 continue;
             }
             let fd = self.food_distance_no_smile(&ns, 1200);

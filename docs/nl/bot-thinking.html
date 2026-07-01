@@ -105,7 +105,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
             <tr><td><code>32</code></td><td>Leeg vak</td><td>Vrij betreedbaar.</td></tr>
             <tr><td><code>3</code> <span class="ico h">&hearts;</span></td><td>Hart</td><td>Voedsel van 10 punten; laat de slang groeien.</td></tr>
             <tr><td><code>5</code> <span class="ico c">&clubs;</span></td><td>Klaver</td><td>Voedsel van 25 punten; laat de slang groeien.</td></tr>
-            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Kost punten; toegestaan wanneer hij de terugweg open houdt.</td></tr>
+            <tr><td><code>1</code> <span class="ico s">&#9786;</span></td><td>Smiley</td><td>Kost 50 punten, laat de slang toch groeien en spawnt een vervanger; wordt bewust uitgegeven wanneer dat het pad terug naar de staart open houdt.</td></tr>
             <tr><td><code>10</code> <span class="ico t">&#9689;</span></td><td>Steen</td><td>Duwbaar als het vak erachter leeg is.</td></tr>
             <tr><td><code>24</code>, <code>26</code>, <code>27</code> <span class="ico a">&uarr;&rarr;&larr;</span></td><td>Bewegende pijlen</td><td>Altijd fataal, inclusief vakken waar ze zo naartoe gaan.</td></tr>
             <tr><td><code>219</code></td><td>Slangenkop</td><td>De game gebruikt dit voor botsingen; de bot volgt de kop via <code>T[BTEL]</code>.</td></tr>
@@ -115,7 +115,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
       </section>
       <section id="turn">
         <h2>3. Een besliscyclus</h2>
-        <p>Elke zet volgt dezelfde ladder. In single-threadmodus wint de eerste strategie die een richting oplevert. In workermodus draait de coordinator de basisplanner naast diepere zoekprofielen: een diepere volledige planner, een diepere urgente/afrondplanner, en bij genoeg cores een agressieve stallbreker. Resultaten krijgen een strategietier, zodat een diepere worker de basis alleen vervangt wanneer hij een even goede of betere soort zet bewijst. Daarna drukt de bot die toets, wacht volgens de snelheidsschuif en rekent opnieuw vanuit de nieuwe live toestand.</p>
+        <p>Elke zet volgt dezelfde ladder. In single-threadmodus wint de eerste strategie die een richting oplevert. In workermodus draait de coordinator de basisplanner naast diepere zoekprofielen: een diepere volledige planner, een diepere urgente/afrondplanner, en bij genoeg cores een agressieve stallbreker. Resultaten krijgen een strategietier, zodat een diepere worker de basis alleen vervangt wanneer hij een even goede of betere soort zet bewijst. Daarna drukt de bot die toets, wacht volgens de snelheidsschuif en rekent opnieuw vanuit de nieuwe live toestand. Boven op de ladder zitten twee toezeggingen. In het eindspel krijgt hij een nulde sport: met nog maar een paar items probeert de planner eerst een complete gesimuleerde toer te certificeren die alles opeet, en neemt die in zijn geheel. En wanneer een voedselzoekactie wint, geeft de planner zijn hele gecertificeerde route terug &mdash; de driver speelt die stap voor stap af, met hercontrole per zet, in plaats van elke tik opnieuw te plannen.</p>
         <div class="ladder">
           <div class="step"><b>1. Gevaarcache resetten</b><p>Pijlengevaar wordt per tick opnieuw berekend en binnen die tick onthouden.</p></div>
           <div class="step"><b>2. Dichtbij schoon voedsel</b><p>Eerst een ondiepe zoekactie naar nabije harten of klavers, zonder smileys.</p></div>
@@ -161,7 +161,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           <div><b>Linkspijlen</b><span>Een <span class="ico a">&larr;</span> rechts van het vak stapt erin.</span></div>
           <div><b>Randen</b><span>Extra controles dekken pijlen die vanaf de rand terug naar het begin springen.</span></div>
         </div>
-        <p>De WebAssembly-planner projecteert pijlen 4 ticks vooruit op gewone pijllevels en 6 ticks in urgente of late zoekacties. Elke gesimuleerde tak kijkt naar het gevaarmasker dat bij zijn toekomstige stap hoort.</p>
+        <p>De pijlen zijn volledig deterministisch, dus de WebAssembly-planner simuleert ze exact, 28 ticks vooruit &mdash; inclusief de stilstandregel van het spel: een pijl die tegen een muur of het slangenlijf botst wacht op zijn plek in plaats van erdoorheen te vliegen. Elke gesimuleerde tak kijkt naar het gevaarmasker dat bij zijn toekomstige stap hoort, dus een route kan een pijlbaan echt <em>timen</em>: vakken die nu leeg lijken maar gekruist gaan worden vallen af, en een gestrande pijl wordt precies verwacht waar hij werkelijk wacht.</p>
       </section>
       <section id="simulation">
         <h2>5. Zetten simuleren</h2>
@@ -205,8 +205,10 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           <div class="card"><h3>Kamerdeuren</h3><p>In de kamerroosters herkent de planner deuren van twee vakken breed en controleert hij dat minstens een deurstrook met de vakken direct ervoor en erna vrij blijft.</p></div>
           <div class="card"><h3>Terugkeerpoorten</h3><p>Buiten kamerlevels behandelt hij smalle doorgangen als kwetsbare poorten: een route die nog maar een dun pad terug naar de staart overlaat krijgt strategische schuld.</p></div>
           <div class="card"><h3>Recent spoor</h3><p>Routes die dezelfde recente vakken opnieuw bezoeken krijgen straf, lager wanneer dat bezoek staartbereik opent of werkelijk dichter bij voedsel komt.</p></div>
+          <div class="card"><h3>Lokale veegbeurt</h3><p>Elke zoekactie meet de afstand tot het dichtstbijzijnde bereikbare voedsel en rekent kandidaten per vak boven dat anker een schuld aan; op de kamerlevels kost het verlaten van een kamer die nog voedsel bevat een regioschuld. Nabije harten worden gegeten voordat de bot het scherm oversteekt.</p></div>
+          <div class="card"><h3>Regioplan</h3><p>Op de lijn- en kamerdoolhoven deelt de planner het doolhof op in regio's verbonden door smalle gangen en verplicht hij zichzelf de huidige regio schoon te vegen; voedsel elders betaalt tot die tijd een schuld. Zo blijven er geen half opgegeten hoeken achter het groeiende lijf liggen.</p></div>
         </div>
-        <p>Normale voedselroutes moeten na het oppakken een bewezen terugweg naar de bewegende staart houden. Urgente druk mag alleen als fallback een zeer ruime losgeraakte regio gebruiken. Kleine regio's, eenvaks-flessenhalzen, geblokkeerde kamerdeuren, verslechterde deurstroken, kwetsbare terugkeerpoorten en vroege staartafsnijdingen worden gefilterd voordat hun korte-termijnbeloning kan winnen.</p>
+        <p>Normale voedselroutes moeten na het oppakken een bewezen terugweg naar de bewegende staart houden. Urgente druk mag alleen als laatste redmiddel een zeer ruime losgeraakte regio gebruiken, en alleen in de smileypass &mdash; een schone route geeft de terugweg nooit op, want een brug van &minus;50 die de staart bewaart is altijd de betere ruil. Kleine regio's, eenvaks-flessenhalzen, geblokkeerde kamerdeuren, verslechterde deurstroken, kwetsbare terugkeerpoorten en vroege staartafsnijdingen worden gefilterd voordat hun korte-termijnbeloning kan winnen. Het laatste woord is aan de zelfinsluitbewaker: op elk level, ook in het eindspel, wordt een zet die de kop in een zak kleiner dan het lijf drukt omgebogen naar de ruimste veilige richting &mdash; en wanneer de enige uitweg een smiley is, betaalt de bot de &minus;50 liever dan zichzelf in te metselen.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Noodzetten</h2>
@@ -223,7 +225,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
       </section>
       <section id="score">
         <h2>9. Routes scoren</h2>
-        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De WebAssembly-planner rolt veelbelovende kandidaten ook door tot maximaal drie pickups, met lagere waarde voor later voedsel maar met opnieuw een bewezen uitweg. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
+        <p>Na de veiligheidsfilters krijgt een voedselkandidaat een score. De WebAssembly-planner rolt veelbelovende kandidaten ook door tot maximaal drie pickups, met lagere waarde voor later voedsel maar met opnieuw een bewezen uitweg. De gewichtentabel zelf is afstelbaar: een offline tuner kan elke constante overschrijven via een WebAssembly-buffer en betere waarden zoeken tegen de spelsimulator. De normale route-score geeft overleving het meeste gewicht, daarna punten, en pas daarna kortheid:</p>
         <div class="formula">
           score = tailReach ? +145000 : 0<br />
           score += survivalDepth * 5600<br />
@@ -233,6 +235,8 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           score += escapeTailReach ? +44000 : 0<br />
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
+          score -= cellsBeyondNearestFood * 900 (met plafond)<br />
+          score -= leavesARoomStillHoldingFood ? regionDebt : 0<br />
           score += returnPreservingSmileys * 8800<br />
           score += smileyEscapeBonus<br />
           score += preservedRoomDoorLanes<br />
@@ -241,8 +245,8 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>De grote gewichten voor staartbereik, overlevingsdiepte, bewezen uitweg, vrije kamerdeuren, terugkeerpoorten en recent spoor zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in, of van nog een rondje door dezelfde oude vakken. De score kijkt ook voorbij de eerste pickup: bereikbare voedselclusters tellen mee, terwijl smileys duur blijven tenzij ze toegang bewaren of zo'n cluster veilig openen.</p>
-        <p>Twee extra krachten vormen de score. Een smiley kost &minus;50, en op deze levels spawnt elke pickup er een nieuwe, dus het veld vult zich met smileys; de planner verlaagt de straf alleen wanneer er een echt naar bereikbaar voedsel overbrugt, en houdt anders de volle straf, zodat de bot niet voor niets aan smileys knabbelt. Als laatste controle, nadat een zet is gekozen, weigert de bot helemaal om op een smiley te stappen wanneer een hart bereikbaar is zonder er een te kruisen, zodat hij nooit de &minus;50 betaalt voor een pickup die hij een vakje eromheen had kunnen bereiken. En omdat de levelbonus elke zet wegloopt en bij het uitspelen in de score wordt geboekt, komt er een kleine extra afstandsstraf &mdash; geschaald met de resterende bonus &mdash; zodra er nog maar een paar items over zijn, wat de bot naar de kortste afrondroute duwt in plaats van te treuzelen op de laatste pickups. Beide zijn tie-breakers: ze overstemmen nooit de overlevingsfilters.</p>
+        <p>De grote gewichten voor staartbereik, overlevingsdiepte, bewezen uitweg, vrije kamerdeuren, terugkeerpoorten en recent spoor zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in, of van nog een rondje door dezelfde oude vakken. De score kijkt ook voorbij de eerste pickup: bereikbare voedselclusters en vervolg-pickups tellen mee <em>met korting naar afstand</em>, zodat een rijk cluster aan de overkant van het scherm niet langer wint van een hart naast de kop, terwijl smileys duur blijven tenzij ze toegang bewaren of zo'n cluster veilig openen. Een pickup die tegen een muur ligt krijgt nog maar een mild uitstel dat meegroeit met de lijflengte, zodat harten in hoekjes vroeg worden opgeruimd, zolang de slang nog kort is en de zak nog veilig.</p>
+        <p>Twee extra krachten vormen de score. Een smiley kost &minus;50, en op deze levels spawnt elke pickup er een nieuwe, dus het veld vult zich met smileys; de planner verlaagt de straf alleen wanneer er een echt naar bereikbaar voedsel overbrugt, en houdt anders de volle straf, zodat de bot niet voor niets aan smileys knabbelt. Als laatste controle, nadat een zet is gekozen, weigert de bot helemaal om op een smiley te stappen wanneer een hart bereikbaar is zonder er een te kruisen, zodat hij nooit de &minus;50 betaalt voor een pickup die hij een vakje eromheen had kunnen bereiken &mdash; tenzij die smiley precies is wat het pad terug naar de staart open houdt. Een bewuste ontsnappingssmiley wordt nooit overstemd, en de zelfinsluitbewaker, die altijd als laatste loopt, kan er zelf een kiezen wanneer elke schone richting het lijf zou insluiten. En omdat de levelbonus elke zet wegloopt en bij het uitspelen in de score wordt geboekt, komt er een kleine extra afstandsstraf &mdash; geschaald met de resterende bonus &mdash; zodra er nog maar een paar items over zijn, wat de bot naar de kortste afrondroute duwt in plaats van te treuzelen op de laatste pickups. Beide zijn tie-breakers: ze overstemmen nooit de overlevingsfilters.</p>
       </section>
       <section id="speed">
         <h2>10. Snelheidslimieten</h2>

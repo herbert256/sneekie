@@ -162,7 +162,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             <tr>
               <td><code>1</code> <span class="ico s">&#9786;</span></td>
               <td>Smiley</td>
-              <td>Point-costly pickup; allowed when it helps preserve a return path.</td>
+              <td>Costs 50 points, still grows the snake, and spawns a replacement; spent deliberately when that is what keeps the path back to the tail open.</td>
             </tr>
             <tr>
               <td><code>10</code> <span class="ico t">&#9689;</span></td>
@@ -185,7 +185,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
       </section>
       <section id="turn">
         <h2>3. One decision cycle</h2>
-        <p>Every bot move follows the same ladder. In single-thread mode, the first strategy that returns a direction wins. In worker mode, the coordinator runs the baseline planner beside deeper search profiles: a deeper full planner, a deeper urgent/finish planner, and an aggressive stall-breaker when enough cores are available. Results are tagged by strategy tier, so a deeper worker can replace the baseline only when it proves an equally good or better kind of move. The bot then presses that key, waits according to the speed slider, and recalculates from the new live game state.</p>
+        <p>Every bot move follows the same ladder. In single-thread mode, the first strategy that returns a direction wins. In worker mode, the coordinator runs the baseline planner beside deeper search profiles: a deeper full planner, a deeper urgent/finish planner, and an aggressive stall-breaker when enough cores are available. Results are tagged by strategy tier, so a deeper worker can replace the baseline only when it proves an equally good or better kind of move. The bot then presses that key, waits according to the speed slider, and recalculates from the new live game state. Two commitments sit on top of the ladder. In the endgame it gets a zeroth rung: with only a few items left, the planner first tries to certify one complete simulated tour that eats everything remaining, and takes it whole. And whenever a food search wins, the planner hands back its entire certified route &mdash; the driver replays it step by step, re-validating each move, instead of replanning from scratch every tick.</p>
         <div class="ladder">
           <div class="step">
             <b>1. Reset danger cache</b>
@@ -263,7 +263,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
           </div>
           <div><b>Wrap edges</b><span>Special checks cover arrows that jump from the far edge back to the start.</span></div>
         </div>
-        <p>The WebAssembly planner projects arrow masks 4 future ticks on normal arrow levels and 6 ticks in urgent or endgame searches. Each simulated branch checks the mask for its own future step, so a route can reject squares that look empty now but will be crossed by an arrow before the snake can safely use them.</p>
+        <p>The arrows are fully deterministic, so the WebAssembly planner simulates them exactly, 28 future ticks deep &mdash; including the game's stall rule: an arrow blocked by a wall or by the snake's own body waits in place instead of flying past. Each simulated branch checks the mask for its own future step, so a route can genuinely <em>time</em> a lane crossing: squares that look empty now but will be crossed are rejected, and a stalled arrow is expected exactly where it really waits.</p>
       </section>
       <section id="simulation">
         <h2>5. Move simulation</h2>
@@ -380,8 +380,16 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             <h3>Recent trail</h3>
             <p>Routes that revisit the same recent cells are penalized, with smaller penalties when that revisit opens tail reach or actually moves closer to food.</p>
           </div>
+          <div class="card">
+            <h3>Local sweep</h3>
+            <p>Every search measures the distance to the nearest reachable food and charges candidates per cell beyond that anchor; on the room layouts, leaving a room that still holds food adds a region debt. Nearby hearts get eaten before the bot wanders across the screen.</p>
+          </div>
+          <div class="card">
+            <h3>Region plan</h3>
+            <p>On the line and room mazes the planner decomposes the maze into regions joined by narrow corridors and commits to sweeping the current region clean; food elsewhere pays a debt until then. Pockets stop being left half-eaten behind the growing body.</p>
+          </div>
         </div>
-        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes now need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a fallback. Tiny regions, one-cell chokepoints, blocked room exits, degraded door lanes, fragile return gates, and early tail cutoffs are filtered before their short-term reward can win.</p>
+        <p>The minimum space requirement grows with the snake length: the longer the snake, the more room a candidate must leave behind. Normal food routes need a proved return path to the moving tail after the pickup; urgent pressure may use a very roomy disconnected region only as a last resort, and only in its smiley pass &mdash; a clean route never trades the return path away, because a &minus;50 bridge that keeps the tail is always the better deal. Tiny regions, one-cell chokepoints, blocked room exits, degraded door lanes, fragile return gates, and early tail cutoffs are filtered before their short-term reward can win. The last word belongs to the self-seal guard: on every level, endgame included, a move that boxes the head into a pocket too small for the body is overridden toward the roomiest safe direction &mdash; and when the only way out is a smiley, the bot spends the &minus;50 rather than entomb itself.</p>
       </section>
       <section id="fallbacks">
         <h2>8. Fallback moves</h2>
@@ -421,7 +429,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
       </section>
       <section id="score">
         <h2>9. Route scoring</h2>
-        <p>Once a food candidate passes the safety gates, it gets a score. The WebAssembly planner also rolls promising candidates forward for up to three pickups, discounting later food but requiring each pickup to keep an escape proof. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
+        <p>Once a food candidate passes the safety gates, it gets a score. The WebAssembly planner also rolls promising candidates forward for up to three pickups, discounting later food but requiring each pickup to keep an escape proof. The weight table itself is tunable: an offline tuner can override every constant through a WebAssembly buffer and hill-climb better values against the game simulator. The normal route score is intentionally biased toward survival first, points second, and shortness only after those are satisfied:</p>
         <div class="formula">
           score = tailReach ? +145000 : 0<br />
           score += survivalDepth * 5600<br />
@@ -431,6 +439,8 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
           score += escapeTailReach ? +44000 : 0<br />
           score += itemPoints * 150<br />
           score -= routeDistance * 260<br />
+          score -= cellsBeyondNearestFood * 900 (capped)<br />
+          score -= leavesARoomStillHoldingFood ? regionDebt : 0<br />
           score += returnPreservingSmileys * 8800<br />
           score += smileyEscapeBonus<br />
           score += preservedRoomDoorLanes<br />
@@ -439,7 +449,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>The large tail-reach, survival-depth, route-out, room-door, return-gate, and recent-trail weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket or another lap through the same stale cells. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. The route scorer also looks beyond the first pickup: reachable food clusters add value, while smileys still carry a cost unless they preserve access or open that cluster safely.</p>
+        <p>The large tail-reach, survival-depth, route-out, room-door, return-gate, and recent-trail weights are the key anti-trap behavior. A slightly longer route that keeps access to the tail and proves an exit beats a short route into a tight pocket or another lap through the same stale cells. Clubs still matter because they are worth more points than hearts, but they do not override the survival tests. The route scorer also looks beyond the first pickup: reachable food clusters and follow-up pickups add value <em>discounted by distance</em>, so a rich cluster across the screen no longer outbids a heart sitting beside the head, while smileys still carry a cost unless they preserve access or open that cluster safely. A pickup tucked against a wall gets only a mild deferral that grows with body length, so pocketed hearts are cleared early, while the snake is still short and the pocket is still safe.</p>
         <p>The two newer food planners deliberately use different weights:</p>
         <table>
           <thead>
@@ -463,7 +473,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // else: no legal move at all -&gt
             </tr>
           </tbody>
         </table>
-        <p>Two more pressures shape the score. A smiley is worth &minus;50, and on these levels every pickup spawns a fresh one, so the board fills with smileys; the planner only discounts eating one when it genuinely bridges toward reachable food, and otherwise keeps the full penalty so the bot does not nibble smileys for nothing. As a final check after a move is chosen, the bot refuses to step onto a smiley at all when a heart is reachable without crossing one, so it never pays the &minus;50 for a pickup it could have reached a step around. And because the level bonus drains every move and banks into the score when the level clears, a small extra distance penalty &mdash; scaled by the remaining bonus &mdash; kicks in once only a few items are left, nudging the bot to take the shortest finishing route rather than dawdle on the last pickups. Both are tie-breakers: they never override the survival gates.</p>
+        <p>Two more pressures shape the score. A smiley is worth &minus;50, and on these levels every pickup spawns a fresh one, so the board fills with smileys; the planner only discounts eating one when it genuinely bridges toward reachable food, and otherwise keeps the full penalty so the bot does not nibble smileys for nothing. As a final check after a move is chosen, the bot refuses to step onto a smiley at all when a heart is reachable without crossing one, so it never pays the &minus;50 for a pickup it could have reached a step around &mdash; unless that smiley is exactly what keeps the path back to the tail open. A deliberate escape smiley is never overridden, and the self-seal guard, which always runs last, may itself steer onto one when every clean direction would seal the body in. And because the level bonus drains every move and banks into the score when the level clears, a small extra distance penalty &mdash; scaled by the remaining bonus &mdash; kicks in once only a few items are left, nudging the bot to take the shortest finishing route rather than dawdle on the last pickups. Both are tie-breakers: they never override the survival gates.</p>
       </section>
       <section id="speed">
         <h2>10. Speed limits</h2>

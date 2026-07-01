@@ -112,11 +112,7 @@ impl Planner {
         info
     }
 
-    pub(super) fn current_room_foods(&self, st: &State) -> i32 {
-        if self.doors.is_empty() {
-            return 0;
-        }
-        let room = self.current_open_room_cells(st);
+    pub(super) fn room_food_count(&self, st: &State, room: &BoardBits) -> i32 {
         let mut foods = 0;
         for o in (0..BOARD_LEN as i32).step_by(2) {
             if room.contains(o) && is_food(self.cell(st, o)) {
@@ -124,6 +120,14 @@ impl Planner {
             }
         }
         foods
+    }
+
+    pub(super) fn current_room_foods(&self, st: &State) -> i32 {
+        if self.doors.is_empty() {
+            return 0;
+        }
+        let room = self.current_open_room_cells(st);
+        self.room_food_count(st, &room)
     }
 
     pub(super) fn empty_room_debt(&self, st: &State, exits: i32) -> i64 {

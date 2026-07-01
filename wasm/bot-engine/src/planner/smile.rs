@@ -32,6 +32,16 @@ impl Planner {
     }
 
     pub(super) fn avoid_extra_smile(&self, body_len: i32) -> bool {
+        // Hard return-path rule: when the way back to the tail is already lost, a
+        // -50 bridge that reopens it beats every discipline concern, so the vetoes
+        // below yield. Normal sweeping play keeps tail reach at the start state,
+        // so this exemption never loosens the everyday smiley discipline. The open
+        // arrow boards are exempt from the exemption: nothing walls the snake in
+        // there, so a smiley is practically never the only way back, and the
+        // self-seal guard can still spend one on an actual seal.
+        if self.escape_pressed && !self.open_board_level() {
+            return false;
+        }
         // On an open board there is room to go around a smiley, so refuse to bridge
         // one well before the body is long -- only a genuinely starving snake (deep
         // idle streak) may still spend one rather than orbit to a restart.
@@ -58,13 +68,13 @@ impl Planner {
         // cluster or keeps tail access, and the urgent value stays lowest so a starving
         // snake can still spend one rather than orbit to a restart.
         let base = match kind {
-            RouteKind::Near => 11_000,
-            RouteKind::Route => 14_000,
+            RouteKind::Near => self.weights[W_SMILE_COST_NEAR],
+            RouteKind::Route => self.weights[W_SMILE_COST_ROUTE],
             RouteKind::Pressure => {
                 if urgent {
-                    7_500
+                    self.weights[W_SMILE_COST_PRESSURE_URGENT]
                 } else {
-                    10_500
+                    self.weights[W_SMILE_COST_PRESSURE]
                 }
             }
         };
