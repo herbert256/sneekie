@@ -9,7 +9,7 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   /* ---- speed: a 0-10 slider mapped to a per-move delay ---- */
-  const SPEED_CHOICES = [10,10,20,30,49,50,60,70,80,90,100];
+  const SPEED_CHOICES = [0,10,20,30,40,50,60,70,80,90,100];
   const speed = document.getElementById('speed');
   const speedout = document.getElementById('speedout');
   const configuredSpeed = Number(window.SNEEKIE_BOT_SPEED);
