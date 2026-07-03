@@ -322,6 +322,19 @@ function isSnakeStuck(){
   if(BTEL <= 0) return false;
   return ![72, 77, 80, 75].some(isSafeMove);
 }
+/* Scratch buffers for the click-route BFS below, hoisted so the ~10KB isn't
+   reallocated every 120ms while a click target is active. Only `seen` needs
+   clearing per run: `first`/`q` entries are never read unless written in the
+   same run. */
+const clickSeen = new Uint8Array(2000);
+const clickFirst = new Int16Array(2000);
+const clickQueue = new Int16Array(2000);
+const CLICK_DIRS = [
+  { dr:-1, dc: 0, code:72, key:'\0H' },
+  { dr: 0, dc: 1, code:77, key:'\0M' },
+  { dr: 1, dc: 0, code:80, key:'\0P' },
+  { dr: 0, dc:-1, code:75, key:'\0K' },
+];
 function nextClickTargetKey(){
   if(!clickTarget || BTEL <= 0) return null;
   const start = T[BTEL] >> 1;
@@ -330,15 +343,10 @@ function nextClickTargetKey(){
 
   const startCell = cellFromOffset(start * 2);
   const targetCell = cellFromOffset(clickTarget.off);
-  const seen = new Uint8Array(2000);
-  const first = new Int16Array(2000);
-  const q = new Int16Array(2000);
-  const dirs = [
-    { dr:-1, dc: 0, code:72, key:'\0H' },
-    { dr: 0, dc: 1, code:77, key:'\0M' },
-    { dr: 1, dc: 0, code:80, key:'\0P' },
-    { dr: 0, dc:-1, code:75, key:'\0K' },
-  ];
+  const seen = clickSeen; seen.fill(0);
+  const first = clickFirst;
+  const q = clickQueue;
+  const dirs = CLICK_DIRS;
   let head = 0, tail = 0, best = start;
   let bestDist = Math.abs(startCell.row - targetCell.row) + Math.abs(startCell.col - targetCell.col);
   seen[start] = 1; q[tail++] = start;
@@ -1479,7 +1487,14 @@ function fit(){
   cv.style.width = (640*s) + 'px';
   cv.style.height = (384*s) + 'px';
 }
-addEventListener('resize', fit);
+/* fit() forces layout (getComputedStyle/getBoundingClientRect); coalesce the
+   raw resize stream to one run per frame instead of thrashing during drags. */
+let fitQueued = false;
+addEventListener('resize', () => {
+  if(fitQueued) return;
+  fitQueued = true;
+  requestAnimationFrame(() => { fitQueued = false; fit(); });
+});
 
 /* fullscreen: hand the whole display to the monitor */
 const fsBtn = document.getElementById('fs');
