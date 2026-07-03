@@ -88,16 +88,18 @@ keep the English, Dutch, and Ukrainian pages aligned by hand.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
 - `docs/<lang>/bot.html` - the **Live bot** demo. It hosts the real game in the
-  SAME page (no iframe): it loads `../css/game.css` + `../js/game.js`
+  SAME page (no iframe): it loads `../css/bot.css` + `../js/game.js`
   (which render the game into `#screen`), sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot
   animation, then loads the planner and the driver. `bot-engine.js` loads the Rust/WebAssembly
-  planner (`window.SneekieBotWasm`, backed by `bot-engine.wasm`), and `bot.js` is the driver: it
+  planner (`window.SneekieBotWasm`, backed by `bot-engine.wasm`, preloaded from the page head)
+  and, when the machine has spare logical cores, a small Worker pool (`bot-engine-worker.js`,
+  one extra Wasm instance per Worker) for parallel planning. `bot.js` is the driver: it
   reads `game.js`'s globals directly, waits for the Wasm planner before driving, and steers via
   `pushKey()`. The Wasm bot needs http(s); when WebAssembly cannot load (e.g. on `file://`) the
-  bot stays idle. Level
-  tabs (26-32) jump the bot into a maze; a speed slider sets the pace. Body class is
-  `page-index page-bot` (the game styling comes from `.page-index`; `bot.css` only adds the
-  lead/speed/tabs/note). The page links to `bot-thinking.html`. Keep the planner
+  bot stays idle and reports "bot unavailable". Level
+  tabs (2-8) jump the bot into an early maze; a speed slider sets the pace. Body class is
+  `page-doc page-bot`, and `bot.css` carries its own copy of the CRT/game-shell styling plus
+  the lead/speed/tabs/note. The page links to `bot-thinking.html`. Keep the planner
   (`bot-engine.js`) and the driver (`bot.js`) in sync with `bot-thinking.html`.
 - `docs/<lang>/bot-thinking.html` - static prose explaining how that bot plans (no runtime JS).
   It is linked only from `bot.html`, not from the nav. Keep it in sync with the planner in
