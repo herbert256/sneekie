@@ -358,164 +358,177 @@
       headTrail.length = 0;
       committedRoute = [];
     };
+    let botErrors = 0;
     while(true){
-      if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
-      if(plannerFailed()){
-        // bot-engine.wasm cannot load here (file://, fetch failure) or the
-        // planner tripped mid-session. The bot stays idle by design; say so.
-        loadingStatus.fail(botText('botUnavailable'));
-        const screen = passivePreview && document.getElementById('screen');
-        if(screen) screen.setAttribute('aria-label', botText('botUnavailable'));
-        return;
-      }
-      if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm to load
-      loadingStatus.done();
-      // game finished (final death or clean win) -> answer "play again", re-target.
-      // Checked before the jump below so a tab click can't overwrite LEVEL first.
-      if(LEVEL > 32){
-        if(++over >= 4){
-          // Don't overwrite a level tab the user clicked during the game-over
-          // window (same guard as the LIVE-drop path below).
-          if(!gameEndQueued){
-            if(pendingJump === null && jumpingTo === null) queueNextLevel();
-            gameEndQueued = true;
+      try{
+        if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
+        if(plannerFailed()){
+          // bot-engine.wasm cannot load here (file://, fetch failure) or the
+          // planner tripped mid-session. The bot stays idle by design; say so.
+          loadingStatus.fail(botText('botUnavailable'));
+          const screen = passivePreview && document.getElementById('screen');
+          if(screen) screen.setAttribute('aria-label', botText('botUnavailable'));
+          return;
+        }
+        if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm to load
+        loadingStatus.done();
+        // game finished (final death or clean win) -> answer "play again", re-target.
+        // Checked before the jump below so a tab click can't overwrite LEVEL first.
+        if(LEVEL > 32){
+          if(++over >= 4){
+            // Don't overwrite a level tab the user clicked during the game-over
+            // window (same guard as the LIVE-drop path below).
+            if(!gameEndQueued){
+              if(pendingJump === null && jumpingTo === null) queueNextLevel();
+              gameEndQueued = true;
+            }
+            forcedDeathQueued = false;
+            resetMoveCounters();
+            pushKey('\r'); pushKey(yesKey()); over = 0;
           }
-          forcedDeathQueued = false;
-          resetMoveCounters();
-          pushKey('\r'); pushKey(yesKey()); over = 0;
-        }
-        observedLive = LIVE;
-        await sleep(botDelay()); continue;
-      }
-      over = 0;
-      // mid-death unwind or restart popup: advance to the next bot level, then
-      // dismiss the popup/next-level prompt so the normal jump path can take over.
-      if(ETEL > BTEL){
-        if(!deathQueued){
-          // Keep a user's pending tab click instead of overwriting it while
-          // the snake unwinds.
-          if(pendingJump === null && jumpingTo === null) queueNextLevel();
-          gameEndQueued = true;
-          deathQueued = true;
-          forcedDeathQueued = false;
-          resetMoveCounters();
           observedLive = LIVE;
-          pushKey('\r');
-        }
-        await sleep(botDelay()); continue;
-      }
-      // deathSeq() can finish and rebuild the same BASIC level between bot ticks.
-      // The lower life count is the stable signal that the previous level failed.
-      if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
-        queueNextLevel();
-        forcedDeathQueued = false;
-        resetMoveCounters();
-      }
-      observedLive = LIVE;
-      deathQueued = false;
-      gameEndQueued = false;
-      if(jumpingTo !== null){
-        if(LEVEL === jumpingTo){
-          activeLevel = LEVEL;
-          target = LEVEL;
-          jumpingTo = null;
-          forcedDeathQueued = false;
-          resetMoveCounters();
-          markTabs();
-        } else {
           await sleep(botDelay()); continue;
         }
-      } else if(pendingJump === null && hasBotLevel(LEVEL) && activeLevel !== LEVEL){
-        activeLevel = LEVEL;
-        target = LEVEL;
-        markTabs();
-      } else if(pendingJump === null && !hasBotLevel(LEVEL)){
-        // A clean clear of level 8 rolls the game into level 9+, which the
-        // page does not advertise (and where the game's own auto-move outruns
-        // slow slider speeds). Wrap back into the 2-8 rotation instead.
-        queueNextLevel();
-      }
-      // jump to the selected level once the game has built the current level.
-      // The request may be queued while the "Level n" popup is waiting; Enter
-      // dismisses that popup and game.js consumes the request at the move loop.
-      if(pendingJump !== null && ETEL <= BTEL &&
-          (typeof window.sneekieRequestLevel === 'function' || BTEL > 2)){
-        jumpingTo = pendingJump;
-        if(typeof window.sneekieRequestLevel === 'function'){
-          window.sneekieRequestLevel(pendingJump);
-          pushKey('\r');
+        over = 0;
+        // mid-death unwind or restart popup: advance to the next bot level, then
+        // dismiss the popup/next-level prompt so the normal jump path can take over.
+        if(ETEL > BTEL){
+          if(!deathQueued){
+            // Keep a user's pending tab click instead of overwriting it while
+            // the snake unwinds.
+            if(pendingJump === null && jumpingTo === null) queueNextLevel();
+            gameEndQueued = true;
+            deathQueued = true;
+            forcedDeathQueued = false;
+            resetMoveCounters();
+            observedLive = LIVE;
+            pushKey('\r');
+          }
+          await sleep(botDelay()); continue;
         }
-        else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
-        pendingJump = null; forcedDeathQueued = false; resetMoveCounters();
-        await sleep(botDelay()); continue;
-      }
-      const tickStarted = now();
-      if(waitingForKey()){
-        forcedDeathQueued = false;
-        pushKey('\r');                                 // under the level popup -> any key dismisses it
-        await sleepForTick(tickStarted); continue;
-      }
-      if(ZCORE > prevScore){
-        idle = 0;
-        movesSincePickup = 0;
-      } else idle++;
-      prevScore = ZCORE;
-      headTrail.push(T[BTEL]);
-      if(headTrail.length > 96) headTrail.shift();
-      let repeats = 0;
-      for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
-      const looping = idle > 20 && repeats >= 2;
-      // Two situations used to make the snake give up here: a long run with no
-      // real food eaten, or a stall (orbiting with no score gain). Neither kills
-      // the snake anymore. When either trips, keep the Wasm planner in charge but
-      // mark the decision as force-risk so its loop-breaking, strict-space, and
-      // return-path scoring get much heavier. Random wandering is now only a last
-      // fallback when the planner cannot find a move at all.
-      const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
-      const forceRisk = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
-      let sc = null;
-      if(forceRisk || looping) committedRoute = [];
-      if(committedRoute.length){
-        // Replay the committed route while each step is still legal and the
-        // route-preservation check agrees; any disagreement drops the route.
-        const cand = committedRoute[0];
-        if(legalMove(cand) && preserveFoodRoute(cand) === cand){
-          committedRoute.shift();
-          sc = cand;
-        } else committedRoute = [];
-      }
-      if(sc === null){
-        const plan = await planner.decide({
-          idle,
-          looping,
-          headTrail,
-          budgetMs:routeBudget(forceRisk),
-          forceRisk
-        });
-        if(plan && plan.sc){
-          sc = preserveFoodRoute(plan.sc);
-          // Commit the rest of the route only when the first move survived the
-          // driver checks unchanged; cap the replay so it stays adaptive.
-          committedRoute = (sc === plan.sc && Array.isArray(plan.route)) ?
-            plan.route.slice(1, 25) : [];
-        } else {
-          sc = randomLegalScancode();                  // planner gave up or a safeguard tripped
-          committedRoute = [];
+        // deathSeq() can finish and rebuild the same BASIC level between bot ticks.
+        // The lower life count is the stable signal that the previous level failed.
+        if(observedLive !== null && LIVE < observedLive && pendingJump === null && jumpingTo === null){
+          queueNextLevel();
+          forcedDeathQueued = false;
+          resetMoveCounters();
         }
+        observedLive = LIVE;
+        deathQueued = false;
+        gameEndQueued = false;
+        if(jumpingTo !== null){
+          if(LEVEL === jumpingTo){
+            activeLevel = LEVEL;
+            target = LEVEL;
+            jumpingTo = null;
+            forcedDeathQueued = false;
+            resetMoveCounters();
+            markTabs();
+          } else {
+            await sleep(botDelay()); continue;
+          }
+        } else if(pendingJump === null && hasBotLevel(LEVEL) && activeLevel !== LEVEL){
+          activeLevel = LEVEL;
+          target = LEVEL;
+          markTabs();
+        } else if(pendingJump === null && !hasBotLevel(LEVEL)){
+          // A clean clear of level 8 rolls the game into level 9+, which the
+          // page does not advertise (and where the game's own auto-move outruns
+          // slow slider speeds). Wrap back into the 2-8 rotation instead.
+          queueNextLevel();
+        }
+        // jump to the selected level once the game has built the current level.
+        // The request may be queued while the "Level n" popup is waiting; Enter
+        // dismisses that popup and game.js consumes the request at the move loop.
+        if(pendingJump !== null && ETEL <= BTEL &&
+            (typeof window.sneekieRequestLevel === 'function' || BTEL > 2)){
+          jumpingTo = pendingJump;
+          if(typeof window.sneekieRequestLevel === 'function'){
+            window.sneekieRequestLevel(pendingJump);
+            pushKey('\r');
+          }
+          else { LEVEL = pendingJump - 1; pushKey(' D'); } // F10 skips straight into the target level
+          pendingJump = null; forcedDeathQueued = false; resetMoveCounters();
+          await sleep(botDelay()); continue;
+        }
+        const tickStarted = now();
+        if(waitingForKey()){
+          forcedDeathQueued = false;
+          pushKey('\r');                                 // under the level popup -> any key dismisses it
+          await sleepForTick(tickStarted); continue;
+        }
+        if(ZCORE > prevScore){
+          idle = 0;
+          movesSincePickup = 0;
+        } else idle++;
+        prevScore = ZCORE;
+        headTrail.push(T[BTEL]);
+        if(headTrail.length > 96) headTrail.shift();
+        let repeats = 0;
+        for(let i = 0; i < headTrail.length - 10; i++) if(headTrail[i] === T[BTEL]) repeats++;
+        const looping = idle > 20 && repeats >= 2;
+        // Two situations used to make the snake give up here: a long run with no
+        // real food eaten, or a stall (orbiting with no score gain). Neither kills
+        // the snake anymore. When either trips, keep the Wasm planner in charge but
+        // mark the decision as force-risk so its loop-breaking, strict-space, and
+        // return-path scoring get much heavier. Random wandering is now only a last
+        // fallback when the planner cannot find a move at all.
+        const stalled = idle > STALL_IDLE_LIMIT || (idle > STALL_LOOP_IDLE_LIMIT && repeats >= 3);
+        const forceRisk = stalled || movesSincePickup >= PICKUP_STUCK_LIMIT;
+        let sc = null;
+        if(forceRisk || looping) committedRoute = [];
+        if(committedRoute.length){
+          // Replay the committed route while each step is still legal and the
+          // route-preservation check agrees; any disagreement drops the route.
+          const cand = committedRoute[0];
+          if(legalMove(cand) && preserveFoodRoute(cand) === cand){
+            committedRoute.shift();
+            sc = cand;
+          } else committedRoute = [];
+        }
+        if(sc === null){
+          const plan = await planner.decide({
+            idle,
+            looping,
+            headTrail,
+            budgetMs:routeBudget(forceRisk),
+            forceRisk
+          });
+          if(plan && plan.sc){
+            sc = preserveFoodRoute(plan.sc);
+            // Commit the rest of the route only when the first move survived the
+            // driver checks unchanged; cap the replay so it stays adaptive.
+            committedRoute = (sc === plan.sc && Array.isArray(plan.route)) ?
+              plan.route.slice(1, 25) : [];
+          } else {
+            sc = randomLegalScancode();                  // planner gave up or a safeguard tripped
+            committedRoute = [];
+          }
+        }
+        if(sc !== null){
+          forcedDeathQueued = false;
+          if(isFoodCell(targetCellFor(sc))) movesSincePickup = 0;
+          else movesSincePickup++;
+          pushKey(keyOf[sc]);
+        }
+        // No legal move remains -> the snake is really stuck. Only now use the
+        // stuck path, including the red flash before the normal death unwind.
+        else if(!forcedDeathQueued){
+          forcedDeathQueued = true;
+          if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
+        }
+        await sleepForTick(tickStarted);
+      } catch(err){
+        // An unexpected throw used to kill the driver silently. Log it,
+        // back off, and only give up (visibly) if it keeps happening.
+        botErrors++;
+        console.error('Sneekie bot tick failed.', err);
+        if(botErrors >= 20){
+          loadingStatus.fail(botText('botUnavailable'));
+          return;
+        }
+        await sleep(Math.max(250, botDelay()));
       }
-      if(sc !== null){
-        forcedDeathQueued = false;
-        if(isFoodCell(targetCellFor(sc))) movesSincePickup = 0;
-        else movesSincePickup++;
-        pushKey(keyOf[sc]);
-      }
-      // No legal move remains -> the snake is really stuck. Only now use the
-      // stuck path, including the red flash before the normal death unwind.
-      else if(!forcedDeathQueued){
-        forcedDeathQueued = true;
-        if(typeof window.sneekieRequestStuck === 'function') window.sneekieRequestStuck();
-      }
-      await sleepForTick(tickStarted);
     }
   })();
 })();

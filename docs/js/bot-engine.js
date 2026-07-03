@@ -211,6 +211,7 @@
       if(message.type === 'ready'){
         state.ready = true;
         state.failed = false;
+        state.strikes = 0;
         return;
       }
       if(message.type === 'error'){
@@ -226,6 +227,7 @@
       }
       if(message.type !== 'result') return;
       state.busy = false;
+      state.strikes = 0;
       const entry = pending.get(message.id);
       if(!entry) return;
       pending.delete(message.id);
@@ -262,6 +264,15 @@
         setTimeout(() => {
           if(!pending.has(id)) return;
           pending.delete(id);
+          // Don't leave a silent worker marked busy forever: free the slot,
+          // and after several missed deadlines in a row treat it as hung.
+          state.busy = false;
+          state.strikes = (state.strikes | 0) + 1;
+          if(state.strikes >= 3){
+            state.failed = true;
+            try { state.worker.terminate(); } catch(_err) {}
+            if(window.SNEEKIE_BOT_DEBUG) console.warn('Sneekie Wasm worker unresponsive, dropped.');
+          }
           resolve(null);
         }, timeoutMs);
       }));
