@@ -1248,6 +1248,13 @@ async function playLevels(){
         skip = true;
         break;
       }
+      /* Modern shell: freeze the tick while the fullscreen help is open or the
+         tab is hidden (human play only). On levels >= 9 keyOrTimeout() would
+         otherwise keep auto-moving the snake — blind under the modal, and
+         draining BONUS or dying to an arrow in a background tab. */
+      while(fsHelpOpen || (document.hidden && !botDrivesGame() && !passivePreview)){
+        await sleep(200);
+      }
       try{
         if(consumeBotDeathRequest()) throw DEATH;
         if(consumeBotStuckRequest() || (!botDrivesGame() && isSnakeStuck())) throw STUCK;
