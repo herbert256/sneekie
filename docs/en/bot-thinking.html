@@ -60,7 +60,7 @@
       <h1 class="page-title">How the bot thinks</h1>
       <p class="lead">The <a href="bot.html">Bot</a> page does not play a recording. It runs the real game, a Rust/WebAssembly planner loaded by <code>bot-engine.js</code>, a small worker pool when the browser exposes spare cores, and a thin driver in <code>bot.js</code> in the same page. The landing-page previews load the same Rust/WebAssembly planner, and like the Bot page they wait for WebAssembly before driving the game. The planner returns a DOS arrow scancode, and the driver presses the same key a player would press.</p>
       <figure class="intro-figure">
-        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
+        <img loading="eager" fetchpriority="high" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="A Sneekie maze covered with glowing route plans, hazards, and bot decision paths." />
       </figure>
       <div class="note"><strong>Important distinction.</strong> The actual 1988 game in <a href="game.html">Play</a> stays faithful to the BASIC source. The bot is only a modern addition in <code>bot.html</code>; it reads the port's live variables and presses keys like a player would. Beyond one bookkeeping write &mdash; jumping to the selected <code>LEVEL</code> &mdash; it leaves the game's rules and engine untouched.</div>
       <nav class="toc" aria-label="On this page">

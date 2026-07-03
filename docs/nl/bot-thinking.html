@@ -60,7 +60,7 @@
       <h1 class="page-title">Hoe de bot denkt</h1>
       <p class="lead">De pagina <a href="bot.html">Bot</a> speelt geen opname af. Hij draait het echte spel, een Rust/WebAssembly-planner via <code>bot-engine.js</code>, een kleine workerpool wanneer de browser extra cores meldt, en een dunne driver in <code>bot.js</code> in dezelfde pagina. De previews op de landingspagina's laden dezelfde Rust/WebAssembly-planner en wachten net als de Bot-pagina op WebAssembly voordat ze het spel besturen. De planner geeft een DOS-pijltjesscancode terug, waarna de driver dezelfde toets indrukt als een speler.</p>
       <figure class="intro-figure">
-        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
+        <img loading="eager" fetchpriority="high" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Een Sneekie-doolhof met gloeiende routes, gevaren en beslispaden van de bot." />
       </figure>
       <div class="note"><strong>Belangrijk verschil.</strong> Het echte spel op <a href="game.html">Spelen</a> blijft trouw aan de BASIC-bron. De bot is alleen een moderne toevoeging in <code>bot.html</code>; hij leest live variabelen uit de port en drukt toetsen in zoals een speler dat zou doen. Behalve een administratieve ingreep &mdash; springen naar het gekozen <code>LEVEL</code> &mdash; laat hij de regels en engine ongemoeid.</div>
       <nav class="toc" aria-label="Op deze pagina">

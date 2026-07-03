@@ -61,7 +61,7 @@
       <h1 class="page-title">Watch the bytes move</h1>
       <p class="lead">Sneekie has no "snake object". The snake, the walls, the hearts and the <em>arrows</em> are just <em>characters living in the screen's memory</em>, and the game reads and writes that memory directly. Steer below and watch it happen: the <strong>screen</strong> on top and the <strong>raw memory</strong> beneath it are the <em>same bytes</em>. Every move is a few <code>peek</code>s and <code>poke</code>s &mdash; shown live on the right. Eat a heart and a club <em>pops up</em> somewhere; the four arrows patrol on their own.</p>
       <figure class="intro-figure">
-        <img loading="lazy" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="A Sneekie playfield connected to a glowing text video memory grid." />
+        <img loading="eager" fetchpriority="high" width="1200" height="676" src="../images/pages/vram-hero.webp" alt="A Sneekie playfield connected to a glowing text video memory grid." />
       </figure>
       <p class="lead" style="color: var(--muted); font-size: 13.5px">
         Each cell is two bytes (character, then a brightness/color attribute), addressed by

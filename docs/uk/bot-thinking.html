@@ -60,7 +60,7 @@
       <h1 class="page-title">Як думає бот</h1>
       <p class="lead">Сторінка <a href="bot.html">Бот</a> не відтворює запис. Вона запускає справжню гру, Rust/WebAssembly-планувальник через <code>bot-engine.js</code>, невеликий пул workers, коли браузер повідомляє про вільні ядра, і тонкий драйвер у <code>bot.js</code> в одній сторінці. Превʼю на головних сторінках завантажують той самий Rust/WebAssembly-планувальник і, як і сторінка Bot, чекають на WebAssembly перед керуванням грою. Планувальник повертає DOS-код стрілки, а драйвер натискає ту саму клавішу, що й гравець.</p>
       <figure class="intro-figure">
-        <img loading="lazy" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Лабіринт Sneekie зі світними маршрутами, небезпеками і шляхами рішень бота." />
+        <img loading="eager" fetchpriority="high" width="1200" height="676" src="../images/pages/bot-thinking-hero.webp" alt="Лабіринт Sneekie зі світними маршрутами, небезпеками і шляхами рішень бота." />
       </figure>
       <div class="note"><strong>Важлива межа.</strong> Справжня гра 1988 року на сторінці <a href="game.html">Грати</a> залишається вірною BASIC-джерелу. Бот — лише сучасне доповнення в <code>bot.html</code>; він читає живі змінні порту і натискає клавіші так, як це робив би гравець. Окрім одного службового запису — переходу до вибраного <code>LEVEL</code> — він не чіпає правила і рушій гри.</div>
       <nav class="toc" aria-label="На цій сторінці">
