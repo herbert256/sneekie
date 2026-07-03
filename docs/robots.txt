@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sneekie.xyz/sitemap.xml
+Sitemap: https://sneekie.cc/sitemap.xml

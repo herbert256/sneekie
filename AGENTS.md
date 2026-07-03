@@ -20,7 +20,7 @@ site under `docs/`, split into localized/page-specific HTML plus shared CSS/JS. 
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
 publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
-https://sneekie.xyz/.
+https://sneekie.cc/.
 
 - `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the

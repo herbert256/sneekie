@@ -3,7 +3,7 @@
 A 32-level snake/maze game written in GW-BASIC in July 1988 by **HerbySoft**,
 published in MS(X)DOS Computer Magazine, issue #25 (October 1988).
 
-**Play it here: https://sneekie.xyz/**
+**Play it here: https://sneekie.cc/**
 
 In 2026 the printed listing was recovered by OCR and ported line for line to a
 static browser version. The port keeps the original direct video-memory model:
@@ -35,16 +35,16 @@ use `docs/js/bot-home.js` for their passive JavaScript previews.
 
 ## On the site
 
-- **[Play](https://sneekie.xyz/)** - the game, including the 1988-style boot/GW-BASIC intro.
-- **[History](https://sneekie.xyz/en/history)** - the story from the 1988 BASIC listing to the 2026 recovery.
-- **[Magazine](https://sneekie.xyz/en/magazine)** - scans from the original 1988 publication.
-- **[Source](https://sneekie.xyz/en/source)** - the recovered GW-BASIC listing.
-- **[Manual](https://sneekie.xyz/en/manual)** - controls, scoring, maze layouts, and all 32 levels.
-- **[Bot](https://sneekie.xyz/en/bot)** - the real game played live by a smart bot in the same page.
-- **[How the bot thinks](https://sneekie.xyz/en/bot-thinking)** - route search, danger modeling, and fallback choices.
-- **[Explained](https://sneekie.xyz/en/explained)** - an annotated walkthrough of the source.
-- **[Migration](https://sneekie.xyz/en/migration)** - BASIC and JavaScript shown side by side.
-- **[Visualizer](https://sneekie.xyz/en/vram)** - an interactive look at the text-VRAM trick.
+- **[Play](https://sneekie.cc/)** - the game, including the 1988-style boot/GW-BASIC intro.
+- **[History](https://sneekie.cc/en/history)** - the story from the 1988 BASIC listing to the 2026 recovery.
+- **[Magazine](https://sneekie.cc/en/magazine)** - scans from the original 1988 publication.
+- **[Source](https://sneekie.cc/en/source)** - the recovered GW-BASIC listing.
+- **[Manual](https://sneekie.cc/en/manual)** - controls, scoring, maze layouts, and all 32 levels.
+- **[Bot](https://sneekie.cc/en/bot)** - the real game played live by a smart bot in the same page.
+- **[How the bot thinks](https://sneekie.cc/en/bot-thinking)** - route search, danger modeling, and fallback choices.
+- **[Explained](https://sneekie.cc/en/explained)** - an annotated walkthrough of the source.
+- **[Migration](https://sneekie.cc/en/migration)** - BASIC and JavaScript shown side by side.
+- **[Visualizer](https://sneekie.cc/en/vram)** - an interactive look at the text-VRAM trick.
 
 ## Layout
 
