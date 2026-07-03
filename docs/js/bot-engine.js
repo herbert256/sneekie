@@ -281,6 +281,7 @@
     return {
       decide,
       ready:() => !!exports && !disabled,
+      failed:() => disabled,
       threads:() => Math.max(1, workers.filter(state => state.ready && !state.failed).length),
       init
     };

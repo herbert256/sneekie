@@ -55,7 +55,7 @@
     typeof window.sneekieWaitingForKey === 'function' && window.sneekieWaitingForKey();
   const botText = key => (window.SNEEKIE_TEXT && window.SNEEKIE_TEXT[key]) || key;
   function delayedLoadingStatus(isReady){
-    if(passivePreview) return { done(){} };
+    if(passivePreview) return { done(){}, fail(){} };
     let shown = null, finished = false;
     const timer = setTimeout(() => {
       if(finished || isReady()) return;
@@ -76,6 +76,23 @@
           shown.classList.add('is-done');
           setTimeout(() => shown.remove(), 220);
         }
+      },
+      // The planner can never become ready (wasm failed to load, or it tripped
+      // mid-session): swap the "loading" toast for a final status instead of
+      // letting it claim to load forever.
+      fail(message){
+        if(finished) return;
+        finished = true;
+        clearTimeout(timer);
+        if(!shown){
+          shown = document.createElement('div');
+          shown.className = 'bot-loading';
+          shown.setAttribute('role', 'status');
+          shown.setAttribute('aria-live', 'polite');
+          shown.setAttribute('aria-atomic', 'true');
+          document.body.appendChild(shown);
+        }
+        shown.textContent = message;
       }
     };
   }
@@ -90,6 +107,7 @@
     state: () => ({ T, D, ETEL, BTEL, LEVEL, HART, KLAVER, BONUS })
   });
   const plannerReady = () => planner && (typeof planner.ready !== 'function' || planner.ready());
+  const plannerFailed = () => !planner || (typeof planner.failed === 'function' && planner.failed());
   const loadingStatus = delayedLoadingStatus(plannerReady);
 
   /* ---- level tabs (2-8): which early maze the bot drops into ---- */
@@ -342,6 +360,14 @@
     };
     while(true){
       if(typeof LEVEL === 'undefined' || LEVEL < 1){ await sleep(botDelay()); continue; }   // wait for the game to start
+      if(plannerFailed()){
+        // bot-engine.wasm cannot load here (file://, fetch failure) or the
+        // planner tripped mid-session. The bot stays idle by design; say so.
+        loadingStatus.fail(botText('botUnavailable'));
+        const screen = passivePreview && document.getElementById('screen');
+        if(screen) screen.setAttribute('aria-label', botText('botUnavailable'));
+        return;
+      }
       if(!plannerReady()){ await sleep(80); continue; }      // wait for bot-engine.wasm to load
       loadingStatus.done();
       // game finished (final death or clean win) -> answer "play again", re-target.
