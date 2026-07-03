@@ -429,6 +429,11 @@
         activeLevel = LEVEL;
         target = LEVEL;
         markTabs();
+      } else if(pendingJump === null && !hasBotLevel(LEVEL)){
+        // A clean clear of level 8 rolls the game into level 9+, which the
+        // page does not advertise (and where the game's own auto-move outruns
+        // slow slider speeds). Wrap back into the 2-8 rotation instead.
+        queueNextLevel();
       }
       // jump to the selected level once the game has built the current level.
       // The request may be queued while the "Level n" popup is waiting; Enter
