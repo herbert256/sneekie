@@ -178,6 +178,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
             <tr><td>Eerste zet bewaren</td><td>Elke tak onthoudt alleen de eerste echte toets die straks gedrukt moet worden.</td></tr>
           </tbody>
         </table>
+        <p>Hierdoor kan de bot redeneren over het duwen van stenen en over zijn eigen staart die wegschuift. Hij zoekt niet alleen een geometrisch pad door het huidige beeld; hij simuleert hoe het lijf van de slang eruitziet na elke stap op dat pad.</p>
       </section>
       <section id="routes">
         <h2>6. Voedsel zoeken</h2>
@@ -217,11 +218,12 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           <thead><tr><th>Noodplan</th><th>Doel</th><th>Gedrag</th></tr></thead>
           <tbody>
             <tr><td><code>breathingMove()</code></td><td>Vakken vermijden</td><td>Loopt vóór verre voedselroutes wanneer het veld krap is of de slang lang is. Hij verkiest staartbereik, toekomstige uitgangen, vrije kamerdeuren en open ruimte.</td></tr>
-            <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of herhaalde kopposities.</td></tr>
+            <tr><td><code>pressureFood()</code></td><td>Lussen breken</td><td>Loopt bij <code>idle &gt;= 18</code> of wanneer het recente kopspoor herhaalde posities toont. Hij zoekt voedsel met lichtere overlevingspoorten, eerst zonder smileys, daarna met smileys.</td></tr>
             <tr><td><code>tailChaseMove()</code></td><td>Eindspel lange slang</td><td>Zodra het lijf op open velden ongeveer 80 vakken telt, of op krappe doolhofvelden ongeveer 24, kiest hij de veilige zet met de diepste gegarandeerde overleving terwijl de staart bereikbaar blijft &mdash; in de praktijk volgt hij zijn eigen staart en vult hij ruimte in plaats van zichzelf op te sluiten. Korte slangen slaan dit over.</td></tr>
             <tr><td><code>survivalMove()</code></td><td>Korte brug</td><td>De lichtere laatste fallback. Hij scoort directe zetten op ruimte, uitgangen, een algemene trek naar het dichtstbijzijnde bereikbare voedsel, terugwegruimte, smileykosten of -bonus, stenen en rechtdoor gaan.</td></tr>
           </tbody>
         </table>
+        <p>Zo krijgt de bot een overlevingsinstinct zonder dat dat instinct het eerste antwoord op elk moeilijk veld wordt. Als de kaart zegt &quot;nog niet eten&quot;, mag hij kort naar een groter open gebied bewegen, maar herhaalde kopposities laten de volgende beslissingen voedseldruk verkiezen. Kan ook druk geen route bewijzen, dan blijft de bot alleen bewegen zolang de lokale fallback een overleefbare stap vindt.</p>
       </section>
       <section id="score">
         <h2>9. Routes scoren</h2>
@@ -245,7 +247,16 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           score -= stonesPushed * 55<br />
           score -= oneExitAfterEating ? 18000 : 0
         </div>
-        <p>De grote gewichten voor staartbereik, overlevingsdiepte, bewezen uitweg, vrije kamerdeuren, terugkeerpoorten en recent spoor zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in, of van nog een rondje door dezelfde oude vakken. De score kijkt ook voorbij de eerste pickup: bereikbare voedselclusters en vervolg-pickups tellen mee <em>met korting naar afstand</em>, zodat een rijk cluster aan de overkant van het scherm niet langer wint van een hart naast de kop, terwijl smileys duur blijven tenzij ze toegang bewaren of zo'n cluster veilig openen. Een pickup die tegen een muur ligt krijgt nog maar een mild uitstel dat meegroeit met de lijflengte, zodat harten in hoekjes vroeg worden opgeruimd, zolang de slang nog kort is en de zak nog veilig.</p>
+        <p>De grote gewichten voor staartbereik, overlevingsdiepte, bewezen uitweg, vrije kamerdeuren, terugkeerpoorten en recent spoor zijn het anti-valgedrag. Een iets langere route met toegang tot de staart en een uitweg wint van een korte route een krappe hoek in, of van nog een rondje door dezelfde oude vakken. Klavers blijven belangrijk omdat ze meer punten waard zijn dan harten, maar ze overstemmen de overlevingstests niet. De score kijkt ook voorbij de eerste pickup: bereikbare voedselclusters en vervolg-pickups tellen mee <em>met korting naar afstand</em>, zodat een rijk cluster aan de overkant van het scherm niet langer wint van een hart naast de kop, terwijl smileys duur blijven tenzij ze toegang bewaren of zo'n cluster veilig openen. Een pickup die tegen een muur ligt krijgt nog maar een mild uitstel dat meegroeit met de lijflengte, zodat harten in hoekjes vroeg worden opgeruimd, zolang de slang nog kort is en de zak nog veilig.</p>
+        <p>De twee nieuwere voedselplanners gebruiken bewust andere gewichten:</p>
+        <table>
+          <thead><tr><th>Planner</th><th>Belangrijkste scoringsverschil</th></tr></thead>
+          <tbody>
+            <tr><td><code>nearFood()</code></td><td>Past een zeer grote term <code>-distance * 6200</code> toe. Dit voorkomt dat de bot veilig voedsel negeert dat maar een paar zetten weg ligt.</td></tr>
+            <tr><td><code>pressureFood()</code></td><td>Gebruikt kleinere val- en smileystraffen bij urgentie, plus een kleinere afstandsstraf. Zo ontsnapt hij aan staartlussen door echte voortgang te boeken.</td></tr>
+            <tr><td><code>survivalMove()</code></td><td>Zoekt geen volledige voedselroute. Hij scoort directe legale zetten op open ruimte, een trek naar het dichtstbijzijnde bereikbare voedsel, uitgangen, smileykosten, steenkosten en de voorkeur voor rechtdoor.</td></tr>
+          </tbody>
+        </table>
         <p>Twee extra krachten vormen de score. Een smiley kost &minus;50, en op deze levels spawnt elke pickup er een nieuwe, dus het veld vult zich met smileys; de planner verlaagt de straf alleen wanneer er een echt naar bereikbaar voedsel overbrugt, en houdt anders de volle straf, zodat de bot niet voor niets aan smileys knabbelt. Als laatste controle, nadat een zet is gekozen, weigert de bot helemaal om op een smiley te stappen wanneer een hart bereikbaar is zonder er een te kruisen, zodat hij nooit de &minus;50 betaalt voor een pickup die hij een vakje eromheen had kunnen bereiken &mdash; tenzij die smiley precies is wat het pad terug naar de staart open houdt. Een bewuste ontsnappingssmiley wordt nooit overstemd, en de zelfinsluitbewaker, die altijd als laatste loopt, kan er zelf een kiezen wanneer elke schone richting het lijf zou insluiten. En omdat de levelbonus elke zet wegloopt en bij het uitspelen in de score wordt geboekt, komt er een kleine extra afstandsstraf &mdash; geschaald met de resterende bonus &mdash; zodra er nog maar een paar items over zijn, wat de bot naar de kortste afrondroute duwt in plaats van te treuzelen op de laatste pickups. Beide zijn tie-breakers: ze overstemmen nooit de overlevingsfilters.</p>
       </section>
       <section id="speed">
@@ -258,6 +269,7 @@ if(sc !== null) pushKey(keyOf[sc]);           // anders: geen enkele legale zet 
           <li><code>pressureFood()</code> kan 5000 toestanden scannen, of 9000 wanneer urgent.</li>
           <li><code>survivalDepth()</code> is een beam search en bewaart in WebAssembly tot 128 toestanden per diepte.</li>
           <li><code>escapeProof()</code> bewaart tot 160 beste toestanden per diepte na het oppakken terwijl hij bewijst dat de voedselroute een uitweg heeft.</li>
+          <li>Voedsel zoeken is ondieper bij gewone beslissingen midden in een level en gaat pas dieper tegen het einde van een level.</li>
           <li>De schuifregelaar zet het doeltempo tussen toetsaanslagen; plannertijd telt mee binnen dat tempo wanneer dat past, en extra workerthreads krijgen grotere routezoekbudgetten dan de basisplanner.</li>
         </ul>
         <p>De schuifregelaar klikt vast op deze snelheden: 10, 10, 20, 30, 49, 50, 60, 70, 80, 90, 100. Lage waarden laten de bot langer wachten tussen zetten; hoge waarden drukken veel sneller toetsen in, tot ongeveer 45&nbsp;ms per zet. Normale plannertijd wordt van die wachttijd afgetrokken; als een zoekactie langer duurt dan het doeltempo, gaat de volgende toets meteen door.</p>
