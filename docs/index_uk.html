@@ -169,6 +169,7 @@
       window.SNEEKIE_BOT_SILENT = true;
       window.SNEEKIE_MUTED = true;
       window.SNEEKIE_LANG = 'uk';
+      window.SNEEKIE_TEXT = { "botUnavailable": "Попередній перегляд бота Sneekie недоступний" };
       function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
       function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
     </script>
@@ -189,7 +190,7 @@
             .catch(error => {
               console.error(error);
               const screen = document.getElementById('screen');
-              if(screen) screen.setAttribute('aria-label', 'Sneekie bot preview unavailable');
+              if(screen) screen.setAttribute('aria-label', window.SNEEKIE_TEXT.botUnavailable);
             });
         }
         function schedulePreview(){
