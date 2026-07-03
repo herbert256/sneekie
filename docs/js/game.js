@@ -41,7 +41,6 @@ const FONT = Uint8Array.from(atob('AAAAAAAAAAAAAAAAAAAAAAAAfoGlgYG9mYGBfgAAAAAAA
 const THEMES = {
   hercules:{ dim:[ 46,168, 46], bright:[125,255,125], css:'#7dff7d', glow:'rgba(125,255,125,.14)', meta:'#051005' },
   amber:   { dim:[191,121,  0], bright:[255,196, 56], css:'#ffc438', glow:'rgba(255,196,56,.13)', meta:'#140c00'  },
-  white:   { dim:[168,176,180], bright:[255,255,255], css:'#e8eef0', glow:'rgba(232,238,240,.12)', meta:'#0a0c0d' },
   cga:     { cga:true, dim:[170,170,170], bright:[255,255,255], css:'#55ffff', glow:'rgba(85,255,255,.12)', meta:'#001010' },
 };
 
@@ -1418,11 +1417,6 @@ function applyTheme(name){
   const metaColor = theme.meta || '#0a0c0d';
   const metaTag = document.querySelector('meta[name="theme-color"]');
   if(metaTag) metaTag.content = metaColor;
-  try {
-    if(window.parent !== window) {
-      window.parent.postMessage({ type: 'sneekie:theme', color: metaColor }, '*');
-    }
-  } catch(_) {}
 }
 document.querySelectorAll('#themes button').forEach(b =>
   b.addEventListener('click', () => { ensureAudio(); applyTheme(b.dataset.theme); }));

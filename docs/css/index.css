@@ -212,12 +212,6 @@
   transition:opacity .08s;
 }
 
-@keyframes indexDeathFlash{
-  0%, 93.66%, 94.31%, 94.93%, 95.58%, 96.19%, 96.85%, 97.46%, 98.11%, 98.72%, 99.38%, 100%{ opacity:0; }
-  93.67%, 94.30%, 94.94%, 95.57%, 96.20%, 96.84%, 97.47%, 98.10%, 98.73%, 99.37%{ opacity:1; }
-}
-
-.play-image,
 .home-bot-preview #screen{
   display:block;
   width:100%;
@@ -306,8 +300,6 @@
   transform:translateY(-2px);
 }
 
-.play-link:hover .play-image,
-.play-link:focus-visible .play-image,
 .home-bot-preview:hover #screen,
 .home-bot-hit:focus-visible + .crt #screen{
   box-shadow:0 0 0 2px #000, 0 0 56px 0 var(--glow);
@@ -389,7 +381,6 @@
     border-radius:0;
     box-shadow:none;
   }
-  .play-image,
   .home-bot-preview #screen{
     width:100vw;
     max-width:none;

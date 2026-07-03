@@ -4,11 +4,6 @@
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
 
-function isEmbedded(){
-  try { return window.self !== window.top; }
-  catch(_) { return true; }
-}
-
 function useCleanUrls(){
   return location.hostname === 'sneekie.xyz' || location.hostname === 'www.sneekie.xyz';
 }

@@ -20,28 +20,6 @@
 }
 
 /* full-width cinematic figures, cropped shorter with per-image focal points */
-.page-history .story-figure{ margin:28px 0 32px; }
-.page-history .story-figure img{
-  display:block;
-  width:100%;
-  height:auto;
-  aspect-ratio:1200 / 540;
-  object-fit:cover;
-  object-position:center var(--history-image-y, 50%);
-  border:1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
-  border-radius:10px;
-  background:#050607;
-  box-shadow:0 20px 52px -32px rgba(0,0,0,.95);
-}
-.page-history .hero-figure{ margin-top:22px; }
-.page-history .story-figure figcaption{
-  margin-top:9px;
-  color:var(--muted);
-  font-size:13px;
-  line-height:1.5;
-  text-align:center;
-}
-.page-history .story-figure figcaption b{ color:var(--heading); }
 
 .page-history .paragraph-figure{
   max-width:860px;
@@ -111,19 +89,6 @@
 }
 .page-history .story-band p:first-of-type{ margin-top:0; }
 
-/* pull quote */
-.page-history .story-pull{
-  max-width:860px;
-  margin:34px auto;
-  padding:22px 26px;
-  color:#f8ffd2;
-  background:linear-gradient(135deg, rgba(227,168,87,.16), rgba(121,192,255,.09));
-  border:1px solid color-mix(in srgb, var(--annot) 42%, var(--border));
-  border-left:4px solid var(--annot);
-  border-radius:8px;
-  font:700 23px/1.35 Georgia, "Times New Roman", serif;
-}
-
 /* finale band accent + ending card */
 .page-history .finale{ border-left-color:color-mix(in srgb, var(--blue) 72%, var(--border)); }
 .page-history .finale::before{ background:linear-gradient(90deg, color-mix(in srgb, var(--blue) 44%, transparent), transparent 64%); }
@@ -168,18 +133,13 @@
   .page-history .story-band{ --story-indent:19px; margin:40px auto; padding-left:16px; }
   .page-history .story-band h2,
   .page-history .story-ending h2{ font-size:21px; }
-  .page-history .story-pull{ padding:18px 20px; font-size:21px; }
 }
 @media (max-width:520px){
   .page-history .kicker{ text-align:left; }
-  .page-history .story-figure{ margin:22px -2px 26px; }
-  .page-history .story-ending,
-  .page-history .story-pull{ margin-left:0; margin-right:0; }
+  .page-history .story-ending{ margin-left:0; margin-right:0; }
   .page-history .story-links{ display:grid; grid-template-columns:1fr; }
 }
 @media print{
-  .page-history .story-figure img,
   .page-history .paragraph-figure img,
-  .page-history .story-pull,
   .page-history .story-ending{ box-shadow:none; }
 }

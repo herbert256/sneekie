@@ -48,7 +48,6 @@
   border-color:#ff3b30;
   box-shadow:0 0 22px rgba(255,59,48,.55);
 }
-.page-vram .memwrap{ margin-top:14px; }
 .page-vram .mem{
   display:grid;
   gap:1px;
@@ -92,12 +91,6 @@
   to{}
 }
 .page-vram .mc.flash{ animation:flash .55s ease-out; }
-.page-vram .cap{
-  max-width:384px;
-  margin-top:10px;
-  color:var(--muted);
-  font-size:12px;
-}
 .page-vram .sxo{
   display:flex;
   align-items:stretch;
@@ -156,13 +149,6 @@
   cursor:pointer;
   transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
-.page-vram .stats{
-  display:flex;
-  gap:18px;
-  font-size:13px;
-}
-.page-vram .stats b{ color:var(--heading); }
-.page-vram .formula .dim{ color:var(--muted); }
 .page-vram .log{
   height:190px;
   overflow-y:auto;

@@ -156,7 +156,6 @@ header.top .lang-switch{
   gap:5px;
 }
 header.top nav a,
-header.top nav button,
 header.top .lang-switch a{
   font:inherit;
   font-size:11px;
@@ -189,7 +188,6 @@ header.top .lang-flag{
   object-fit:cover;
 }
 header.top nav a:hover,
-header.top nav button:hover,
 header.top nav a[aria-current="page"],
 header.top .lang-switch a:hover,
 header.top .lang-switch a[aria-current="true"]{
@@ -427,8 +425,7 @@ footer a:hover{
   white-space:nowrap;
 }
 .page-doc table .g,
-.page-doc td.mono,
-.page-doc td .lv{ color:var(--num); }
+.page-doc td.mono{ color:var(--num); }
 .page-doc .note,
 .page-doc .callout,
 .page-doc .panel,
@@ -508,14 +505,11 @@ footer a:hover{
   font-weight:700;
 }
 .page-doc .ico.h{ color:var(--red); }
-.page-doc .ico.c,
-.page-doc .ico.g{ color:var(--club); }
+.page-doc .ico.c{ color:var(--club); }
 .page-doc .ico.s{ color:var(--smiley); }
 .page-doc .ico.t{ color:var(--stone); }
 .page-doc .ico.a{ color:var(--arrow); }
 .page-doc .ico.w{ color:#5ad0d0; }
-.page-doc .ico.green{ color:var(--accent); }
-.page-doc .ico.r{ color:var(--red); }
 section.card{ padding:13px 15px; }
 
 /* Shared code-listing widgets: Explained + Migration */
@@ -668,8 +662,7 @@ section.card .prose,
     scrollbar-width:none;
   }
   header.top nav::-webkit-scrollbar{ display:none; }
-  header.top nav a,
-  header.top nav button{
+  header.top nav a{
     flex:0 0 auto;
     font-size:10px;
     letter-spacing:.06em;

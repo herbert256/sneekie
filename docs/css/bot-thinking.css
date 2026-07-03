@@ -12,7 +12,6 @@
   overflow:auto;
   overflow-wrap:anywhere;
 }
-.page-bot-thinking .formula .dim{ color:var(--muted); }
 .page-bot-thinking td:first-child{ white-space:nowrap; }
 .page-bot-thinking .cards,
 .page-bot-thinking .ladder,
