@@ -67,7 +67,7 @@ if(pageFs && pageFsClose && pageStage && pageFsCaption && pageThumbs.length){
     if(!pageFsImg) return;
     pageFsImg.style.transform = `translate3d(${Math.round(offsetX)}px, ${Math.round(offsetY)}px, 0) scale(${scale.toFixed(3)})`;
     pageStage.classList.toggle('is-zoomed', scale > 1.01);
-    pageZoomReset.textContent = `${Math.round(scale * 100)}%`;
+    if(pageZoomReset) pageZoomReset.textContent = `${Math.round(scale * 100)}%`;
   }
 
   function setScale(nextScale, point){
@@ -301,6 +301,11 @@ if(pageFs && pageFsClose && pageStage && pageFsCaption && pageThumbs.length){
 
   document.addEventListener('fullscreenchange', () => {
     if(!document.fullscreenElement) finishClose();
+    // openPage()'s fullscreen request can resolve after a very fast close;
+    // leave fullscreen again instead of staying on a hidden overlay.
+    else if(document.fullscreenElement === pageFs && !isOpen() && document.exitFullscreen){
+      document.exitFullscreen().catch(() => {});
+    }
   });
 
   document.addEventListener('keydown', e => {
