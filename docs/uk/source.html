@@ -36,6 +36,38 @@
     <link rel="stylesheet" href="../css/source.css" />
   </head>
   <body class="page-source">
+  <script>
+    /* Theme restore runs here, right after <body> opens, so the big listing
+       below never paints green first for Amber/CGA visitors. The toolbar
+       parses later; its wiring waits for DOMContentLoaded. */
+    (() => {
+      function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+      function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
+      const THEMES = {
+        hercules:{ bg:'#020503', phos:'#7dff7d', glow:'rgba(125,255,125,.13)', meta:'#051005', gut:'#44864f', ln:'#46c95a', kw:'#d6ffd6', fn:'#7ff09a', str:'#5ad06f', num:'#a9f4b6', com:'#3c8f49', id:'#86ff86', op:'#54bf69', pn:'#4a9a5a' },
+        amber:{ bg:'#070401', phos:'#ffc438', glow:'rgba(255,196,56,.12)', meta:'#140c00', gut:'#8a6a2a', ln:'#ffb732', kw:'#ffe7a0', fn:'#ffc861', str:'#f0a838', num:'#ffd873', com:'#9a6a18', id:'#ffcb52', op:'#cf9a2c', pn:'#a07d34' },
+        cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)', meta:'#001010', gut:'#0a6a6a', ln:'#55ffff', kw:'#55ff55', fn:'#55ffff', str:'#ffff55', num:'#ff55ff', com:'#aaaaaa', id:'#ffffff', op:'#ff5555', pn:'#888888' }
+      };
+      function applyTheme(name, persist){
+        const theme = THEMES[name] || THEMES.hercules;
+        for(const key in theme) document.body.style.setProperty('--' + key, theme[key]);
+        document.querySelectorAll('#themes button').forEach(button =>
+          button.setAttribute('aria-pressed', String(button.dataset.theme === name)));
+        if(persist) lsSet('sneekie.theme', name);
+        const metaTag = document.querySelector('meta[name="theme-color"]');
+        if(metaTag) metaTag.content = theme.meta || '#0a0c0d';
+      }
+      const saved = lsGet('sneekie.theme');
+      const initial = THEMES[saved] ? saved : 'hercules';
+      applyTheme(initial, false);
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('print')?.addEventListener('click', () => window.print());
+        document.querySelectorAll('#themes button').forEach(button =>
+          button.addEventListener('click', () => applyTheme(button.dataset.theme, true)));
+        applyTheme(initial, false);   // sync aria-pressed now that the toolbar exists
+      });
+    })();
+  </script>
     <a class="skip" href="#main">Перейти до вмісту</a>
     <header class="top">
       <a class="brand" href="../index_uk.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" width="704" height="128" alt="Sneekie" /></a>
@@ -332,30 +364,5 @@
     <footer>
       Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Оригінал: GW-BASIC, текстовий режим 80&times;25, POKE прямо у відеопамʼять.<br>Браузерна версія: червень 2026.
     </footer>
-    <script>
-      (() => {
-        function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
-        function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
-        const THEMES = {
-          hercules:{ bg:'#020503', phos:'#7dff7d', glow:'rgba(125,255,125,.13)', meta:'#051005', gut:'#44864f', ln:'#46c95a', kw:'#d6ffd6', fn:'#7ff09a', str:'#5ad06f', num:'#a9f4b6', com:'#3c8f49', id:'#86ff86', op:'#54bf69', pn:'#4a9a5a' },
-          amber:{ bg:'#070401', phos:'#ffc438', glow:'rgba(255,196,56,.12)', meta:'#140c00', gut:'#8a6a2a', ln:'#ffb732', kw:'#ffe7a0', fn:'#ffc861', str:'#f0a838', num:'#ffd873', com:'#9a6a18', id:'#ffcb52', op:'#cf9a2c', pn:'#a07d34' },
-          cga:{ bg:'#000000', phos:'#55ffff', glow:'rgba(85,255,255,.12)', meta:'#001010', gut:'#0a6a6a', ln:'#55ffff', kw:'#55ff55', fn:'#55ffff', str:'#ffff55', num:'#ff55ff', com:'#aaaaaa', id:'#ffffff', op:'#ff5555', pn:'#888888' }
-        };
-        function applyTheme(name, persist){
-          const theme = THEMES[name] || THEMES.hercules;
-          for(const key in theme) document.body.style.setProperty('--' + key, theme[key]);
-          document.querySelectorAll('#themes button').forEach(button =>
-            button.setAttribute('aria-pressed', String(button.dataset.theme === name)));
-          if(persist) lsSet('sneekie.theme', name);
-          const metaTag = document.querySelector('meta[name="theme-color"]');
-          if(metaTag) metaTag.content = theme.meta || '#0a0c0d';
-        }
-        document.getElementById('print')?.addEventListener('click', () => window.print());
-        document.querySelectorAll('#themes button').forEach(button =>
-          button.addEventListener('click', () => applyTheme(button.dataset.theme, true)));
-        const saved = lsGet('sneekie.theme');
-        applyTheme(THEMES[saved] ? saved : 'hercules', false);
-      })();
-    </script>
   </body>
 </html>
