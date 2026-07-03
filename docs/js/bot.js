@@ -374,7 +374,12 @@
       // Checked before the jump below so a tab click can't overwrite LEVEL first.
       if(LEVEL > 32){
         if(++over >= 4){
-          if(!gameEndQueued){ queueNextLevel(); gameEndQueued = true; }
+          // Don't overwrite a level tab the user clicked during the game-over
+          // window (same guard as the LIVE-drop path below).
+          if(!gameEndQueued){
+            if(pendingJump === null && jumpingTo === null) queueNextLevel();
+            gameEndQueued = true;
+          }
           forcedDeathQueued = false;
           resetMoveCounters();
           pushKey('\r'); pushKey(yesKey()); over = 0;
@@ -387,7 +392,9 @@
       // dismiss the popup/next-level prompt so the normal jump path can take over.
       if(ETEL > BTEL){
         if(!deathQueued){
-          queueNextLevel();
+          // Keep a user's pending tab click instead of overwriting it while
+          // the snake unwinds.
+          if(pendingJump === null && jumpingTo === null) queueNextLevel();
           gameEndQueued = true;
           deathQueued = true;
           forcedDeathQueued = false;
