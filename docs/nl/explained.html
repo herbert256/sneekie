@@ -322,7 +322,16 @@
       </div>
       <section class="card" id="s-10">
         <div class="head"><span class="badge">10</span><h2>Wat staat er in het volgende vak?</h2><span class="lines">regels 710&ndash;900</span></div>
-        <div class="prose">De grote beslissing: leeg vak, klaver, hart, steen, smiley of pijl. Eten laat de slang groeien; pijlen doden; stenen kunnen worden geduwd.</div>
+        <div class="prose">De grote beslissing: schakel op het teken dat v&oacute;&oacute;r de kop ligt.
+    <ul>
+      <li><code>32</code> leeg &rarr; schuif vooruit (staart wissen, kop erbij).</li>
+      <li><code>5</code> &#9827; klaver &rarr; +25 en <b>groeien</b> (de staart wordt niet gewist).</li>
+      <li><code>3</code> &#9829; hart &rarr; +10 en groeien; na level 16 broedt het ook een nieuwe klaver.</li>
+      <li><code>10</code> &#9689; steen &rarr; duw hem als het vak erachter leeg is, anders zit je vast.</li>
+      <li><code>1</code> &#9786; smiley &rarr; &minus;50 en er overheen groeien.</li>
+      <li><code>24/26/27</code> pijl &rarr; onmiddellijke dood.</li>
+    </ul>
+    Een aardige twist: een hart of klaver eten <i>laat verse smileys verschijnen</i>, dus het veld wordt drukker terwijl je het leegruimt.</div>
       </section>
       <div class="src">
         <div class="ln-row"><span class="t-ln">710</span>       <span class="t-kw">IF</span> <span class="t-id">D</span><span class="t-op">&lt;&gt;</span><span class="t-num">32</span>  <span class="t-kw">THEN</span>  <span class="t-kw">GOTO</span> <span class="t-num">740</span></div>
