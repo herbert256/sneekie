@@ -48,6 +48,12 @@
   --room:#5b9bff;
   --arrow:#d886ff;
   --blue:#79c0ff;
+  --crt-case-bg:linear-gradient(168deg, #7a8289 0%, #626b72 46%, #434b52 100%);
+  --crt-case-shadow:0 38px 84px -28px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.18), inset 0 -3px 9px rgba(0,0,0,.38), inset 0 0 0 1px rgba(0,0,0,.42);
+  --crt-case-hover-shadow:0 40px 90px -26px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.20), inset 0 -3px 9px rgba(0,0,0,.38), inset 0 0 0 1px rgba(0,0,0,.42), 0 0 24px -6px var(--accent);
+  --crt-logo:#303840;
+  --crt-logo-shadow:0 1px 0 rgba(255,255,255,.22), 0 -1px 0 rgba(0,0,0,.35);
+  --crt-knob-bg:radial-gradient(circle at 38% 30%, #737d85, #3d454c 62%, #1d2227 100%);
 }
 
 html{
@@ -117,6 +123,72 @@ summary:focus-visible,
   transition:color .12s, border-color .12s, box-shadow .12s, background .12s;
 }
 .fs-close:hover{ color:var(--accent); border-color:var(--accent); background:var(--button); }
+
+/* Decorative side speakers used by the home preview, playable game, and bot CRTs. */
+.crt-speaker{
+  position:absolute;
+  top:auto;
+  bottom:0;
+  z-index:0;
+  display:block;
+  width:clamp(96px, 8.8vw, 118px);
+  height:clamp(280px, 72%, 340px);
+  overflow:hidden;
+  pointer-events:none;
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:44% 44% 14px 14px / 8% 8% 13px 13px;
+  background:radial-gradient(ellipse at 50% 0, rgba(255,255,255,.72) 0 24%, transparent 25%),
+    linear-gradient(90deg, rgba(0,0,0,.24), transparent 12% 88%, rgba(0,0,0,.22)),
+    linear-gradient(155deg, #d8d0b6 0%, #beb293 52%, #8b826c 100%);
+  box-shadow:0 34px 70px -34px rgba(0,0,0,.98), inset 0 3px 0 rgba(255,255,255,.5), inset 0 -18px 26px rgba(65,54,35,.32);
+}
+.crt-speaker-left{
+  right:calc(100% + clamp(14px, 1.7vw, 22px));
+  transform:perspective(320px) rotateY(-5deg);
+  transform-origin:right center;
+}
+.crt-speaker-right{
+  left:calc(100% + clamp(14px, 1.7vw, 22px));
+  transform:perspective(320px) rotateY(5deg);
+  transform-origin:left center;
+}
+.crt-speaker::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:clamp(20px, 7%, 30px);
+  width:84%;
+  aspect-ratio:1;
+  border:3px solid #151512;
+  border-radius:50%;
+  transform:translateX(-50%);
+  background:radial-gradient(circle, rgba(21,19,15,.92) 0 1.2px, transparent 1.55px) 0 0 / 6px 6px,
+    radial-gradient(circle at 38% 28%, #f1ead5 0%, #d0c5a5 54%, #8f856f 100%);
+  box-shadow:0 2px 0 rgba(255,255,255,.22), inset 0 0 0 2px rgba(255,255,255,.18), inset 0 0 22px rgba(0,0,0,.42);
+}
+.crt-speaker::after{
+  content:"";
+  position:absolute;
+  right:9px;
+  bottom:9px;
+  left:9px;
+  height:42%;
+  display:block;
+  background:radial-gradient(ellipse at 20% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    radial-gradient(ellipse at 80% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    radial-gradient(circle at 21% 84%, #65cf93 0 6%, #102115 7% 12%, transparent 13%),
+    radial-gradient(circle at 78% 84%, #e7dcc2 0 9%, #90836a 10% 18%, #2f2b22 19% 22%, transparent 23%),
+    linear-gradient(180deg, transparent 0 56%, rgba(43,38,27,.36) 57% 59%, rgba(231,221,190,.52) 60% 100%);
+  border-radius:0 0 9px 9px;
+}
+#bezel:fullscreen .crt-speaker{
+  display:none;
+}
+@media (max-width:980px){
+  .crt-speaker{
+    display:none;
+  }
+}
 header.top{
   position:sticky;
   top:0;

@@ -50,10 +50,10 @@
   flex-direction:column;
   align-items:stretch;
   gap:13px;
-  background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
+  background:var(--crt-case-bg);
   border-radius:20px;
   padding:18px 22px 15px;
-  box-shadow:0 38px 84px -28px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45);
+  box-shadow:var(--crt-case-shadow);
 }
 @keyframes poweron{
   from{ opacity:0; transform:scale(.985); }
@@ -130,8 +130,8 @@
   font:700 10px/1 ui-monospace, monospace;
   letter-spacing:.24em;
   text-transform:uppercase;
-  color:#494e53;
-  text-shadow:0 1px 0 rgba(255,255,255,.06), 0 -1px 0 rgba(0,0,0,.55);
+  color:var(--crt-logo);
+  text-shadow:var(--crt-logo-shadow);
 }
 .page-index #panel .led{
   width:7px;
@@ -150,7 +150,7 @@
   width:15px;
   height:15px;
   border-radius:50%;
-  background:radial-gradient(circle at 38% 30%, #4a4f54, #25292c 62%, #15171a 100%);
+  background:var(--crt-knob-bg);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.6);
 }
 .page-index #panel .knobs i::after{

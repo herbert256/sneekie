@@ -122,6 +122,8 @@ const dirty = new Set();
 const cv = document.getElementById('screen');
 const tube = document.getElementById('tube');
 const ctx = cv.getContext('2d');
+const CRT_DISPLAY_W = 512;                         // 4:3 CRT display of the 640x384 signal
+const CRT_DISPLAY_H = 384;
 let atlasDim, atlasBright;
 const cgaAtlas = {};
 let bootActive = true, bootWaiting = false, bootStarted = false, bootSkip = false;
@@ -1451,7 +1453,9 @@ function fit(){
   if(previewMode && !document.fullscreenElement){
     bezel.style.removeProperty('--fs-touch-reserve');
     cv.style.width = '100%';
-    cv.style.height = 'auto';
+    const rect = cv.getBoundingClientRect();
+    const w = rect.width || cv.parentElement?.clientWidth || CRT_DISPLAY_W;
+    cv.style.height = (w * CRT_DISPLAY_H / CRT_DISPLAY_W) + 'px';
     return;
   }
   if(document.fullscreenElement){
@@ -1482,10 +1486,10 @@ function fit(){
     document.getElementById('panel').offsetHeight + 18;
   const availW = Math.min(document.documentElement.clientWidth - bodyChromeW - monitorChromeW, 1300);
   const availH = innerHeight - bezel.getBoundingClientRect().top - monitorChromeH - 18;
-  let s = Math.min(availW/640, availH/384);
+  let s = Math.min(availW/CRT_DISPLAY_W, availH/CRT_DISPLAY_H);
   s = s >= 1 ? Math.floor(s) : Math.max(s, 0.42);
-  cv.style.width = (640*s) + 'px';
-  cv.style.height = (384*s) + 'px';
+  cv.style.width = (CRT_DISPLAY_W*s) + 'px';
+  cv.style.height = (CRT_DISPLAY_H*s) + 'px';
 }
 /* fit() forces layout (getComputedStyle/getBoundingClientRect); coalesce the
    raw resize stream to one run per frame instead of thrashing during drags. */

@@ -141,7 +141,8 @@
 
 .play-link{
   display:block;
-  max-width:760px;             /* match the title image so the monitor lines up under the logo */
+  max-width:640px;
+  margin:0 auto;
   color:inherit;
   text-decoration:none;
   touch-action:pan-y;
@@ -182,11 +183,12 @@
 
 /* CRT monitor shell around the play image, mirroring the one on game.html */
 .play-link .crt{
+  position:relative;
   display:block;
-  background:linear-gradient(168deg, #3c4045 0%, #2b2f33 46%, #1e2125 100%);
+  background:var(--crt-case-bg);
   border-radius:20px;
   padding:18px 22px 15px;
-  box-shadow:0 38px 84px -28px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45);
+  box-shadow:var(--crt-case-shadow);
   transition:box-shadow .14s, transform .14s;
 }
 
@@ -216,8 +218,8 @@
   display:block;
   width:100%;
   height:auto;
-  aspect-ratio:640 / 384;
-  object-fit:contain;
+  aspect-ratio:4 / 3;
+  object-fit:fill;
   background:#000;
   border-radius:7px;
   image-rendering:pixelated;
@@ -255,8 +257,8 @@
   font:700 10px/1 ui-monospace, monospace;
   letter-spacing:.24em;
   text-transform:uppercase;
-  color:#494e53;
-  text-shadow:0 1px 0 rgba(255,255,255,.06), 0 -1px 0 rgba(0,0,0,.55);
+  color:var(--crt-logo);
+  text-shadow:var(--crt-logo-shadow);
 }
 
 .play-link .crt-led{
@@ -278,7 +280,7 @@
   width:15px;
   height:15px;
   border-radius:50%;
-  background:radial-gradient(circle at 38% 30%, #4a4f54, #25292c 62%, #15171a 100%);
+  background:var(--crt-knob-bg);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.6);
 }
 
@@ -296,7 +298,7 @@
 
 .play-link:hover .crt,
 .play-link:focus-visible .crt{
-  box-shadow:0 40px 90px -26px rgba(0,0,0,.95), 0 8px 20px -8px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.10), inset 0 -3px 9px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.45), 0 0 24px -6px var(--accent);
+  box-shadow:var(--crt-case-hover-shadow);
   transform:translateY(-2px);
 }
 
