@@ -11,14 +11,19 @@ the BASIC code POKEd characters straight into text VRAM at `&HB000`/`&HB800`,
 and the JavaScript version keeps a matching byte array rendered with the real
 IBM VGA 8x16 CP437 ROM font.
 
-There is no framework, build step, package dependency, or dedicated automated
-test suite. The published site lives in `docs/` and is served by GitHub Pages.
-All site source editing now happens directly under `docs/`, including the
-localized pages in `docs/en/`, `docs/nl/`, and `docs/uk/`.
-The Live bot is the one exception with source outside `docs/`: its Rust planner
-lives under `wasm/bot-engine/` and is checked in as `docs/js/bot-engine.wasm`,
-with `docs/js/bot-engine.js` loading it on the Bot page. The root landing pages
-use `docs/js/bot-home.js` for their passive JavaScript previews.
+The website has no framework, build step, or package dependency. The published
+pages live in `docs/`. The canonical site at https://sneekie.cc/ is served by
+Cloudflare (see `wrangler.jsonc`); GitHub Pages builds the same `docs/` tree as a
+mirror at https://herbert256.github.io/sneekie/. All site editing happens
+directly under `docs/`, including the localized pages in `docs/en/`, `docs/nl/`,
+and `docs/uk/`.
+The Live bot is the one part with source outside `docs/`: its planner is written
+in Rust under `wasm/bot-engine/`, compiled to the checked-in
+`docs/js/bot-engine.wasm`, and loaded by `docs/js/bot-engine.js`. The Bot page
+and all three landing pages run this same WebAssembly bot; the landing pages
+lazy-load `game.js`, `bot-engine.js`, and `bot.js` inline and drive it in a
+passive preview mode. A Rust test suite plus a Node simulator/tuner under
+`tools/` keep the bot honest offline.
 
 ## Controls
 
@@ -54,17 +59,18 @@ docs/
   index_nl.html       # Dutch standalone home page
   index_uk.html       # Ukrainian standalone home page
   404.html            # root dramatic 404 page
-  en/, nl/, uk/       # localized content pages
-    404.html          # localized dramatic 404 pages
+  en/, nl/, uk/       # localized content pages (each with its own 404.html)
   css/                # shared site.css plus one page CSS file per page
-  js/                 # shared runtime JS plus scripts for interactive/generated pages
-  images/             # logo, social images, manual WebP clips, magazine scans, page art
+  js/                 # game.js, the bot (bot.js/bot-engine.js + bot-engine.wasm), helpers
+  images/             # logo, social/flag icons, manual WebP clips, magazine scans, page art
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
-  favicon.png
-  sw.js                # cleanup shim for old service-worker installs
+  favicon.png / .ico
+  robots.txt, sitemap.xml
+  sw.js               # cleanup shim for old service-worker installs
 wasm/
-  bot-engine/          # Rust source for the Live bot WebAssembly planner
-AGENTS.md             # guidance for Codex
+  bot-engine/         # Rust source for the Live bot WebAssembly planner
+tools/                # Node bot simulator + weight tuner (offline; not shipped)
+wrangler.jsonc        # Cloudflare Workers config serving docs/ at sneekie.cc
 CLAUDE.md             # guidance for Claude Code
 ```
 
@@ -108,3 +114,8 @@ cargo test --manifest-path wasm/bot-engine/Cargo.toml
 cargo build --manifest-path wasm/bot-engine/Cargo.toml --release --target wasm32-unknown-unknown
 wasm-opt -O3 wasm/bot-engine/target/wasm32-unknown-unknown/release/bot_engine.wasm -o docs/js/bot-engine.wasm
 ```
+
+The offline tools in `tools/` (a headless simulator and a hill-climbing weight
+tuner) exercise the same `.wasm` without a browser. On macOS, if a `cc` shim on
+your `PATH` shadows the system compiler and the host build fails, pass
+`CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=/usr/bin/cc` to the `cargo test` above.

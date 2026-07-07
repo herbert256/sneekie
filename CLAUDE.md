@@ -9,18 +9,27 @@ HerbySoft and published in MS(X)DOS Computer Magazine no. 25. In 2026 it was
 recovered by OCR from the magazine's printed listing and ported **line for line** to a
 static browser version.
 
-There is no framework, no package dependency, and no dedicated automated test suite. There is
-no runtime app build step: the publishable pages are static files checked into `docs/`. All
-site source editing now happens directly under `docs/`; there is no generator or `tools/`
-workflow. The current site is **not** a single inline HTML file anymore: it is a GitHub Pages
-site under `docs/`, split into localized/page-specific HTML plus shared CSS/JS. The canonical
-1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in `docs/js/game.js`.
+The website itself has no framework, no package dependency, no site generator, and no runtime
+build step: the publishable pages are static files checked into `docs/`, and all site editing
+happens directly under `docs/`. The one compiled component is the Live bot's planner: its Rust
+source lives in `wasm/bot-engine/` and ships as the checked-in `docs/js/bot-engine.wasm`. That
+engine has a `cargo test` suite and an offline Node simulator/tuner under `tools/` (see **Live
+bot engine** below). The current site is **not** a single inline HTML file anymore: it is a
+static site under `docs/`, split into localized/page-specific HTML plus shared CSS/JS. The
+canonical 1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in
+`docs/js/game.js`.
 
 ## Layout & Deployment
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
-publishable website lives in `docs/`, which is the GitHub Pages source. It is served at
-https://sneekie.cc/.
+publishable website lives in `docs/`. The canonical site at https://sneekie.cc/ is served by
+**Cloudflare**: the root `wrangler.jsonc` publishes `docs/` as Cloudflare Workers static assets
+(project name `sneekie`), and `server: cloudflare` in the live response headers confirms it.
+GitHub Pages also builds the same `master` -> `/docs` tree as a **mirror** at
+https://herbert256.github.io/sneekie/ (its custom-domain CNAME is unset). Clean URLs (dropping
+the `.html`) resolve on `sneekie.cc` because Cloudflare serves them; `docs/js/site.js` only
+rewrites in-page links to clean form when `location.hostname` is `sneekie.cc`/`www.sneekie.cc`,
+so keep `.html` in the checked-in `href`s.
 
 - `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
@@ -51,9 +60,11 @@ https://sneekie.cc/.
   the header.)
 - `docs/js/<page>.js` - page-specific behavior. Keep shared utilities in `site.js` when they
   are used by more than one page.
-- `docs/images/` - logo/social/icon PNGs, the manual layout clips and magazine scans (both
-  WebP). `favicon.png` stays
-  at `docs/favicon.png`.
+- `docs/images/` - logo/social/icon PNGs (`logo.png`, `og.png`, `apple-touch-icon.png`),
+  `flags/` (the gb/nl/ua language-switch SVGs), `manual/` layout clips (lossless animated
+  WebP), `magazine/` scans (full + `.thumb` WebP), and `pages/` art (per-page hero/closing
+  images, the History illustrations, the 404 snake, and the vram font-explorer figure).
+  `favicon.png` and `favicon.ico` stay at `docs/`.
 - `docs/sw.js` - cleanup shim for visitors who still have an older Sneekie service worker
   installed. It deletes `sneekie-*` caches, unregisters itself, and does not intercept fetches.
   The site intentionally has no offline/PWA cache; do not add service-worker registration,
@@ -64,10 +75,14 @@ are the only HTML at the site root. Content pages live under `docs/en/`, `docs/n
 `docs/uk/`, so root-level links should include the language prefix; links between content pages
 can use same-language relative `.html` paths.
 
-To ship a change: edit source files, commit, and push to `master`. GitHub Pages is configured
-to publish from `master` -> `/docs` (`gh api repos/herbert256/sneekie/pages` can verify this).
-For localized page text or chrome, edit the checked-in `docs/<lang>/*.html` files directly and
-keep the English, Dutch, and Ukrainian pages aligned by hand.
+To ship a change: edit source files, commit, and push to `master`. GitHub Pages publishes the
+mirror from `master` -> `/docs` automatically (`gh api repos/herbert256/sneekie/pages` verifies
+it). The canonical `sneekie.cc` is fronted by Cloudflare from the root `wrangler.jsonc`
+(`docs/` as static assets); a Cloudflare deploy (e.g. `wrangler deploy`, or its Git integration
+on push) republishes it. When only the Wasm bot changed, rebuild `docs/js/bot-engine.wasm`
+first (see **Live bot engine**). For localized page text or chrome, edit the checked-in
+`docs/<lang>/*.html` files directly and keep the English, Dutch, and Ukrainian pages aligned by
+hand.
 
 ## Pages
 
@@ -120,8 +135,12 @@ All localized content pages carry one standard static top nav and footer in the 
 Do not rely on `docs/js/site.js` to inject `header.top` or `<footer>`. When changing shared
 chrome, edit every affected `docs/<lang>/*.html` page directly. The top-left brand is
 `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
-The header nav is `game, history, magazine, source, bot, manual, explained, migration, vram`
-(9 links, no buttons). `bot` is the Live bot demo; `bot-thinking` marks `bot` current.
+The header nav has 9 links (no buttons), labelled `▶ Play, History, Magazine, Source, Bot,
+Manual, Explained, Migration, Visualizer` (the underlying files are `game, history, magazine,
+source, bot, manual, explained, migration, vram`). `Bot` is the Live bot demo; the
+`bot-thinking` page marks `Bot` current. To the right of the nav is a `.lang-switch` row of
+three flag links (`docs/images/flags/gb.svg`, `nl.svg`, `ua.svg`) pointing at the en/nl/uk copy
+of the current page, with `aria-current="true"` on the active language.
 
 Download and Print live on the **Source** page (a `.toolbar`), not in the header. Print calls
 `window.print()` directly (`source.css` `@media print` hides the chrome so only the listing
@@ -156,9 +175,56 @@ behavior. The Source pages carry checked-in rendered HTML based on that frozen l
   rather than the current live `docs/SNEEKIE.BAS` or `docs/js/game.js`. When changing those
   pages, edit all three localized files and keep every BASIC/JS line range co-calibrated.
 
+## Live bot engine (Rust/Wasm)
+
+The Live bot (Bot page + landing-page previews) is planned by a Rust engine compiled to
+WebAssembly, not by JavaScript. The source of truth is `wasm/bot-engine/`; the shipped artifact
+is the checked-in `docs/js/bot-engine.wasm`. Editing the Rust does nothing until you rebuild the
+`.wasm`, so keep the two in sync.
+
+- `wasm/bot-engine/src/ffi.rs` - the C ABI the browser calls. It exposes fixed static buffers
+  (`board_ptr`, `body_ptr`, `enemy_ptr`, `trail_ptr`, `weights_ptr`, `route_ptr`) that JS fills
+  each tick, plus `decide(...)` / `decide_mode(mode, ...)`, which return one packed
+  `tier*256 + scancode` decision and publish the committed route into the route buffer.
+- `wasm/bot-engine/src/lib.rs` - board constants (the 4000-cell VRAM mirror, DOS arrow deltas,
+  danger-mask depth) and the `now_ms` host import used for the per-tick planning deadline.
+- `wasm/bot-engine/src/planner/` - the planner, split into `core` (the decide loop and tiered
+  fallbacks), `board` (per-level classification: arrow / open / room-door layouts), `food` +
+  `movement` + `space` (route search, the move engine, and flood/escape space analysis),
+  `region` + `doors` + `tour` (region-sweep discipline, chokepoint reservation, and the
+  end-game full-tour finisher), `smile` (smiley `-50` discipline), and `fallback` (survival
+  guards). `planner/tests.rs` is the `cargo test` suite.
+- Scoring is driven by 27 tunable weights (`W_DEFAULTS` and the `W_*` index constants in
+  `planner/mod.rs`). The page always runs the compiled-in defaults; the `weights_ptr` buffer is
+  only used by the offline tuner.
+
+Offline bot tooling lives in `tools/` (Node, no dependencies):
+
+- `tools/sim-wasm-bot.mjs` - headless simulator that loads a `.wasm` and runs the bot across
+  chosen levels/seeds, reporting clears/score. Use it to check a build without a browser.
+- `tools/tune-bot-weights.mjs` - hill-climbs the weight vector via the simulator and writes the
+  best result to `tools/bot-weights.best.json`. To ship a tuned vector, copy its numbers into
+  `W_DEFAULTS` in `planner/mod.rs` and rebuild. Keep `W_DEFAULTS`, the `W_*` index constants,
+  and the tuner's `DEFAULTS`/`NAMES` arrays in sync.
+
+Rebuild the shipped Wasm after any Rust change:
+
+```sh
+cargo test --manifest-path wasm/bot-engine/Cargo.toml
+cargo build --manifest-path wasm/bot-engine/Cargo.toml --release --target wasm32-unknown-unknown
+wasm-opt -O3 wasm/bot-engine/target/wasm32-unknown-unknown/release/bot_engine.wasm -o docs/js/bot-engine.wasm
+```
+
+On this machine a `~/scripts/cc` shim shadows the system compiler and breaks the host `cargo
+test` build; pass `CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=/usr/bin/cc` to work around it. Keep
+`bot-engine.js` (the loader + Worker pool), `bot.js` (the driver), and `bot-thinking.html` in
+sync with planner behavior.
+
 ## Running & Verification
 
-No app build/lint/test commands exist. To preview, serve the site folder:
+The site has no build/lint/test step. The only build is the Rust bot's Wasm (see the **Live bot
+engine** section above), which carries its own `cargo test` suite. To preview, serve the site
+folder:
 
 ```sh
 cd docs
