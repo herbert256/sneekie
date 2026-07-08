@@ -34,6 +34,21 @@
     <meta name="twitter:image:alt" content="Sneekie — гра про змію в лабіринті для MS-DOS 1988 року" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/game.css" />
+    <link rel="stylesheet" href="../css/game3d.css" />
+    <!-- era switch: 1988 CRT port vs the 2026 3D remake. Class goes on <html>
+         before first paint so the right monitor shows without a flash. -->
+    <script>
+      (function(){
+        var era = '1988';
+        try{
+          var q = new URLSearchParams(location.search).get('era');
+          if(q === '2026' || q === '1988'){ era = q; localStorage.setItem('sneekie.era', q); }
+          else if(localStorage.getItem('sneekie.era') === '2026') era = '2026';
+        }catch(_){ }
+        window.SNEEKIE_ERA = era;
+        document.documentElement.classList.add('era-' + era);
+      })();
+    </script>
   </head>
   <body class="page-index">
     <a class="skip" href="#main">Перейти до вмісту</a>
@@ -59,10 +74,14 @@
     <main id="main" tabindex="-1">
       <noscript><div class="noscript-warn">Для запуску цієї гри MS-DOS 1988 року в браузері потрібен JavaScript.</div></noscript>
       <header class="hero">
-        <h1 class="page-title">Гра 1988 року</h1>
+        <h1 class="page-title"><span class="h88">Гра 1988 року</span><span class="h26">Гра 2026 року</span></h1>
       </header>
       <div id="game-stage">
         <div id="game-toolbar" aria-label="Параметри гри">
+          <div class="grp" id="era" aria-label="Версія гри">
+            <button type="button" data-era="1988">1988</button>
+            <button type="button" data-era="2026">2026</button>
+          </div>
           <div class="grp" id="themes">
             <button type="button" data-theme="hercules">Зелений</button>
             <button type="button" data-theme="amber">Бурштин</button>
@@ -107,10 +126,24 @@
             </div>
           </div>
         </div>
+        <!-- the 2026 monitor: shown instead of the CRT when the era switch says 2026 -->
+        <div id="bezel3d">
+          <div id="monitor3d">
+            <div id="tube3d">
+              <canvas id="screen3d" role="img" aria-label="Ігровий екран Sneekie 2026"></canvas>
+              <div id="glass3d" aria-hidden="true"></div>
+              <div id="hud3d"></div>
+            </div>
+            <div id="chin3d" aria-hidden="true"><span class="logo3d">Acme UltraView</span><span class="led3d"></span></div>
+          </div>
+          <div id="stand3d" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
+        </div>
       </div>
       <p id="hint">
-        <span class="kb">Стрілки керують змійкою<br />Дотик / клік = змійка йде до цієї точки<br />&lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя / F10 = пропустити рівень</span>
-        <span class="tc">Проведіть пальцем, щоб керувати змійкою<br />Дотик = змійка йде до цієї точки<br />F9 = додаткове життя / F10 = пропустити рівень</span>
+        <span class="kb h88">Стрілки керують змійкою<br />Дотик / клік = змійка йде до цієї точки<br />&lt;ESC&gt; = здатися, якщо застрягли<br />F9 = додаткове життя / F10 = пропустити рівень</span>
+        <span class="tc h88">Проведіть пальцем, щоб керувати змійкою<br />Дотик = змійка йде до цієї точки<br />F9 = додаткове життя / F10 = пропустити рівень</span>
+        <span class="kb h26">Стрілки / WASD керують змійкою<br />Дотик / клік = змійка сама знаходить шлях<br />Стіни лише зупиняють &mdash; сяйливі вогники вбивають<br />F9 = додаткове життя / F10 = пропустити рівень</span>
+        <span class="tc h26">Проведіть пальцем, щоб керувати змійкою<br />Дотик = змійка йде до цієї точки<br />Стіни лише зупиняють &mdash; сяйливі вогники вбивають</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="Світна змія Sneekie проривається крізь CRT-екран гри, а серця, трефи, камені й частини лабіринту летять назовні." />
@@ -136,7 +169,54 @@
       "fsHelpTouchExit": "Скористайтеся жестом браузера або повноекранним елементом керування, щоб вийти.",
       "fsHelpPlay": "Грати"
     };</script>
+    <script>window.SNEEKIE_TEXT3D = {
+      "title2026": "SNEEKIE 2026",
+      "byline": "© липень '88, HerbySoft · 3D-ремейк 2026 від Claude Fable",
+      "score": "Рахунок",
+      "best": "Рекорд",
+      "level": "Рівень",
+      "lives": "Життя",
+      "bonus": "Бонус",
+      "tapToStart": "Торкніться, клікніть або натисніть клавішу",
+      "getReady": "З'їжте кожне ♥ і ♣ — уникайте решти",
+      "stuck": "Виходу немає!",
+      "zapped": "Влучили!",
+      "gameOver": "Гру закінчено",
+      "newBest": "Новий рекорд!",
+      "finalScore": "Підсумковий рахунок",
+      "playAgain": "Грати знову",
+      "levelClear": "Рівень пройдено!",
+      "extraLife": "+1 життя",
+      "theEnd": "Кінець",
+      "allCleared": "Усі 32 рівні пройдено — змійка відпочиває.",
+      "botBadge": "LIVE · автопілот Fable",
+      "webglMissing": "Версії 2026 потрібен WebGL2, якого цей браузер або пристрій не має. Версія 1988 працює як завжди!"
+    };</script>
     <script src="../js/site.js"></script>
-    <script src="../js/game.js"></script>
+    <!-- era loader: wires the 1988/2026 buttons and loads only the selected game -->
+    <script>
+      (function(){
+        var era = window.SNEEKIE_ERA === '2026' ? '2026' : '1988';
+        document.querySelectorAll('#era button').forEach(function(b){
+          b.setAttribute('aria-pressed', String(b.dataset.era === era));
+          b.addEventListener('click', function(){
+            if(b.dataset.era === era) return;
+            try{ localStorage.setItem('sneekie.era', b.dataset.era); }catch(_){ }
+            var url = new URL(location.href);
+            url.searchParams.delete('era');
+            if(url.href === location.href) location.reload();
+            else location.href = url.href;
+          });
+        });
+        var scripts = era === '2026' ? ['../js/game3d.js'] : ['../js/game.js'];
+        (function load(i){
+          if(i >= scripts.length) return;
+          var s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = function(){ load(i + 1); };
+          document.body.appendChild(s);
+        })(0);
+      })();
+    </script>
   </body>
 </html>

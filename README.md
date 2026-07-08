@@ -11,6 +11,13 @@ the BASIC code POKEd characters straight into text VRAM at `&HB000`/`&HB800`,
 and the JavaScript version keeps a matching byte array rendered with the real
 IBM VGA 8x16 CP437 ROM font.
 
+Since July 2026 the Play and Bot pages also carry a **1988/2026 switch**: next
+to the faithful CRT port there is a full 3D remake (`docs/js/game3d.js`),
+hand-written WebGL2 + Web Audio with no engine or library, built by Claude
+Fable. Same rules, same maze archetypes, a realistic snake, a modern monitor
+shell, swipe/tap controls, and its own autopilot on the Bot page. The home
+pages stay 1988-only.
+
 The website has no framework, build step, or package dependency. The published
 pages live in `docs/`. The canonical site at https://sneekie.cc/ is served by
 Cloudflare (see `wrangler.jsonc`); GitHub Pages builds the same `docs/` tree as a
@@ -40,7 +47,8 @@ passive preview mode. A Rust test suite plus a Node simulator/tuner under
 
 ## On the site
 
-- **[Play](https://sneekie.cc/)** - the game, including the 1988-style boot/GW-BASIC intro.
+- **[Play](https://sneekie.cc/)** - the game, including the 1988-style boot/GW-BASIC intro,
+  plus the 2026 3D remake behind the 1988/2026 switch.
 - **[History](https://sneekie.cc/en/history)** - the story from the 1988 BASIC listing to the 2026 recovery.
 - **[Magazine](https://sneekie.cc/en/magazine)** - scans from the original 1988 publication.
 - **[Source](https://sneekie.cc/en/source)** - the recovered GW-BASIC listing.
@@ -61,7 +69,7 @@ docs/
   404.html            # root dramatic 404 page
   en/, nl/, uk/       # localized content pages (each with its own 404.html)
   css/                # shared site.css plus one page CSS file per page
-  js/                 # game.js, the bot (bot.js/bot-engine.js + bot-engine.wasm), helpers
+  js/                 # game.js, game3d.js (2026 remake), the bot (bot.js/bot-engine.js + bot-engine.wasm), helpers
   images/             # logo, social/flag icons, manual WebP clips, magazine scans, page art
   SNEEKIE.BAS         # recovered 1988 GW-BASIC source; the specification
   favicon.png / .ico

@@ -34,8 +34,28 @@
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/bot.css" />
-    <!-- bot-engine.js fetches this 125KB module late in the script chain; start the fetch now -->
-    <link rel="preload" href="../js/bot-engine.wasm" as="fetch" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../css/game3d.css" />
+    <!-- era switch: 1988 CRT port vs the 2026 3D remake. Class goes on <html>
+         before first paint so the right monitor shows without a flash. The 1988
+         bot-engine.wasm preload (125KB, fetched late in the script chain) is
+         only injected when the 1988 era will actually load it. -->
+    <script>
+      (function(){
+        var era = '1988';
+        try{
+          var q = new URLSearchParams(location.search).get('era');
+          if(q === '2026' || q === '1988'){ era = q; localStorage.setItem('sneekie.era', q); }
+          else if(localStorage.getItem('sneekie.era') === '2026') era = '2026';
+        }catch(_){ }
+        window.SNEEKIE_ERA = era;
+        document.documentElement.classList.add('era-' + era);
+        if(era === '1988'){
+          var l = document.createElement('link');
+          l.rel = 'preload'; l.href = '../js/bot-engine.wasm'; l.as = 'fetch'; l.crossOrigin = 'anonymous';
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
   </head>
   <body class="page-doc page-bot">
     <a class="skip" href="#main">Skip to content</a>
@@ -63,11 +83,18 @@
       <div class="hero">
         <h1 class="page-title">The bot takes on the early mazes</h1>
       </div>
-      <p class="lead">
+      <p class="lead lead-1988">
         This is no recording. The <em>real</em> 1988 game runs live while a bot plays the early levels 2-8: arrows, stones, smileys, and a snake that grows as it eats. It reads the screen, plans a safe route, clears the board when it can, and tries again when the maze wins.
+      </p>
+      <p class="lead lead-2026">
+        This is no recording either. The brand-new <em>2026</em> 3D remake runs live while Fable's autopilot plays it: a real WebGL snake that hunts hearts, dodges the glowing wisps, pushes stones, and keeps its own tail out of the way.
       </p>
       <div id="game-stage">
         <div id="controls">
+          <div class="grp" id="era" aria-label="Game version">
+            <button type="button" data-era="1988">1988</button>
+            <button type="button" data-era="2026">2026</button>
+          </div>
           <div class="grp" id="themes">
             <button type="button" data-theme="hercules" data-short="Green">Green</button>
             <button type="button" data-theme="amber" data-short="Amber">Amber</button>
@@ -91,6 +118,18 @@
             <span class="led"></span>
             <span class="knobs"><i></i><i></i></span>
           </div>
+        </div>
+        <!-- the 2026 monitor: shown instead of the CRT when the era switch says 2026 -->
+        <div id="bezel3d">
+          <div id="monitor3d">
+            <div id="tube3d">
+              <canvas id="screen3d" role="img" aria-label="Sneekie 2026 game screen"></canvas>
+              <div id="glass3d" aria-hidden="true"></div>
+              <div id="hud3d"></div>
+            </div>
+            <div id="chin3d" aria-hidden="true"><span class="logo3d">Acme UltraView</span><span class="led3d"></span></div>
+          </div>
+          <div id="stand3d" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
         </div>
       </div>
       <div class="speedbar">
@@ -118,9 +157,62 @@
       "botLoading": "One moment - Loading bot code",
       "botUnavailable": "Bot unavailable - the bot code failed to load"
     };</script>
+    <script>window.SNEEKIE_TEXT3D = {
+      "title2026": "SNEEKIE 2026",
+      "byline": "© July '88 by HerbySoft · 3D remake 2026 by Claude Fable",
+      "score": "Score",
+      "best": "Best",
+      "level": "Level",
+      "lives": "Lives",
+      "bonus": "Bonus",
+      "tapToStart": "Tap, click or press any key",
+      "getReady": "Eat every ♥ and ♣ — dodge the rest",
+      "stuck": "No way out!",
+      "zapped": "Zapped!",
+      "gameOver": "Game over",
+      "newBest": "New high score!",
+      "finalScore": "Final score",
+      "playAgain": "Play again",
+      "levelClear": "Level cleared!",
+      "extraLife": "+1 life",
+      "theEnd": "The End",
+      "allCleared": "All 32 levels cleared — the snake rests.",
+      "botBadge": "LIVE · Fable autopilot",
+      "webglMissing": "The 2026 version needs WebGL2, which this browser or device does not provide. The 1988 version still plays!"
+    };</script>
     <script src="../js/site.js"></script>
-    <script src="../js/game.js"></script>
-    <script src="../js/bot-engine.js"></script>
-    <script src="../js/bot.js"></script>
+    <!-- era loader: wires the 1988/2026 buttons and loads only the selected stack.
+         1988 = the faithful port + the Rust/Wasm planner; 2026 = game3d.js with
+         its built-in autopilot. -->
+    <script>
+      (function(){
+        var era = window.SNEEKIE_ERA === '2026' ? '2026' : '1988';
+        document.querySelectorAll('#era button').forEach(function(b){
+          b.setAttribute('aria-pressed', String(b.dataset.era === era));
+          b.addEventListener('click', function(){
+            if(b.dataset.era === era) return;
+            try{ localStorage.setItem('sneekie.era', b.dataset.era); }catch(_){ }
+            var url = new URL(location.href);
+            url.searchParams.delete('era');
+            if(url.href === location.href) location.reload();
+            else location.href = url.href;
+          });
+        });
+        var scripts;
+        if(era === '2026'){
+          window.SNEEKIE3D_BOT = true;
+          scripts = ['../js/game3d.js'];
+        } else {
+          scripts = ['../js/game.js', '../js/bot-engine.js', '../js/bot.js'];
+        }
+        (function load(i){
+          if(i >= scripts.length) return;
+          var s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = function(){ load(i + 1); };
+          document.body.appendChild(s);
+        })(0);
+      })();
+    </script>
   </body>
 </html>

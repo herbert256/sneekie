@@ -34,8 +34,28 @@
     <meta name="twitter:image:alt" content="Sneekie — гра про змію в лабіринті для MS-DOS 1988 року" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/bot.css" />
-    <!-- bot-engine.js fetches this 125KB module late in the script chain; start the fetch now -->
-    <link rel="preload" href="../js/bot-engine.wasm" as="fetch" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../css/game3d.css" />
+    <!-- era switch: 1988 CRT port vs the 2026 3D remake. Class goes on <html>
+         before first paint so the right monitor shows without a flash. The 1988
+         bot-engine.wasm preload (125KB, fetched late in the script chain) is
+         only injected when the 1988 era will actually load it. -->
+    <script>
+      (function(){
+        var era = '1988';
+        try{
+          var q = new URLSearchParams(location.search).get('era');
+          if(q === '2026' || q === '1988'){ era = q; localStorage.setItem('sneekie.era', q); }
+          else if(localStorage.getItem('sneekie.era') === '2026') era = '2026';
+        }catch(_){ }
+        window.SNEEKIE_ERA = era;
+        document.documentElement.classList.add('era-' + era);
+        if(era === '1988'){
+          var l = document.createElement('link');
+          l.rel = 'preload'; l.href = '../js/bot-engine.wasm'; l.as = 'fetch'; l.crossOrigin = 'anonymous';
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
   </head>
   <body class="page-doc page-bot">
     <a class="skip" href="#main">Перейти до вмісту</a>
@@ -63,9 +83,14 @@
       <div class="hero">
         <h1 class="page-title">Бот береться за ранні лабіринти</h1>
       </div>
-      <p class="lead">Це не запис. <em>Справжня</em> гра 1988 року працює наживо, поки бот грає ранні рівні 2-8: стріли, камені, смайлики і змія, що росте, коли їсть. Він читає екран, планує безпечний маршрут, очищає поле, коли може, і пробує знову, коли лабіринт перемагає.</p>
+      <p class="lead lead-1988">Це не запис. <em>Справжня</em> гра 1988 року працює наживо, поки бот грає ранні рівні 2-8: стріли, камені, смайлики і змія, що росте, коли їсть. Він читає екран, планує безпечний маршрут, очищає поле, коли може, і пробує знову, коли лабіринт перемагає.</p>
+      <p class="lead lead-2026">Це теж не запис. Новісінький 3D-ремейк <em>2026</em> року працює наживо, поки ним грає автопілот Fable: справжня WebGL-змія, що полює на серця, ухиляється від сяйливих вогників, штовхає камені й тримає власний хвіст подалі.</p>
       <div id="game-stage">
         <div id="controls">
+          <div class="grp" id="era" aria-label="Версія гри">
+            <button type="button" data-era="1988">1988</button>
+            <button type="button" data-era="2026">2026</button>
+          </div>
           <div class="grp" id="themes">
             <button type="button" data-theme="hercules" data-short="Зел.">Зелений</button>
             <button type="button" data-theme="amber" data-short="Бурш.">Бурштин</button>
@@ -89,6 +114,18 @@
             <span class="led"></span>
             <span class="knobs"><i></i><i></i></span>
           </div>
+        </div>
+        <!-- the 2026 monitor: shown instead of the CRT when the era switch says 2026 -->
+        <div id="bezel3d">
+          <div id="monitor3d">
+            <div id="tube3d">
+              <canvas id="screen3d" role="img" aria-label="Ігровий екран Sneekie 2026"></canvas>
+              <div id="glass3d" aria-hidden="true"></div>
+              <div id="hud3d"></div>
+            </div>
+            <div id="chin3d" aria-hidden="true"><span class="logo3d">Acme UltraView</span><span class="led3d"></span></div>
+          </div>
+          <div id="stand3d" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
         </div>
       </div>
       <div class="speedbar">
@@ -116,9 +153,62 @@
       "botLoading": "Хвилинку - завантаження коду бота",
       "botUnavailable": "Бот недоступний - код бота не завантажився"
     };</script>
+    <script>window.SNEEKIE_TEXT3D = {
+      "title2026": "SNEEKIE 2026",
+      "byline": "© липень '88, HerbySoft · 3D-ремейк 2026 від Claude Fable",
+      "score": "Рахунок",
+      "best": "Рекорд",
+      "level": "Рівень",
+      "lives": "Життя",
+      "bonus": "Бонус",
+      "tapToStart": "Торкніться, клікніть або натисніть клавішу",
+      "getReady": "З'їжте кожне ♥ і ♣ — уникайте решти",
+      "stuck": "Виходу немає!",
+      "zapped": "Влучили!",
+      "gameOver": "Гру закінчено",
+      "newBest": "Новий рекорд!",
+      "finalScore": "Підсумковий рахунок",
+      "playAgain": "Грати знову",
+      "levelClear": "Рівень пройдено!",
+      "extraLife": "+1 життя",
+      "theEnd": "Кінець",
+      "allCleared": "Усі 32 рівні пройдено — змійка відпочиває.",
+      "botBadge": "LIVE · автопілот Fable",
+      "webglMissing": "Версії 2026 потрібен WebGL2, якого цей браузер або пристрій не має. Версія 1988 працює як завжди!"
+    };</script>
     <script src="../js/site.js"></script>
-    <script src="../js/game.js"></script>
-    <script src="../js/bot-engine.js"></script>
-    <script src="../js/bot.js"></script>
+    <!-- era loader: wires the 1988/2026 buttons and loads only the selected stack.
+         1988 = the faithful port + the Rust/Wasm planner; 2026 = game3d.js with
+         its built-in autopilot. -->
+    <script>
+      (function(){
+        var era = window.SNEEKIE_ERA === '2026' ? '2026' : '1988';
+        document.querySelectorAll('#era button').forEach(function(b){
+          b.setAttribute('aria-pressed', String(b.dataset.era === era));
+          b.addEventListener('click', function(){
+            if(b.dataset.era === era) return;
+            try{ localStorage.setItem('sneekie.era', b.dataset.era); }catch(_){ }
+            var url = new URL(location.href);
+            url.searchParams.delete('era');
+            if(url.href === location.href) location.reload();
+            else location.href = url.href;
+          });
+        });
+        var scripts;
+        if(era === '2026'){
+          window.SNEEKIE3D_BOT = true;
+          scripts = ['../js/game3d.js'];
+        } else {
+          scripts = ['../js/game.js', '../js/bot-engine.js', '../js/bot.js'];
+        }
+        (function load(i){
+          if(i >= scripts.length) return;
+          var s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = function(){ load(i + 1); };
+          document.body.appendChild(s);
+        })(0);
+      })();
+    </script>
   </body>
 </html>

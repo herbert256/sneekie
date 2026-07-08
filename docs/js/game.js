@@ -1487,6 +1487,10 @@ function fit(){
   const availW = Math.min(document.documentElement.clientWidth - bodyChromeW - monitorChromeW, 1300);
   const availH = innerHeight - bezel.getBoundingClientRect().top - monitorChromeH - 18;
   let s = Math.min(availW/CRT_DISPLAY_W, availH/CRT_DISPLAY_H);
+  /* The bot page's intro text pushes the monitor down, which would shrink the
+     CRT below the game page's 1x scale. Keep the two monitors identical when
+     the width allows it, even if that puts the case partly below the fold. */
+  if(window.SNEEKIE_BOT_DRIVES_GAME === true && availW >= CRT_DISPLAY_W) s = Math.max(s, 1);
   s = s >= 1 ? Math.floor(s) : Math.max(s, 0.42);
   cv.style.width = (CRT_DISPLAY_W*s) + 'px';
   cv.style.height = (CRT_DISPLAY_H*s) + 'px';

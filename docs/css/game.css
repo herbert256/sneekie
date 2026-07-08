@@ -46,6 +46,7 @@
   margin:0 0 12px;
 }
 .page-index #bezel{
+  align-self:center;      /* hug the tube: the case never grows wider than the screen */
   display:flex;
   flex-direction:column;
   align-items:stretch;

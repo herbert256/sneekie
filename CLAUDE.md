@@ -19,6 +19,11 @@ static site under `docs/`, split into localized/page-specific HTML plus shared C
 canonical 1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in
 `docs/js/game.js`.
 
+Since July 2026 the site carries a **second game engine**: `docs/js/game3d.js`, a from-scratch
+3D remake of the same game (hand-written WebGL2 + Web Audio, no libraries), written by Claude
+Fable. The Play and Bot pages carry a 1988/2026 era switch that loads one engine or the other
+(see **The 2026 remake** below). The landing pages remain 1988-only.
+
 ## Layout & Deployment
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
@@ -41,14 +46,20 @@ so keep `.html` in the checked-in `href`s.
   page, in passive preview mode. Keep the inline service-worker cleanup
   and JSON-LD structured-data block inline.
 - `docs/<lang>/game.html` - the game page shell. It loads `../css/site.css`,
-  `../css/game.css`, `../js/site.js`, and `../js/game.js` (the playable port only — no bot).
+  `../css/game.css`, `../css/game3d.css`, and `../js/site.js`. An inline head script resolves
+  the era (localStorage `sneekie.era`, `?era=` override) and stamps `era-1988`/`era-2026` on
+  `<html>`; an inline era loader at the end of the body wires the `#era` toolbar buttons and
+  dynamically loads `../js/game.js` (1988, no bot) **or** `../js/game3d.js` (2026). The page
+  contains both monitors in the HTML: the CRT `#bezel` and the modern `#bezel3d`; CSS shows
+  one per era.
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
   `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
   `migration`, `source`, and `404`) load no external runtime JavaScript. JavaScript-backed
   pages load `../js/site.js` and the page script they need (`game`, `manual`, `bot`,
   `magazine`, or `vram`). Runtime UI text for `game`, `bot`, and `vram` is provided inline in
-  the localized HTML pages as `window.SNEEKIE_TEXT`.
+  the localized HTML pages as `window.SNEEKIE_TEXT`; the game and bot pages additionally carry
+  `window.SNEEKIE_TEXT3D` with the localized strings of the 2026 remake.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
   header/footer chrome, dialogs, buttons, and responsive rules.
 - `docs/css/<page>.css` - page-specific styles.
@@ -103,19 +114,23 @@ hand.
 - `docs/<lang>/manual.html` + `docs/js/manual.js` - player manual with maze gallery and dialogs.
   Layout clips live in `docs/images/manual/scene-1..8.webp` (lossless animated WebP).
 - `docs/<lang>/bot.html` - the **Live bot** demo. It hosts the real game in the
-  SAME page (no iframe): it loads `../css/bot.css` + `../js/game.js`
-  (which render the game into `#screen`), sets `window.SNEEKIE_SKIPBOOT = true` to skip the boot
-  animation, then loads the planner and the driver. `bot-engine.js` loads the Rust/WebAssembly
-  planner (`window.SneekieBotWasm`, backed by `bot-engine.wasm`, preloaded from the page head)
-  and, when the machine has spare logical cores, a small Worker pool (`bot-engine-worker.js`,
-  one extra Wasm instance per Worker) for parallel planning. `bot.js` is the driver: it
-  reads `game.js`'s globals directly, waits for the Wasm planner before driving, and steers via
-  `pushKey()`. The Wasm bot needs http(s); when WebAssembly cannot load (e.g. on `file://`) the
-  bot stays idle and reports "bot unavailable". Level
-  tabs (2-8) jump the bot into an early maze; a speed slider sets the pace. Body class is
-  `page-doc page-bot`, and `bot.css` carries its own copy of the CRT/game-shell styling plus
-  the lead/speed/tabs/note. The page links to `bot-thinking.html`. Keep the planner
-  (`bot-engine.js`) and the driver (`bot.js`) in sync with `bot-thinking.html`.
+  SAME page (no iframe) and carries the 1988/2026 era switch. In the 1988 era its inline era
+  loader loads `../js/game.js` (which renders the game into `#screen`; the page sets
+  `window.SNEEKIE_SKIPBOOT = true` to skip the boot animation), then the planner and the
+  driver. `bot-engine.js` loads the Rust/WebAssembly planner (`window.SneekieBotWasm`, backed
+  by `bot-engine.wasm`; the head era script injects its preload only in the 1988 era) and,
+  when the machine has spare logical cores, a small Worker pool (`bot-engine-worker.js`, one
+  extra Wasm instance per Worker) for parallel planning. `bot.js` is the driver: it reads
+  `game.js`'s globals directly, waits for the Wasm planner before driving, and steers via
+  `pushKey()`. The Wasm bot needs http(s); when WebAssembly cannot load (e.g. on `file://`)
+  the bot stays idle and reports "bot unavailable". Level tabs (2-8) jump the bot into an
+  early maze; a speed slider sets the pace. In the **2026 era** the loader instead sets
+  `window.SNEEKIE3D_BOT = true` and loads only `../js/game3d.js`, whose built-in JavaScript
+  autopilot plays the 3D remake (level tabs 1-8, same speed slider, LIVE badge); the two lead
+  paragraphs (`.lead-1988`/`.lead-2026`) and the `bot-thinking` link swap per era. Body class
+  is `page-doc page-bot`, and `bot.css` carries its own copy of the CRT/game-shell styling
+  plus the lead/speed/tabs/note. The page links to `bot-thinking.html` (1988 era only). Keep
+  the planner (`bot-engine.js`) and the driver (`bot.js`) in sync with `bot-thinking.html`.
 - `docs/<lang>/bot-thinking.html` - static prose explaining how that bot plans (no runtime JS).
   It is linked only from `bot.html`, not from the nav. Keep it in sync with the planner in
   `docs/js/bot-engine.js` (and the driver in `docs/js/bot.js`) when
@@ -123,7 +138,9 @@ hand.
 - `docs/<lang>/magazine.html` + `docs/js/magazine.js` - original magazine scans and translated
   page images. Media lives in `docs/images/magazine/`. Reachable from the header.
 - `docs/<lang>/game.html` + `docs/js/game.js` - the playable port. Keep BASIC line-number
-  comments and the original variable names when changing game behavior.
+  comments and the original variable names when changing game behavior. The page also hosts
+  the 2026 era: `docs/js/game3d.js` renders into `#screen3d` inside the modern `#bezel3d`
+  monitor when the era switch says 2026 (see **The 2026 remake**).
 - `docs/index.html` (+ `index_nl.html`, `index_uk.html`) - the localized root landing pages; the
   hero "play" image links into `<lang>/game.html` (see Layout & Deployment).
 - `docs/404.html` and `docs/<lang>/404.html` - dramatic localized 404 pages styled by
@@ -153,8 +170,9 @@ When changing page copy, static chrome, canonical links, hreflang alternates, or
 edit the corresponding files in `docs/` directly and keep all three languages consistent.
 
 Runtime UI strings that JavaScript needs live inline in the localized HTML page that uses
-them, usually as `window.SNEEKIE_TEXT` before the page script. Static chrome strings and static
-prose live directly in the HTML pages.
+them, usually as `window.SNEEKIE_TEXT` (and `window.SNEEKIE_TEXT3D` for the 2026 remake)
+before the page script. Static chrome strings and static prose live directly in the HTML
+pages.
 
 The game page and plain Source listing keep the Green/Amber/CGA theme switcher
 (`sneekie.theme`). The other doc pages use the fixed green CRT palette from `site.css`.
@@ -220,6 +238,48 @@ test` build; pass `CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=/usr/bin/cc` to work
 `bot-engine.js` (the loader + Worker pool), `bot.js` (the driver), and `bot-thinking.html` in
 sync with planner behavior.
 
+## The 2026 remake (game3d.js)
+
+`docs/js/game3d.js` is a self-contained 3D remake of the game, written by Claude Fable in July
+2026: hand-written WebGL2 (no engine, no library) plus a small Web Audio synthesizer. It is a
+plain script like `game.js` — no build step, `node --check` is the only tooling. Styling for
+its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-screen HUD lives in
+`docs/css/game3d.css`, loaded by the game and bot pages next to their page CSS.
+
+- **Render pipeline.** Linear-light shading into a sqrt-encoded 4x-MSAA offscreen target, a
+  2048 directional shadow map with PCF (walls, stones, items, and the snake all cast), a
+  half-res planar-reflection pass mirrored in the wet puddle-streaked floor, up to 12 dynamic
+  point lights (six flickering border braziers, wisps, nearby loot, eat flashes, the death
+  fireball), and procedural bump mapping (snake scales, wall bricks, flagstones, moss). Post:
+  quarter-res bloom, ACES tonemap + gamma, saturation push, vignette, film grain, chromatic
+  aberration, and a screen-space shockwave ripple on death/level-clear. Deaths run in brief
+  slow motion; the camera gives a whole-maze establishing shot on cards and swoops in to
+  follow the snake in play; eating pops floating score labels and travels as a visible bulge
+  down the body; the head gapes with fangs when prey is near. All GLSL is hand-written inside
+  `game3d.js`.
+- **Era switch.** The game and bot pages resolve the era in an inline head script: localStorage
+  `sneekie.era` ('1988' default, '2026'), overridable and persisted via `?era=2026`. It stamps
+  `era-1988`/`era-2026` on `<html>` (CSS shows the matching monitor and `.h88`/`.h26`,
+  `.lead-1988`/`.lead-2026` text variants), and an inline loader at the end of the body loads
+  only the selected engine's scripts. Era buttons (`#era`) persist the choice and reload.
+- **Rules mirror 1988.** Same board spirit (36x20 court in a wall ring), hearts +10 (each eaten
+  heart seeds a smiley), clubs +25 (spawned per heart from level 17), smileys -50 (eating one
+  respawns another), pushable stones, bonus 10000 draining per step, 3 lives, +1 life per
+  cleared level, F9/F10 cheats, Esc gives up, 32 levels. The eight layout archetypes follow the
+  original `ON LEVEL GOSUB` order (open court, line maze, rooms+doors, stone zigzag, gate walls
+  with crawling gaps, climbing hazards, sweeping hazards, gates+stones), cycled across four
+  speed tiers. Deviation by design: the snake moves continuously, **walls only bump** (stop +
+  small penalty); only the glowing wisps (the 1988 arrows) kill, plus self-trapping ("No way
+  out"). At level start the snake waits for the first command.
+- **Controls.** Arrows/WASD, swipe on touch, tap/click = BFS route to that cell (same
+  smiley-avoiding routing idea as the 1988 port), fullscreen on `#bezel3d`, shared `#mute`
+  button, localized strings from inline `window.SNEEKIE_TEXT3D`.
+- **Bot mode.** With `window.SNEEKIE3D_BOT = true` (bot page, 2026 era) a built-in JavaScript
+  autopilot steers: BFS to the nearest heart/club avoiding wisp danger zones, flood-fill
+  survival fallback. It builds level tabs 1-8 in `#leveltabs` and maps the `#speed` slider to a
+  speed multiplier. `window.SNEEKIE3D` is a tiny read-only debug handle used by tests.
+- The 2026 high score persists separately as `sneekie.highscore3d`.
+
 ## Running & Verification
 
 The site has no build/lint/test step. The only build is the Rust bot's Wasm (see the **Live bot
@@ -276,8 +336,10 @@ model rather than building a modern game-object model.** Everything follows from
 
 ## Modern Additions
 
-These intentionally go beyond the 1988 source: localStorage persistence for the theme and
-high score (`sneekie.theme`, `sneekie.highscore`), theme switching and CGA colorization,
+These intentionally go beyond the 1988 source: the 1988/2026 era switch (`sneekie.era`) and
+the whole 2026 remake, localStorage persistence for the theme and
+high score (`sneekie.theme`, `sneekie.highscore`, `sneekie.highscore3d`), theme switching and
+CGA colorization,
 fullscreen, touch controls, click/tap route targeting, stuck detection with a red flash and
 restart popup, responsive scaling, the on-page error banner, the CRT monitor shell, the short
 1988-style BIOS/DOS/GW-BASIC boot animation, shared static nav/footer, page dialogs, localized

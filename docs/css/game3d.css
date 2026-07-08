@@ -1,0 +1,369 @@
+/* Styles for the 2026 era: the 1988/2026 switch, the modern thin-bezel
+   monitor that replaces the CRT when 2026 is selected, and the in-screen
+   HUD of the 3D game (docs/js/game3d.js). Loaded by the localized game
+   and bot pages next to their page CSS. The era class (era-1988 /
+   era-2026) is set on <html> by the inline era loader in those pages. */
+
+/* ---------- era visibility ---------- */
+.era-1988 #bezel3d{ display:none !important; }
+.era-2026 #bezel{ display:none !important; }
+.era-2026 #themes{ display:none !important; }
+.era-2026 .h88{ display:none !important; }
+.era-1988 .h26{ display:none !important; }
+.era-2026 .lead-1988{ display:none !important; }
+.era-1988 .lead-2026{ display:none !important; }
+.era-2026 .bot-think-link{ display:none !important; }
+
+/* ---------- unified toolbar ----------
+   The Play and Bot pages share the exact same centered row of three groups:
+   [1988 2026]   [Green Amber CGA]   [Sound Fullscreen], with wide gaps
+   between the groups. On narrow screens the groups wrap to centered rows. */
+.page-index #game-toolbar,
+.page-bot #controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:10px 46px;
+  width:100%;
+  margin:0 0 12px;
+}
+.page-index #game-toolbar #controls{ display:contents; }
+.page-index #game-toolbar .grp,
+.page-index #game-toolbar #controls .grp,
+.page-bot #controls .grp,
+.page-bot #controls .grp:last-child{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:6px;
+  margin:0;
+}
+@media (max-width:520px){
+  .page-index #game-toolbar,
+  .page-bot #controls{ gap:8px 22px; margin-bottom:8px; }
+}
+
+/* the 2026 stage takes a wider, 16:9-friendly column */
+.era-2026 .page-index #game-stage,
+.era-2026 .page-bot #game-stage{
+  width:100%;
+  max-width:1060px;
+}
+
+/* ---------- the modern monitor ---------- */
+#bezel3d{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  animation:poweron3d .5s ease-out both .06s;
+}
+@keyframes poweron3d{
+  from{ opacity:0; transform:translateY(6px); }
+  to{ opacity:1; transform:none; }
+}
+#monitor3d{
+  position:relative;
+  width:100%;
+  background:linear-gradient(180deg, #191d22, #0c0e11 55%, #08090b);
+  border:1px solid #2b2f35;
+  border-radius:14px;
+  padding:9px 9px 30px;
+  box-shadow:0 42px 90px -32px rgba(0,0,0,.95), 0 6px 18px -8px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.07), inset 0 0 0 1px rgba(0,0,0,.5);
+}
+#tube3d{
+  position:relative;
+  border-radius:7px;
+  overflow:hidden;
+  background:#000;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+#screen3d{
+  display:block;
+  width:100%;
+  aspect-ratio:16 / 9;
+  background:#000;
+  touch-action:none;
+}
+#glass3d{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,.045), rgba(255,255,255,.008) 26%, transparent 42%),
+    radial-gradient(150% 125% at 50% 44%, transparent 64%, rgba(0,0,0,.34) 100%);
+}
+#chin3d{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+#chin3d .logo3d{
+  font:600 10px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing:.34em;
+  text-transform:uppercase;
+  color:#59616a;
+  text-shadow:0 1px 0 rgba(0,0,0,.6);
+}
+#chin3d .led3d{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#57d7ff;
+  box-shadow:0 0 8px 1px rgba(87,215,255,.8);
+}
+#stand3d{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-top:-1px;
+}
+#stand3d .neck{
+  display:block;
+  width:86px;
+  height:42px;
+  background:linear-gradient(180deg, #23272c, #101215);
+  clip-path:polygon(16% 0, 84% 0, 100% 100%, 0 100%);
+}
+#stand3d .foot{
+  display:block;
+  width:280px;
+  height:11px;
+  border-radius:7px;
+  background:linear-gradient(180deg, #2c3138, #14171a);
+  box-shadow:0 16px 30px -10px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+/* ---------- fullscreen: hand the display to the panel ---------- */
+#bezel3d:fullscreen{
+  justify-content:center;
+  background:#000;
+  animation:none;
+}
+#bezel3d:fullscreen #monitor3d{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  padding:0;
+  background:#000;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+}
+#bezel3d:fullscreen #tube3d{
+  width:min(100vw, calc(100vh * 16 / 9));
+  border-radius:0;
+  box-shadow:none;
+}
+#bezel3d:fullscreen #chin3d,
+#bezel3d:fullscreen #stand3d{ display:none; }
+
+/* ---------- the in-screen HUD ---------- */
+#hud3d{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  color:#d9e6da;
+  font:13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+}
+#hud3d [hidden]{ display:none !important; }
+#hud3d .hud-top{
+  position:absolute;
+  top:10px;
+  left:12px;
+  right:12px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+}
+#hud3d .chip{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 11px;
+  background:rgba(3, 9, 5, .58);
+  border:1px solid rgba(125, 255, 125, .17);
+  border-radius:999px;
+  font-size:10.5px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:#93a698;
+  backdrop-filter:blur(3px);
+}
+#hud3d .chip b{
+  display:inline-block;
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:.02em;
+  color:#b6ffb6;
+}
+#hud3d .chip b.pop{ animation:chippop3d .3s ease-out; }
+@keyframes chippop3d{
+  0%{ transform:scale(1.55); color:#ffffff; }
+  100%{ transform:scale(1); }
+}
+#hud3d .hud-float{
+  position:absolute;
+  z-index:6;
+  transform:translate(-50%, -50%);
+  font:700 17px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color:#b6ffb6;
+  text-shadow:0 0 14px rgba(125, 255, 125, .95), 0 1px 2px rgba(0, 0, 0, .9);
+  pointer-events:none;
+  animation:floatup3d .95s ease-out forwards;
+}
+#hud3d .hud-float.bad{
+  color:#ff8f8f;
+  text-shadow:0 0 14px rgba(255, 90, 90, .95), 0 1px 2px rgba(0, 0, 0, .9);
+}
+@keyframes floatup3d{
+  0%{ opacity:0; }
+  14%{ opacity:1; }
+  100%{ transform:translate(-50%, -320%); opacity:0; }
+}
+#hud3d .chip-lives b{ color:#ff6b81; }
+#hud3d .chip-bonus{ margin-left:auto; }
+#hud3d .bonusbar{
+  display:inline-block;
+  width:72px;
+  height:6px;
+  border-radius:3px;
+  background:rgba(255,255,255,.13);
+  overflow:hidden;
+}
+#hud3d .bonusbar i{
+  display:block;
+  height:100%;
+  width:100%;
+  border-radius:3px;
+  background:linear-gradient(90deg, #57d7ff, #7dff7d);
+  transition:width .15s linear;
+}
+#hud3d .hud-flash{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity .55s ease;
+}
+#hud3d .hud-flash.is-red{ background:rgba(255, 32, 32, .34); opacity:1; transition:none; }
+#hud3d .hud-flash.is-green{ background:rgba(46, 255, 120, .24); opacity:1; transition:none; }
+#hud3d .hud-toast{
+  position:absolute;
+  top:17%;
+  left:50%;
+  transform:translateX(-50%) translateY(6px);
+  padding:8px 18px;
+  background:rgba(4, 9, 6, .82);
+  border:1px solid rgba(255, 110, 110, .5);
+  border-radius:8px;
+  color:#ffd9d9;
+  font-size:15px;
+  letter-spacing:.06em;
+  opacity:0;
+  transition:opacity .25s ease, transform .25s ease;
+}
+#hud3d .hud-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#hud3d .hud-badge{
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 11px;
+  background:rgba(3, 9, 5, .6);
+  border:1px solid rgba(255, 92, 92, .4);
+  border-radius:999px;
+  font-size:10px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#ffb3b3;
+}
+#hud3d .hud-badge::before{
+  content:"";
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#ff4747;
+  box-shadow:0 0 8px rgba(255, 71, 71, .9);
+  animation:liveblink3d 1.4s ease-in-out infinite;
+}
+@keyframes liveblink3d{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:.35; }
+}
+#hud3d .hud-card{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+  background:radial-gradient(circle at 50% 44%, rgba(0, 0, 0, .46), rgba(0, 0, 0, .82) 76%);
+}
+#hud3d .hud-card h2{
+  margin:0 0 10px;
+  font-size:clamp(22px, 4.6vw, 40px);
+  font-weight:700;
+  letter-spacing:.1em;
+  color:#eafce9;
+  text-shadow:0 0 26px rgba(125, 255, 125, .55), 0 2px 0 rgba(0, 0, 0, .7);
+}
+#hud3d .hud-card p{
+  margin:0 auto 8px;
+  max-width:520px;
+  font-size:clamp(12px, 1.9vw, 15px);
+  color:#aebfb1;
+}
+#hud3d .hud-card .hud-tap{
+  margin-top:14px;
+  color:#7dff7d;
+  letter-spacing:.08em;
+  animation:tappulse3d 1.6s ease-in-out infinite;
+}
+@keyframes tappulse3d{
+  0%, 100%{ opacity:1; }
+  50%{ opacity:.45; }
+}
+
+/* ---------- small screens: drop the frame, keep the game ---------- */
+@media (max-width:640px){
+  .era-2026 .page-index #game-stage,
+  .era-2026 .page-bot #game-stage{ width:100%; max-width:100%; }
+  .era-2026 .page-index #bezel3d,
+  .era-2026 .page-bot #bezel3d{
+    width:100vw;
+    max-width:none;
+    margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw);
+  }
+  #monitor3d{
+    padding:0;
+    background:none;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
+  }
+  #tube3d{ border-radius:0; }
+  #chin3d, #stand3d{ display:none; }
+  #hud3d .hud-top{ top:6px; left:6px; right:6px; gap:5px; }
+  #hud3d .chip{ padding:3px 8px; font-size:9px; gap:5px; }
+  #hud3d .chip b{ font-size:11px; }
+  #hud3d .bonusbar{ width:44px; }
+}
+@media print{
+  #bezel3d{ display:none !important; }
+}

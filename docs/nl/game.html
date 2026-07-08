@@ -34,6 +34,21 @@
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/game.css" />
+    <link rel="stylesheet" href="../css/game3d.css" />
+    <!-- era switch: 1988 CRT port vs the 2026 3D remake. Class goes on <html>
+         before first paint so the right monitor shows without a flash. -->
+    <script>
+      (function(){
+        var era = '1988';
+        try{
+          var q = new URLSearchParams(location.search).get('era');
+          if(q === '2026' || q === '1988'){ era = q; localStorage.setItem('sneekie.era', q); }
+          else if(localStorage.getItem('sneekie.era') === '2026') era = '2026';
+        }catch(_){ }
+        window.SNEEKIE_ERA = era;
+        document.documentElement.classList.add('era-' + era);
+      })();
+    </script>
   </head>
   <body class="page-index">
     <a class="skip" href="#main">Spring naar inhoud</a>
@@ -59,10 +74,14 @@
     <main id="main" tabindex="-1">
       <noscript><div class="noscript-warn">JavaScript is vereist om deze MS-DOS game uit 1988 in de browser te spelen.</div></noscript>
       <header class="hero">
-        <h1 class="page-title">Het spel uit 1988</h1>
+        <h1 class="page-title"><span class="h88">Het spel uit 1988</span><span class="h26">Het spel van 2026</span></h1>
       </header>
       <div id="game-stage">
         <div id="game-toolbar" aria-label="Spelopties">
+          <div class="grp" id="era" aria-label="Spelversie">
+            <button type="button" data-era="1988">1988</button>
+            <button type="button" data-era="2026">2026</button>
+          </div>
           <div class="grp" id="themes">
             <button type="button" data-theme="hercules">Groen</button>
             <button type="button" data-theme="amber">Amber</button>
@@ -107,10 +126,24 @@
             </div>
           </div>
         </div>
+        <!-- the 2026 monitor: shown instead of the CRT when the era switch says 2026 -->
+        <div id="bezel3d">
+          <div id="monitor3d">
+            <div id="tube3d">
+              <canvas id="screen3d" role="img" aria-label="Sneekie 2026 spelscherm"></canvas>
+              <div id="glass3d" aria-hidden="true"></div>
+              <div id="hud3d"></div>
+            </div>
+            <div id="chin3d" aria-hidden="true"><span class="logo3d">Acme UltraView</span><span class="led3d"></span></div>
+          </div>
+          <div id="stand3d" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
+        </div>
       </div>
       <p id="hint">
-        <span class="kb">Pijltjestoetsen sturen de slang<br />Tik / klik = de slang loopt naar dat punt<br />&lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven / F10 = level overslaan</span>
-        <span class="tc">Veeg om de slang te sturen<br />Tik = de slang loopt naar dat punt<br />F9 = extra leven / F10 = level overslaan</span>
+        <span class="kb h88">Pijltjestoetsen sturen de slang<br />Tik / klik = de slang loopt naar dat punt<br />&lt;ESC&gt; = opgeven als je vastzit<br />F9 = extra leven / F10 = level overslaan</span>
+        <span class="tc h88">Veeg om de slang te sturen<br />Tik = de slang loopt naar dat punt<br />F9 = extra leven / F10 = level overslaan</span>
+        <span class="kb h26">Pijltjestoetsen / WASD sturen de slang<br />Tik / klik = de slang zoekt er zelf de weg heen<br />Muren botsen alleen &mdash; de gloeiende dwaallichten doden<br />F9 = extra leven / F10 = level overslaan</span>
+        <span class="tc h26">Veeg om de slang te sturen<br />Tik = de slang loopt naar dat punt<br />Muren botsen alleen &mdash; de gloeiende dwaallichten doden</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="Een gloeiende Sneekie-slang barst door een CRT-spelscherm terwijl harten, klavers, stenen en doolhofstukken naar buiten vliegen." />
@@ -136,7 +169,54 @@
       "fsHelpTouchExit": "Gebruik de browserbeweging of fullscreenknop om volledig scherm te verlaten.",
       "fsHelpPlay": "Spelen"
     };</script>
+    <script>window.SNEEKIE_TEXT3D = {
+      "title2026": "SNEEKIE 2026",
+      "byline": "© juli '88 door HerbySoft · 3D-remake 2026 door Claude Fable",
+      "score": "Score",
+      "best": "Record",
+      "level": "Level",
+      "lives": "Levens",
+      "bonus": "Bonus",
+      "tapToStart": "Tik, klik of druk op een toets",
+      "getReady": "Eet elke ♥ en ♣ — ontwijk de rest",
+      "stuck": "Geen uitweg!",
+      "zapped": "Geraakt!",
+      "gameOver": "Game over",
+      "newBest": "Nieuw record!",
+      "finalScore": "Eindscore",
+      "playAgain": "Opnieuw spelen",
+      "levelClear": "Level gehaald!",
+      "extraLife": "+1 leven",
+      "theEnd": "Einde",
+      "allCleared": "Alle 32 levels gehaald — de slang rust.",
+      "botBadge": "LIVE · Fable-autopiloot",
+      "webglMissing": "De 2026-versie heeft WebGL2 nodig en deze browser of dit apparaat biedt dat niet. De 1988-versie speelt gewoon!"
+    };</script>
     <script src="../js/site.js"></script>
-    <script src="../js/game.js"></script>
+    <!-- era loader: wires the 1988/2026 buttons and loads only the selected game -->
+    <script>
+      (function(){
+        var era = window.SNEEKIE_ERA === '2026' ? '2026' : '1988';
+        document.querySelectorAll('#era button').forEach(function(b){
+          b.setAttribute('aria-pressed', String(b.dataset.era === era));
+          b.addEventListener('click', function(){
+            if(b.dataset.era === era) return;
+            try{ localStorage.setItem('sneekie.era', b.dataset.era); }catch(_){ }
+            var url = new URL(location.href);
+            url.searchParams.delete('era');
+            if(url.href === location.href) location.reload();
+            else location.href = url.href;
+          });
+        });
+        var scripts = era === '2026' ? ['../js/game3d.js'] : ['../js/game.js'];
+        (function load(i){
+          if(i >= scripts.length) return;
+          var s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = function(){ load(i + 1); };
+          document.body.appendChild(s);
+        })(0);
+      })();
+    </script>
   </body>
 </html>

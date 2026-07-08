@@ -34,6 +34,21 @@
     <meta name="twitter:image:alt" content="Sneekie — a 1988 MS-DOS snake/maze game" />
     <link rel="stylesheet" href="../css/site.css" />
     <link rel="stylesheet" href="../css/game.css" />
+    <link rel="stylesheet" href="../css/game3d.css" />
+    <!-- era switch: 1988 CRT port vs the 2026 3D remake. Class goes on <html>
+         before first paint so the right monitor shows without a flash. -->
+    <script>
+      (function(){
+        var era = '1988';
+        try{
+          var q = new URLSearchParams(location.search).get('era');
+          if(q === '2026' || q === '1988'){ era = q; localStorage.setItem('sneekie.era', q); }
+          else if(localStorage.getItem('sneekie.era') === '2026') era = '2026';
+        }catch(_){ }
+        window.SNEEKIE_ERA = era;
+        document.documentElement.classList.add('era-' + era);
+      })();
+    </script>
   </head>
   <body class="page-index">
     <a class="skip" href="#main">Skip to content</a>
@@ -59,10 +74,14 @@
     <main id="main" tabindex="-1">
       <noscript><div class="noscript-warn">JavaScript is required to emulate and play this 1988 MS-DOS game in the browser.</div></noscript>
       <header class="hero">
-        <h1 class="page-title">The 1988 Game</h1>
+        <h1 class="page-title"><span class="h88">The 1988 Game</span><span class="h26">The 2026 Game</span></h1>
       </header>
       <div id="game-stage">
         <div id="game-toolbar" aria-label="Game options">
+          <div class="grp" id="era" aria-label="Game version">
+            <button type="button" data-era="1988">1988</button>
+            <button type="button" data-era="2026">2026</button>
+          </div>
           <div class="grp" id="themes">
             <button type="button" data-theme="hercules">Green</button>
             <button type="button" data-theme="amber">Amber</button>
@@ -107,10 +126,24 @@
             </div>
           </div>
         </div>
+        <!-- the 2026 monitor: shown instead of the CRT when the era switch says 2026 -->
+        <div id="bezel3d">
+          <div id="monitor3d">
+            <div id="tube3d">
+              <canvas id="screen3d" role="img" aria-label="Sneekie 2026 game screen"></canvas>
+              <div id="glass3d" aria-hidden="true"></div>
+              <div id="hud3d"></div>
+            </div>
+            <div id="chin3d" aria-hidden="true"><span class="logo3d">Acme UltraView</span><span class="led3d"></span></div>
+          </div>
+          <div id="stand3d" aria-hidden="true"><i class="neck"></i><i class="foot"></i></div>
+        </div>
       </div>
       <p id="hint">
-        <span class="kb">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
-        <span class="tc">Swipe to steer the snake<br />Tap = the snake walks to that point<br />F9 = extra life / F10 = skip level</span>
+        <span class="kb h88">Arrow keys steer the snake<br />Tap / click = the snake walks to that point<br />&lt;ESC&gt; = give up when stuck<br />F9 = extra life / F10 = skip level</span>
+        <span class="tc h88">Swipe to steer the snake<br />Tap = the snake walks to that point<br />F9 = extra life / F10 = skip level</span>
+        <span class="kb h26">Arrow keys / WASD steer the snake<br />Tap / click = the snake finds its way there<br />Walls only bump &mdash; the glowing wisps kill<br />F9 = extra life / F10 = skip level</span>
+        <span class="tc h26">Swipe to steer the snake<br />Tap = the snake walks to that point<br />Walls only bump &mdash; the glowing wisps kill</span>
       </p>
       <figure class="closing-figure">
         <img loading="lazy" width="1200" height="676" src="../images/pages/game-closing.webp" alt="A glowing Sneekie snake bursting through a CRT game screen while hearts, clubs, stones, and maze pieces fly outward." />
@@ -136,7 +169,54 @@
       "fsHelpTouchExit": "Use your browser gesture or fullscreen control to leave fullscreen.",
       "fsHelpPlay": "Play"
     };</script>
+    <script>window.SNEEKIE_TEXT3D = {
+      "title2026": "SNEEKIE 2026",
+      "byline": "© July '88 by HerbySoft · 3D remake 2026 by Claude Fable",
+      "score": "Score",
+      "best": "Best",
+      "level": "Level",
+      "lives": "Lives",
+      "bonus": "Bonus",
+      "tapToStart": "Tap, click or press any key",
+      "getReady": "Eat every ♥ and ♣ — dodge the rest",
+      "stuck": "No way out!",
+      "zapped": "Zapped!",
+      "gameOver": "Game over",
+      "newBest": "New high score!",
+      "finalScore": "Final score",
+      "playAgain": "Play again",
+      "levelClear": "Level cleared!",
+      "extraLife": "+1 life",
+      "theEnd": "The End",
+      "allCleared": "All 32 levels cleared — the snake rests.",
+      "botBadge": "LIVE · Fable autopilot",
+      "webglMissing": "The 2026 version needs WebGL2, which this browser or device does not provide. The 1988 version still plays!"
+    };</script>
     <script src="../js/site.js"></script>
-    <script src="../js/game.js"></script>
+    <!-- era loader: wires the 1988/2026 buttons and loads only the selected game -->
+    <script>
+      (function(){
+        var era = window.SNEEKIE_ERA === '2026' ? '2026' : '1988';
+        document.querySelectorAll('#era button').forEach(function(b){
+          b.setAttribute('aria-pressed', String(b.dataset.era === era));
+          b.addEventListener('click', function(){
+            if(b.dataset.era === era) return;
+            try{ localStorage.setItem('sneekie.era', b.dataset.era); }catch(_){ }
+            var url = new URL(location.href);
+            url.searchParams.delete('era');
+            if(url.href === location.href) location.reload();
+            else location.href = url.href;
+          });
+        });
+        var scripts = era === '2026' ? ['../js/game3d.js'] : ['../js/game.js'];
+        (function load(i){
+          if(i >= scripts.length) return;
+          var s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = function(){ load(i + 1); };
+          document.body.appendChild(s);
+        })(0);
+      })();
+    </script>
   </body>
 </html>

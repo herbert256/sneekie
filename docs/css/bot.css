@@ -27,6 +27,7 @@
 }
 .page-bot #bezel{
   position:relative;
+  align-self:center;      /* hug the tube like the game page: no wide case flanks */
   display:flex;
   flex-direction:column;
   align-items:stretch;
