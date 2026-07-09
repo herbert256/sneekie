@@ -287,6 +287,9 @@ const Snd = (() => {
       tone({f: 1175, type: 'sine', vol: 0.16, dur: 0.26, delay: 0.07});
       tone({f: 2350, type: 'sine', vol: 0.05, dur: 0.30, delay: 0.07});
     },
+    pop(){                                          // a club popping into existence
+      tone({f: 420, f2: 900, type: 'triangle', vol: 0.09, dur: 0.10});
+    },
     smiley(){                                       // -50: a sour descending womp
       tone({f: 340, f2: 70, type: 'sawtooth', vol: 0.22, dur: 0.5, lpf: 900, q: 6});
       tone({f: 220, f2: 55, type: 'square', vol: 0.10, dur: 0.5, lpf: 500});
@@ -525,17 +528,23 @@ void main(){
     spec = 0.30; gloss = 34.0;
     spec *= (1.0 - 0.7 * ridge) * (0.45 + 1.1 * glint);
   } else if(mode == 4){
+    // bone-gray skull: hollow eye sockets, nasal cavity, gritted teeth
     vec3 No = normalize(vNormObj);
-    amb = max(amb, 0.55);
-    if(No.z > 0.25){
+    amb = max(amb, 0.42);
+    if(No.z > 0.20){
       vec2 p = No.xy / No.z;
-      float eye = min(length(p - vec2(-0.30, 0.28)), length(p - vec2(0.30, 0.28)));
-      float face = smoothstep(0.11, 0.08, eye);
-      float mouth = abs(length(p - vec2(0.0, 0.10)) - 0.46);
-      face = max(face, smoothstep(0.085, 0.055, mouth) * step(p.y, -0.16));
-      base = mix(base, vec3(0.020, 0.012, 0.004), face);
+      float socket = min(length((p - vec2(-0.30, 0.18)) * vec2(1.0, 1.15)),
+                         length((p - vec2(0.30, 0.18)) * vec2(1.0, 1.15)));
+      float dark = smoothstep(0.21, 0.15, socket);
+      float nasal = smoothstep(0.095, 0.055, length((p - vec2(0.0, -0.16)) * vec2(1.0, 0.75)));
+      float mouth = smoothstep(0.065, 0.035, abs(p.y + 0.44)) * step(abs(p.x), 0.30);
+      mouth *= 0.55 + 0.45 * step(0.5, fract(p.x * 6.0 + 0.25));
+      float f2 = max(max(dark, nasal), mouth * 0.85);
+      base = mix(base, vec3(0.010, 0.009, 0.007), f2);
+      base *= 1.0 - 0.28 * smoothstep(0.45, 0.80, abs(p.x)) * step(p.y, 0.4);   // sunken temples
+      base *= 0.92 + 0.10 * vnoise(p * 5.0);                                    // old bone
     }
-    spec = 0.5; gloss = 60.0;
+    spec = 0.30; gloss = 26.0;
   } else if(mode == 5){
     // snake head skin: same scales and glints as the body, no belly banding
     float u = vUV.x;
@@ -1063,7 +1072,7 @@ const COL = {
   head:   lin([0.15, 0.49, 0.20]),
   heart:  lin([0.92, 0.10, 0.22]),
   club:   lin([0.15, 0.76, 0.30]),
-  smiley: lin([0.97, 0.80, 0.12]),
+  smiley: lin([0.72, 0.70, 0.62]),     // the 1988 smiley, reborn as a bone-gray skull
   eye:    lin([0.90, 0.60, 0.10]),
   pupil:  lin([0.02, 0.02, 0.02]),
   tongue: lin([0.80, 0.12, 0.16]),
@@ -1468,7 +1477,7 @@ const G = {
   clickTarget: null,
   combo: 0, lastEatAt: -9,
   wisps: [], gates: [], gatePeriod: 0.95, gateAcc: 0,
-  pulses: [], eatFlash: 0, gape: 0,
+  pulses: [], eatFlash: 0, gape: 0, lastAdvance: 0,
   deathCause: '', explodeAt: 0, deathPos: null,
   speedMul: 1,
   wallsDirty: true,
@@ -1565,7 +1574,8 @@ function layStoneGates(){
 
 const LAYOUTS = [layOpen, laySegments, layRooms, layZigzag, layGates, layRisers, laySweepers, layStoneGates];
 
-/* random item drop on an empty cell (the 1150 'place' of 2026) */
+/* random item drop on an empty cell (the 1150 'place' of 2026);
+   returns the cell so callers can point effects at it */
 function placeItem(type){
   for(let tries = 0; tries < 400; tries++){
     const x = 1 + (Math.random() * (GW - 2) | 0);
@@ -1575,9 +1585,9 @@ function placeItem(type){
     const h = G.cells[0];
     if(h && Math.abs(x - h.x) + Math.abs(y - h.y) < 3) continue;
     grid[gi(x, y)] = type;
-    return true;
+    return { x, y };
   }
-  return false;
+  return null;
 }
 
 function buildLevel(level){
@@ -1699,8 +1709,15 @@ function tryStep(){
     G.eatFlash = 1;
     cam.shake = Math.max(cam.shake, 0.07);
     cam.kick = Math.max(cam.kick, 0.045);
-    placeItem(SMILEY);                                 // 1988: every heart seeds a smiley
-    if(tierOf(G.level) >= 2 && placeItem(CLUB)) G.clubsLeft++;   // 17+: and a club to chase
+    placeItem(SMILEY);                                 // 1988: every heart seeds a smiley (a skull here)
+    const cl = placeItem(CLUB);                        // and pops up a club that must be eaten too
+    if(cl){
+      G.clubsLeft++;
+      const cwx = gxToWorld(cl.x), cwz = gyToWorld(cl.y);
+      spawnBurst(cwx, 0.5, cwz, COL.club, 10, 1.8, 0.5, 0.10, 1.4);
+      spawnShock(cwx, cwz, 1.2, 0.45, 0.25, 1.2, 0.4, 0.4);
+      Snd.pop();
+    }
   } else if(c === CLUB){
     G.clubsLeft--;
     grow = 3;
@@ -1730,6 +1747,7 @@ function tryStep(){
   }
   G.growPending += grow;
   G.idle = false; G.bumped = false;
+  G.lastAdvance = G.time;
   if(G.clickTarget && nx === G.clickTarget.x && ny === G.clickTarget.y) G.clickTarget = null;
   if(G.cells.length >= 420) { startDeath('stuck'); return; }   // the 15000-cell cap, scaled down
   if(G.heartsLeft <= 0 && G.clubsLeft <= 0) startClear();
@@ -1838,9 +1856,13 @@ function botHunt(avoidDanger){
 function botSteer(){
   let dir = botHunt(true) || botHunt(false);
   if(!dir){
-    // survival: take the move with the most breathing room
+    // survival: take the move with the most breathing room. bestScore starts
+    // at -Infinity on purpose: a skull bite or a wisp-grazed cell scores deep
+    // negative, but the least-bad escape still beats standing at a wall until
+    // the board strangles us (that stall was a real bug: not stuck enough to
+    // die, not brave enough to move).
     const h = G.cells[0];
-    let bestScore = -1;
+    let bestScore = -Infinity;
     for(let d = 0; d < 4; d++){
       const dd = DIRS[d];
       if(dd.x === -G.dir.x && dd.y === -G.dir.y) continue;
@@ -1933,6 +1955,7 @@ function beginPlay(){
   if(G.state !== 'intro') return;
   hudCardHide();
   G.state = 'play'; G.stateT = 0; G.acc = 0; G.idleAcc = 0;
+  G.lastAdvance = G.time;
   if(!BOT){ G.idle = true; G.bumped = true; }   // 1988 manners: wait for the first command
 }
 function resetGame(){
@@ -2286,6 +2309,9 @@ function update(dt, t){
         if(G.state !== 'play') break;
         if(G.idle){ G.acc = 0; break; }
       }
+      /* watchdog: an autopilot that hasn't advanced for seconds is wedged in
+         a way the planner can't see — treat it as stuck so the show goes on */
+      if(BOT && G.state === 'play' && G.time - G.lastAdvance > 5) startDeath('stuck');
     }
   } else if(G.state === 'dying'){
     const want = Math.floor(clamp(G.stateT / 0.9, 0, 1) * G.cells.length);
@@ -2459,9 +2485,12 @@ function renderShadow(rings, t){
     if(v === STONE) drawDepth(R.rocks[(x * 7 + y * 13) & 3], wx, 0.26, wz, ph * 2, 0.46, 0.46, 0.46);
     else {
       const bobY = 0.48 + Math.sin(t * 2.1 + ph) * 0.06;
-      if(v === HEART) drawDepth(R.heart, wx, bobY, wz, t * 1.5 + ph, 1.1, 1.1, 1.1);
-      else if(v === CLUB) drawDepth(R.club, wx, bobY, wz, -t * 1.3 + ph, 1.15, 1.15, 1.15);
-      else drawDepth(R.ball, wx, bobY, wz, 0, 0.34, 0.34, 0.34);
+      if(v === HEART) drawDepth(R.heart, wx, bobY, wz, t * 1.5 + ph, 1.4, 1.4, 1.4);
+      else if(v === CLUB) drawDepth(R.club, wx, bobY, wz, -t * 1.3 + ph, 1.5, 1.5, 1.5);
+      else {
+        const wob = skullWobble(x, y, t);
+        drawDepth(R.ball, wx + wob.dx, 0.52 + wob.dy, wz + wob.dz, 0, 0.38, 0.42, 0.38);
+      }
     }
   }
   if(rings > 1){
@@ -2551,6 +2580,16 @@ function worldToUV(x, y, z){
   return [(m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5,
           (m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5];
 }
+/* skulls drift restlessly, but never leave their cell (radius .38 + drift .10 < half a cell) */
+function skullWobble(x, y, t){
+  const ph = hash1(x * 53 + y * 29) * 9;
+  return {
+    dx: Math.sin(t * 0.9 + ph) * 0.10,
+    dz: Math.cos(t * 0.7 + ph * 1.4) * 0.10,
+    dy: Math.sin(t * 1.3 + ph) * 0.04,
+    yaw: Math.sin(t * 0.5 + ph) * 0.55,
+  };
+}
 function drawBoardMeshes(t, withGlow){
   for(let y = 1; y < GH - 1; y++) for(let x = 1; x < GW - 1; x++){
     const v = grid[gi(x, y)];
@@ -2562,15 +2601,26 @@ function drawBoardMeshes(t, withGlow){
     } else {
       const bobY = 0.48 + Math.sin(t * 2.1 + ph) * 0.06;
       if(v === HEART){
-        drawLit(R.heart, wx, bobY, wz, t * 1.5 + ph, 1.1, 1.1, 1.1, COL.heart, null, 0, 0.58, 1.0);
-        if(withGlow) pushBillboard(R.bb, wx, bobY, wz, 0.72 + Math.sin(t * 2.4 + ph) * 0.10, 1, 0.2, 0.3, 0.22);
+        drawLit(R.heart, wx, bobY, wz, t * 1.5 + ph, 1.4, 1.4, 1.4, COL.heart, null, 0, 0.58, 1.0);
+        if(withGlow) pushBillboard(R.bb, wx, bobY, wz, 0.85 + Math.sin(t * 2.4 + ph) * 0.12, 1, 0.2, 0.3, 0.24);
       } else if(v === CLUB){
-        drawLit(R.club, wx, bobY, wz, -t * 1.3 + ph, 1.15, 1.15, 1.15, COL.club, null, 0, 0.55, 0.9);
-        if(withGlow) pushBillboard(R.bb, wx, bobY, wz, 0.7, 0.3, 1, 0.4, 0.18);
+        drawLit(R.club, wx, bobY, wz, -t * 1.3 + ph, 1.5, 1.5, 1.5, COL.club, null, 0, 0.55, 0.9);
+        if(withGlow) pushBillboard(R.bb, wx, bobY, wz, 0.85, 0.3, 1, 0.4, 0.20);
       } else if(v === SMILEY){
-        const yaw = Math.atan2(cam.eye[0] - wx, cam.eye[2] - wz);
-        drawLit(R.ball, wx, bobY, wz, yaw, 0.34, 0.34, 0.34, COL.smiley, null, 4, 0.5, 0.5);
-        if(withGlow) pushBillboard(R.bb, wx, bobY, wz, 0.5, 1, 0.85, 0.2, 0.11);
+        /* the -50 penalty item: a restless skull, drifting inside its cell */
+        const wob = skullWobble(x, y, t);
+        const sx2 = wx + wob.dx, sz2 = wz + wob.dz, sy2 = 0.52 + wob.dy;
+        const yaw = Math.atan2(cam.eye[0] - sx2, cam.eye[2] - sz2) + wob.yaw;
+        const fx = Math.sin(yaw), fz = Math.cos(yaw);
+        drawLit(R.ball, sx2, sy2, sz2, yaw, 0.38, 0.42, 0.38, COL.smiley, null, 4, 0.45, 0.35);
+        drawLit(R.ball, sx2 + fx * 0.075, sy2 - 0.28, sz2 + fz * 0.075, yaw, 0.25, 0.16, 0.25, COL.smiley, null, 0, 0.42, 0.3);
+        if(withGlow){
+          const px2 = fz, pz2 = -fx;
+          for(const s of [-1, 1])
+            pushBillboard(R.bb, sx2 + fx * 0.33 + px2 * 0.115 * s, sy2 + 0.08, sz2 + fz * 0.33 + pz2 * 0.115 * s,
+              0.09, 0.25, 1.0, 0.4, 0.5);
+          pushBillboard(R.bb, sx2, sy2, sz2, 0.55, 0.55, 0.65, 0.55, 0.05);
+        }
       }
     }
   }

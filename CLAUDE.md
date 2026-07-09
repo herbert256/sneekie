@@ -263,7 +263,9 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   `.lead-1988`/`.lead-2026` text variants), and an inline loader at the end of the body loads
   only the selected engine's scripts. Era buttons (`#era`) persist the choice and reload.
 - **Rules mirror 1988.** Same board spirit (36x20 court in a wall ring), hearts +10 (each eaten
-  heart seeds a smiley), clubs +25 (spawned per heart from level 17), smileys -50 (eating one
+  heart seeds a skull AND pops up a club that must also be eaten — 1988's level-17 club rule,
+  promoted to every level), clubs +25, skulls -50 (the 1988 smileys, drawn as restless gray
+  skulls that drift inside their cell; eating one
   respawns another), pushable stones, bonus 10000 draining per step, 3 lives, +1 life per
   cleared level, F9/F10 cheats, Esc gives up, 32 levels. The eight layout archetypes follow the
   original `ON LEVEL GOSUB` order (open court, line maze, rooms+doors, stone zigzag, gate walls
