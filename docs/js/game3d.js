@@ -407,7 +407,7 @@ in float vTint;
 in vec4 vShadow;
 uniform vec3 uColor;
 uniform vec3 uColorB;
-uniform float uMode;      // 0 plain, 1 floor, 2 stone, 3 snakeskin, 4 smiley
+uniform float uMode;      // 0 plain, 1 floor, 2 stone, 3 body skin, 4 skull, 5 head skin
 uniform float uAmb;
 uniform float uSpec;
 uniform vec3 uLightDir;
@@ -499,34 +499,40 @@ void main(){
     float moss = smoothstep(0.52, 0.80, vnoise(buv * 0.9 + vec2(3.7))) * clamp(1.3 - g.y, 0.0, 1.0);
     base = mix(base, vec3(0.012, 0.045, 0.010), moss * 0.75);
   } else if(mode == 3){
-    // python skin: staggered diamond scales with per-scale glints, dark dorsal
-    // saddles, pale flat belly, and a faint iridescent drift along the spine
+    // Natural olive viper skin: fine keeled scales, a chain of dark
+    // pale-edged dorsal saddles, alternating flank spots, belly scutes.
     float u = vUV.x;
     float v = vUV.y;
     float dSide = abs(u - 0.5);
-    float belly = 1.0 - smoothstep(0.13, 0.30, dSide);
-    vec2 p = vec2(u * 20.0, v * 16.0);
+    float belly = 1.0 - smoothstep(0.11, 0.25, dSide);
+    float dorsal = smoothstep(0.19, 0.33, dSide);
+    vec2 p = vec2(u * 18.0, v * 6.0);
     p.x += mod(floor(p.y), 2.0) * 0.5;
     vec2 f = fract(p) - 0.5;
     float dd = abs(f.x) + abs(f.y);
-    float ridge = smoothstep(0.34, 0.62, dd);
+    float ridge = smoothstep(0.38, 0.56, dd);
     float glint = hash21(floor(p) + vec2(7.0));
-    float saddle = smoothstep(0.52, 0.70, vnoise(vec2(v * 1.4, u * 2.4))) * (1.0 - belly);
-    float fleck = smoothstep(0.76, 0.95, vnoise(vec2(v * 1.4 + 31.0, u * 2.4))) * (1.0 - belly);
-    base = mix(base, uColor * 0.36, saddle * 0.9);
-    base = mix(base, uColor * 1.55, fleck * 0.55);
-    base = mix(base, uColorB, belly);
-    base *= 0.74 + 0.34 * smoothstep(0.02, 0.30, dSide);            // dark dorsal crest
-    base *= 0.86 + 0.28 * vnoise(vec2(v * 0.55 + 13.0, u * 1.2));   // organic mottling
-    base += vec3(0.03, 0.09, 0.05) * sin(v * 0.9) * (1.0 - belly);
-    base *= 1.0 - 0.22 * ridge;
-    base *= 0.92 + 0.16 * glint;
+    float warp = vnoise(vec2(v * 0.24, u * 1.7 + 9.0));
+    float ph = v * 3.0 + (warp - 0.5) * 2.6;
+    float amp = 0.78 + 0.22 * hash21(vec2(floor(ph / 6.2831853 + 0.5), 3.7));
+    float band = sin(ph);
+    float core = smoothstep(0.02, 0.42, band) * dorsal * amp;
+    float edge = (smoothstep(-0.30, 0.02, band) - smoothstep(0.12, 0.52, band)) * dorsal * amp;
+    float fl = smoothstep(0.35, 0.75, sin(ph + 3.1416)) * (1.0 - belly) * (1.0 - dorsal) * amp;
+    base *= 0.76 + 0.34 * vnoise(vec2(v * 0.30 + 13.0, u * 1.45));
+    base = mix(base, uColor * 1.65, edge * 0.50);
+    base = mix(base, vec3(0.024, 0.027, 0.010), core * 0.90);
+    base = mix(base, uColor * 0.40, fl * 0.60);
+    float scute = 0.90 + 0.10 * smoothstep(0.08, 0.45, fract(v * 4.2));
+    base = mix(base, uColorB * scute, belly);
+    base *= 1.0 - 0.12 * ridge;
+    base *= 0.96 + 0.08 * glint;
     float dome = clamp(1.0 - dd * 1.55, 0.0, 1.0);
-    h = dome * 0.9 + glint * 0.18;
-    bumpK = 0.55;
-    // matte skin: sparse per-scale glints instead of one wet plastic stripe
-    spec = 0.30; gloss = 34.0;
-    spec *= (1.0 - 0.7 * ridge) * (0.45 + 1.1 * glint);
+    h = dome * 0.58 + glint * 0.08;
+    bumpK = 0.30;
+    // dry dorsum, waxier flanks: no continuous highlight straight down the spine
+    spec = 0.24 * (1.0 - 0.62 * dorsal); gloss = 46.0;
+    spec *= (1.0 - 0.72 * ridge) * (0.65 + 0.55 * glint);
   } else if(mode == 4){
     // bone-gray skull: hollow eye sockets, nasal cavity, gritted teeth
     vec3 No = normalize(vNormObj);
@@ -546,30 +552,41 @@ void main(){
     }
     spec = 0.30; gloss = 26.0;
   } else if(mode == 5){
-    // snake head skin: same scales and glints as the body, no belly banding
+    // Head plates with a dark arrowhead crown and the viper's eye stripe.
     float u = vUV.x;
     float v = vUV.y;
-    vec2 p = vec2(u * 20.0, v * 16.0);
+    float cu = min(u, 1.0 - u) * 2.0;          // 0 crown center .. 1 underside
+    vec2 p = vec2(u * 14.0, v * 7.0);
     p.x += mod(floor(p.y), 2.0) * 0.5;
     vec2 f = fract(p) - 0.5;
     float dd = abs(f.x) + abs(f.y);
-    float ridge = smoothstep(0.34, 0.62, dd);
+    float ridge = smoothstep(0.38, 0.57, dd);
     float glint = hash21(floor(p) + vec2(7.0));
-    base *= 0.86 + 0.28 * vnoise(vec2(v * 2.0 + 13.0, u * 2.0));
-    base *= 1.0 - 0.22 * ridge;
-    base *= 0.92 + 0.16 * glint;
+    base *= 0.80 + 0.26 * vnoise(vec2(v * 0.65 + 13.0, u * 1.8));
+    // dark crown arrowhead tapering toward the snout
+    float aw = 0.24 + max(1.55 - v, 0.0) * 0.26;
+    float arrow = (1.0 - smoothstep(aw - 0.10, aw, cu)) * smoothstep(0.10, 0.55, v);
+    arrow *= 0.65 + 0.35 * vnoise(vec2(v * 1.3, u * 2.2 + 5.0));
+    base = mix(base, vec3(0.026, 0.030, 0.011), arrow * 0.85);
+    // dark stripe sweeping back from the eye toward the jaw hinge
+    float uc = 0.52 + clamp(0.85 - v, 0.0, 1.0) * 0.14;
+    float stripe = (1.0 - smoothstep(0.05, 0.13, abs(cu - uc)))
+                 * smoothstep(0.92, 0.72, v) * smoothstep(0.02, 0.22, v);
+    base = mix(base, vec3(0.024, 0.027, 0.010), stripe * 0.66);
+    base *= 1.0 - 0.13 * ridge;
+    base *= 0.96 + 0.08 * glint;
     float dome = clamp(1.0 - dd * 1.55, 0.0, 1.0);
-    h = dome * 0.9 + glint * 0.18;
-    bumpK = 0.5;
-    spec = 0.30; gloss = 34.0;
-    spec *= (1.0 - 0.7 * ridge) * (0.45 + 1.1 * glint);
+    h = dome * 0.52 + glint * 0.08;
+    bumpK = 0.28;
+    spec = 0.22 * (1.0 - 0.55 * (1.0 - smoothstep(0.30, 0.55, cu))); gloss = 52.0;
+    spec *= (1.0 - 0.72 * ridge) * (0.65 + 0.55 * glint);
   }
   if(bumpK > 0.0) N = bumpNormal(N, h, bumpK);
   vec3 V = normalize(uCamPos - vPos);
   if(mode == 3 || mode == 5){
-    // iridescent sheen creeping in at grazing angles
+    // A restrained green-gold grazing sheen, not a plastic blue highlight.
     float f2 = pow(1.0 - max(dot(N, V), 0.0), 1.6);
-    base = mix(base, vec3(0.05, 0.22, 0.38), f2 * 0.30);
+    base = mix(base, vec3(0.08, 0.15, 0.045), f2 * 0.14);
   }
   vec3 L = normalize(uLightDir);
   float sh = shadowFactor(N);
@@ -982,14 +999,18 @@ function uploadInstancedCube(gl){
   return { vao, count: mesh.idx.length, instBuf: inst, data: new Float32Array(WALL_MAX * 5), used: 0 };
 }
 
-/* snake tube: interleaved pos(3) norm(3) uv(2), streamed every frame */
-const RING_SEG = 14, TUBE_MAX_RINGS = 1500;
+/* snake tube: interleaved pos(3) norm(3) uv(2), streamed every frame.
+   Twenty sides keep the silhouette round even when the camera rides low. */
+const RING_SEG = 20, TUBE_SUB = 5, TUBE_MAX_RINGS = 2400;
+/* Each ring carries a duplicated seam vertex (u runs 0..1 inclusive) so the
+   wrap-around quad never interpolates u backwards through the belly value. */
+const RING_VERTS = RING_SEG + 1;
 function makeTube(gl){
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const vb = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-  gl.bufferData(gl.ARRAY_BUFFER, TUBE_MAX_RINGS * RING_SEG * 8 * 4, gl.DYNAMIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, TUBE_MAX_RINGS * RING_VERTS * 8 * 4, gl.DYNAMIC_DRAW);
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
   gl.enableVertexAttribArray(1);
@@ -1000,9 +1021,9 @@ function makeTube(gl){
   let k = 0;
   for(let r = 0; r < TUBE_MAX_RINGS - 1; r++){
     for(let s = 0; s < RING_SEG; s++){
-      const a = r * RING_SEG + s;
-      const b = r * RING_SEG + (s + 1) % RING_SEG;
-      const c = a + RING_SEG, d = b + RING_SEG;
+      const a = r * RING_VERTS + s;
+      const b = a + 1;
+      const c = a + RING_VERTS, d = b + RING_VERTS;
       idx[k++] = a; idx[k++] = c; idx[k++] = b;
       idx[k++] = b; idx[k++] = c; idx[k++] = d;
     }
@@ -1011,7 +1032,7 @@ function makeTube(gl){
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
   gl.bindVertexArray(null);
-  return { vao, vb, verts: new Float32Array(TUBE_MAX_RINGS * RING_SEG * 8), rings: 0 };
+  return { vao, vb, verts: new Float32Array(TUBE_MAX_RINGS * RING_VERTS * 8), rings: 0 };
 }
 
 /* billboards: interleaved center(3) corner(2) size(1) color(4), 6 verts/quad */
@@ -1067,13 +1088,13 @@ const COL = {
   floorB: lin([0.19, 0.28, 0.20]),
   wall:   lin([0.36, 0.40, 0.37]),
   stone:  lin([0.47, 0.41, 0.34]),
-  snake:  lin([0.16, 0.52, 0.22]),
-  belly:  lin([0.76, 0.80, 0.52]),
-  head:   lin([0.15, 0.49, 0.20]),
+  snake:  lin([0.23, 0.36, 0.15]),
+  belly:  lin([0.62, 0.62, 0.39]),
+  head:   lin([0.21, 0.33, 0.13]),
   heart:  lin([0.92, 0.10, 0.22]),
   club:   lin([0.15, 0.76, 0.30]),
   smiley: lin([0.72, 0.70, 0.62]),     // the 1988 smiley, reborn as a bone-gray skull
-  eye:    lin([0.90, 0.60, 0.10]),
+  eye:    lin([0.78, 0.49, 0.08]),
   pupil:  lin([0.02, 0.02, 0.02]),
   tongue: lin([0.80, 0.12, 0.16]),
   maw:    lin([0.48, 0.07, 0.08]),
@@ -1095,6 +1116,73 @@ function buildTongue(){
   quad([-0.014, 0, 0.20], [0.002, 0, 0.20], [-0.052, 0, 0.34], [-0.068, 0, 0.31]);   // left prong
   quad([-0.002, 0, 0.20], [0.014, 0, 0.20], [0.068, 0, 0.31], [0.052, 0, 0.34]);     // right prong
   return { pos, norm, uv, idx };
+}
+
+/* One continuous, broad viper head replaces the old stack of overlapping
+   spheres. Local +z points toward the snout; u=0 is the crown and u=.5 the
+   underside, matching the body's procedural skin coordinates. */
+function buildSnakeHead(){
+  const SEG = 24;
+  const sections = [
+    [-0.44, 0.25, 0.20],
+    [-0.27, 0.36, 0.26],
+    [-0.06, 0.47, 0.30],
+    [ 0.18, 0.46, 0.28],
+    [ 0.39, 0.38, 0.22],
+    [ 0.58, 0.30, 0.16],
+    [ 0.69, 0.22, 0.105],
+  ];
+  const mesh = { pos: [], norm: [], uv: [], idx: [] };
+  const COLS = SEG + 1;      // duplicated seam vertex keeps u from wrapping backwards
+  for(let j = 0; j < sections.length; j++){
+    const [z, width, height] = sections[j];
+    const crownLift = Math.sin((j / (sections.length - 1)) * Math.PI) * 0.025;
+    for(let s = 0; s <= SEG; s++){
+      const a = ((s % SEG) / SEG) * Math.PI * 2;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      const y = ca >= 0 ? ca * height : ca * height * 0.68;
+      mesh.pos.push(sa * width, y + crownLift, z);
+      mesh.norm.push(0, 1, 0); // replaced below by the geometry-derived normal
+      mesh.uv.push(s / SEG, j / (sections.length - 1) * 1.8);
+    }
+  }
+  for(let j = 0; j < sections.length - 1; j++) for(let s = 0; s < SEG; s++){
+    const a = j * COLS + s;
+    const b = a + 1;
+    const c = a + COLS, d = b + COLS;
+    mesh.idx.push(a, c, b, b, c, d);
+  }
+  const nose = mesh.pos.length / 3;
+  mesh.pos.push(0, -0.01, 0.715); mesh.norm.push(0, 0, 1); mesh.uv.push(0.5, 1.9);
+  const last = (sections.length - 1) * COLS;
+  for(let s = 0; s < SEG; s++) mesh.idx.push(last + s, nose, last + s + 1);
+  recomputeNormals(mesh);
+  // the seam pair shares a position: average their normals so lighting is continuous
+  for(let j = 0; j < sections.length; j++){
+    const a = j * COLS * 3, b = (j * COLS + SEG) * 3;
+    for(let k = 0; k < 3; k++){
+      const n = (mesh.norm[a + k] + mesh.norm[b + k]) * 0.5;
+      mesh.norm[a + k] = n; mesh.norm[b + k] = n;
+    }
+  }
+  return mesh;
+}
+
+/* A small tapered cone hanging from the upper jaw reads as a fang at game
+   scale much better than a stretched sphere. */
+function buildFang(){
+  const SEG = 10;
+  const mesh = { pos: [], norm: [], uv: [], idx: [] };
+  for(let s = 0; s < SEG; s++){
+    const a = s / SEG * Math.PI * 2;
+    mesh.pos.push(Math.cos(a) * 0.12, 0, Math.sin(a) * 0.12);
+    mesh.norm.push(Math.cos(a), 0.12, Math.sin(a));
+    mesh.uv.push(s / SEG, 0);
+  }
+  const tip = mesh.pos.length / 3;
+  mesh.pos.push(0, -1, 0); mesh.norm.push(0, -1, 0); mesh.uv.push(0.5, 1);
+  for(let s = 0; s < SEG; s++) mesh.idx.push(s, tip, (s + 1) % SEG);
+  return recomputeNormals(mesh);
 }
 
 /* ---------- canvas + GL ---------- */
@@ -1124,6 +1212,8 @@ function initGL(){
     club: uploadMesh(gl, buildClub()),
     ball: uploadMesh(gl, buildIcosphere(2)),
     bead: uploadMesh(gl, buildIcosphere(1)),
+    snakeHead: uploadMesh(gl, buildSnakeHead()),
+    fang: uploadMesh(gl, buildFang()),
     tongue: uploadMesh(gl, buildTongue()),
     tube: makeTube(gl),
     bb: makeBillboards(gl),        // camera-facing additive glows
@@ -1350,7 +1440,9 @@ function updateParts(dt){
 }
 
 /* ---------- snake spine + tube streaming ---------- */
-const spine = [];        // flat scratch: {x,y,z} points reused per frame
+const spine = [];        // flat scratch: {x,y,z,d} points reused per frame
+const tubeRadii = new Float32Array(TUBE_MAX_RINGS);
+let restW = 0;           // eases toward 1 while the snake idles, deepening the S-curve
 function catmull(p0, p1, p2, p3, t){
   const t2 = t * t, t3 = t2 * t;
   return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2*p0 - 5*p1 + 4*p2 - p3) * t2 + (-p0 + 3*p1 - 3*p2 + p3) * t3);
@@ -1358,29 +1450,49 @@ function catmull(p0, p1, p2, p3, t){
 /* Fills R.tube.verts with rings along the snake and returns ring count.
    pts = [{x,z}...] head..tail world coords. */
 function buildTubeMesh(pts, time){
-  const SUB = 3;
   const n = pts.length;
   if(n < 2) return 0;
   spine.length = 0;
   for(let i = 0; i < n - 1; i++){
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(n - 1, i + 2)];
-    for(let s = 0; s < SUB; s++){
-      const t = s / SUB;
+    for(let s = 0; s < TUBE_SUB; s++){
+      const t = s / TUBE_SUB;
       spine.push({ x: catmull(p0.x, p1.x, p2.x, p3.x, t), z: catmull(p0.z, p1.z, p2.z, p3.z, t) });
     }
   }
   spine.push({ x: pts[n-1].x, z: pts[n-1].z });
   const m = spine.length;
-  // muscular sideways undulation, quiet at the head, alive along the body
+  // A traveling lateral wave creates muscular locomotion without breaking the
+  // grid path. It fades out at the skull and the fine tail tip. While the
+  // snake waits for a command it eases into a slower, deeper resting S-curve
+  // instead of lying ruler-straight.
+  restW += (((G.idle && G.state === 'play') ? 1 : 0) - restW) * 0.04;
   for(let i = 1; i < m - 1; i++){
     const tx = spine[i+1].x - spine[i-1].x, tz = spine[i+1].z - spine[i-1].z;
     const l = Math.hypot(tx, tz) || 1;
-    const fade = Math.min(1, i / 9) * Math.min(1, (m - 1 - i) / 5) * 0.10;
-    const w = Math.sin(i * 0.30 - time * 5.5) * fade;
+    const d = i / TUBE_SUB;
+    const fade = Math.min(1, d / 1.8) * Math.min(1, (m - 1 - i) / (TUBE_SUB * 0.9));
+    const w = Math.sin(d * (2.15 - restW * 0.9) - time * (3.6 - restW * 2.5))
+            * fade * (0.10 + restW * 0.05);
     spine[i].x += (-tz / l) * w;
     spine[i].z += (tx / l) * w;
   }
   const rings = Math.min(m, TUBE_MAX_RINGS);
+  spine[0].d = 0;
+  for(let i = 1; i < rings; i++){
+    const dx = spine[i].x - spine[i-1].x, dz = spine[i].z - spine[i-1].z;
+    spine[i].d = spine[i-1].d + Math.hypot(dx, dz);
+  }
+  const totalD = Math.max(0.001, spine[rings - 1].d);
+  const radii = tubeRadii;
+  for(let i = 0; i < rings; i++){
+    const along = spine[i].d / totalD;
+    const neck = 0.68 + 0.32 * Math.min(1, along / 0.13);
+    const q = Math.max(0, (along - 0.56) / 0.44);
+    const tail = 1 - Math.pow(q, 1.12) * 0.91;
+    radii[i] = 0.365 * neck * Math.max(0.09, tail)
+             * (1 + Math.sin(time * 2.0 - spine[i].d * 0.7) * (0.008 + restW * 0.007));
+  }
   const v = R.tube.verts;
   const pulses = G.pulses;
   let o = 0;
@@ -1393,27 +1505,30 @@ function buildTubeMesh(pts, time){
     tx /= l; tz /= l; px = tx; pz = tz;
     // frames: N = up, B = T x N (horizontal, perpendicular)
     const bx = -tz, bz = tx;
-    const along = i / (rings - 1);              // 0 head .. 1 tail
-    let prof = 1;
-    if(along < 0.10) prof = 0.60 + 0.40 * (along / 0.10);          // neck behind the skull
-    if(along > 0.62) prof = Math.max(0.10, 1 - Math.pow((along - 0.62) / 0.38, 1.2) * 0.92);
-    let r = 0.44 * prof;
+    let r = radii[i];
     for(const pu of pulses){                    // a swallowed meal traveling down the body
       const d = i - pu.d;
-      r *= 1 + 0.34 * Math.exp(-d * d / 26) * prof;
+      r *= 1 + 0.30 * Math.exp(-d * d / (TUBE_SUB * TUBE_SUB * 2.3));
     }
-    const rh = r * 1.08, ry = r * 0.86;         // flattened belly resting on the floor
-    const cy = ry + 0.012;
-    for(let s = 0; s < RING_SEG; s++){
-      const ang = (s / RING_SEG) * Math.PI * 2;
+    const rh = r * 1.10, ry = r * 0.84;         // broad ground-hugging muscle, flattened vertically
+    const cy = ry + 0.016;
+    const prevR = radii[Math.max(0, i - 1)], nextR = radii[Math.min(rings - 1, i + 1)];
+    const span = Math.max(0.001, spine[Math.min(rings - 1, i + 1)].d - spine[Math.max(0, i - 1)].d);
+    const axial = (prevR - nextR) / (span * Math.max(r, 0.001));
+    for(let s = 0; s <= RING_SEG; s++){
+      const ang = ((s % RING_SEG) / RING_SEG) * Math.PI * 2;
       const cN = Math.cos(ang), sB = Math.sin(ang);
-      const nx = bx * sB, ny = cN, nz = bz * sB;
+      // Ellipse-correct normal plus the longitudinal component of the taper.
+      let nx = bx * (sB / Math.max(rh, 0.001)) + tx * axial;
+      let ny = cN / Math.max(ry, 0.001);
+      let nz = bz * (sB / Math.max(rh, 0.001)) + tz * axial;
+      const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
       v[o++] = spine[i].x + bx * sB * rh;
       v[o++] = cy + cN * ry;
       v[o++] = spine[i].z + bz * sB * rh;
       v[o++] = nx; v[o++] = ny; v[o++] = nz;
-      v[o++] = s / RING_SEG + (s === 0 ? 0.0001 : 0);   // u: 0 top, .5 belly
-      v[o++] = i * 0.42;                                 // v along the body
+      v[o++] = s / RING_SEG;                              // u: 0 top, .5 belly, 1 top again
+      v[o++] = spine[i].d;                                // v is real distance along the body
     }
   }
   return rings;
@@ -2282,9 +2397,9 @@ function update(dt, t){
   G.gape += (gapeT - G.gape) * Math.min(1, dt * 7);
   if(G.state === 'play' && !G.idle && G.pulses.length){
     // swallowed meals stay put in the world, so they slide tailward at body speed
-    const v = G.cps * G.speedMul * 3 * dt;
+    const v = G.cps * G.speedMul * TUBE_SUB * dt;
     for(const pu of G.pulses) pu.d += v;
-    const maxD = G.cells.length * 3 + 8;
+    const maxD = G.cells.length * TUBE_SUB + TUBE_SUB * 2.5;
     G.pulses = G.pulses.filter(pu => pu.d < maxD);
   }
   updateWisps(dt);
@@ -2503,8 +2618,9 @@ function renderShadow(rings, t){
   }
   const hp = headPose();
   if(hp && (G.state !== 'dying' || G.explodeAt === 0)){
-    drawDepth(R.ball, hp.hpx, 0.40, hp.hpz, hp.yaw, 0.45, 0.33, 0.68);
-    drawDepth(R.ball, hp.hpx + hp.hx * 0.46, 0.33, hp.hpz + hp.hz * 0.46, hp.yaw, 0.31, 0.22, 0.42);
+    drawDepth(R.snakeHead, hp.hpx, 0.34, hp.hpz, hp.yaw, 1, 1, 1);
+    drawDepth(R.ball, hp.hpx + hp.hx * 0.33, 0.235 - G.gape * 0.10,
+      hp.hpz + hp.hz * 0.33, hp.yaw, 0.27, 0.075, 0.39);
   }
   gl.disable(gl.POLYGON_OFFSET_FILL);
   gl.cullFace(gl.BACK);
@@ -2649,14 +2765,14 @@ function drawSnakeTube(rings){
   gl.uniform1f(R.lit.u.uMode, 3);
   gl.uniform1f(R.lit.u.uAmb, 0.36);
   gl.uniform1f(R.lit.u.uSpec, 0.40);
-  gl.uniform1f(R.lit.u.uRim, 0.20);
+  gl.uniform1f(R.lit.u.uRim, 0.10);
   gl.disable(gl.CULL_FACE);
   gl.bindVertexArray(R.tube.vao);
   gl.drawElements(gl.TRIANGLES, (rings - 1) * RING_SEG * 6, gl.UNSIGNED_INT, 0);
   gl.enable(gl.CULL_FACE);
 }
-/* the head: broad viper skull, tapered snout, amber slit-pupil eyes, nostrils,
-   a jaw that gapes with bared fangs when prey is near, and a forked tongue */
+/* A continuous broad viper skull, tapered snout, inset amber slit-pupil eyes,
+   heat pits, nostrils, hinged jaw, tapered fangs, and a forked tongue. */
 function drawHead(t, visible, full){
   if(!visible || chainPts.length < 2) return;
   const a = chainPts[0], b = chainPts[Math.min(2, chainPts.length - 1)];
@@ -2667,30 +2783,48 @@ function drawHead(t, visible, full){
   const bob = Math.sin(t * 2.1) * 0.015;
   const gape = G.gape;
   const hpx = a.x + hx * 0.22, hpz = a.z + hz * 0.22;
-  /* the head wears the same scaled skin as the body, not smooth rubber */
-  drawLit(R.ball, hpx, 0.40 + gape * 0.04 + bob, hpz, yaw, 0.45, 0.33, 0.68, COL.head, null, 5, 0.38, 0.4, 0.22);
-  drawLit(R.ball, hpx + hx * 0.46, 0.33 + gape * 0.06 + bob, hpz + hz * 0.46, yaw, 0.31, 0.22, 0.42, COL.head, null, 5, 0.38, 0.4, 0.22);
-  drawLit(R.ball, hpx + hx * 0.30, 0.245 - gape * 0.09 + bob, hpz + hz * 0.30, yaw, 0.27, 0.09, 0.36, COL.head, null, 5, 0.38, 0.4, 0.15);
-  if(gape > 0.15){
-    drawLit(R.ball, hpx + hx * 0.38, 0.30 + bob, hpz + hz * 0.38, yaw, 0.19, 0.03 + 0.12 * gape, 0.26, COL.maw, null, 0, 0.65, 0.3);
+  const headY = 0.34 + gape * 0.025 + bob;
+  drawLit(R.snakeHead, hpx, headY, hpz, yaw, 1, 1, 1, COL.head, null, 5, 0.38, 0.28, 0.08);
+  /* The lower jaw stays tucked beneath the skull until prey is close. */
+  drawLit(R.ball, hpx + hx * 0.33, 0.235 - gape * 0.10 + bob, hpz + hz * 0.33,
+    yaw, 0.27, 0.075, 0.39, COL.head, null, 5, 0.38, 0.24, 0.08);
+  if(gape > 0.08){
+    drawLit(R.ball, hpx + hx * 0.40, 0.285 - gape * 0.025 + bob, hpz + hz * 0.40,
+      yaw, 0.20, 0.025 + 0.10 * gape, 0.28, COL.maw, null, 0, 0.55, 0.18);
     if(full) for(const s of [-1, 1])
-      drawLit(R.bead, hpx + hx * 0.58 + px * 0.11 * s, 0.37 + bob, hpz + hz * 0.58 + pz * 0.11 * s, yaw, 0.017, 0.05, 0.017, COL.fang, null, 0, 0.6, 0.8);
+      drawLit(R.fang, hpx + hx * 0.52 + px * 0.145 * s, 0.43 + bob,
+        hpz + hz * 0.52 + pz * 0.145 * s, yaw, 0.11, 0.16 * gape, 0.11,
+        COL.fang, null, 0, 0.58, 0.55);
   }
   if(!full) return;
   for(const s of [-1, 1]){
-    const ex = hpx + hx * 0.14 + px * 0.36 * s, ez = hpz + hz * 0.14 + pz * 0.36 * s;
-    drawLit(R.bead, ex, 0.52 + bob, ez, yaw, 0.088, 0.088, 0.088, COL.eye, null, 0, 0.55, 1.6);
-    drawLit(R.bead, ex + hx * 0.048 + px * 0.028 * s, 0.525 + bob, ez + hz * 0.048 + pz * 0.028 * s,
-      yaw, 0.024, 0.058, 0.024, COL.pupil, null, 0, 0.2, 2.0);
-    const nx2 = hpx + hx * 0.72 + px * 0.085 * s, nz2 = hpz + hz * 0.72 + pz * 0.085 * s;
-    drawLit(R.bead, nx2, 0.44 + gape * 0.06 + bob, nz2, yaw, 0.019, 0.019, 0.019, COL.pupil, null, 0, 0.3, 0.2);
+    const ex = hpx + hx * 0.12 + px * 0.395 * s, ez = hpz + hz * 0.12 + pz * 0.395 * s;
+    /* heavy supraocular brow scale, tucked toward the crown so the amber
+       eye still shows from the gameplay camera */
+    drawLit(R.bead, ex - hx * 0.02 - px * 0.048 * s, 0.588 + gape * 0.02 + bob,
+      ez - hz * 0.02 - pz * 0.048 * s, yaw, 0.070, 0.028, 0.110, COL.head, null, 0, 0.30, 0.15);
+    drawLit(R.bead, ex, 0.535 + gape * 0.02 + bob, ez, yaw, 0.084, 0.076, 0.070,
+      COL.eye, null, 0, 0.48, 1.15);
+    drawLit(R.bead, ex + hx * 0.040 + px * 0.052 * s, 0.538 + gape * 0.02 + bob,
+      ez + hz * 0.040 + pz * 0.052 * s, yaw, 0.015, 0.052, 0.013,
+      COL.pupil, null, 0, 0.16, 1.2);
+    /* dark heat-sensing pit between eye and nostril */
+    const pitx = hpx + hx * 0.39 + px * 0.275 * s, pitz = hpz + hz * 0.39 + pz * 0.275 * s;
+    drawLit(R.bead, pitx, 0.405 + bob, pitz, yaw, 0.024, 0.024, 0.016,
+      COL.pupil, null, 0, 0.18, 0.1);
+    const nx2 = hpx + hx * 0.625 + px * 0.095 * s, nz2 = hpz + hz * 0.625 + pz * 0.095 * s;
+    drawLit(R.bead, nx2, 0.415 + gape * 0.025 + bob, nz2, yaw, 0.016, 0.014, 0.014,
+      COL.pupil, null, 0, 0.22, 0.1);
   }
-  const cyc = (t * 1.1 + 0.3) % 2.0;
-  if(cyc < 0.62){
-    const ext = Math.sin(Math.PI * cyc / 0.62);
+  /* real snakes flick in quick bursts: two flicks, then a longer pause */
+  const cyc = (t * 1.35 + 0.3) % 3.1;
+  let ext = 0;
+  if(cyc < 0.40) ext = Math.sin(Math.PI * cyc / 0.40);
+  else if(cyc >= 0.52 && cyc < 0.92) ext = Math.sin(Math.PI * (cyc - 0.52) / 0.40) * 0.8;
+  if(ext > 0.02){
     gl.disable(gl.CULL_FACE);
     drawLit(R.tongue, hpx + hx * 0.80, 0.36 + bob, hpz + hz * 0.80, yaw + Math.sin(t * 37) * 0.09,
-      1.5, 1.5, 1.55 * Math.max(0.05, ext), COL.tongue, null, 0, 0.8, 0.4);
+      1.5, 1.5, 1.55 * ext, COL.tongue, null, 0, 0.8, 0.4);
     gl.enable(gl.CULL_FACE);
   }
   /* a soft aura keeps the hero readable against the dark floor */
@@ -2759,7 +2893,7 @@ function render(t, dt){
   if(chainPts.length >= 2){
     rings = buildTubeMesh(chainPts, t);
     gl.bindBuffer(gl.ARRAY_BUFFER, R.tube.vb);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, R.tube.verts.subarray(0, rings * RING_SEG * 8));
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, R.tube.verts.subarray(0, rings * RING_VERTS * 8));
   }
   if(G.wallsDirty) rebuildWalls();
   collectLights(hw, t);
