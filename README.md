@@ -101,7 +101,7 @@ Two domains serve the identical `docs/` tree:
 - **https://sneekie.cc/** (canonical) - GitHub Pages, publishing `master` -> `/docs` with
   the custom domain `sneekie.cc`; https://herbert256.github.io/sneekie/ redirects there.
 - **https://sneekie.xyz/** (mirror) - Cloudflare Workers static assets from `wrangler.jsonc`,
-  republished with `wrangler deploy` (or Cloudflare's Git integration). All canonical,
+  redeployed automatically on push by Cloudflare's Git integration. All canonical,
   hreflang, and sitemap URLs point at `sneekie.cc`, so search engines treat `.xyz` as a
   mirror.
 

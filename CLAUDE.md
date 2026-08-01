@@ -95,10 +95,11 @@ are the only HTML at the site root. Content pages live under `docs/en/`, `docs/n
 `docs/uk/`, so root-level links should include the language prefix; links between content pages
 can use same-language relative `.html` paths.
 
-To ship a change: edit source files, commit, and push to `master`. GitHub Pages republishes
-the canonical `sneekie.cc` from `master` -> `/docs` automatically. The `sneekie.xyz` mirror
-needs a Cloudflare deploy from the root `wrangler.jsonc` (e.g. `wrangler deploy`, or its Git
-integration on push). When only the Wasm bot changed, rebuild `docs/js/bot-engine.wasm`
+To ship a change: edit source files, commit, and push to `master`. Both domains republish
+automatically from the push: GitHub Pages rebuilds the canonical `sneekie.cc` from `master`
+-> `/docs`, and Cloudflare's Git integration redeploys the `sneekie.xyz` mirror from the root
+`wrangler.jsonc` (confirmed active 2026-08-01; no local `wrangler deploy` or API token
+needed). When only the Wasm bot changed, rebuild `docs/js/bot-engine.wasm`
 first (see **Live bot engine**). For localized page text or chrome, edit the checked-in
 `docs/<lang>/*.html` files directly and keep the English, Dutch, and Ukrainian pages aligned by
 hand.
