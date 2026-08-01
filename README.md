@@ -20,8 +20,9 @@ pages stay 1988-only.
 
 The website has no framework, build step, or package dependency. The published
 pages live in `docs/`. The canonical site at https://sneekie.cc/ is served by
-Cloudflare (see `wrangler.jsonc`); GitHub Pages builds the same `docs/` tree as a
-mirror at https://herbert256.github.io/sneekie/. All site editing happens
+GitHub Pages (`master` -> `/docs`, custom domain `sneekie.cc`); Cloudflare serves
+the same `docs/` tree as a mirror at https://sneekie.xyz/ via the Workers
+static-assets config in `wrangler.jsonc`. All site editing happens
 directly under `docs/`, including the localized pages in `docs/en/`, `docs/nl/`,
 and `docs/uk/`.
 The Live bot is the one part with source outside `docs/`: its planner is written
@@ -78,7 +79,7 @@ docs/
 wasm/
   bot-engine/         # Rust source for the Live bot WebAssembly planner
 tools/                # Node bot simulator + weight tuner (offline; not shipped)
-wrangler.jsonc        # Cloudflare Workers config serving docs/ at sneekie.cc
+wrangler.jsonc        # Cloudflare Workers config serving docs/ at the sneekie.xyz mirror
 CLAUDE.md             # guidance for Claude Code
 ```
 
@@ -92,6 +93,30 @@ JavaScript. Interactive pages keep the scripts they need (`game`, `manual`, `bot
 `magazine`, `vram`).
 `docs/css/game.css` styles the monitor shell, and `docs/css/site.css` styles the
 static shared chrome used by the content pages.
+
+## Hosting
+
+Two domains serve the identical `docs/` tree:
+
+- **https://sneekie.cc/** (canonical) - GitHub Pages, publishing `master` -> `/docs` with
+  the custom domain `sneekie.cc`; https://herbert256.github.io/sneekie/ redirects there.
+- **https://sneekie.xyz/** (mirror) - Cloudflare Workers static assets from `wrangler.jsonc`,
+  republished with `wrangler deploy` (or Cloudflare's Git integration). All canonical,
+  hreflang, and sitemap URLs point at `sneekie.cc`, so search engines treat `.xyz` as a
+  mirror.
+
+Known hosting gaps (as of 2026-08-01) and their fixes:
+
+- `https://www.sneekie.cc` fails TLS: the GitHub Pages certificate covers only the apex, so
+  the www hostname gets the fallback `*.github.io` certificate. Re-save the custom domain in
+  the GitHub Pages settings so a www certificate is provisioned, or drop the www DNS record.
+- `http://sneekie.xyz` serves the site unencrypted without redirecting to https: enable
+  "Always Use HTTPS" for the zone in the Cloudflare dashboard.
+
+Already fixed in the repo (effective on the next Cloudflare deploy): `sneekie.xyz` 404s
+returned an empty page instead of `docs/404.html` (`"not_found_handling": "404-page"` in
+`wrangler.jsonc`), and in-page links there kept `.html` and cost a redirect per click
+(`docs/js/site.js` now rewrites clean links on the `sneekie.xyz` hostnames too).
 
 ## Maintenance
 

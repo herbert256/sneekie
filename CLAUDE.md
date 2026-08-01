@@ -27,14 +27,23 @@ Fable. The Play and Bot pages carry a 1988/2026 era switch that loads one engine
 ## Layout & Deployment
 
 The repository root **is** the git repo (remote `github.com:herbert256/sneekie`). The
-publishable website lives in `docs/`. The canonical site at https://sneekie.cc/ is served by
-**Cloudflare**: the root `wrangler.jsonc` publishes `docs/` as Cloudflare Workers static assets
-(project name `sneekie`), and `server: cloudflare` in the live response headers confirms it.
-GitHub Pages also builds the same `master` -> `/docs` tree as a **mirror** at
-https://herbert256.github.io/sneekie/ (its custom-domain CNAME is unset). Clean URLs (dropping
-the `.html`) resolve on `sneekie.cc` because Cloudflare serves them; `docs/js/site.js` only
-rewrites in-page links to clean form when `location.hostname` is `sneekie.cc`/`www.sneekie.cc`,
-so keep `.html` in the checked-in `href`s.
+publishable website lives in `docs/`. The same tree is served on two domains (verified from
+live response headers on 2026-08-01):
+
+- The canonical https://sneekie.cc/ is served by **GitHub Pages** (`server: GitHub.com`):
+  the Pages build publishes `master` -> `/docs` with custom domain `sneekie.cc`
+  (`gh api repos/herbert256/sneekie/pages` verifies it), and
+  https://herbert256.github.io/sneekie/ 301-redirects there.
+- The mirror https://sneekie.xyz/ is served by **Cloudflare** (`server: cloudflare`): the root
+  `wrangler.jsonc` publishes `docs/` as Cloudflare Workers static assets (project name
+  `sneekie`), republished by `wrangler deploy` (or Cloudflare's Git integration).
+
+All canonical links, hreflang alternates, `og:url`, `robots.txt`, and the sitemap point at
+`sneekie.cc`, so `.xyz` presents itself to search engines as a mirror. Clean URLs (dropping
+the `.html`) resolve on both hosts (GitHub Pages serves the extensionless form directly;
+Cloudflare 307-redirects `.html` to it); `docs/js/site.js` only rewrites in-page links to
+clean form when `location.hostname` is a `sneekie.cc`/`sneekie.xyz` hostname (with or
+without `www.`), so keep `.html` in the checked-in `href`s.
 
 - `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
@@ -86,14 +95,34 @@ are the only HTML at the site root. Content pages live under `docs/en/`, `docs/n
 `docs/uk/`, so root-level links should include the language prefix; links between content pages
 can use same-language relative `.html` paths.
 
-To ship a change: edit source files, commit, and push to `master`. GitHub Pages publishes the
-mirror from `master` -> `/docs` automatically (`gh api repos/herbert256/sneekie/pages` verifies
-it). The canonical `sneekie.cc` is fronted by Cloudflare from the root `wrangler.jsonc`
-(`docs/` as static assets); a Cloudflare deploy (e.g. `wrangler deploy`, or its Git integration
-on push) republishes it. When only the Wasm bot changed, rebuild `docs/js/bot-engine.wasm`
+To ship a change: edit source files, commit, and push to `master`. GitHub Pages republishes
+the canonical `sneekie.cc` from `master` -> `/docs` automatically. The `sneekie.xyz` mirror
+needs a Cloudflare deploy from the root `wrangler.jsonc` (e.g. `wrangler deploy`, or its Git
+integration on push). When only the Wasm bot changed, rebuild `docs/js/bot-engine.wasm`
 first (see **Live bot engine**). For localized page text or chrome, edit the checked-in
 `docs/<lang>/*.html` files directly and keep the English, Dutch, and Ukrainian pages aligned by
 hand.
+
+### Known serving issues (as of 2026-08-01)
+
+Both domains serve byte-identical content (all 137 tracked `docs/` files verified), but each
+host has open configuration gaps:
+
+- `sneekie.cc` (GitHub Pages): `https://www.sneekie.cc` fails TLS. The www CNAME resolves to
+  GitHub Pages, but the Pages certificate covers only the apex (`domains: ["sneekie.cc"]`),
+  so https on www serves the fallback `*.github.io` certificate. Fix in the repo's GitHub
+  Pages settings (re-save the custom domain so a www certificate is provisioned) or drop the
+  www DNS record.
+- `sneekie.xyz` (Cloudflare): plain `http://sneekie.xyz` serves the full site unencrypted
+  with no redirect to https. Fix: enable "Always Use HTTPS" for the zone in the Cloudflare
+  dashboard (GitHub Pages already 301s http -> https on `.cc`).
+- Minor, `sneekie.xyz`: `SNEEKIE.BAS` is served with no `Content-Type` header (GitHub sends
+  `application/octet-stream`); downloads still work via the `download` attribute.
+
+Fixed in the repo on 2026-08-01, effective on the next Cloudflare deploy: `sneekie.xyz` 404s
+used to return an empty body (`"not_found_handling": "404-page"` in `wrangler.jsonc` now
+serves the nearest `404.html`), and internal `.html` links cost a 307 hop per click there
+(the `site.js` clean-link rewrite now covers the `sneekie.xyz` hostnames too).
 
 ## Pages
 

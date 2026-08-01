@@ -5,7 +5,8 @@ function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; 
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(_){ } }
 
 function useCleanUrls(){
-  return location.hostname === 'sneekie.cc' || location.hostname === 'www.sneekie.cc';
+  return location.hostname === 'sneekie.cc' || location.hostname === 'www.sneekie.cc' ||
+         location.hostname === 'sneekie.xyz' || location.hostname === 'www.sneekie.xyz';
 }
 
 function normalizeCleanLinks(){
