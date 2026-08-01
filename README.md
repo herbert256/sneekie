@@ -105,17 +105,15 @@ Two domains serve the identical `docs/` tree:
   hreflang, and sitemap URLs point at `sneekie.cc`, so search engines treat `.xyz` as a
   mirror.
 
-Known hosting gaps (as of 2026-08-01) and their fixes:
-
-- `https://www.sneekie.cc` fails TLS: the GitHub Pages certificate covers only the apex, so
-  the www hostname gets the fallback `*.github.io` certificate. Re-save the custom domain in
-  the GitHub Pages settings so a www certificate is provisioned, or drop the www DNS record.
-
-Already fixed (verified live 2026-08-01): `sneekie.xyz` 404s returned an empty page instead
-of `docs/404.html` (`"not_found_handling": "404-page"` in `wrangler.jsonc`), in-page links
-there kept `.html` and cost a redirect per click (`docs/js/site.js` now rewrites clean links
-on the `sneekie.xyz` hostnames too), and `http://sneekie.xyz` now 301s to https ("Always Use
-HTTPS" enabled in Cloudflare).
+A 2026-08-01 audit found and fixed (all verified live): `sneekie.xyz` 404s returned an
+empty page instead of `docs/404.html` (`"not_found_handling": "404-page"` in
+`wrangler.jsonc`), in-page links there kept `.html` and cost a redirect per click
+(`docs/js/site.js` now rewrites clean links on the `sneekie.xyz` hostnames too),
+`http://sneekie.xyz` served the site without https ("Always Use HTTPS" enabled in
+Cloudflare), and `https://www.sneekie.cc` failed TLS (the www CNAME now points at
+`herbert256.github.io` and the re-provisioned GitHub Pages certificate covers both apex and
+www; www 301s to `https://sneekie.cc/`). One accepted quirk: `sneekie.xyz` serves
+`SNEEKIE.BAS` with no `Content-Type` header; the Source page's download still works.
 
 ## Maintenance
 

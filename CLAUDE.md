@@ -104,24 +104,21 @@ first (see **Live bot engine**). For localized page text or chrome, edit the che
 `docs/<lang>/*.html` files directly and keep the English, Dutch, and Ukrainian pages aligned by
 hand.
 
-### Known serving issues (as of 2026-08-01)
+### Serving health (audited 2026-08-01)
 
-Both domains serve byte-identical content (all 137 tracked `docs/` files verified), but each
-host has open configuration gaps:
+Both domains serve byte-identical content (all 137 tracked `docs/` files verified). One
+known minor quirk remains: `sneekie.xyz` serves `SNEEKIE.BAS` with no `Content-Type` header
+(GitHub sends `application/octet-stream`); downloads still work via the `download`
+attribute, and Cloudflare's static-assets config offers no way to set it.
 
-- `sneekie.cc` (GitHub Pages): `https://www.sneekie.cc` fails TLS. The www CNAME resolves to
-  GitHub Pages, but the Pages certificate covers only the apex (`domains: ["sneekie.cc"]`),
-  so https on www serves the fallback `*.github.io` certificate. Fix in the repo's GitHub
-  Pages settings (re-save the custom domain so a www certificate is provisioned) or drop the
-  www DNS record.
-- Minor, `sneekie.xyz`: `SNEEKIE.BAS` is served with no `Content-Type` header (GitHub sends
-  `application/octet-stream`); downloads still work via the `download` attribute.
-
-Fixed on 2026-08-01 (verified live): `sneekie.xyz` 404s returned an empty body
-(`"not_found_handling": "404-page"` in `wrangler.jsonc` now serves the nearest `404.html`),
-internal `.html` links cost a 307 hop per click there (the `site.js` clean-link rewrite now
-covers the `sneekie.xyz` hostnames too), and plain `http://sneekie.xyz` served the site
-unencrypted (Cloudflare's "Always Use HTTPS" now 301s it to https).
+Issues found and fixed during that audit (all verified live): `sneekie.xyz` 404s returned an
+empty body (`"not_found_handling": "404-page"` in `wrangler.jsonc` now serves the nearest
+`404.html`); internal `.html` links cost a 307 hop per click there (the `site.js` clean-link
+rewrite now covers the `sneekie.xyz` hostnames too); plain `http://sneekie.xyz` served the
+site unencrypted (Cloudflare's "Always Use HTTPS" now 301s it to https); and
+`https://www.sneekie.cc` failed TLS with the fallback `*.github.io` certificate (the www
+CNAME now points at `herbert256.github.io` and the re-provisioned Pages certificate covers
+both `sneekie.cc` and `www.sneekie.cc`; www 301s to the apex).
 
 ## Pages
 
