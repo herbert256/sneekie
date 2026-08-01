@@ -131,26 +131,28 @@ summary:focus-visible,
   bottom:0;
   z-index:0;
   display:block;
-  width:clamp(96px, 8.8vw, 118px);
+  width:clamp(108px, 9.6vw, 130px);
   height:clamp(280px, 72%, 340px);
   overflow:hidden;
   pointer-events:none;
   border:1px solid rgba(255,255,255,.42);
   border-radius:44% 44% 14px 14px / 8% 8% 13px 13px;
   background:radial-gradient(ellipse at 50% 0, rgba(255,255,255,.72) 0 24%, transparent 25%),
-    linear-gradient(90deg, rgba(0,0,0,.24), transparent 12% 88%, rgba(0,0,0,.22)),
+    linear-gradient(90deg, rgba(255,255,255,.16), rgba(0,0,0,.06) 13%, transparent 27% 75%, rgba(0,0,0,.34) 100%),
     linear-gradient(155deg, #d8d0b6 0%, #beb293 52%, #8b826c 100%);
-  box-shadow:0 34px 70px -34px rgba(0,0,0,.98), inset 0 3px 0 rgba(255,255,255,.5), inset 0 -18px 26px rgba(65,54,35,.32);
+  box-shadow:0 34px 70px -34px rgba(0,0,0,.98), inset 0 3px 0 rgba(255,255,255,.5), inset 4px 0 8px rgba(255,255,255,.13), inset -5px 0 10px rgba(42,34,22,.3), inset 0 -18px 26px rgba(65,54,35,.32);
 }
 .crt-speaker-left{
   right:calc(100% + clamp(14px, 1.7vw, 22px));
-  transform:perspective(320px) rotateY(-5deg);
+  transform:perspective(380px) rotateY(7deg);
   transform-origin:right center;
+  filter:drop-shadow(-10px 18px 12px rgba(0,0,0,.46));
 }
 .crt-speaker-right{
   left:calc(100% + clamp(14px, 1.7vw, 22px));
-  transform:perspective(320px) rotateY(5deg);
+  transform:perspective(380px) rotateY(-7deg);
   transform-origin:left center;
+  filter:drop-shadow(10px 18px 12px rgba(0,0,0,.46));
 }
 .crt-speaker::before{
   content:"";
@@ -174,12 +176,19 @@ summary:focus-visible,
   left:9px;
   height:42%;
   display:block;
-  background:radial-gradient(ellipse at 20% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
-    radial-gradient(ellipse at 80% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
-    radial-gradient(circle at 21% 84%, #65cf93 0 6%, #102115 7% 12%, transparent 13%),
-    radial-gradient(circle at 78% 84%, #e7dcc2 0 9%, #90836a 10% 18%, #2f2b22 19% 22%, transparent 23%),
+  background:radial-gradient(ellipse at 22% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    radial-gradient(ellipse at 78% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    radial-gradient(circle at 23% 84%, #65cf93 0 6%, #102115 7% 12%, transparent 13%),
+    radial-gradient(circle at 77% 84%, #e7dcc2 0 9%, #90836a 10% 18%, #2f2b22 19% 22%, transparent 23%),
     linear-gradient(180deg, transparent 0 56%, rgba(43,38,27,.36) 57% 59%, rgba(231,221,190,.52) 60% 100%);
   border-radius:0 0 9px 9px;
+}
+/* The left unit is the passive half of the 1988 pair; power and volume live
+   only on the right speaker. */
+.crt-speaker-left::after{
+  background:radial-gradient(ellipse at 22% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    radial-gradient(ellipse at 78% 28%, #070705 0 14%, #332d1d 15% 22%, transparent 24%),
+    linear-gradient(180deg, transparent 0 56%, rgba(43,38,27,.36) 57% 59%, rgba(231,221,190,.52) 60% 100%);
 }
 #bezel:fullscreen .crt-speaker{
   display:none;
