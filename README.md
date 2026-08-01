@@ -110,13 +110,12 @@ Known hosting gaps (as of 2026-08-01) and their fixes:
 - `https://www.sneekie.cc` fails TLS: the GitHub Pages certificate covers only the apex, so
   the www hostname gets the fallback `*.github.io` certificate. Re-save the custom domain in
   the GitHub Pages settings so a www certificate is provisioned, or drop the www DNS record.
-- `http://sneekie.xyz` serves the site unencrypted without redirecting to https: enable
-  "Always Use HTTPS" for the zone in the Cloudflare dashboard.
 
-Already fixed in the repo (effective on the next Cloudflare deploy): `sneekie.xyz` 404s
-returned an empty page instead of `docs/404.html` (`"not_found_handling": "404-page"` in
-`wrangler.jsonc`), and in-page links there kept `.html` and cost a redirect per click
-(`docs/js/site.js` now rewrites clean links on the `sneekie.xyz` hostnames too).
+Already fixed (verified live 2026-08-01): `sneekie.xyz` 404s returned an empty page instead
+of `docs/404.html` (`"not_found_handling": "404-page"` in `wrangler.jsonc`), in-page links
+there kept `.html` and cost a redirect per click (`docs/js/site.js` now rewrites clean links
+on the `sneekie.xyz` hostnames too), and `http://sneekie.xyz` now 301s to https ("Always Use
+HTTPS" enabled in Cloudflare).
 
 ## Maintenance
 

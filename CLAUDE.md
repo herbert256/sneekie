@@ -114,16 +114,14 @@ host has open configuration gaps:
   so https on www serves the fallback `*.github.io` certificate. Fix in the repo's GitHub
   Pages settings (re-save the custom domain so a www certificate is provisioned) or drop the
   www DNS record.
-- `sneekie.xyz` (Cloudflare): plain `http://sneekie.xyz` serves the full site unencrypted
-  with no redirect to https. Fix: enable "Always Use HTTPS" for the zone in the Cloudflare
-  dashboard (GitHub Pages already 301s http -> https on `.cc`).
 - Minor, `sneekie.xyz`: `SNEEKIE.BAS` is served with no `Content-Type` header (GitHub sends
   `application/octet-stream`); downloads still work via the `download` attribute.
 
-Fixed in the repo on 2026-08-01, effective on the next Cloudflare deploy: `sneekie.xyz` 404s
-used to return an empty body (`"not_found_handling": "404-page"` in `wrangler.jsonc` now
-serves the nearest `404.html`), and internal `.html` links cost a 307 hop per click there
-(the `site.js` clean-link rewrite now covers the `sneekie.xyz` hostnames too).
+Fixed on 2026-08-01 (verified live): `sneekie.xyz` 404s returned an empty body
+(`"not_found_handling": "404-page"` in `wrangler.jsonc` now serves the nearest `404.html`),
+internal `.html` links cost a 307 hop per click there (the `site.js` clean-link rewrite now
+covers the `sneekie.xyz` hostnames too), and plain `http://sneekie.xyz` served the site
+unencrypted (Cloudflare's "Always Use HTTPS" now 301s it to https).
 
 ## Pages
 
