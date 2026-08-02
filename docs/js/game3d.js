@@ -478,7 +478,7 @@ void main(){
     bumpK = 0.22;
     wet = 0.30 + 0.70 * smoothstep(0.42, 0.72, vnoise(g * 0.37 + vec2(9.1)));  // puddle patches
     base *= 1.0 - wet * 0.18;
-    spec = 0.45 + wet * 0.5; gloss = 120.0;
+    spec = 0.75 + wet * 1.1; gloss = 220.0;
   } else if(mode == 2){
     // stone bricks, mapped per dominant face axis so courses stay level
     vec3 g = vPos;
@@ -495,7 +495,7 @@ void main(){
     base *= 0.80 + 0.20 * clamp(g.y * 1.6, 0.0, 1.0);
     h = (1.0 - mortar) * 0.9 + tint * 0.3 + vnoise(buv * 7.0) * 0.35;
     bumpK = 0.45;
-    spec = 0.10; gloss = 26.0;
+    spec = 0.28; gloss = 42.0;
     float moss = smoothstep(0.52, 0.80, vnoise(buv * 0.9 + vec2(3.7))) * clamp(1.3 - g.y, 0.0, 1.0);
     base = mix(base, vec3(0.012, 0.045, 0.010), moss * 0.75);
   } else if(mode == 3){
@@ -531,8 +531,8 @@ void main(){
     h = dome * 0.58 + glint * 0.08;
     bumpK = 0.30;
     // dry dorsum, waxier flanks: no continuous highlight straight down the spine
-    spec = 0.24 * (1.0 - 0.62 * dorsal); gloss = 46.0;
-    spec *= (1.0 - 0.72 * ridge) * (0.65 + 0.55 * glint);
+    spec = 0.55 * (1.0 - 0.55 * dorsal); gloss = 72.0;
+    spec *= (1.0 - 0.72 * ridge) * (0.72 + 0.65 * glint);
   } else if(mode == 4){
     // bone-gray skull: hollow eye sockets, nasal cavity, gritted teeth
     vec3 No = normalize(vNormObj);
@@ -541,16 +541,23 @@ void main(){
       vec2 p = No.xy / No.z;
       float socket = min(length((p - vec2(-0.30, 0.18)) * vec2(1.0, 1.15)),
                          length((p - vec2(0.30, 0.18)) * vec2(1.0, 1.15)));
-      float dark = smoothstep(0.21, 0.15, socket);
-      float nasal = smoothstep(0.095, 0.055, length((p - vec2(0.0, -0.16)) * vec2(1.0, 0.75)));
-      float mouth = smoothstep(0.065, 0.035, abs(p.y + 0.44)) * step(abs(p.x), 0.30);
-      mouth *= 0.55 + 0.45 * step(0.5, fract(p.x * 6.0 + 0.25));
-      float f2 = max(max(dark, nasal), mouth * 0.85);
-      base = mix(base, vec3(0.010, 0.009, 0.007), f2);
-      base *= 1.0 - 0.28 * smoothstep(0.45, 0.80, abs(p.x)) * step(p.y, 0.4);   // sunken temples
-      base *= 0.92 + 0.10 * vnoise(p * 5.0);                                    // old bone
+      float dark = smoothstep(0.28, 0.10, socket);
+      // burning embers deep in the sockets
+      float ember = smoothstep(0.16, 0.03, socket);
+      base = mix(base, vec3(0.22, 0.02, 0.01), ember * 0.65);
+      // forehead crack — a vertical stress fissure
+      float crack = smoothstep(0.050, 0.012, abs(p.x - 0.03));
+      crack *= step(0.18, p.y) * step(p.y, 0.60);
+      crack *= vnoise(p * vec2(0.5, 4.0)) * 0.65 + 0.35;
+      float nasal = smoothstep(0.110, 0.04, length((p - vec2(0.0, -0.16)) * vec2(1.0, 0.75)));
+      float mouth = smoothstep(0.070, 0.030, abs(p.y + 0.44)) * step(abs(p.x), 0.32);
+      mouth *= 0.50 + 0.50 * step(0.5, fract(p.x * 6.0 + 0.25));
+      float f2 = max(max(dark, nasal), max(mouth * 0.88, crack * 0.60));
+      base = mix(base, vec3(0.005, 0.004, 0.002), f2);
+      base *= 1.0 - 0.38 * smoothstep(0.38, 0.84, abs(p.x)) * step(p.y, 0.4);   // deeper sunken temples
+      base *= 0.86 + 0.16 * vnoise(p * 6.0);                                    // bleached bone
     }
-    spec = 0.30; gloss = 26.0;
+    spec = 0.65; gloss = 22.0;
   } else if(mode == 5){
     // Head plates with a dark arrowhead crown and the viper's eye stripe.
     float u = vUV.x;
@@ -578,8 +585,8 @@ void main(){
     float dome = clamp(1.0 - dd * 1.55, 0.0, 1.0);
     h = dome * 0.52 + glint * 0.08;
     bumpK = 0.28;
-    spec = 0.22 * (1.0 - 0.55 * (1.0 - smoothstep(0.30, 0.55, cu))); gloss = 52.0;
-    spec *= (1.0 - 0.72 * ridge) * (0.65 + 0.55 * glint);
+    spec = 0.48 * (1.0 - 0.45 * (1.0 - smoothstep(0.30, 0.55, cu))); gloss = 80.0;
+    spec *= (1.0 - 0.72 * ridge) * (0.72 + 0.65 * glint);
   }
   if(bumpK > 0.0) N = bumpNormal(N, h, bumpK);
   vec3 V = normalize(uCamPos - vPos);
@@ -588,16 +595,22 @@ void main(){
     float f2 = pow(1.0 - max(dot(N, V), 0.0), 1.6);
     base = mix(base, vec3(0.08, 0.15, 0.045), f2 * 0.14);
   }
+  // Fresnel edge-rim — specular flares at glancing angles
+  float fresnel = 1.0 + pow(1.0 - max(dot(N, V), 0.0), 3.5) * 4.5;
   vec3 L = normalize(uLightDir);
   float sh = shadowFactor(N);
   float dif = max(dot(N, L), 0.0) * sh;
   vec3 H = normalize(L + V);
-  float sp = pow(max(dot(N, H), 0.0), gloss) * spec * sh;
+  float NdotH = max(dot(N, H), 0.0);
+  float sp = pow(NdotH, gloss) * spec * fresnel * sh;
+  float spBroad = pow(NdotH, gloss * 0.13) * spec * 0.35 * fresnel * sh;
   vec3 sun = vec3(1.50, 1.40, 1.14);
   float hemi = 0.55 + 0.45 * max(N.y, 0.0);
+  vec3 sunSpec = mix(sun, base, 0.55);
   vec3 col = base * amb * hemi * vec3(0.72, 0.94, 0.86)
            + base * dif * sun
-           + sun * sp;
+           + sunSpec * sp
+           + sunSpec * spBroad;
   for(int i = 0; i < 12; i++){                // dynamic point lights
     if(i >= uLCount) break;
     vec3 ld = uLPos[i] - vPos;
@@ -606,18 +619,19 @@ void main(){
     if(att < 0.004) continue;
     vec3 Ln = ld * inversesqrt(max(d2, 1e-4));
     vec3 Hp = normalize(Ln + V);
-    col += uLCol[i] * att * (base * max(dot(N, Ln), 0.0)
-         + vec3(0.7) * pow(max(dot(N, Hp), 0.0), gloss) * spec);
+    float NdotHp = max(dot(N, Hp), 0.0);
+     col += uLCol[i] * att * (base * max(dot(N, Ln), 0.0)
+          + vec3(1.2) * (pow(NdotHp, gloss) + pow(NdotHp, gloss * 0.13) * 0.45) * spec * fresnel);
   }
-  float rim = pow(1.0 - max(dot(N, V), 0.0), 2.6);
-  col += vec3(0.10, 0.55, 0.18) * (rim * uRim);
+  float rim = pow(1.0 - max(dot(N, V), 0.0), 1.6);
+  col += vec3(0.15, 0.68, 0.22) * (rim * uRim * 3.0);
   if(mode == 1 && uReflOn > 0.5){
     // planar reflection of the mirrored scene, rippled by the floor bump
     vec2 suv = gl_FragCoord.xy / uViewport + N.xz * 0.05;
     vec3 re = texture(uRefl, suv).rgb;
     vec3 rc = re * re * 4.0;
     float fresF = pow(1.0 - max(dot(N, V), 0.0), 2.0);
-    col += rc * (0.06 + 0.50 * fresF) * wet;
+    col += rc * (0.06 + 0.65 * fresF) * wet;
   }
   float fog = smoothstep(uFogRange.x, uFogRange.y, length(vPos - uCamPos));
   col = mix(col, uFogColor, fog * 0.9);
@@ -678,7 +692,7 @@ out vec4 frag;
 void main(){
   vec3 e = texture(uScene, vUV).rgb;
   vec3 c = e * e * 4.0;
-  frag = vec4(max(c - vec3(1.05), 0.0) / 3.0, 1.0);
+  frag = vec4(max(c - vec3(0.52), 0.0) / 1.6, 1.0);
 }`;
 const BLUR_FS = `#version 300 es
 precision highp float;
@@ -716,20 +730,20 @@ void main(){
   }
   vec2 cc = uv - 0.5;
   float r2 = dot(cc, cc);
-  vec2 off = cc * (0.0012 + 0.0030 * r2);       // subtle chromatic aberration
+   vec2 off = cc * (0.0022 + 0.0055 * r2);       // strong chromatic aberration — cinematic edge bleed
   vec3 col;
   col.r = texture(uScene, uv - off).r;
   col.g = texture(uScene, uv).g;
   col.b = texture(uScene, uv + off).b;
   col = col * col * 4.0;                        // decode
-  col += texture(uBloom, uv).rgb * 3.0 * 0.8;   // bloom
-  col *= 1.22;                                  // exposure
+  col += texture(uBloom, uv).rgb * 5.5 * 1.1;   // bloom
+  col *= 1.42;                                  // exposure
   col = aces(col);
   col = pow(col, vec3(1.0 / 2.2));
   float lum = dot(col, vec3(0.2126, 0.7152, 0.0722));
-  col = mix(vec3(lum), col, 1.22);              // filmic saturation push
-  col *= 1.0 - 0.32 * smoothstep(0.12, 0.72, r2);       // vignette
-  col += (hash21(vUV * uRes + fract(uTime) * 61.7) - 0.5) * 0.014;  // grain
+  col = mix(vec3(lum), col, 1.35);              // filmic saturation push
+  col *= 1.0 - 0.36 * smoothstep(0.12, 0.72, r2);       // vignette
+  col += (hash21(vUV * uRes + fract(uTime) * 61.7) - 0.5) * 0.012;  // grain
   frag = vec4(col, 1.0);
 }`;
 
@@ -2604,7 +2618,7 @@ function renderShadow(rings, t){
       else if(v === CLUB) drawDepth(R.club, wx, bobY, wz, -t * 1.3 + ph, 1.5, 1.5, 1.5);
       else {
         const wob = skullWobble(x, y, t);
-        drawDepth(R.ball, wx + wob.dx, 0.52 + wob.dy, wz + wob.dz, 0, 0.38, 0.42, 0.38);
+        drawDepth(R.ball, wx + wob.dx, 0.68 + wob.dy, wz + wob.dz, 0, 0.68, 0.55, 0.68);
       }
     }
   }
@@ -2696,14 +2710,14 @@ function worldToUV(x, y, z){
   return [(m[0] * x + m[4] * y + m[8] * z + m[12]) / w * 0.5 + 0.5,
           (m[1] * x + m[5] * y + m[9] * z + m[13]) / w * 0.5 + 0.5];
 }
-/* skulls drift restlessly, but never leave their cell (radius .38 + drift .10 < half a cell) */
+/* skulls drift restlessly, but never leave their cell (radius .68 + drift .20 < half a cell) */
 function skullWobble(x, y, t){
   const ph = hash1(x * 53 + y * 29) * 9;
   return {
-    dx: Math.sin(t * 0.9 + ph) * 0.10,
-    dz: Math.cos(t * 0.7 + ph * 1.4) * 0.10,
-    dy: Math.sin(t * 1.3 + ph) * 0.04,
-    yaw: Math.sin(t * 0.5 + ph) * 0.55,
+    dx: Math.sin(t * 1.7 + ph) * 0.20,
+    dz: Math.cos(t * 1.2 + ph * 1.4) * 0.20,
+    dy: Math.sin(t * 2.5 + ph) * 0.14,
+    yaw: Math.sin(t * 0.9 + ph) * 1.20,
   };
 }
 function drawBoardMeshes(t, withGlow){
@@ -2725,17 +2739,17 @@ function drawBoardMeshes(t, withGlow){
       } else if(v === SMILEY){
         /* the -50 penalty item: a restless skull, drifting inside its cell */
         const wob = skullWobble(x, y, t);
-        const sx2 = wx + wob.dx, sz2 = wz + wob.dz, sy2 = 0.52 + wob.dy;
+        const sx2 = wx + wob.dx, sz2 = wz + wob.dz, sy2 = 0.68 + wob.dy;
         const yaw = Math.atan2(cam.eye[0] - sx2, cam.eye[2] - sz2) + wob.yaw;
         const fx = Math.sin(yaw), fz = Math.cos(yaw);
-        drawLit(R.ball, sx2, sy2, sz2, yaw, 0.38, 0.42, 0.38, COL.smiley, null, 4, 0.45, 0.35);
-        drawLit(R.ball, sx2 + fx * 0.075, sy2 - 0.28, sz2 + fz * 0.075, yaw, 0.25, 0.16, 0.25, COL.smiley, null, 0, 0.42, 0.3);
+        drawLit(R.ball, sx2, sy2, sz2, yaw, 0.68, 0.55, 0.68, COL.smiley, null, 4, 0.45, 0.35);
+        drawLit(R.ball, sx2 + fx * 0.13, sy2 - 0.46, sz2 + fz * 0.13, yaw, 0.44, 0.28, 0.44, COL.smiley, null, 0, 0.42, 0.3);
         if(withGlow){
           const px2 = fz, pz2 = -fx;
           for(const s of [-1, 1])
-            pushBillboard(R.bb, sx2 + fx * 0.33 + px2 * 0.115 * s, sy2 + 0.08, sz2 + fz * 0.33 + pz2 * 0.115 * s,
-              0.09, 0.25, 1.0, 0.4, 0.5);
-          pushBillboard(R.bb, sx2, sy2, sz2, 0.55, 0.55, 0.65, 0.55, 0.05);
+            pushBillboard(R.bb, sx2 + fx * 0.50 + px2 * 0.19 * s, sy2 + 0.12, sz2 + fz * 0.50 + pz2 * 0.19 * s,
+              0.16, 0.35, 1.0, 0.18, 0.7);
+          pushBillboard(R.bb, sx2, sy2, sz2, 0.80, 0.55, 0.65, 0.55, 0.05);
         }
       }
     }
