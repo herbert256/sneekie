@@ -310,8 +310,12 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
 ## Running & Verification
 
 The site has no build/lint/test step. The only build is the Rust bot's Wasm (see the **Live bot
-engine** section above), which carries its own `cargo test` suite. To preview, serve the site
-folder:
+engine** section above), which carries its own `cargo test` suite. On this machine, local
+Apache already serves the working tree live at `http://localhost/sneekie/` (mapped straight
+to `docs/`, so edits show without commit or deploy) — prefer it for verification. Clean URLs
+404 there by design: `site.js` only rewrites links to clean form on the production
+hostnames, so local navigation uses the `.html` hrefs. On machines without that Apache
+setup, serve the site folder instead:
 
 ```sh
 cd docs
