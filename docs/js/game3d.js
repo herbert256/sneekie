@@ -1633,7 +1633,7 @@ function laySegments(){
   wallSeg(12, 13, 12, 16); wallSeg(25, 5, 25, 8);
 }
 
-/* level 3 shape: a grid of rooms with door gaps (spirit of 1500) */
+/* level 4 shape: a grid of rooms with door gaps (spirit of 1500) */
 function layRooms(){
   wallSeg(12, 1, 12, 20); wallSeg(25, 1, 25, 20);
   wallSeg(1, 7, 36, 7);   wallSeg(1, 14, 36, 14);
@@ -1641,7 +1641,7 @@ function layRooms(){
   for(const y of [7, 14]) for(const x of [5, 18, 31]) setCells(x, y, x + 1, y, EMPTY);
 }
 
-/* level 4 shape: zigzag rows of pushable stones (spirit of 1400) */
+/* level 3 shape: zigzag rows of pushable stones (spirit of 1400) */
 function layZigzag(){
   for(let x = 4; x <= 33; x += 3){
     stoneAt(x, 6 + ((x / 3) & 1));
@@ -1650,7 +1650,7 @@ function layZigzag(){
   for(const [x, y] of [[6,10],[10,11],[14,10],[22,11],[26,10],[30,11]]) stoneAt(x, y);
 }
 
-/* levels 5+8 machinery: vertical walls whose gap crawls (spirit of 1670+2130) */
+/* levels 7+8 machinery: vertical walls whose gap crawls (spirit of 1670+2130) */
 function gateOpenAt(g, y){ return ((y - g.gap + 20) % 20) < 4; }
 function applyGate(g){
   for(let y = 1; y <= GH - 2; y++) grid[gi(g.x, y)] = gateOpenAt(g, y) ? EMPTY : WALL;
@@ -1671,7 +1671,7 @@ function gateStep(){
   }
 }
 
-/* levels 6/7 machinery: free-flying plasma wisps (spirit of the 1988 arrows) */
+/* levels 5/6 machinery: free-flying plasma wisps (spirit of the 1988 arrows) */
 function makeWisp(x, y, dx, dy, speed){
   return { x, y, dx, dy, speed, phase: Math.random() * 7, trail: [] };
 }
@@ -1691,7 +1691,7 @@ function laySweepers(){
   }
 }
 
-/* level 8 shape: crawling gates plus stone posts (spirit of 1750) */
+/* level 7 shape: crawling gates plus stone posts (spirit of 1750) */
 function layStoneGates(){
   layGates();
   let k = 0;
@@ -1701,7 +1701,11 @@ function layStoneGates(){
   }
 }
 
-const LAYOUTS = [layOpen, laySegments, layRooms, layZigzag, layGates, layRisers, laySweepers, layStoneGates];
+/* 2026 deviation by design: the eight archetypes run easy -> difficult
+   (measured by the autopilot benchmark and mirrored for players), so the
+   crawling-gate walls — the cruelest board — close each 8-level cycle.
+   The 1988 original's ON LEVEL GOSUB order lives on in game.js. */
+const LAYOUTS = [layOpen, laySegments, layZigzag, layRooms, laySweepers, layRisers, layStoneGates, layGates];
 
 /* random item drop on an empty cell (the 1150 'place' of 2026);
    returns the cell so callers can point effects at it */

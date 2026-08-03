@@ -300,10 +300,12 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   promoted to every level), clubs +25, skulls -50 (the 1988 smileys, drawn as restless gray
   skulls that drift inside their cell; eating one
   respawns another), pushable stones, bonus 10000 draining per step, 3 lives, +1 life per
-  cleared level, F9/F10 cheats, Esc gives up, 32 levels. The eight layout archetypes follow the
-  original `ON LEVEL GOSUB` order (open court, line maze, rooms+doors, stone zigzag, gate walls
-  with crawling gaps, climbing hazards, sweeping hazards, gates+stones), cycled across four
-  speed tiers. Deviation by design: the snake moves continuously, **walls only bump** (stop +
+  cleared level, F9/F10 cheats, Esc gives up, 32 levels. The eight layout archetypes are the
+  original `ON LEVEL GOSUB` shapes, but reordered easy -> difficult (a 2026 deviation by
+  design, ranked by the autopilot benchmark): open court, line maze, stone zigzag,
+  rooms+doors, sweeping hazards, climbing hazards, gates+stones, and the crawling-gate walls
+  as level 8, cycled across four speed tiers. Deviation by design: the snake moves
+  continuously, **walls only bump** (stop +
   small penalty); only the glowing wisps (the 1988 arrows) kill, plus self-trapping ("No way
   out"). At level start the snake waits for the first command.
 - **Controls.** Arrows/WASD, swipe on touch, tap/click = BFS route to that cell (same
@@ -327,7 +329,7 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   boards with live crawling gates pool classes 2/3 for the hunt's first refusal and treat the
   reserve as a tiebreak. Wisps are fully deterministic (straight wrapped lines), so danger is
   judged from their EXACT positions at arrival time (`botWispD2`), plus a small toll for
-  loitering in a riser's column / sweeper's row (`botLaneNear`). On gate levels (5, 8) doorway
+  loitering in a riser's column / sweeper's row (`botLaneNear`). On gate levels (7, 8) doorway
   cells are predicted (the gap crawl is deterministic; a gate whose closing cell is occupied
   is frozen; a stone anywhere in the gap jams the door open for the rest of the level —
   recognized by `botGateStone`/`botGateJammed` and hunted deliberately as a jam target on the
@@ -337,9 +339,9 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   future wake (time-expanded body cells), and every hunt must survive a full route replay
   (`botRouteSafe`: march the body along the whole route with growth, then demand the tail
   stays reachable) with a starvation valve that lifts the veto when the endgame stalls.
-  Level 8 is now occasionally cleared single-life (door jams turn the board into one big
-  room); level 5 (pure crawling gates, no stones) remains unsolved — the bot survives long
-  but eventually gets sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the
+  Level 7 (gates+stones) is now occasionally cleared single-life (door jams turn the board
+  into one big room); level 8 (pure crawling gates, no stones) remains unsolved — the bot
+  survives long but eventually gets sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the
   `#speed` slider to a speed multiplier. `window.SNEEKIE3D` is a tiny read-only debug handle
   used by tests.
   `tools/sim-3d-bot.mjs` benchmarks this autopilot headlessly (see **Running & Verification**).
