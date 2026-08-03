@@ -2043,6 +2043,12 @@ const BOT_OVERFILL = 1500;
 const BOT_TAILPULL = 6;   // prefer loot near the tail's wake: the head then
                           // follows freshly vacated ground around the board
                           // instead of doubling back into its own body
+const BOT_CLUB_LATER = 400; // hearts before clovers: every heart eaten pops a
+                            // NEW clover somewhere random — possibly across
+                            // the maze — so clear the hearts while the tail
+                            // is short and mop up clovers when they stop
+                            // multiplying. A clover is only worth grabbing
+                            // first when it is much closer than any heart.
 function botHunt(tightHome){
   const h = G.cells[0];
   const t = G.cells[G.cells.length - 1];
@@ -2059,7 +2065,8 @@ function botHunt(tightHome){
     if(cost > botDist[idx]) continue;                  // stale heap entry
     if(idx !== start && (grid[idx] === HEART || grid[idx] === CLUB)){
       const lx = idx % GW, ly = (idx / GW) | 0;
-      const c = cost + (tightHome && botRegion[idx] ? BOT_OVERFILL : 0)
+      const c = cost + (grid[idx] === CLUB ? BOT_CLUB_LATER : 0)
+        + (tightHome && botRegion[idx] ? BOT_OVERFILL : 0)
         + (G.gates.length ? BOT_TAILPULL * (Math.abs(lx - t.x) + Math.abs(ly - t.y)) : 0);
       if(c < bestCost){ bestCost = c; best = idx; }
     }

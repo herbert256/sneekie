@@ -69,7 +69,8 @@ const HEADERS = [
   'const botGateCol', 'function botGatePass', 'function botFlood',
   'const botDist', 'const botFirst', 'const botHeap = [', 'function botHeapPush',
   'function botHeapPop', 'function botHugCost',
-  'const botRegion', 'const BOT_OVERFILL', 'const BOT_TAILPULL', 'function botHunt',
+  'const botRegion', 'const BOT_OVERFILL', 'const BOT_TAILPULL', 'const BOT_CLUB_LATER',
+  'function botHunt',
   'function botStepInfo', 'const botBodyIdx', 'function botChase',
   'function botEval', 'function botHot', 'function botSteer',
   'function updateWisps',
@@ -224,6 +225,13 @@ function plannerScenarios(){
   grid[gi(5,4)] = WALL; grid[gi(5,6)] = WALL;
   grid[gi(6,5)] = STONE; grid[gi(8,5)] = HEART;
   tests.push(chose('stone may be moved for later access', 1, 0));
+
+  // Hearts before clovers: a heart spawns a NEW clover somewhere random, so
+  // clear hearts while the tail is short — the nearer clover must lose to a
+  // heart a stretch further away.
+  reset([[5,5],[4,5],[3,5],[2,5]]);
+  grid[gi(8,5)] = CLUB; grid[gi(5,13)] = HEART;
+  tests.push(chose('nearby clover loses to farther heart', 0, 1));
   return tests;
 }
 return { runLevel, plannerScenarios };

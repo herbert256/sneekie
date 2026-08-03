@@ -316,7 +316,10 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   gated by a time-expanded return-path check (`botChase`: a body cell counts as passable once
   the tail will have vacated it, so reaching the own tail = a survivable chase loop); a
   pocket only counts as big enough if it still holds the snake after the loot inside it is
-  eaten. Each simulated landing also receives an escape-reserve rank: at least one lateral
+  eaten. Hearts are hunted ahead of clovers (`BOT_CLUB_LATER`): every heart eaten pops a NEW
+  clover somewhere random, so hearts get cleared while the tail is short and clovers are
+  mopped up once they stop multiplying. Each simulated landing also receives an
+  escape-reserve rank: at least one lateral
   exit is protected ahead of the hunted direction, then full wall/body clearance settles
   non-hunt ties. Steps are ranked in four safety classes (loop + stable-pocket guard,
   area-safe with guard, safe-until-the-doors-move, last-resort wall-follow orbit), and the
