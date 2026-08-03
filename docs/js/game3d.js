@@ -1932,86 +1932,333 @@ function routeNext(target){
 }
 
 /* ---------- the autopilot (Bot page) ---------- */
-function floodCount(sx, sy){
+/* Strategy over tactics: the hunt is a weighted search (Dijkstra), not a
+   plain BFS. Cells hugging a wall or the snake's own body cost extra, so
+   routes keep a one-cell escape row beside both whenever the board allows.
+   Skulls (-50) and stone pushes are allowed at a price: chewing through or
+   shoving a stone now beats being sealed in later. And no step is taken
+   without a return path — botSafe() simulates the move and demands the head
+   can still reach its own tail afterwards. */
+const BOT_STEP = 10;      // base cost of one route cell
+const BOT_SKULL = 250;    // a skull is worth a 25-step detour, no more
+const BOT_STONE = 60;     // pushing a stone is fine, just not gratuitous
+const BOT_HUG_WALL = 8;   // per adjacent wall/stone: keep a row of air
+const BOT_HUG_BODY = 14;  // per adjacent body cell: keep an escape row
+const BOT_GATE = 40;      // doorways are chokepoints: clear your own section first
+const BOT_WISP = 900;     // wisp lanes only when there is no other way
+const botGateCol = x => G.gates.some(g => g.x === x);
+/* gates are deterministic: the gap crawls one row per gatePeriod, except
+   while something sits in the closing cell (gateStep skips the whole gate
+   — usually our own body mid-crossing, which freezes the door open).
+   So "is this doorway cell passable D snake-steps from now" is a
+   prediction, not a guess. The +2 look-past trims the closing edge. */
+function botGatePass(g, y, D, hz){
+  const cv = grid[gi(g.x, g.gap)];
+  const bi2 = cv === SNAKE ? botBodyIdx[gi(g.x, g.gap)] : -1;
+  const hold = cv === EMPTY ? 0 : (bi2 >= 0 ? bi2 + 1 : 1e9);
+  // with a horizon, a distant doorway counts as shut: beyond a couple of
+  // gate ticks the predicted gap is guesswork, and a return path built on
+  // guesswork is how the planner talks itself into sealed pockets
+  if(hz && D > hold + hz) return false;
+  const gapAt = D2 => {
+    const s = D2 <= hold ? 0 : ((G.gateAcc + (D2 - hold) * G.stepDur) / G.gatePeriod) | 0;
+    return ((g.gap - 1 + s) % 20) + 1;
+  };
+  return (((y - gapAt(D)) % 20 + 20) % 20) < 4 && (((y - gapAt(D + 2)) % 20 + 20) % 20) < 4;
+}
+/* free-space flood from seed (a grid index). tailCell may be null. With
+   gatesClosed, every gate-column cell counts as shut no matter what the
+   grid says right now — the stable pocket a crawling door cannot take away. */
+function botFlood(seed, tailCell, gatesClosed){
   bfsSeen.fill(0);
-  let head = 0, tail = 0, count = 0;
-  bfsSeen[gi(sx, sy)] = 1;
-  bfsQueue[tail++] = gi(sx, sy);
-  while(head < tail && count < 260){
+  let head = 0, tail = 0, area = 0, grow = 0, tailReach = false;
+  bfsSeen[seed] = 1;
+  bfsQueue[tail++] = seed;
+  while(head < tail){
     const idx = bfsQueue[head++];
-    count++;
     const x = idx % GW, y = (idx / GW) | 0;
+    if(tailCell && Math.abs(x - tailCell.x) + Math.abs(y - tailCell.y) === 1) tailReach = true;
     for(let d = 0; d < 4; d++){
       const nx2 = x + DIRS[d].x, ny2 = y + DIRS[d].y;
       if(!inField(nx2, ny2)) continue;
       const ni = gi(nx2, ny2);
       if(bfsSeen[ni]) continue;
       const v = grid[ni];
-      if(v === WALL || v === SNAKE || v === STONE) continue;
+      if(v === WALL || v === SNAKE || v === STONE) continue;  // skulls count: escape may chew through
+      if(gatesClosed && G.gates.length && botGateCol(nx2)) continue;
+      if(v === HEART) grow += 2;
+      else if(v === CLUB) grow += 3;
       bfsSeen[ni] = 1;
       bfsQueue[tail++] = ni;
+      area++;
     }
   }
-  return count;
+  return { area, grow, tailReach };
 }
-const botSeen = new Uint8Array(GW * GH);
+const botDist = new Int32Array(GW * GH);
 const botFirst = new Int8Array(GW * GH);
-function botHunt(avoidDanger){
+/* binary min-heap of cost*1024+idx numbers (idx < 1024, so packing is exact) */
+const botHeap = [];
+function botHeapPush(v){
+  let i = botHeap.length;
+  botHeap.push(v);
+  while(i > 0){
+    const p = (i - 1) >> 1;
+    if(botHeap[p] <= v) break;
+    botHeap[i] = botHeap[p]; botHeap[p] = v; i = p;
+  }
+}
+function botHeapPop(){
+  const top = botHeap[0];
+  const v = botHeap.pop();
+  if(botHeap.length){
+    botHeap[0] = v;
+    let i = 0;
+    for(;;){
+      let c = i * 2 + 1;
+      if(c >= botHeap.length) break;
+      if(c + 1 < botHeap.length && botHeap[c + 1] < botHeap[c]) c++;
+      if(botHeap[c] >= v) break;
+      botHeap[i] = botHeap[c]; botHeap[c] = v; i = c;
+    }
+  }
+  return top;
+}
+function botHugCost(x, y){
+  let c = 0;
+  for(let d = 0; d < 4; d++){
+    const v = grid[gi(x + DIRS[d].x, y + DIRS[d].y)];
+    if(v === WALL || v === STONE) c += BOT_HUG_WALL;
+    else if(v === SNAKE) c += BOT_HUG_BODY;
+  }
+  return c;
+}
+/* full weighted search from the head. tightHome marks loot inside the
+   head's own stable pocket as a last resort (BOT_OVERFILL): eating where
+   the growth cannot be absorbed is how a snake entombs itself — better to
+   leave through a door and graze somewhere roomier first. */
+const botRegion = new Uint8Array(GW * GH);
+const BOT_OVERFILL = 1500;
+const BOT_TAILPULL = 6;   // prefer loot near the tail's wake: the head then
+                          // follows freshly vacated ground around the board
+                          // instead of doubling back into its own body
+function botHunt(tightHome){
   const h = G.cells[0];
+  const t = G.cells[G.cells.length - 1];
   const start = gi(h.x, h.y);
-  botSeen.fill(0);
-  let head = 0, tail = 0;
-  botSeen[start] = 1;
-  bfsQueue[tail++] = start;
-  while(head < tail){
-    const idx = bfsQueue[head++];
+  botDist.fill(0x3fffffff);
+  botDist[start] = 0;
+  botHeap.length = 0;
+  botHeapPush(start);
+  let best = -1, bestCost = 0x3fffffff;
+  while(botHeap.length){
+    const v = botHeapPop();
+    const idx = v % 1024;
+    const cost = (v - idx) / 1024;
+    if(cost > botDist[idx]) continue;                  // stale heap entry
+    if(idx !== start && (grid[idx] === HEART || grid[idx] === CLUB)){
+      const lx = idx % GW, ly = (idx / GW) | 0;
+      const c = cost + (tightHome && botRegion[idx] ? BOT_OVERFILL : 0)
+        + (G.gates.length ? BOT_TAILPULL * (Math.abs(lx - t.x) + Math.abs(ly - t.y)) : 0);
+      if(c < bestCost){ bestCost = c; best = idx; }
+    }
+    if(cost >= bestCost) break;                        // nothing cheaper left to find
     const x = idx % GW, y = (idx / GW) | 0;
-    if(idx !== start && (grid[idx] === HEART || grid[idx] === CLUB)) return DIRS[botFirst[idx]];
     for(let d = 0; d < 4; d++){
       const nx2 = x + DIRS[d].x, ny2 = y + DIRS[d].y;
       if(!inField(nx2, ny2)) continue;
       const ni = gi(nx2, ny2);
-      if(botSeen[ni]) continue;
-      const v = grid[ni];
-      if(!isPassableFor(v)) continue;
-      if(avoidDanger && G.wisps.length && wispNear(nx2, ny2, 1.9)) continue;
-      botSeen[ni] = 1;
+      const gv = grid[ni];
+      if(gv === SNAKE) continue;
+      let c = BOT_STEP + botHugCost(nx2, ny2);
+      if(G.gates.length && botGateCol(nx2)){
+        // route through the doorway as it will stand when we get there
+        const g = G.gates.find(gg => gg.x === nx2);
+        if(!botGatePass(g, ny2, (cost / BOT_STEP | 0) + 1)) continue;
+        c += BOT_GATE;
+      } else if(gv === WALL) continue;
+      if(gv === SMILEY) c += BOT_SKULL;
+      else if(gv === STONE){
+        const bx = nx2 + DIRS[d].x, by = ny2 + DIRS[d].y;
+        if(!inField(bx, by) || grid[gi(bx, by)] !== EMPTY) continue;
+        c += BOT_STONE;
+      }
+      if(G.wisps.length && wispNear(nx2, ny2, 1.9)) c += BOT_WISP;
+      const nc = cost + c;
+      if(nc >= botDist[ni]) continue;
+      botDist[ni] = nc;
       botFirst[ni] = idx === start ? d : botFirst[idx];
-      bfsQueue[tail++] = ni;
+      botHeapPush(nc * 1024 + ni);
     }
   }
-  return null;
+  return best < 0 ? null : DIRS[botFirst[best]];
+}
+/* one immediate step in direction d: null if illegal, else the target cell */
+function botStepInfo(d){
+  const h = G.cells[0];
+  const nx = h.x + d.x, ny = h.y + d.y;
+  const v = grid[gi(nx, ny)];
+  if(v === WALL || v === SNAKE) return null;
+  if(v === STONE && (!inField(nx + d.x, ny + d.y) || grid[gi(nx + d.x, ny + d.y)] !== EMPTY)) return null;
+  return { nx, ny, v };
+}
+/* the return path, time-expanded: a body cell counts as passable if the
+   tail will have vacated it by the time the head can arrive (cell with
+   tail-index i frees up after i+1 ticks, later when growth stalls the
+   tail). Reaching the tail cell itself means the head can chase the tail
+   forever — the survivable loop — even when the tail is buried deep in a
+   coil with no free cell beside it. */
+const botBodyIdx = new Int16Array(GW * GH);
+function botChase(start, grow2, strictGates){
+  bfsSeen.fill(0);
+  const tc = G.cells[G.cells.length - 1];
+  const ti = gi(tc.x, tc.y);
+  const hz = Math.max(6, (2 * G.gatePeriod / G.stepDur) | 0);
+  let head = 0, tail = 0, area = 0, grow = 0, gotTail = false;
+  bfsSeen[start] = 1;
+  botDist[start] = 0;
+  bfsQueue[tail++] = start;
+  while(head < tail){
+    const idx = bfsQueue[head++];
+    const D = botDist[idx];
+    const x = idx % GW, y = (idx / GW) | 0;
+    for(let d = 0; d < 4; d++){
+      const nx2 = x + DIRS[d].x, ny2 = y + DIRS[d].y;
+      if(!inField(nx2, ny2)) continue;
+      const ni2 = gi(nx2, ny2);
+      if(bfsSeen[ni2]) continue;
+      const v2 = grid[ni2];
+      if(v2 === STONE) continue;
+      if(G.gates.length && botGateCol(nx2)){
+        // strict mode writes every doorway off; otherwise a doorway cell
+        // goes by the predicted gap at arrival, not by the grid right now
+        if(strictGates) continue;
+        const g = G.gates.find(gg => gg.x === nx2);
+        if(!botGatePass(g, ny2, D + 1, hz)) continue;
+      } else if(v2 === WALL) continue;                 // skulls count: escape may chew through
+      if(v2 === SNAKE){
+        const i2 = botBodyIdx[ni2];
+        if(i2 < 0 || D + 1 < i2 + grow2 + 2) continue; // still occupied on arrival
+      }
+      if(v2 === HEART) grow += 2;
+      else if(v2 === CLUB) grow += 3;
+      bfsSeen[ni2] = 1;
+      botDist[ni2] = D + 1;
+      bfsQueue[tail++] = ni2;
+      area++;
+      if(ni2 === ti) gotTail = true;
+    }
+  }
+  return { area, grow, gotTail };
+}
+/* simulate the step (including a stone push), then demand a return path:
+   the chase loop onto the own tail must stay open — including against the
+   growth this very step would swallow (eating in a full pocket is the
+   classic self-entombment) — or the pocket must dwarf the snake. Returns
+   the verdict plus the chase-aware breathing room, which ranks the
+   least-bad step far better than a static flood when nothing is safe. */
+function botEval(d, s){
+  const ni = gi(s.nx, s.ny);
+  let bi = -1;
+  if(s.v === STONE){ bi = gi(s.nx + d.x, s.ny + d.y); grid[bi] = STONE; }
+  grid[ni] = SNAKE;
+  const grow2 = G.growPending + (s.v === HEART ? 2 : s.v === CLUB ? 3 : 0);
+  // a pocket is only big enough if it still holds the snake AFTER the
+  // meals inside it are eaten — growing past your room's capacity from
+  // its own loot was the bot's classic way to die
+  const a = botChase(ni, grow2, false);
+  const okA = a.gotTail || a.area >= G.cells.length + grow2 + a.grow + 10;
+  let okB = true;
+  if(okA && G.gates.length){
+    // the stable-pocket guard: with every doorway written off, the local
+    // return path must still stand — the chase loop, or room for the
+    // whole snake. Failing it does not veto the step (crossings live
+    // there briefly), it demotes it below any step that keeps it.
+    const b = botChase(ni, grow2, true);
+    okB = b.gotTail || b.area >= G.cells.length + grow2 + b.grow + 8;
+  }
+  const room = a.area + (a.gotTail ? 200 : 0);
+  grid[ni] = s.v;
+  if(bi >= 0) grid[bi] = EMPTY;
+  return { okA, okB, room, loop: a.gotTail };
+}
+/* a cell is hot when a wisp is on it or will be about there within the
+   next couple of snake steps — wispNear sees only the present */
+function botHot(x, y){
+  if(!G.wisps.length) return false;
+  if(wispNear(x, y, 1.7)) return true;
+  const t = 2 * G.stepDur;
+  for(const w of G.wisps){
+    const dx = x - (w.x + w.dx * w.speed * t), dy = y - (w.y + w.dy * w.speed * t);
+    if(dx * dx + dy * dy < 2.1) return true;
+  }
+  return false;
 }
 function botSteer(){
-  let dir = botHunt(true) || botHunt(false);
-  if(!dir){
-    // survival: take the move with the most breathing room. bestScore starts
-    // at -Infinity on purpose: a skull bite or a wisp-grazed cell scores deep
-    // negative, but the least-bad escape still beats standing at a wall until
-    // the board strangles us (that stall was a real bug: not stuck enough to
-    // die, not brave enough to move).
-    const h = G.cells[0];
-    let bestScore = -Infinity;
-    for(let d = 0; d < 4; d++){
-      const dd = DIRS[d];
-      if(dd.x === -G.dir.x && dd.y === -G.dir.y) continue;
-      const nx2 = h.x + dd.x, ny2 = h.y + dd.y;
-      const v = grid[gi(nx2, ny2)];
-      let ok = isPassableFor(v) || v === SMILEY;
-      if(!ok && v === STONE) ok = grid[gi(nx2 + dd.x, ny2 + dd.y)] === EMPTY;
-      if(!ok) continue;
-      let s = (v === STONE) ? 4 : floodCount(nx2, ny2);
-      if(v === SMILEY) s -= 60;
-      if(G.wisps.length && wispNear(nx2, ny2, 1.7)) s -= 400;
-      if(dd.x === G.dir.x && dd.y === G.dir.y) s += 2;
-      if(s > bestScore){ bestScore = s; dir = dd; }
-    }
+  const h = G.cells[0];
+  botBodyIdx.fill(-1);
+  for(let j = 0; j < G.cells.length; j++){
+    const c = G.cells[j];
+    botBodyIdx[gi(c.x, c.y)] = G.cells.length - 1 - j;   // 0 = tail
   }
-  if(dir){
-    if(!(dir.x === -G.dir.x && dir.y === -G.dir.y)){
-      if(dir.x !== G.dir.x || dir.y !== G.dir.y) G.bumped = false;
-      G.dir = dir;
+  // the head's stable pocket: whatever stays reachable if every door shuts
+  // now. When it cannot comfortably absorb the snake plus its pending
+  // growth, grazing in it is a last resort (see botHunt) — leave and eat
+  // elsewhere. The fat margin makes a big snake keep moving section to
+  // section instead of feasting in place until the pocket bursts.
+  const reg = botFlood(gi(h.x, h.y), null, true);
+  botRegion.set(bfsSeen);
+  const tightHome = reg.area < G.cells.length + G.growPending + reg.grow + 12;
+  const hunt = botHunt(tightHome);
+  // steps are ranked in four classes: true tail-chase loop with the
+  // stable-pocket guard intact (3), area-safe with the guard (2), safe
+  // only until the doors move (1), last resort (0). The hunted direction
+  // has first refusal only within a class — a bite that would sever the
+  // return path loses to a detour that keeps it, which is what stops the
+  // snake from grazing itself into a dense, tail-burying coil, and from
+  // threading its head into pockets a crawling door can seal. Class 0
+  // falls back to raw breathing room (that stall-at-the-wall bug is why
+  // it starts at -Infinity).
+  let pick = null, pickClass = -1, pickHunt = false, pickScore = -Infinity;
+  for(let d = 0; d < 4; d++){
+    const dd = DIRS[d];
+    const s = botStepInfo(dd);
+    if(!s) continue;
+    const hot = botHot(s.nx, s.ny);
+    const ev = botEval(dd, s);
+    const cls = (hot || !ev.okA) ? 0 : !ev.okB ? 1 : ev.loop ? 3 : 2;  // a wisp voids any safety
+    let sc = ev.room;
+    if(cls === 0 && !hot){
+      // nothing is safe: orbit. A fixed turn preference (wall-following)
+      // runs the pocket's perimeter and keeps its interior open until a
+      // door cycles back — maximizing room here would carve the pocket
+      // into ribbons instead. Tiny-room steps are dead-end fingers: veto.
+      const turn =
+        (dd.x === G.dir.y && dd.y === -G.dir.x) ? 3 :
+        (dd.x === G.dir.x && dd.y === G.dir.y) ? 2 :
+        (dd.x === -G.dir.y && dd.y === G.dir.x) ? 1 : 0;
+      sc = (ev.room >= 4 ? turn * 1000 : -1000) + ev.room;
     }
+    if(s.v === SMILEY) sc -= 60;
+    if(hot) sc -= 400;
+    if(dd.x === G.dir.x && dd.y === G.dir.y) sc += 2;
+    // the hunt only gets first refusal on solidly safe steps (class 2+);
+    // in brittle class 1 survival room decides, which backs the head out
+    // of door-dependent territory instead of pressing deeper toward loot
+    const isHunt = dd === hunt;
+    let better;
+    if(cls !== pickClass) better = cls > pickClass;
+    else if(cls >= 2 && isHunt !== pickHunt) better = isHunt;
+    else better = sc > pickScore;
+    if(better){ pick = dd; pickClass = cls; pickHunt = isHunt; pickScore = sc; }
+  }
+  const dir = pick;
+  if(dir){
+    // no human-style reverse refusal here: botStepInfo already rejects the
+    // true neck-bite, and after a bump the only way out is often straight
+    // back — refusing it wedged the bot against walls until the watchdog
+    if(dir.x !== G.dir.x || dir.y !== G.dir.y) G.bumped = false;
+    G.dir = dir;
   }
 }
 

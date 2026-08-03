@@ -1,0 +1,238 @@
+#!/usr/bin/env node
+/*
+  sim-3d-bot.mjs - headless simulator for the 2026 remake's autopilot.
+
+  Extracts the real game-logic + planner functions straight out of
+  docs/js/game3d.js (no copied code, so it cannot drift) and runs the bot
+  over chosen levels/seeds without a browser, WebGL, or DOM. Rendering,
+  audio, and HUD calls are stubbed; movement rules, layouts, gates, wisps,
+  and the autopilot are the shipped code, byte for byte.
+
+  Usage:
+    node tools/sim-3d-bot.mjs                 # levels 1-8, 10 seeds each
+    node tools/sim-3d-bot.mjs --levels 5,8 --seeds 25
+    node tools/sim-3d-bot.mjs --levels 1-8 --seeds 10 --verbose
+
+  Like the game itself, a run ends on death (entombed / zapped / watchdog)
+  or on a clear; each trial is a single life on a freshly built level.
+*/
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const SRC = readFileSync(join(ROOT, 'docs', 'js', 'game3d.js'), 'utf8');
+
+/* ---- extract a top-level declaration by its exact header ---- */
+function grab(header){
+  const i = SRC.indexOf(header);
+  if(i < 0) throw new Error('declaration not found in game3d.js: ' + header);
+  const isFn = header.startsWith('function');
+  let depth = 0, opened = false, j = i;
+  while(j < SRC.length){
+    const c = SRC[j], c2 = SRC[j + 1];
+    if(c === '/' && c2 === '/'){ j = SRC.indexOf('\n', j); if(j < 0) j = SRC.length; continue; }
+    if(c === '/' && c2 === '*'){ j = SRC.indexOf('*/', j) + 2; continue; }
+    if(c === "'" || c === '"' || c === '`'){
+      j++;
+      while(j < SRC.length && SRC[j] !== c){ if(SRC[j] === '\\') j++; j++; }
+      j++; continue;
+    }
+    if(c === '{' || c === '(' || c === '['){ depth++; opened = true; }
+    else if(c === '}' || c === ')' || c === ']'){
+      depth--;
+      if(isFn && opened && depth === 0 && c === '}'){ j++; break; }
+    } else if(c === ';' && depth === 0 && !isFn){ j++; break; }
+    j++;
+  }
+  return SRC.slice(i, j) + '\n';
+}
+
+const HEADERS = [
+  'const clamp', 'const lerp',
+  'const GW', 'const EMPTY', 'const gxToWorld', 'const gyToWorld',
+  'const grid', 'const gi', 'const inField',
+  'const G = {', 'const tierOf',
+  'function setCells', 'const wallSeg', 'const stoneAt',
+  'function layOpen', 'function laySegments', 'function layRooms', 'function layZigzag',
+  'function gateOpenAt', 'function applyGate', 'function layGates', 'function gateStep',
+  'function makeWisp', 'function layRisers', 'function laySweepers', 'function layStoneGates',
+  'const LAYOUTS',
+  'function placeItem', 'function buildLevel',
+  'function headWorld', 'function isPassableFor', 'function canLeaveBy', 'function isStuck',
+  'function bump', 'function tryStep',
+  'const bfsSeen', 'const bfsFirst', 'const bfsQueue', 'const DIRS',
+  'function wispNear', 'function routeNext',
+  'const BOT_STEP', 'const BOT_SKULL', 'const BOT_STONE', 'const BOT_HUG_WALL',
+  'const BOT_HUG_BODY', 'const BOT_GATE', 'const BOT_WISP',
+  'const botGateCol', 'function botGatePass', 'function botFlood',
+  'const botDist', 'const botFirst', 'const botHeap = [', 'function botHeapPush',
+  'function botHeapPop', 'function botHugCost',
+  'const botRegion', 'const BOT_OVERFILL', 'const BOT_TAILPULL', 'function botHunt',
+  'function botStepInfo', 'const botBodyIdx', 'function botChase',
+  'function botEval', 'function botHot', 'function botSteer',
+  'function updateWisps',
+];
+
+const prelude = `
+'use strict';
+/* seeded RNG so runs are reproducible: mulberry32 behind a Math proxy */
+let __seed = 1;
+function __rng(){
+  __seed |= 0; __seed = (__seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(__seed ^ (__seed >>> 15), 1 | __seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const __Math = globalThis.Math;
+const Math = new Proxy(__Math, { get: (t, k) => k === 'random' ? __rng : t[k] });
+const BOT = true;
+const COL = { heart: [0,0,0], club: [0,0,0], smiley: [0,0,0], wisp: [0,0,0] };
+const cam = { shake: 0, kick: 0, roll: 0 };
+const Snd = new Proxy({}, { get: () => () => {} });
+const noop = () => {};
+const hudLevel = noop, hudBonus = noop, hudLives = noop, hudScore = noop;
+const hudToast = noop, hudFlash = noop, hudCard = noop, markLevelTabs = noop;
+const floatLabel = noop, spawnBurst = noop, spawnShock = noop;
+const tx = k => k;
+function addScore(n){ G.score += n; }
+function startDeath(cause){ if(G.state !== 'play') return; G.state = 'dying'; G.deathCause = cause; }
+function startClear(){ if(G.state !== 'play') return; G.state = 'clear'; }
+`;
+
+const driver = `
+/* replay the planner's decision inputs read-only (same helpers, same prep
+   order as botSteer) so death spirals can be diagnosed step by step */
+function probe(){
+  const h = G.cells[0];
+  botBodyIdx.fill(-1);
+  for(let j = 0; j < G.cells.length; j++){ const c = G.cells[j]; botBodyIdx[gi(c.x, c.y)] = G.cells.length - 1 - j; }
+  const reg = botFlood(gi(h.x, h.y), null, true);
+  botRegion.set(bfsSeen);
+  const tight = reg.area < G.cells.length + G.growPending + 25;
+  const hunt = botHunt(tight);
+  const parts = [];
+  for(let d = 0; d < 4; d++){
+    const dd = DIRS[d];
+    const s = botStepInfo(dd);
+    if(!s){ parts.push('NESW'[d] + ':--'); continue; }
+    const ev = botEval(dd, s);
+    const hot = botHot(s.nx, s.ny);
+    const cls = (hot || !ev.okA) ? 0 : !ev.okB ? 1 : ev.loop ? 3 : 2;
+    parts.push('NESW'[d] + ':' + (dd === hunt ? 'H' : '') + 'c' + cls + '/' + ev.room + (hot ? '!' : ''));
+  }
+  return 'h(' + h.x + ',' + h.y + ') len=' + G.cells.length + ' grow=' + G.growPending +
+    ' reg=' + reg.area + (tight ? ' TIGHT' : '') + ' | ' + parts.join(' ');
+}
+function runLevel(level, seed, maxSteps){
+  __seed = seed;
+  G.level = level; G.score = 0; G.deathCause = '';
+  buildLevel(level);
+  G.state = 'play';
+  G.time = 0; G.lastAdvance = 0; G.lastEatAt = -9;
+  let steps = 0;
+  const trail = [], probes = [];
+  while(steps < maxSteps){
+    trail.push(G.cells[0].x + ',' + G.cells[0].y + ':' + G.cells.length);
+    if(trail.length > 60) trail.shift();
+    if(PROBE){
+      probes.push(probe());
+      if(probes.length > 400) probes.shift();
+    }
+    const dt = G.stepDur;
+    G.time += dt;
+    G.gateAcc += dt;
+    while(G.gateAcc >= G.gatePeriod){ G.gateAcc -= G.gatePeriod; gateStep(); }
+    for(let k = 0; k < 4 && G.state === 'play'; k++) updateWisps(dt / 4);
+    if(G.state !== 'play') break;
+    tryStep();
+    steps++;
+    if(G.state !== 'play') break;
+    if(G.time - G.lastAdvance > 5){ startDeath('watchdog'); break; }
+  }
+  return {
+    level, seed, steps,
+    outcome: G.state === 'clear' ? 'clear' : (G.state === 'play' ? 'timeout' : G.deathCause),
+    score: G.score + (G.state === 'clear' ? G.bonus : 0),
+    len: G.cells.length, hearts: G.heartsLeft, clubs: G.clubsLeft,
+    map: G.state === 'clear' ? null : renderMap(),
+    trail: G.state === 'clear' ? null : trail.join(' '),
+    probes: G.state === 'clear' ? null : probes,
+    gates: G.gates.map(g => g.x + '@' + g.gap).join(' '),
+  };
+}
+function renderMap(){
+  const CH = ['.', '#', 'o', 'H', 'C', 'x', 's'];
+  const rows = [];
+  const head = G.cells[0], tail = G.cells[G.cells.length - 1];
+  for(let y = 0; y < GH; y++){
+    let line = '';
+    for(let x = 0; x < GW; x++){
+      if(head && x === head.x && y === head.y) line += '@';
+      else if(tail && x === tail.x && y === tail.y) line += 't';
+      else line += CH[grid[gi(x, y)]] || '?';
+    }
+    rows.push(line);
+  }
+  for(const w of G.wisps){
+    const x = Math.round(w.x), y = Math.round(w.y);
+    if(y >= 0 && y < GH && x >= 0 && x < GW) rows[y] = rows[y].slice(0, x) + '*' + rows[y].slice(x + 1);
+  }
+  return rows.join('\\n');
+}
+return { runLevel };
+`;
+
+const PROBE = process.argv.includes('--probe');
+const body = prelude + `const PROBE = ${PROBE};\n` + HEADERS.map(grab).join('') + driver;
+let sim;
+try {
+  sim = new Function(body)();
+} catch (err) {
+  console.error('failed to assemble simulator from game3d.js:', err.message);
+  process.exit(1);
+}
+
+/* ---- CLI ---- */
+const args = process.argv.slice(2);
+const opt = (name, dflt) => {
+  const i = args.indexOf('--' + name);
+  return i >= 0 && args[i + 1] !== undefined ? args[i + 1] : dflt;
+};
+const verbose = args.includes('--verbose');
+const seeds = Number(opt('seeds', 10));
+const maxSteps = Number(opt('steps', 60000));
+const levelSpec = opt('levels', '1-8');
+const levels = [];
+for(const part of levelSpec.split(',')){
+  const m = part.match(/^(\d+)-(\d+)$/);
+  if(m) for(let l = +m[1]; l <= +m[2]; l++) levels.push(l);
+  else levels.push(+part);
+}
+
+let allClears = 0, allRuns = 0;
+for(const level of levels){
+  const runs = [];
+  for(let s = 1; s <= seeds; s++) runs.push(sim.runLevel(level, s * 7919 + level, maxSteps));
+  const clears = runs.filter(r => r.outcome === 'clear');
+  const causes = {};
+  for(const r of runs) if(r.outcome !== 'clear') causes[r.outcome] = (causes[r.outcome] || 0) + 1;
+  const avgScore = Math.round(runs.reduce((a, r) => a + r.score, 0) / runs.length);
+  const avgLen = Math.round(runs.reduce((a, r) => a + r.len, 0) / runs.length);
+  allClears += clears.length; allRuns += runs.length;
+  console.log(
+    `level ${String(level).padStart(2)}: ${clears.length}/${runs.length} cleared` +
+    `  avg score ${String(avgScore).padStart(6)}  avg len ${String(avgLen).padStart(3)}` +
+    (Object.keys(causes).length ? `  deaths: ${Object.entries(causes).map(([c, n]) => `${c}×${n}`).join(' ')}` : '')
+  );
+  if(verbose) for(const r of runs.filter(x => x.outcome !== 'clear')){
+    console.log(`   seed ${r.seed}: ${r.outcome} after ${r.steps} steps, len ${r.len}, ${r.hearts} hearts + ${r.clubs} clubs left`);
+    if(args.includes('--map') && r.map){
+      console.log(r.map.replace(/^/gm, '   '));
+      console.log('   gates: ' + r.gates);
+      if(r.trail) console.log(('last steps: ' + r.trail).replace(/^/gm, '   '));
+      if(r.probes) for(const p of r.probes) console.log('   ' + p);
+    }
+  }
+}
+console.log(`total: ${allClears}/${allRuns} cleared`);

@@ -249,6 +249,13 @@ Offline bot tooling lives in `tools/` (Node, no dependencies):
   best result to `tools/bot-weights.best.json`. To ship a tuned vector, copy its numbers into
   `W_DEFAULTS` in `planner/mod.rs` and rebuild. Keep `W_DEFAULTS`, the `W_*` index constants,
   and the tuner's `DEFAULTS`/`NAMES` arrays in sync.
+- `tools/sim-3d-bot.mjs` - headless benchmark for the **2026 remake's** JavaScript autopilot
+  (not the Wasm bot). It extracts the game-logic and planner functions verbatim out of
+  `docs/js/game3d.js` at run time (no copied code, so it cannot drift), stubs
+  rendering/audio/HUD, and plays full single-life games on a seeded RNG:
+  `node tools/sim-3d-bot.mjs --levels 1-8 --seeds 15` reports clears/score per level;
+  `--verbose --map --probe` additionally dumps death boards, the head trail, and the
+  planner's per-step decision inputs. Run it after any `game3d.js` autopilot change.
 
 Rebuild the shipped Wasm after any Rust change:
 
@@ -302,9 +309,20 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   smiley-avoiding routing idea as the 1988 port), fullscreen on `#bezel3d`, shared `#mute`
   button, localized strings from inline `window.SNEEKIE_TEXT3D`.
 - **Bot mode.** With `window.SNEEKIE3D_BOT = true` (bot page, 2026 era) a built-in JavaScript
-  autopilot steers: BFS to the nearest heart/club avoiding wisp danger zones, flood-fill
-  survival fallback. It builds level tabs 1-8 in `#leveltabs` and maps the `#speed` slider to a
+  autopilot steers. It is a strategy planner, not a greedy BFS: hunting runs a weighted
+  Dijkstra whose costs keep a one-cell escape row beside walls and the snake's own body and
+  allow skull bites (-50) and stone pushes at a price; every candidate step is simulated and
+  gated by a time-expanded return-path check (`botChase`: a body cell counts as passable once
+  the tail will have vacated it, so reaching the own tail = a survivable chase loop); a
+  pocket only counts as big enough if it still holds the snake after the loot inside it is
+  eaten. Steps are ranked in four safety classes (loop + stable-pocket guard, area-safe with
+  guard, safe-until-the-doors-move, last-resort wall-follow orbit), and the hunted direction
+  only gets first refusal in the solid classes. On the gate levels (5, 8) doorway cells are
+  predicted (the gap crawl is deterministic; a gate whose closing cell is occupied is frozen),
+  but full single-life clears there remain unsolved — the bot plays well and eventually gets
+  sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the `#speed` slider to a
   speed multiplier. `window.SNEEKIE3D` is a tiny read-only debug handle used by tests.
+  `tools/sim-3d-bot.mjs` benchmarks this autopilot headlessly (see **Running & Verification**).
 - The 2026 high score persists separately as `sneekie.highscore3d`.
 
 ## Running & Verification
