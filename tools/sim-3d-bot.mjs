@@ -12,6 +12,7 @@
     node tools/sim-3d-bot.mjs                 # levels 1-8, 10 seeds each
     node tools/sim-3d-bot.mjs --levels 5,8 --seeds 25
     node tools/sim-3d-bot.mjs --levels 1-8 --seeds 10 --verbose
+    node tools/sim-3d-bot.mjs --self-test     # focused planner invariants
 
   Like the game itself, a run ends on death (entombed / zapped / watchdog)
   or on a clear; each trial is a single life on a freshly built level.
@@ -109,7 +110,7 @@ function probe(){
   for(let j = 0; j < G.cells.length; j++){ const c = G.cells[j]; botBodyIdx[gi(c.x, c.y)] = G.cells.length - 1 - j; }
   const reg = botFlood(gi(h.x, h.y), null, true);
   botRegion.set(bfsSeen);
-  const tight = reg.area < G.cells.length + G.growPending + 25;
+  const tight = reg.area < G.cells.length + G.growPending + reg.grow + 12;
   const hunt = botHunt(tight);
   const parts = [];
   for(let d = 0; d < 4; d++){
@@ -119,7 +120,8 @@ function probe(){
     const ev = botEval(dd, s);
     const hot = botHot(s.nx, s.ny);
     const cls = (hot || !ev.okA) ? 0 : !ev.okB ? 1 : ev.loop ? 3 : 2;
-    parts.push('NESW'[d] + ':' + (dd === hunt ? 'H' : '') + 'c' + cls + '/' + ev.room + (hot ? '!' : ''));
+    parts.push('NESW'[d] + ':' + (dd === hunt ? 'H' : '') + 'c' + cls +
+      '/r' + ev.reserve + '/e' + ev.exits + '/' + ev.room + (hot ? '!' : ''));
   }
   return 'h(' + h.x + ',' + h.y + ') len=' + G.cells.length + ' grow=' + G.growPending +
     ' reg=' + reg.area + (tight ? ' TIGHT' : '') + ' | ' + parts.join(' ');
@@ -180,7 +182,51 @@ function renderMap(){
   }
   return rows.join('\\n');
 }
-return { runLevel };
+function plannerScenarios(){
+  const reset = cells => {
+    grid.fill(EMPTY);
+    for(let x = 0; x < GW; x++){ grid[gi(x, 0)] = WALL; grid[gi(x, GH - 1)] = WALL; }
+    for(let y = 0; y < GH; y++){ grid[gi(0, y)] = WALL; grid[gi(GW - 1, y)] = WALL; }
+    G.cells = cells.map(([x, y]) => ({ x, y }));
+    for(const c of G.cells) grid[gi(c.x, c.y)] = SNAKE;
+    G.dir = { x: 1, y: 0 }; G.growPending = 0;
+    G.gates = []; G.wisps = []; G.gateAcc = 0; G.gatePeriod = 0.95;
+    G.stepDur = 1 / 5.2; G.time = 0; G.lastEatAt = -9;
+  };
+  const chose = (name, x, y) => {
+    botSteer();
+    return { name, pass: G.dir.x === x && G.dir.y === y, got: G.dir.x + ',' + G.dir.y };
+  };
+  const tests = [];
+
+  // The tempting heart is a sealed finger. A return lane around the body
+  // must beat the immediate score.
+  reset([[5,5],[4,5],[3,5],[2,5]]);
+  grid[gi(6,5)] = HEART;
+  grid[gi(6,4)] = WALL; grid[gi(7,5)] = WALL; grid[gi(6,6)] = WALL;
+  tests.push(chose('return path beats adjacent heart', 0, -1));
+
+  // Both routes can reach the tail, but the direct heart enters a one-cell
+  // tunnel. Keep the lateral row and approach it from open ground instead.
+  reset([[5,5],[4,5],[3,5],[2,5]]);
+  grid[gi(6,5)] = HEART;
+  grid[gi(6,4)] = WALL; grid[gi(6,6)] = WALL;
+  tests.push(chose('lateral escape row beats direct food', 0, -1));
+
+  // Skull and stone costs are prices, never prohibitions: when either is
+  // the bridge to food and open ground the planner must take it.
+  reset([[5,5],[4,5],[3,5],[2,5]]);
+  grid[gi(5,4)] = WALL; grid[gi(5,6)] = WALL;
+  grid[gi(6,5)] = SMILEY; grid[gi(8,5)] = HEART;
+  tests.push(chose('skull may buy the escape route', 1, 0));
+
+  reset([[5,5],[4,5],[3,5],[2,5]]);
+  grid[gi(5,4)] = WALL; grid[gi(5,6)] = WALL;
+  grid[gi(6,5)] = STONE; grid[gi(8,5)] = HEART;
+  tests.push(chose('stone may be moved for later access', 1, 0));
+  return tests;
+}
+return { runLevel, plannerScenarios };
 `;
 
 const PROBE = process.argv.includes('--probe');
@@ -208,6 +254,13 @@ for(const part of levelSpec.split(',')){
   const m = part.match(/^(\d+)-(\d+)$/);
   if(m) for(let l = +m[1]; l <= +m[2]; l++) levels.push(l);
   else levels.push(+part);
+}
+
+if(args.includes('--self-test')){
+  const tests = sim.plannerScenarios();
+  for(const t of tests) console.log(`${t.pass ? 'ok' : 'FAIL'}  ${t.name}${t.pass ? '' : ` (chose ${t.got})`}`);
+  if(tests.some(t => !t.pass)) process.exitCode = 1;
+  if(args.length === 1) process.exit();
 }
 
 let allClears = 0, allRuns = 0;

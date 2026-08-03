@@ -1937,13 +1937,14 @@ function routeNext(target){
    routes keep a one-cell escape row beside both whenever the board allows.
    Skulls (-50) and stone pushes are allowed at a price: chewing through or
    shoving a stone now beats being sealed in later. And no step is taken
-   without a return path — botSafe() simulates the move and demands the head
+   without a return path — botEval() simulates the move and demands the head
    can still reach its own tail afterwards. */
 const BOT_STEP = 10;      // base cost of one route cell
-const BOT_SKULL = 250;    // a skull is worth a 25-step detour, no more
-const BOT_STONE = 60;     // pushing a stone is fine, just not gratuitous
-const BOT_HUG_WALL = 8;   // per adjacent wall/stone: keep a row of air
-const BOT_HUG_BODY = 14;  // per adjacent body cell: keep an escape row
+const BOT_SKULL = 80;     // a skull is worth an 8-step detour — eating one (-50)
+                           // is cheap insurance against being sealed in later
+const BOT_STONE = 25;     // pushing a stone for strategic room: cheap
+const BOT_HUG_WALL = 50;  // per adjacent wall/stone: keep a row of air at all cost
+const BOT_HUG_BODY = 60;  // per adjacent body cell: keep an escape row from the body
 const BOT_GATE = 40;      // doorways are chokepoints: clear your own section first
 const BOT_WISP = 900;     // wisp lanes only when there is no other way
 const botGateCol = x => G.gates.some(g => g.x === x);
@@ -2177,10 +2178,37 @@ function botEval(d, s){
     const b = botChase(ni, grow2, true);
     okB = b.gotTail || b.area >= G.cells.length + grow2 + b.grow + 8;
   }
+  // A return path is much more useful when it has a spare row. Measure the
+  // new head after the simulated step, ignoring only the neck immediately
+  // behind it: lateral exits are the emergency turns, wallClear leaves an
+  // empty row beside the masonry/stones, and bodyClear leaves one beside the
+  // rest of the snake. This is deliberately a rank, not a point bonus; a
+  // nearby meal may not buy away the escape reserve.
+  const neck = G.cells[0];
+  let exits = 0, sideExits = 0, wallClear = true, bodyClear = true;
+  for(let q = 0; q < 4; q++){
+    const qd = DIRS[q];
+    const qx = s.nx + qd.x, qy = s.ny + qd.y;
+    const qv = grid[gi(qx, qy)];
+    if(qv === WALL || qv === STONE) wallClear = false;
+    if(qv === SNAKE && (qx !== neck.x || qy !== neck.y)) bodyClear = false;
+    let open = qv === EMPTY || qv === HEART || qv === CLUB || qv === SMILEY;
+    if(qv === STONE){
+      const bx = qx + qd.x, by = qy + qd.y;
+      open = inField(bx, by) && grid[gi(bx, by)] === EMPTY;
+    }
+    if(open){
+      exits++;
+      if(qd.x * d.x + qd.y * d.y === 0) sideExits++;
+    }
+  }
+  const reserve = sideExits > 0
+    ? (wallClear && bodyClear ? 3 : bodyClear ? 2 : 1)
+    : 0;
   const room = a.area + (a.gotTail ? 200 : 0);
   grid[ni] = s.v;
   if(bi >= 0) grid[bi] = EMPTY;
-  return { okA, okB, room, loop: a.gotTail };
+  return { okA, okB, room, loop: a.gotTail, reserve, exits };
 }
 /* a cell is hot when a wisp is on it or will be about there within the
    next couple of snake steps — wispNear sees only the present */
@@ -2208,26 +2236,39 @@ function botSteer(){
   // section instead of feasting in place until the pocket bursts.
   const reg = botFlood(gi(h.x, h.y), null, true);
   botRegion.set(bfsSeen);
-  const tightHome = reg.area < G.cells.length + G.growPending + reg.grow + 12;
+  const tightHome = reg.area < G.cells.length + G.growPending + reg.grow + 20;
   const hunt = botHunt(tightHome);
-  // steps are ranked in four classes: true tail-chase loop with the
+  // Steps are ranked in four safety classes: true tail-chase loop with the
   // stable-pocket guard intact (3), area-safe with the guard (2), safe
-  // only until the doors move (1), last resort (0). The hunted direction
-  // has first refusal only within a class — a bite that would sever the
-  // return path loses to a detour that keeps it, which is what stops the
-  // snake from grazing itself into a dense, tail-burying coil, and from
-  // threading its head into pockets a crawling door can seal. Class 0
-  // falls back to raw breathing room (that stall-at-the-wall bug is why
-  // it starts at -Infinity).
-  let pick = null, pickClass = -1, pickHunt = false, pickScore = -Infinity;
+  // only until the doors move (1), last resort (0). Steps that have no
+  // lateral escape reserve lose one class (except loops — class 3 is its
+  // own escape): hugging a wall or the body with no spare row is one
+  // surprise wisp or closing gate away from death, so a lower-class step
+  // that keeps an escape row beats a higher-class step that gives it up.
+  // The hunted direction has first refusal only within a class and after at
+  // least one lateral escape stays open — a bite that would sever the
+  // return path or consume the last spare row loses to a detour that keeps
+  // it, which stops the snake from grazing itself into a dense,
+  // tail-burying coil, and from threading its head into pockets a crawling
+  // door can seal. Class 0 falls back to wall-following orbit.
+  let pick = null, pickEffCls = -1, pickReserve = -1, pickHunt = false, pickScore = -Infinity;
   for(let d = 0; d < 4; d++){
     const dd = DIRS[d];
     const s = botStepInfo(dd);
     if(!s) continue;
     const hot = botHot(s.nx, s.ny);
     const ev = botEval(dd, s);
-    const cls = (hot || !ev.okA) ? 0 : !ev.okB ? 1 : ev.loop ? 3 : 2;  // a wisp voids any safety
-    let sc = ev.room;
+    const cls = (hot || !ev.okA) ? 0 : !ev.okB ? 1 : ev.loop ? 3 : 2;
+    // escape-row discipline, long-term: a step that keeps no lateral escape
+    // (reserve=0) has its safety class docked by one — hugging a wall or the
+    // body with no spare row means one surprise wisp or a closing gate can
+    // kill you. Only a true tail-chase loop (class 3) keeps its rank: the
+    // loop IS its own escape. This class demotion means the hunt planner will
+    // prefer a class-1 step with a perfect escape row (3) over a class-2
+    // step with none, which stops the snake from pressing inrestorably
+    // toward loot while giving up the route it would need to retreat.
+    const effCls = (cls === 3) ? 3 : cls - (ev.reserve === 0 ? 1 : 0);
+    let sc = ev.room + ev.reserve * 10;
     if(cls === 0 && !hot){
       // nothing is safe: orbit. A fixed turn preference (wall-following)
       // runs the pocket's perimeter and keeps its interior open until a
@@ -2239,7 +2280,7 @@ function botSteer(){
         (dd.x === -G.dir.y && dd.y === G.dir.x) ? 1 : 0;
       sc = (ev.room >= 4 ? turn * 1000 : -1000) + ev.room;
     }
-    if(s.v === SMILEY) sc -= 60;
+    if(s.v === SMILEY) sc -= 25;
     if(hot) sc -= 400;
     if(dd.x === G.dir.x && dd.y === G.dir.y) sc += 2;
     // the hunt only gets first refusal on solidly safe steps (class 2+);
@@ -2247,10 +2288,12 @@ function botSteer(){
     // of door-dependent territory instead of pressing deeper toward loot
     const isHunt = dd === hunt;
     let better;
-    if(cls !== pickClass) better = cls > pickClass;
-    else if(cls >= 2 && isHunt !== pickHunt) better = isHunt;
+    if(effCls !== pickEffCls) better = effCls > pickEffCls;
+    else if((ev.reserve > 0) !== (pickReserve > 0)) better = ev.reserve > 0;
+    else if(effCls >= 2 && isHunt !== pickHunt) better = isHunt;
+    else if(ev.reserve !== pickReserve) better = ev.reserve > pickReserve;
     else better = sc > pickScore;
-    if(better){ pick = dd; pickClass = cls; pickHunt = isHunt; pickScore = sc; }
+    if(better){ pick = dd; pickEffCls = effCls; pickReserve = ev.reserve; pickHunt = isHunt; pickScore = sc; }
   }
   const dir = pick;
   if(dir){

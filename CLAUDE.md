@@ -254,6 +254,7 @@ Offline bot tooling lives in `tools/` (Node, no dependencies):
   `docs/js/game3d.js` at run time (no copied code, so it cannot drift), stubs
   rendering/audio/HUD, and plays full single-life games on a seeded RNG:
   `node tools/sim-3d-bot.mjs --levels 1-8 --seeds 15` reports clears/score per level;
+  `node tools/sim-3d-bot.mjs --self-test` checks return-path, escape-row, skull, and stone invariants;
   `--verbose --map --probe` additionally dumps death boards, the head trail, and the
   planner's per-step decision inputs. Run it after any `game3d.js` autopilot change.
 
@@ -315,9 +316,12 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   gated by a time-expanded return-path check (`botChase`: a body cell counts as passable once
   the tail will have vacated it, so reaching the own tail = a survivable chase loop); a
   pocket only counts as big enough if it still holds the snake after the loot inside it is
-  eaten. Steps are ranked in four safety classes (loop + stable-pocket guard, area-safe with
-  guard, safe-until-the-doors-move, last-resort wall-follow orbit), and the hunted direction
-  only gets first refusal in the solid classes. On the gate levels (5, 8) doorway cells are
+  eaten. Each simulated landing also receives an escape-reserve rank: at least one lateral
+  exit is protected ahead of the hunted direction, then full wall/body clearance settles
+  non-hunt ties. Steps are ranked in four safety classes (loop + stable-pocket guard,
+  area-safe with guard, safe-until-the-doors-move, last-resort wall-follow orbit), and the
+  hunted direction only gets first refusal in the solid classes after that reserve. On the
+  gate levels (5, 8) doorway cells are
   predicted (the gap crawl is deterministic; a gate whose closing cell is occupied is frozen),
   but full single-life clears there remain unsolved — the bot plays well and eventually gets
   sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the `#speed` slider to a
