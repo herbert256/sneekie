@@ -322,13 +322,26 @@ its era switch, modern monitor shell (`#bezel3d`, "Acme UltraView"), and in-scre
   escape-reserve rank: at least one lateral
   exit is protected ahead of the hunted direction, then full wall/body clearance settles
   non-hunt ties. Steps are ranked in four safety classes (loop + stable-pocket guard,
-  area-safe with guard, safe-until-the-doors-move, last-resort wall-follow orbit), and the
-  hunted direction only gets first refusal in the solid classes after that reserve. On the
-  gate levels (5, 8) doorway cells are
-  predicted (the gap crawl is deterministic; a gate whose closing cell is occupied is frozen),
-  but full single-life clears there remain unsolved — the bot plays well and eventually gets
-  sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the `#speed` slider to a
-  speed multiplier. `window.SNEEKIE3D` is a tiny read-only debug handle used by tests.
+  area-safe with guard, safe-until-the-doors-move, last-resort wall-follow orbit); on open
+  boards the classic ranking applies (escape-row demotion, hunt refusal in class 2+), while
+  boards with live crawling gates pool classes 2/3 for the hunt's first refusal and treat the
+  reserve as a tiebreak. Wisps are fully deterministic (straight wrapped lines), so danger is
+  judged from their EXACT positions at arrival time (`botWispD2`), plus a small toll for
+  loitering in a riser's column / sweeper's row (`botLaneNear`). On gate levels (5, 8) doorway
+  cells are predicted (the gap crawl is deterministic; a gate whose closing cell is occupied
+  is frozen; a stone anywhere in the gap jams the door open for the rest of the level —
+  recognized by `botGateStone`/`botGateJammed` and hunted deliberately as a jam target on the
+  stone level), band capacity is tracked per strip (`botBands`: never hunt loot in a section
+  the grown snake would no longer fit in; clear the home strip before migrating), targets get
+  commitment hysteresis against door-crawl flip-flopping, the hunt routes through the tail's
+  future wake (time-expanded body cells), and every hunt must survive a full route replay
+  (`botRouteSafe`: march the body along the whole route with growth, then demand the tail
+  stays reachable) with a starvation valve that lifts the veto when the endgame stalls.
+  Level 8 is now occasionally cleared single-life (door jams turn the board into one big
+  room); level 5 (pure crawling gates, no stones) remains unsolved — the bot survives long
+  but eventually gets sealed mid-level. It builds level tabs 1-8 in `#leveltabs` and maps the
+  `#speed` slider to a speed multiplier. `window.SNEEKIE3D` is a tiny read-only debug handle
+  used by tests.
   `tools/sim-3d-bot.mjs` benchmarks this autopilot headlessly (see **Running & Verification**).
 - The 2026 high score persists separately as `sneekie.highscore3d`.
 

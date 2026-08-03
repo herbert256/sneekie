@@ -65,12 +65,22 @@ const HEADERS = [
   'const bfsSeen', 'const bfsFirst', 'const bfsQueue', 'const DIRS',
   'function wispNear', 'function routeNext',
   'const BOT_STEP', 'const BOT_SKULL', 'const BOT_STONE', 'const BOT_HUG_WALL',
-  'const BOT_HUG_BODY', 'const BOT_GATE', 'const BOT_WISP',
-  'const botGateCol', 'function botGatePass', 'function botFlood',
-  'const botDist', 'const botFirst', 'const botHeap = [', 'function botHeapPush',
+  'const BOT_HUG_BODY', 'const BOT_GATE', 'const BOT_WISP', 'const BOT_WISP_SOON',
+  'const BOT_LANE',
+  'const botGateCol', 'function botGateStone', 'function botGateJammed',
+  'function botGatesLive', 'function botGatePass', 'function botFlood',
+  'const botDist', 'const botFirst', 'const botSteps', 'function botWispD2',
+  'function botLaneNear',
+  'const botBandFree', 'const botBandGrow', 'const botBandBody', 'const botBandLoot',
+  'const BOT_MIGRATE',
+  'function botBandAt', 'function botBands(', 'function botBandShort',
+  'const botHeap = [', 'function botHeapPush',
   'function botHeapPop', 'function botHugCost',
   'const botRegion', 'const BOT_OVERFILL', 'const BOT_TAILPULL', 'const BOT_CLUB_LATER',
-  'function botHunt',
+  'const botVGrid', 'const botVIdx', 'const botRoute', 'const botBan ', 'const botPrev',
+  'function botRouteSafe',
+  'let botHuntOut', 'let botTarget', 'let botFedMark', 'let botFedAt',
+  'function botHuntPass(', 'function botHunt(',
   'function botStepInfo', 'const botBodyIdx', 'function botChase',
   'function botEval', 'function botHot', 'function botSteer',
   'function updateWisps',
@@ -109,9 +119,10 @@ function probe(){
   const h = G.cells[0];
   botBodyIdx.fill(-1);
   for(let j = 0; j < G.cells.length; j++){ const c = G.cells[j]; botBodyIdx[gi(c.x, c.y)] = G.cells.length - 1 - j; }
+  botBands();
   const reg = botFlood(gi(h.x, h.y), null, true);
   botRegion.set(bfsSeen);
-  const tight = reg.area < G.cells.length + G.growPending + reg.grow + 12;
+  const tight = reg.area < G.cells.length + G.growPending + reg.grow + 20;
   const hunt = botHunt(tight);
   const parts = [];
   for(let d = 0; d < 4; d++){
@@ -124,8 +135,9 @@ function probe(){
     parts.push('NESW'[d] + ':' + (dd === hunt ? 'H' : '') + 'c' + cls +
       '/r' + ev.reserve + '/e' + ev.exits + '/' + ev.room + (hot ? '!' : ''));
   }
+  const tg = botTarget >= 0 ? ' tgt(' + (botTarget % GW) + ',' + ((botTarget / GW) | 0) + ')' : '';
   return 'h(' + h.x + ',' + h.y + ') len=' + G.cells.length + ' grow=' + G.growPending +
-    ' reg=' + reg.area + (tight ? ' TIGHT' : '') + ' | ' + parts.join(' ');
+    ' reg=' + reg.area + (tight ? ' TIGHT' : '') + tg + ' | ' + parts.join(' ');
 }
 function runLevel(level, seed, maxSteps){
   __seed = seed;
