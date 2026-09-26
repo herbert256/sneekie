@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sneekie Dreamscape: de slang van 1988 herboren als filmische Three.js-fantasie. Een realistische smaragdgroene slang glijdt door een zwevend tempeldoolhof vol robijnen harten, smaragden klavers en gouden smileys." />
+    <title>Sneekie - Dreamscape</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="canonical" href="https://sneekie.cc/nl/demo" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+    <meta name="theme-color" content="#05040c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Dreamscape" />
+    <meta property="og:description" content="De slang van 1988 herboren als filmische Three.js-fantasie." />
+    <meta property="og:url" content="https://sneekie.cc/nl/demo" />
+    <meta property="og:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <meta property="og:image:alt" content="Een gouden SNEEKIE-titel boven een zwevend tempeldoolhof vol gloeiende edelstenen onder een violette nachthemel." />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/demo.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" crossorigin />
+  </head>
+  <body class="page-demo">
+    <a class="skip" href="#main">Spring naar inhoud</a>
+    <div class="demo-shell">
+      <header class="top">
+        <a class="brand" href="../index_nl.html" aria-label="Sneekie start" target="_top"><img src="../images/logo.png" width="704" height="128" alt="Sneekie" /></a>
+        <nav aria-label="Hoofdnavigatie">
+          <a href="../nl/game.html" target="_top">&#9654; Spelen</a>
+          <a href="../nl/history.html" target="_top">Geschiedenis</a>
+          <a href="../nl/magazine.html" target="_top">Magazine</a>
+          <a href="../nl/source.html" target="_top">Broncode</a>
+          <a href="../nl/bot.html" target="_top">Bot</a>
+          <a href="../nl/manual.html" target="_top">Handleiding</a>
+          <a href="../nl/explained.html" target="_top">Uitleg</a>
+          <a href="../nl/migration.html" target="_top">Migratie</a>
+          <a href="../nl/vram.html" target="_top">Visualizer</a>
+          <a href="../nl/demo.html" target="_top" aria-current="page">Demo</a>
+        </nav>
+        <div class="lang-switch" aria-label="Taal">
+          <a href="../en/demo.html" target="_top" aria-label="English" title="English"><img class="lang-flag" src="../images/flags/gb.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../nl/demo.html" target="_top" aria-label="Nederlands" title="Nederlands" aria-current="true"><img class="lang-flag" src="../images/flags/nl.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../uk/demo.html" target="_top" aria-label="Українська" title="Українська"><img class="lang-flag" src="../images/flags/ua.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+        </div>
+      </header>
+      <main id="main" tabindex="-1" class="demo-stage" aria-label="Sneekie Dreamscape, een filmische 3D-demo">
+        <canvas id="dream" aria-hidden="true"></canvas>
+        <canvas id="crt" aria-hidden="true"></canvas>
+        <div class="demo-presents" id="presents"></div>
+        <div class="demo-subtitle" id="subtitle"></div>
+        <div class="demo-caption" id="caption" aria-live="polite"></div>
+        <div class="demo-era" id="era"></div>
+        <div class="demo-pops" id="pops" aria-hidden="true"></div>
+        <div class="demo-controls" id="controls">
+          <button type="button" id="b-pause" aria-label="Pauze (spatie)" aria-pressed="false" title="Pauze (spatie)">&#10074;&#10074;</button>
+          <button type="button" id="b-next" aria-label="Volgend shot (N)" title="Volgend shot (N)">&#9197;</button>
+          <button type="button" id="b-cam" aria-label="Vrije camera (C)" aria-pressed="false" title="Vrije camera (C)">&#9678;</button>
+          <button type="button" id="b-sound" aria-label="Geluid (M)" aria-pressed="false" title="Geluid (M)">&#9835;</button>
+          <button type="button" id="b-full" aria-label="Volledig scherm (F)" title="Volledig scherm (F)">&#9974;</button>
+        </div>
+        <div class="demo-loading" id="loading"><span class="demo-spinner" aria-hidden="true"></span><span id="loading-text">De slang wordt opgeroepen&hellip;</span></div>
+        <noscript><p class="demo-fallback">Deze demo heeft JavaScript en WebGL2 nodig.</p></noscript>
+      </main>
+    </div>
+    <footer>
+      Sneekie &copy; juli '88 door HerbySoft<br>Gepubliceerd in MS(X)DOS Computer Magazine nr.&nbsp;25 (oktober 1988).<br>Dreamscape: een filmisch Three.js-eerbetoon, september 2026.
+    </footer>
+    <script>
+      window.SNEEKIE_TEXT = {
+        presents: 'HerbySoft presenteert',
+        subtitle: 'de slang van 1988 &middot; opnieuw gedroomd',
+        levels: ['Het Open Hof', 'Het Lijnendoolhof', 'De Stenen Zigzag', 'De Zalen der Deuren'],
+        level: 'Level',
+        era1988: '1988 &middot; GW-BASIC &middot; 80&times;25 tekstmodus',
+        era2026: '2026 &middot; Three.js &middot; WebGL',
+        nogl: 'Deze demo heeft WebGL2 nodig, en die kon deze browser niet starten.',
+        pause: 'Pauze (spatie)', play: 'Afspelen (spatie)',
+        freecam: 'Vrije camera: sleep om te draaien, scroll om te zoomen',
+        director: 'Director’s cut'
+      };
+    </script>
+    <script src="../js/site.js"></script>
+    <script type="module" src="../js/demo.js"></script>
+  </body>
+</html>

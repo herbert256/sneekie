@@ -231,4 +231,25 @@
     <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/vram" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/vram" />
   </url>
+  <url>
+    <loc>https://sneekie.cc/en/demo</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+  </url>
+  <url>
+    <loc>https://sneekie.cc/nl/demo</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+  </url>
+  <url>
+    <loc>https://sneekie.cc/uk/demo</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <xhtml:link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+  </url>
 </urlset>

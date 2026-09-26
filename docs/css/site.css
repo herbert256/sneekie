@@ -282,6 +282,12 @@ header.top .lang-switch a[aria-current="true"]{
 header.top nav a[aria-current="page"]{
   cursor:default;
 }
+/* ten nav links: tighten a little on mid-width screens so the header
+   wraps no earlier than it did with nine */
+@media (max-width:1180px) and (min-width:521px){
+  header.top nav{ gap:5px; }
+  header.top nav a{ padding:6px 8px; }
+}
 
 h1.page-title,
 body h1.page-title{

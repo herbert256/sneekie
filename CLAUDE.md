@@ -19,6 +19,11 @@ static site under `docs/`, split into localized/page-specific HTML plus shared C
 canonical 1988 source remains `docs/SNEEKIE.BAS`; the faithful game port lives in
 `docs/js/game.js`.
 
+Since September 2026 there is also a **cinematic demo**, `docs/<lang>/demo.html` +
+`docs/js/demo.js` ("Sneekie Dreamscape"): a non-playable Three.js showcase and the site's only
+third-party runtime code. It imports a pinned Three.js (`three@0.180.0`) from jsDelivr through
+an import map in each demo page (see **Dreamscape demo** below).
+
 Since July 2026 the site carries a **second game engine**: `docs/js/game3d.js`, a from-scratch
 3D remake of the same game (hand-written WebGL2 + Web Audio, no libraries), written by Claude
 Fable. The Play and Bot pages carry a 1988/2026 era switch that loads one engine or the other
@@ -48,7 +53,8 @@ without `www.`), so keep `.html` in the checked-in `href`s.
 - `docs/index.html`, `docs/index_nl.html`, `docs/index_uk.html` - the three localized root
   landing pages (en/nl/uk). Each is a standalone full page (**not** an iframe wrapper): the
   standard static header/footer chrome, a hero "play" section whose CRT image links to the
-  matching `<lang>/game.html`, and a topic-card grid linking to the content pages. They load
+  matching `<lang>/game.html`, and a topic-card grid linking to the content pages (opened by a
+  full-width `.topic-feature` banner card for the Dreamscape demo). They load
   `css/site.css` and `css/index.css`; there is no `js/index.js`. The live bot preview scripts
   (`game.js`, `bot-engine.js`, and `bot.js`) are lazy-loaded from inline code after the page is
   loaded/idle. The index preview runs the same Rust/WebAssembly bot (`bot-engine.js`) as the Bot
@@ -63,10 +69,10 @@ without `www.`), so keep `.html` in the checked-in `href`s.
   one per era.
 - `docs/<lang>/*.html` - localized content pages under `docs/en/`, `docs/nl/`, and `docs/uk/`:
   `game`, `history`, `source`, `manual`, `bot`, `bot-thinking`, `magazine`, `explained`,
-  `migration`, and `vram`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
+  `migration`, `vram`, and `demo`. Static prose/error pages (`history`, `bot-thinking`, `explained`,
   `migration`, `source`, and `404`) load no external runtime JavaScript. JavaScript-backed
   pages load `../js/site.js` and the page script they need (`game`, `manual`, `bot`,
-  `magazine`, or `vram`). Runtime UI text for `game`, `bot`, and `vram` is provided inline in
+  `magazine`, `vram`, or the `demo` module). Runtime UI text for `game`, `bot`, and `vram` is provided inline in
   the localized HTML pages as `window.SNEEKIE_TEXT`; the game and bot pages additionally carry
   `window.SNEEKIE_TEXT3D` with the localized strings of the 2026 remake.
 - `docs/css/site.css` - shared variables, layout primitives, doc-page styling, static
@@ -168,6 +174,11 @@ both `sneekie.cc` and `www.sneekie.cc`; www 301s to the apex).
   monitor when the era switch says 2026 (see **The 2026 remake**).
 - `docs/index.html` (+ `index_nl.html`, `index_uk.html`) - the localized root landing pages; the
   hero "play" image links into `<lang>/game.html` (see Layout & Deployment).
+- `docs/<lang>/demo.html` + `docs/js/demo.js` + `docs/css/demo.css` - the **Dreamscape** demo
+  (see **Dreamscape demo**). Standard static header, then a full-viewport `.demo-stage`. Linked
+  from the header nav (`Demo`), the landing-page feature card, and the sitemap; its social
+  preview is `docs/images/pages/dreamscape.jpg` (card image: `dreamscape.webp`). Localized
+  strings live inline as `window.SNEEKIE_TEXT`.
 - `docs/404.html` and `docs/<lang>/404.html` - dramatic localized 404 pages styled by
   `docs/css/404.css`, using `docs/images/pages/404-lost-snake.webp`.
 
@@ -177,9 +188,11 @@ All localized content pages carry one standard static top nav and footer in the 
 Do not rely on `docs/js/site.js` to inject `header.top` or `<footer>`. When changing shared
 chrome, edit every affected `docs/<lang>/*.html` page directly. The top-left brand is
 `docs/images/logo.png`, and the current page is marked with `aria-current="page"`.
-The header nav has 9 links (no buttons), labelled `▶ Play, History, Magazine, Source, Bot,
-Manual, Explained, Migration, Visualizer` (the underlying files are `game, history, magazine,
-source, bot, manual, explained, migration, vram`). `Bot` is the Live bot demo; the
+The header nav has 10 links (no buttons), labelled `▶ Play, History, Magazine, Source, Bot,
+Manual, Explained, Migration, Visualizer, Demo` (the underlying files are `game, history,
+magazine, source, bot, manual, explained, migration, vram, demo`; `Demo` is `Демо` in uk).
+`site.css` tightens the nav padding between 521 and 1180 px so ten links wrap no earlier than
+nine did. `Bot` is the Live bot demo; the
 `bot-thinking` page marks `Bot` current. To the right of the nav is a `.lang-switch` row of
 three flag links (`docs/images/flags/gb.svg`, `nl.svg`, `ua.svg`) pointing at the en/nl/uk copy
 of the current page, with `aria-current="true"` on the active language.
@@ -270,6 +283,34 @@ On this machine a `~/scripts/cc` shim shadows the system compiler and breaks the
 test` build; pass `CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=/usr/bin/cc` to work around it. Keep
 `bot-engine.js` (the loader + Worker pool), `bot.js` (the driver), and `bot-thinking.html` in
 sync with planner behavior.
+
+## Dreamscape demo (demo.js)
+
+A cinematic, **non-playable** Three.js tribute (nobody steers the snake; the viewer can only
+pause, skip shots, or grab a free orbit camera), written in September 2026. `demo.js` is an ES module (`<script type="module">`); the page's import map
+points `three` and `three/addons/` at jsDelivr, so bumping Three.js means editing the version in
+all three `demo.html` files (and `THREE_VER` in `demo.js`, used for the title font URL).
+
+- **World.** The 1988 court (32x20 incl. the wall ring) is a floating temple above a cloud sea:
+  instanced rune-lit wall blocks with gold caps (one instance per cell; hidden cells get a zero
+  scale), a planar-reflection floor (a `Reflector` whose texture the floor shader samples by wet
+  mask; gems are swapped to cheap emissive stand-ins while the mirror renders), braziers, GPU
+  fireflies, crystal islets, and a hand-written sky shader (moon, stars, aurora).
+- **Serpent.** A ribbon of lofted rings rebuilt on the CPU each frame along a Catmull-Rom path
+  through planned cells plus a lateral sine fixed in space (true serpentine motion). Skin,
+  normal, roughness and glow maps are generated at boot as DataTextures from a staggered scale
+  lattice (each scale's color is decided at its center). The head is a lofted skull + hinged
+  jaw with eyes, fangs and a forked tongue. The planner is a time-expanded BFS toward hearts and
+  clubs that avoids smileys, stones and its own body.
+- **Director.** Shots (`chase`, `strike` with slow motion, `crane`, `profile`, `rear`,
+  `lowFront`, `top1988`, `wisp`) cycle from a playlist after an intro whose gold 3D title burns
+  away. `top1988` looks straight down and crossfades a `#crt` canvas that redraws the live board
+  as CP437 text-mode glyphs over the projected board. Every ~52 s the layout morphs into the next
+  of four 1988-inspired boards.
+- **Testing.** `window.SNEEKIE_DEMO` is a debug handle: `step(seconds, fps)` advances the demo
+  without `requestAnimationFrame` (browser-automation tabs are often hidden), `cut(name)` forces
+  a shot, `nextLevel()` triggers a morph. The quality adapter only reads real rAF frame times.
+  GLSL gotcha: never write `smoothstep` with reversed edges (undefined; it broke the sky).
 
 ## The 2026 remake (game3d.js)
 

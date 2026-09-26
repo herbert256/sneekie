@@ -73,6 +73,35 @@
   transition:border-color .12s, box-shadow .12s, background .12s;
 }
 
+/* the Dreamscape demo gets a full-width banner card ahead of the 3x3 grid */
+.topic-feature{
+  grid-column:1 / -1;
+  flex-direction:row;
+  align-items:center;
+  gap:22px;
+  min-height:0;
+}
+.topic-feature .topic-text{
+  flex:1 1 38%;
+  min-width:0;
+}
+.topic-feature .topic-image{
+  flex:0 0 58%;
+  width:58%;
+  margin-top:0;
+}
+.topic-kicker{
+  display:block;
+  margin:0 0 6px;
+  color:var(--annot);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.topic-card.topic-feature h3{
+  font-size:clamp(20px, 2.4vw, 28px);
+}
+
 .topic-card h3{
   margin:0 0 8px;
   color:var(--greenhi);
@@ -314,6 +343,14 @@
 }
 
 @media (max-width:640px){
+  .topic-feature{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .topic-feature .topic-image{
+    width:100%;
+  }
   .page-home main{
     padding:0 12px 52px;
   }

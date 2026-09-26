@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sneekie Dreamscape: змія 1988 року, відроджена як кінематографічна фантазія на Three.js. Реалістична смарагдова змія ковзає крізь ширяючий лабіринт храму з рубіновими серцями, смарагдовими конюшинами й золотими смайликами." />
+    <title>Sneekie - Dreamscape</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="canonical" href="https://sneekie.cc/uk/demo" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+    <meta name="theme-color" content="#05040c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Dreamscape" />
+    <meta property="og:description" content="Змія 1988 року, відроджена як кінематографічна фантазія на Three.js." />
+    <meta property="og:url" content="https://sneekie.cc/uk/demo" />
+    <meta property="og:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <meta property="og:image:alt" content="Золотий напис SNEEKIE над ширяючим лабіринтом храму зі світними самоцвітами під фіолетовим нічним небом." />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/demo.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" crossorigin />
+  </head>
+  <body class="page-demo">
+    <a class="skip" href="#main">Перейти до вмісту</a>
+    <div class="demo-shell">
+      <header class="top">
+        <a class="brand" href="../index_uk.html" aria-label="Домівка Sneekie" target="_top"><img src="../images/logo.png" width="704" height="128" alt="Sneekie" /></a>
+        <nav aria-label="Основна навігація">
+          <a href="../uk/game.html" target="_top">&#9654; Грати</a>
+          <a href="../uk/history.html" target="_top">Історія</a>
+          <a href="../uk/magazine.html" target="_top">Журнал</a>
+          <a href="../uk/source.html" target="_top">Код</a>
+          <a href="../uk/bot.html" target="_top">Бот</a>
+          <a href="../uk/manual.html" target="_top">Посібник</a>
+          <a href="../uk/explained.html" target="_top">Пояснення</a>
+          <a href="../uk/migration.html" target="_top">Міграція</a>
+          <a href="../uk/vram.html" target="_top">Візуалізатор</a>
+          <a href="../uk/demo.html" target="_top" aria-current="page">Демо</a>
+        </nav>
+        <div class="lang-switch" aria-label="Мова">
+          <a href="../en/demo.html" target="_top" aria-label="English" title="English"><img class="lang-flag" src="../images/flags/gb.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../nl/demo.html" target="_top" aria-label="Nederlands" title="Nederlands"><img class="lang-flag" src="../images/flags/nl.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../uk/demo.html" target="_top" aria-label="Українська" title="Українська" aria-current="true"><img class="lang-flag" src="../images/flags/ua.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+        </div>
+      </header>
+      <main id="main" tabindex="-1" class="demo-stage" aria-label="Sneekie Dreamscape, кінематографічне 3D-демо">
+        <canvas id="dream" aria-hidden="true"></canvas>
+        <canvas id="crt" aria-hidden="true"></canvas>
+        <div class="demo-presents" id="presents"></div>
+        <div class="demo-subtitle" id="subtitle"></div>
+        <div class="demo-caption" id="caption" aria-live="polite"></div>
+        <div class="demo-era" id="era"></div>
+        <div class="demo-pops" id="pops" aria-hidden="true"></div>
+        <div class="demo-controls" id="controls">
+          <button type="button" id="b-pause" aria-label="Пауза (пробіл)" aria-pressed="false" title="Пауза (пробіл)">&#10074;&#10074;</button>
+          <button type="button" id="b-next" aria-label="Наступний кадр (N)" title="Наступний кадр (N)">&#9197;</button>
+          <button type="button" id="b-cam" aria-label="Вільна камера (C)" aria-pressed="false" title="Вільна камера (C)">&#9678;</button>
+          <button type="button" id="b-sound" aria-label="Звук (M)" aria-pressed="false" title="Звук (M)">&#9835;</button>
+          <button type="button" id="b-full" aria-label="Повний екран (F)" title="Повний екран (F)">&#9974;</button>
+        </div>
+        <div class="demo-loading" id="loading"><span class="demo-spinner" aria-hidden="true"></span><span id="loading-text">Викликаємо змію&hellip;</span></div>
+        <noscript><p class="demo-fallback">Для цього демо потрібні JavaScript і WebGL2.</p></noscript>
+      </main>
+    </div>
+    <footer>
+      Sneekie &copy; липень '88, HerbySoft<br>Опубліковано в MS(X)DOS Computer Magazine №&nbsp;25 (жовтень 1988).<br>Dreamscape: кінематографічна данина на Three.js, вересень 2026.
+    </footer>
+    <script>
+      window.SNEEKIE_TEXT = {
+        presents: 'HerbySoft представляє',
+        subtitle: 'змія 1988 року &middot; знову у сні',
+        levels: ['Відкритий двір', 'Лабіринт ліній', 'Камʼяний зигзаг', 'Зали дверей'],
+        level: 'Рівень',
+        era1988: '1988 &middot; GW-BASIC &middot; текстовий режим 80&times;25',
+        era2026: '2026 &middot; Three.js &middot; WebGL',
+        nogl: 'Для цього демо потрібен WebGL2, але браузер не зміг його запустити.',
+        pause: 'Пауза (пробіл)', play: 'Відтворити (пробіл)',
+        freecam: 'Вільна камера: тягніть, щоб обертати, прокручуйте, щоб масштабувати',
+        director: 'Режисерська версія'
+      };
+    </script>
+    <script src="../js/site.js"></script>
+    <script type="module" src="../js/demo.js"></script>
+  </body>
+</html>

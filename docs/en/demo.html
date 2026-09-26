@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sneekie Dreamscape: the 1988 snake reborn as a cinematic Three.js fantasy. A realistic emerald serpent glides through a floating temple maze of ruby hearts, emerald clovers and golden smileys." />
+    <title>Sneekie - Dreamscape</title>
+    <link rel="icon" type="image/png" href="../favicon.png" />
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+    <link rel="canonical" href="https://sneekie.cc/en/demo" />
+    <link rel="alternate" hreflang="en" href="https://sneekie.cc/en/demo" />
+    <link rel="alternate" hreflang="nl" href="https://sneekie.cc/nl/demo" />
+    <link rel="alternate" hreflang="uk" href="https://sneekie.cc/uk/demo" />
+    <link rel="alternate" hreflang="x-default" href="https://sneekie.cc/en/demo" />
+    <meta name="theme-color" content="#05040c" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Sneekie" />
+    <meta property="og:title" content="Sneekie - Dreamscape" />
+    <meta property="og:description" content="The 1988 snake reborn as a cinematic Three.js fantasy." />
+    <meta property="og:url" content="https://sneekie.cc/en/demo" />
+    <meta property="og:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <meta property="og:image:alt" content="A golden SNEEKIE title above a floating temple maze of glowing gems under a violet night sky." />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://sneekie.cc/images/pages/dreamscape.jpg" />
+    <link rel="stylesheet" href="../css/site.css" />
+    <link rel="stylesheet" href="../css/demo.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" crossorigin />
+  </head>
+  <body class="page-demo">
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="demo-shell">
+      <header class="top">
+        <a class="brand" href="../index.html" aria-label="Sneekie home" target="_top"><img src="../images/logo.png" width="704" height="128" alt="Sneekie" /></a>
+        <nav aria-label="Primary">
+          <a href="../en/game.html" target="_top">&#9654; Play</a>
+          <a href="../en/history.html" target="_top">History</a>
+          <a href="../en/magazine.html" target="_top">Magazine</a>
+          <a href="../en/source.html" target="_top">Source</a>
+          <a href="../en/bot.html" target="_top">Bot</a>
+          <a href="../en/manual.html" target="_top">Manual</a>
+          <a href="../en/explained.html" target="_top">Explained</a>
+          <a href="../en/migration.html" target="_top">Migration</a>
+          <a href="../en/vram.html" target="_top">Visualizer</a>
+          <a href="../en/demo.html" target="_top" aria-current="page">Demo</a>
+        </nav>
+        <div class="lang-switch" aria-label="Language">
+          <a href="../en/demo.html" target="_top" aria-label="English" title="English" aria-current="true"><img class="lang-flag" src="../images/flags/gb.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../nl/demo.html" target="_top" aria-label="Nederlands" title="Nederlands"><img class="lang-flag" src="../images/flags/nl.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+          <a href="../uk/demo.html" target="_top" aria-label="Українська" title="Українська"><img class="lang-flag" src="../images/flags/ua.svg" width="24" height="16" alt="" aria-hidden="true" /></a>
+        </div>
+      </header>
+      <main id="main" tabindex="-1" class="demo-stage" aria-label="Sneekie Dreamscape, a cinematic 3D demo">
+        <canvas id="dream" aria-hidden="true"></canvas>
+        <canvas id="crt" aria-hidden="true"></canvas>
+        <div class="demo-presents" id="presents"></div>
+        <div class="demo-subtitle" id="subtitle"></div>
+        <div class="demo-caption" id="caption" aria-live="polite"></div>
+        <div class="demo-era" id="era"></div>
+        <div class="demo-pops" id="pops" aria-hidden="true"></div>
+        <div class="demo-controls" id="controls">
+          <button type="button" id="b-pause" aria-label="Pause (Space)" aria-pressed="false" title="Pause (Space)">&#10074;&#10074;</button>
+          <button type="button" id="b-next" aria-label="Next shot (N)" title="Next shot (N)">&#9197;</button>
+          <button type="button" id="b-cam" aria-label="Free camera (C)" aria-pressed="false" title="Free camera (C)">&#9678;</button>
+          <button type="button" id="b-sound" aria-label="Sound (M)" aria-pressed="false" title="Sound (M)">&#9835;</button>
+          <button type="button" id="b-full" aria-label="Fullscreen (F)" title="Fullscreen (F)">&#9974;</button>
+        </div>
+        <div class="demo-loading" id="loading"><span class="demo-spinner" aria-hidden="true"></span><span id="loading-text">Summoning the serpent&hellip;</span></div>
+        <noscript><p class="demo-fallback">This demo needs JavaScript and WebGL2.</p></noscript>
+      </main>
+    </div>
+    <footer>
+      Sneekie &copy; July '88 by HerbySoft<br>Published in MS(X)DOS Computer Magazine no.&nbsp;25 (October 1988).<br>Dreamscape: a cinematic Three.js tribute, September 2026.
+    </footer>
+    <script>
+      window.SNEEKIE_TEXT = {
+        presents: 'HerbySoft presents',
+        subtitle: 'the serpent of 1988 &middot; dreamed anew',
+        levels: ['The Open Court', 'The Maze of Lines', 'The Stone Zigzag', 'The Halls of Doors'],
+        level: 'Level',
+        era1988: '1988 &middot; GW-BASIC &middot; 80&times;25 text mode',
+        era2026: '2026 &middot; Three.js &middot; WebGL',
+        nogl: 'This demo needs WebGL2, which this browser could not start.',
+        pause: 'Pause (Space)', play: 'Play (Space)',
+        freecam: 'Free camera: drag to orbit, scroll to zoom',
+        director: 'Director’s cut'
+      };
+    </script>
+    <script src="../js/site.js"></script>
+    <script type="module" src="../js/demo.js"></script>
+  </body>
+</html>

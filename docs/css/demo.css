@@ -1,0 +1,203 @@
+/* Sneekie Dreamscape (docs/<lang>/demo.html + docs/js/demo.js): a
+   full-viewport cinematic stage under the standard static header. The
+   WebGL canvas fills the stage; the 1988 CRT canvas, captions, score pops
+   and the control dock float above it. */
+
+.page-demo{
+  background:#05040c;
+}
+.demo-shell{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100svh;
+  min-height:420px;
+}
+.page-demo header.top{
+  margin:0;
+  flex:0 0 auto;
+}
+.demo-stage{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  background:#05040c;
+  outline:none;
+  isolation:isolate;
+  font-family:"Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  color:#f3ead0;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.demo-stage:fullscreen{ width:100vw; height:100vh; }
+#dream,
+#crt{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+#dream{ touch-action:none; }
+#crt{
+  pointer-events:none;
+  opacity:0;
+  mix-blend-mode:normal;
+}
+
+/* ---------- title cards and captions ---------- */
+.demo-presents,
+.demo-subtitle,
+.demo-caption,
+.demo-era{
+  position:absolute;
+  left:0;
+  right:0;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 1.1s ease, transform 1.4s cubic-bezier(.2,.7,.2,1), letter-spacing 2.4s ease;
+  text-shadow:0 0 18px rgba(0,0,0,.9), 0 0 42px rgba(40,10,60,.8);
+}
+.demo-presents{
+  top:16%;
+  font-size:clamp(13px, 1.6vw, 20px);
+  letter-spacing:.5em;
+  text-transform:uppercase;
+  color:#e9d59a;
+  transform:translateY(8px);
+}
+.demo-subtitle{
+  bottom:17%;
+  font-size:clamp(15px, 2.1vw, 26px);
+  font-style:italic;
+  letter-spacing:.14em;
+  color:#f5e7c0;
+  transform:translateY(10px);
+}
+.demo-caption{
+  bottom:9%;
+  font-size:clamp(14px, 1.9vw, 24px);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:#f7e3a4;
+  transform:translateY(8px);
+}
+.demo-caption small{
+  display:block;
+  margin-bottom:.5em;
+  font-size:.62em;
+  letter-spacing:.6em;
+  color:#b9e8c4;
+}
+.demo-era{
+  top:2.4%;
+  font-family:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size:clamp(12px, 1.5vw, 17px);
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:#9dffa6;
+}
+.demo-era.is-2026{ color:#f7e3a4; font-family:inherit; }
+.is-on{ opacity:1 !important; transform:none !important; }
+
+/* floating +10 / +25 / -50 score pops, projected from 3D each frame */
+.demo-pops{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.demo-pop{
+  position:absolute;
+  left:0;
+  top:0;
+  font-weight:700;
+  font-size:clamp(16px, 2vw, 26px);
+  letter-spacing:.06em;
+  white-space:nowrap;
+  will-change:transform, opacity;
+  text-shadow:0 0 10px currentColor, 0 0 3px #000, 0 2px 4px #000;
+}
+.demo-pop.heart{ color:#ff8098; }
+.demo-pop.club{ color:#8dffae; }
+.demo-pop.smiley{ color:#ffd65e; }
+
+/* ---------- control dock ---------- */
+.demo-controls{
+  position:absolute;
+  right:14px;
+  bottom:14px;
+  display:flex;
+  gap:6px;
+  padding:6px;
+  border-radius:12px;
+  background:rgba(12,9,24,.42);
+  border:1px solid rgba(233,213,154,.18);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  opacity:.55;
+  transition:opacity .3s;
+}
+.demo-controls:hover,
+.demo-controls:focus-within{ opacity:1; }
+.demo-controls button{
+  width:38px;
+  height:38px;
+  padding:0;
+  border:1px solid rgba(233,213,154,.25);
+  border-radius:9px;
+  background:rgba(20,14,36,.6);
+  color:#f3e2ad;
+  font:16px/1 system-ui, sans-serif;
+  cursor:pointer;
+  transition:background .15s, border-color .15s, box-shadow .15s, color .15s;
+}
+.demo-controls button:hover{ border-color:#f3e2ad; box-shadow:0 0 14px -4px #f3e2ad; }
+.demo-controls button[aria-pressed="true"]{
+  color:#0c0818;
+  background:#e9d59a;
+  border-color:#e9d59a;
+}
+.demo-controls button:focus-visible{ outline:2px solid #9dffa6; outline-offset:2px; }
+
+/* ---------- loading / fallback ---------- */
+.demo-loading{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  background:#05040c;
+  color:#e9d59a;
+  font-size:clamp(14px, 1.7vw, 19px);
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  transition:opacity 1.2s ease;
+  z-index:5;
+}
+.demo-loading.is-done{ opacity:0; pointer-events:none; }
+.demo-spinner{
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  border:2px solid rgba(233,213,154,.15);
+  border-top-color:#9dffa6;
+  animation:demo-spin 1s linear infinite;
+}
+@keyframes demo-spin{ to{ transform:rotate(360deg); } }
+.demo-fallback{
+  position:absolute;
+  inset:auto 0 45% 0;
+  text-align:center;
+  color:#e9d59a;
+  z-index:6;
+}
+
+@media (max-width:520px){
+  .demo-controls{ right:8px; bottom:8px; gap:4px; padding:4px; }
+  .demo-controls button{ width:34px; height:34px; font-size:14px; }
+  .demo-caption{ bottom:16%; letter-spacing:.18em; }
+  .demo-subtitle{ bottom:24%; }
+}
+@media (prefers-reduced-motion:reduce){
+  .demo-presents, .demo-subtitle, .demo-caption, .demo-era{ transition:opacity .4s; }
+}
